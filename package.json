@@ -1,6 +1,6 @@
 {
   "name": "manarat-learning-platform",
-  "version": "16.13.0",
+  "version": "17.0.0",
   "private": true,
   "scripts": {
     "start": "npx serve . -l 4173",
@@ -11,5 +11,5 @@
   "dependencies": {
     "serve": "latest"
   },
-  "description": "Manarat Platform V16.13 Theme Preview Restoration"
+  "description": "Manarat Platform V17 Premium Experience"
 }
