@@ -212,7 +212,7 @@ create policy "profiles_delete_admin" on public.profiles for delete to authentic
 using (manarat_private.is_admin((select auth.uid())));
 
 create policy "platform_public_read" on public.platform_state for select to anon, authenticated
-using (id='public' or manarat_private.is_admin((select auth.uid())));
+using (id in ('main','public') or manarat_private.is_admin((select auth.uid())));
 create policy "platform_admin_insert" on public.platform_state for insert to authenticated
 with check (manarat_private.is_admin((select auth.uid())));
 create policy "platform_admin_update" on public.platform_state for update to authenticated
@@ -300,6 +300,10 @@ using (bucket_id='manarat-assets') with check (bucket_id='manarat-assets');
 create policy "manarat_assets_authenticated_delete" on storage.objects for delete to authenticated
 using (bucket_id='manarat-assets');
 
--- Public state is safe for anonymous home-page configuration. The full main state is created on first admin sync.
+-- Keep the V16.13 cloud-state key aligned with the client constant CLOUD_STATE_ID='main'.
+insert into public.platform_state(id,data,updated_at) values ('main','{}'::jsonb,now())
+on conflict(id) do nothing;
+
+-- Legacy compatibility row for older deployments that used 'public'.
 insert into public.platform_state(id,data,updated_at) values ('public','{}'::jsonb,now())
 on conflict(id) do nothing;
