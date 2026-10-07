@@ -1,0 +1,51 @@
+<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>لوحة المعلمة | منارة</title><link rel="stylesheet" href="../css/main.css?v=16.13"></head><body class="teacher-dashboard-page premium-dashboard">
+<header class="topbar"><div class="wrap nav"><a class="brand" href="../index.html"><img data-mark src="../assets/manarat-mark.svg"><span><b data-brand-name>منارة التعلم الرقمي</b><small>TEACHER DASHBOARD</small></span></a><div class="navlinks"><span id="teacherNameBadge" class="teacher-nav-card">المعلمة</span><a class="btn ghost" href="../index.html">الرئيسية</a><a class="btn" href="create-game.html">+ إنشاء لعبة</a><a class="btn dark admin-only" href="../admin/admin.html">الأدمن</a></div></div></header>
+<main class="page"><div class="wrap"><section class="teacher-profile-hero control-card">
+  <div class="teacher-profile-head">
+    <div class="teacher-avatar-wrap">
+      <div id="teacherAvatarBox" class="teacher-avatar-box"></div>
+      <div class="teacher-avatar-actions">
+        <label class="btn ghost small" for="teacherAvatarFile">رفع صورة</label>
+        <input id="teacherAvatarFile" type="file" accept="image/*" style="display:none">
+        <button class="btn ghost small" type="button" onclick="clearTeacherAvatar()">حذف الصورة</button>
+      </div>
+    </div>
+    <div class="teacher-profile-main">
+      <div class="kicker">👤 الملف التعريفي</div>
+      <h1 id="teacherProfileTitle">المعلمة</h1>
+      <p id="teacherProfileSchool" class="teacher-school-line">المدرسة</p>
+      <div id="teacherProfileActions" class="teacher-profile-actions">
+        <button id="editProfileBtn" class="btn dark" type="button" onclick="toggleTeacherProfileEdit(true)">✏️ تحرير الملف التعريفي</button>
+        <button id="teacherProfileLogout" class="btn danger" type="button" onclick="Manarat.authSignOut()">🚪 تسجيل خروج</button>
+      </div>
+      <div id="teacherProfileForm" class="teacher-profile-form field-grid field-grid-profile" style="display:none">
+        <input id="profileNameInput" class="input" placeholder="اسم المعلم / المعلمة">
+        <input id="profileSchoolInput" class="input" placeholder="اسم المدرسة">
+        <select id="profileGenderSelect" class="input"><option value="female">معلمة — صيغة مؤنث</option><option value="male">معلم — صيغة مذكر</option></select>
+        <input id="profileIconInput" class="input" maxlength="4" placeholder="أيقونة معبرة مثل 👩‍🏫 أو 👨‍🏫">
+        <button class="btn" type="button" onclick="saveTeacherProfile()">حفظ الملف التعريفي</button>
+        <button class="btn ghost" type="button" onclick="toggleTeacherProfileEdit(false)">إلغاء التحرير</button>
+      </div>
+    </div>
+  </div>
+</section>
+<section class="dashboard-command card">
+  <div>
+    <div class="kicker">👩‍🏫 لوحة المعلم/المعلمة</div>
+    <h1>مركز إدارة الألعاب التعليمية</h1>
+    <p class="muted">أنشئ ألعابًا تفاعلية، راقب النتائج، انسخ ألعابًا مشتركة، وصدّر ألعابًا تعمل محليًا من مكان واحد.</p>
+  </div>
+  <div class="dashboard-command-actions">
+    <a class="btn" href="create-game.html">+ إنشاء لعبة جديدة</a>
+    <a class="btn dark" href="../player/game.html?game=demo-adventure" target="_blank">تشغيل نموذج</a>
+  </div>
+</section>
+<div class="quick-action-grid">
+  <a class="quick-action-card" href="create-game.html"><span>🎮</span><b>إنشاء لعبة</b><small>ابدأ لعبة جديدة من الصفر</small></a>
+  <a class="quick-action-card" href="#sharedGamesGrid"><span>🤝</span><b>مكتبة المشاركة</b><small>انسخ ألعابًا متاحة للمعلمين</small></a>
+  <a class="quick-action-card" href="#attemptsTable"><span>📊</span><b>آخر النتائج</b><small>تابع محاولات الطلاب</small></a>
+  <a class="quick-action-card" href="#teacherMessages"><span>✉️</span><b>مراسلة الأدمن</b><small>تواصل مع إدارة المنصة</small></a>
+</div>
+<div class="toolbar premium-list-toolbar"><div><div class="kicker">🎮 ألعابي</div><h2>الألعاب الخاصة بي</h2><p class="muted">كل لعبة تحفظ باسم الحساب الحالي، وتظهر كاملة في لوحة الأدمن.</p></div><div><input id="search" class="input" placeholder="بحث في الألعاب..."></div></div>
+<div class="stat-row"><div class="stat"><span>ألعابي</span><strong id="gamesCount">0</strong></div><div class="stat"><span>الأسئلة</span><strong id="questionsCount">0</strong></div><div class="stat"><span>المحاولات</span><strong id="attemptsCount">0</strong></div><div class="stat"><span>متوسط الدرجات</span><strong id="avgScore">0%</strong></div></div>
+<div id="gamesGrid" class="game-list"></div><div class="control-card" style="margin-top:20px"><div class="toolbar"><div><h2>🤝 مكتبة الألعاب المتاحة للمشاركة</h2><p class="muted">الألعاب التي أتاحها منشئوها لكل المعلمين. يمكنك معاينتها أو نسخ نسخة مستقلة إلى مكتبتك ثم تعديلها دون التأثير على الأصل.</p></div><div class="filter-row"><input id="sharedSearch" class="input" placeholder="بحث في الألعاب المشتركة..."><input id="sharedSubjectFilter" class="input" placeholder="فلترة بالمادة"><input id="sharedGradeFilter" class="input" placeholder="فلترة بالصف"></div></div><div id="sharedGamesGrid" class="game-list"></div></div><div class="control-card" style="margin-top:20px"><h2>✉️ مراسلة الأدمن</h2><div class="field-grid"><input id="teacherMsgSubject" class="input" placeholder="عنوان الرسالة"><button class="btn" onclick="sendTeacherMessage()">إرسال للأدمن</button></div><textarea id="teacherMsgBody" class="input" placeholder="اكتب رسالتك لإدارة المنصة"></textarea><div id="teacherMessages"></div></div><div class="control-card" style="margin-top:20px"><h2>📊 آخر المحاولات</h2><div id="attemptsTable"></div></div></div></main><script src="../js/core.js?v=16.13"></script><script src="../js/dashboard.js?v=16.13"></script></body></html>

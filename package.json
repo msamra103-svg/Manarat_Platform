@@ -1,0 +1,15 @@
+{
+  "name": "manarat-learning-platform",
+  "version": "16.13.0",
+  "private": true,
+  "scripts": {
+    "start": "npx serve public -l 4173",
+    "check:js": "node --check js/core.js && node --check js/home.js && node --check js/admin.js && node --check js/dashboard.js && node --check js/create-game.js && node --check js/player.js",
+    "smoke": "node scripts/smoke-check.js",
+    "check": "node scripts/smoke-check.js"
+  },
+  "dependencies": {
+    "serve": "latest"
+  },
+  "description": "Manarat Platform V16.13 Theme Preview Restoration"
+}

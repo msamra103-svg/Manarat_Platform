@@ -1,0 +1,5 @@
+/admin /admin/admin.html 200
+/teacher /teacher/dashboard.html 200
+/player /player/game.html 200
+/auth /auth.html 200
+/* /index.html 200
