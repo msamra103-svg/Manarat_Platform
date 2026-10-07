@@ -17,6 +17,7 @@ const required = [
   'js/create-game.js',
   'js/player.js',
   'css/main.css',
+  'css/v17.css',
   'vercel.json',
   'netlify.toml',
   'supabase/functions/dynamic-handler/index.ts',
@@ -57,8 +58,18 @@ function walk(dir) {
   }
 }
 walk(root);
+const forbidden = [
+  ['m.samra0103@gmail.com','legacy admin email'],
+  ['xbnefcwbkwrsvxsopnjy','legacy Supabase project']
+];
 for (const p of textFiles) {
   const txt = fs.readFileSync(p, 'utf8');
+  for (const [needle,label] of forbidden) {
+    if (txt.includes(needle)) {
+      console.error('Forbidden '+label+' found in:', path.relative(root,p));
+      failed = true;
+    }
+  }
   if (/AIzaSy[A-Za-z0-9_\-]{20,}/.test(txt)) {
     console.error('Gemini API key appears in frontend/package file:', path.relative(root, p));
     failed = true;
