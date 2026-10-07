@@ -154,6 +154,7 @@ body::before{opacity:.34}
 
 /* Trust / impact strip */
 .v17-impact-strip{
+  grid-column:1/-1;
   display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:0 0 36px
 }
 .v17-impact-item{
