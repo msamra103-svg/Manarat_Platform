@@ -35,7 +35,7 @@ for (const rel of required) {
   }
 }
 
-const jsFiles = ['js/core.js','js/admin.js','js/dashboard.js','js/create-game.js','js/player.js','public/js/core.js','public/js/admin.js','public/js/dashboard.js','public/js/create-game.js','public/js/player.js'];
+const jsFiles = ['js/core.js','js/home.js','js/admin.js','js/dashboard.js','js/create-game.js','js/player.js','public/js/core.js','public/js/admin.js','public/js/dashboard.js','public/js/create-game.js','public/js/player.js'];
 for (const rel of jsFiles) {
   const p = path.join(root, rel);
   if (fs.existsSync(p)) {
