@@ -1,16 +1,122 @@
-<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>تسجيل المعلم/المعلمة | منارة</title><link rel="stylesheet" href="css/main.css?v=16.13"><style>.auth-tabs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:18px 0}.auth-tabs button{border:0;border-radius:18px;padding:14px;font-weight:900;cursor:pointer;background:rgba(255,255,255,.08);color:#fff}.auth-tabs button.active{background:linear-gradient(135deg,var(--brand1),var(--brand2));color:#06121b}.auth-box{display:none}.auth-box.active{display:block}.auth-note{border:1px solid rgba(246,200,95,.25);background:rgba(246,200,95,.08);padding:14px;border-radius:18px;margin:14px 0;color:#fff7d7;line-height:1.8}.mini-line{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap}</style></head><body>
-<header class="topbar"><div class="wrap nav"><a class="brand" href="index.html"><img data-mark src="assets/manarat-mark.svg"><span><b data-brand-name>منارة التعلم الرقمي</b><small data-brand-subtitle>DIGITAL LEARNING BEACON</small></span></a><div class="navlinks"><a class="btn ghost" href="index.html">الرئيسية</a></div></div></header>
-<main class="page"><div class="wrap" style="width:min(760px,94vw)"><div class="control-card"><div class="kicker">🔐 حسابات المعلمين والمعلمات عبر Supabase</div><h1>دخول / إنشاء حساب معلم أو معلمة</h1><p class="muted">يتم استخدام Supabase Auth للحسابات الحقيقية، وتظل بيانات Gemini وSupabase محفوظة داخل إعدادات المنصة.</p>
-<div class="auth-note"><b>تنبيه:</b> إذا كان تأكيد البريد الإلكتروني مفعّلًا في Supabase فقد تحتاج المعلمة لتأكيد البريد قبل الدخول.</div>
-<div class="auth-tabs"><button id="loginTab" class="active" onclick="switchAuth('login')">دخول</button><button id="signupTab" onclick="switchAuth('signup')">إنشاء حساب جديد</button></div>
-<div id="loginBox" class="auth-box active"><input id="loginEmail" class="input" type="email" placeholder="البريد الإلكتروني"><input id="loginPassword" class="input" type="password" placeholder="كلمة المرور" style="margin-top:12px"><button class="btn full" style="margin-top:16px" onclick="doLogin()">تسجيل الدخول</button></div>
-<div id="signupBox" class="auth-box"><select id="signupGender" class="input"><option value="female">معلمة — صيغة مؤنث</option><option value="male">معلم — صيغة مذكر</option></select><input id="signupName" class="input" placeholder="اسم المعلم / المعلمة الكامل" style="margin-top:12px"><input id="signupSchool" class="input" placeholder="اسم المدرسة" style="margin-top:12px"><input id="signupEmail" class="input" type="email" placeholder="البريد الإلكتروني" style="margin-top:12px"><input id="signupPassword" class="input" type="password" placeholder="كلمة المرور - 6 أحرف على الأقل" style="margin-top:12px"><button class="btn full" style="margin-top:16px" onclick="doSignup()">إنشاء الحساب</button></div>
-<p id="authStatus" class="muted" style="margin-top:14px"></p>
-<div class="mini-line" style="margin-top:18px"><span class="muted">بعد الدخول ستظهر ألعاب المعلمة الخاصة بها فقط.</span><a class="btn ghost" href="teacher/dashboard.html">فتح لوحة المعلمة</a></div>
-</div></div></main><script src="js/core.js?v=16.13"></script><script>
-function switchAuth(t){document.getElementById('loginBox').classList.toggle('active',t==='login');document.getElementById('signupBox').classList.toggle('active',t==='signup');document.getElementById('loginTab').classList.toggle('active',t==='login');document.getElementById('signupTab').classList.toggle('active',t==='signup');}
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#061225">
+  <title>الدخول إلى منارة</title>
+  <link rel="stylesheet" href="css/main.css?v=17.0">
+  <link rel="stylesheet" href="css/v17.css?v=17.0">
+  <style>
+    .auth-tabs{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:22px 0}
+    .auth-tabs button{border:0;padding:13px;font-weight:900;cursor:pointer;background:transparent;color:#b8c7dc}
+    .auth-tabs button.active{background:linear-gradient(135deg,var(--v17-gold),#ffe49a);color:#152038}
+    .auth-box{display:none}.auth-box.active{display:block}
+    .auth-note{border:1px solid rgba(88,215,238,.16);background:rgba(88,215,238,.055);padding:13px 15px;border-radius:15px;margin:16px 0;color:#dceafa;line-height:1.75}
+    .mini-line{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap}
+  </style>
+</head>
+<body class="auth-page">
+<header class="topbar">
+  <div class="wrap nav">
+    <a class="brand" href="index.html">
+      <img data-mark src="assets/manarat-mark.svg" alt="">
+      <span><b data-brand-name>منارة التعلم الرقمي</b><small data-brand-subtitle>DIGITAL LEARNING BEACON</small></span>
+    </a>
+    <div class="navlinks"><a class="btn ghost" href="index.html">العودة للرئيسية</a></div>
+  </div>
+</header>
+
+<main class="page">
+  <div class="wrap auth-v17-shell">
+    <section class="auth-v17-intro card">
+      <div class="brand-lockup">
+        <img data-mark src="assets/manarat-mark.svg" alt="">
+        <div><div class="kicker">منصة المعلمين</div><h2>كل أدواتك التعليمية في مكان واحد</h2></div>
+      </div>
+      <p class="muted">سجّل الدخول لإدارة ألعابك، توليد الأسئلة بالذكاء الاصطناعي، متابعة النتائج، ومشاركة محتواك التعليمي من لوحة موحدة.</p>
+      <div class="auth-v17-points">
+        <div class="auth-v17-point">🎮 إنشاء وإدارة الألعاب التعليمية</div>
+        <div class="auth-v17-point">🤖 توليد أسئلة من النصوص والملفات</div>
+        <div class="auth-v17-point">📊 متابعة المحاولات والنتائج</div>
+        <div class="auth-v17-point">☁️ مزامنة سحابية آمنة عبر Supabase</div>
+      </div>
+    </section>
+
+    <section class="auth-v17-form control-card">
+      <div class="kicker">🔐 حساب منارة</div>
+      <h1 style="margin:10px 0 6px">مرحبًا بك</h1>
+      <p class="muted">استخدم حسابك الحالي أو أنشئ حسابًا جديدًا للمعلم/المعلمة.</p>
+
+      <div class="auth-tabs">
+        <button id="loginTab" class="active" onclick="switchAuth('login')">تسجيل الدخول</button>
+        <button id="signupTab" onclick="switchAuth('signup')">إنشاء حساب</button>
+      </div>
+
+      <div id="loginBox" class="auth-box active">
+        <input id="loginEmail" class="input" type="email" autocomplete="email" placeholder="البريد الإلكتروني">
+        <input id="loginPassword" class="input" type="password" autocomplete="current-password" placeholder="كلمة المرور" style="margin-top:12px">
+        <button class="btn full" style="margin-top:16px" onclick="doLogin()">دخول إلى المنصة</button>
+      </div>
+
+      <div id="signupBox" class="auth-box">
+        <select id="signupGender" class="input">
+          <option value="female">معلمة — صيغة مؤنث</option>
+          <option value="male">معلم — صيغة مذكر</option>
+        </select>
+        <input id="signupName" class="input" placeholder="الاسم الكامل" style="margin-top:12px">
+        <input id="signupSchool" class="input" placeholder="اسم المدرسة" style="margin-top:12px">
+        <input id="signupEmail" class="input" type="email" autocomplete="email" placeholder="البريد الإلكتروني" style="margin-top:12px">
+        <input id="signupPassword" class="input" type="password" autocomplete="new-password" placeholder="كلمة المرور — 6 أحرف على الأقل" style="margin-top:12px">
+        <button class="btn full" style="margin-top:16px" onclick="doSignup()">إنشاء الحساب</button>
+      </div>
+
+      <div class="auth-note"><b>ملاحظة:</b> إذا كان تأكيد البريد الإلكتروني مفعّلًا في Supabase، أكّد البريد أولًا ثم سجّل الدخول.</div>
+      <p id="authStatus" class="muted" style="margin-top:14px"></p>
+      <div class="mini-line" style="margin-top:18px">
+        <span class="muted">تظهر لكل معلم ألعابه وبياناته الخاصة فقط.</span>
+        <a class="btn ghost" href="teacher/dashboard.html">فتح لوحة المعلم</a>
+      </div>
+    </section>
+  </div>
+</main>
+
+<script src="js/core.js?v=17.0"></script>
+<script>
+function switchAuth(t){
+  document.getElementById('loginBox').classList.toggle('active',t==='login');
+  document.getElementById('signupBox').classList.toggle('active',t==='signup');
+  document.getElementById('loginTab').classList.toggle('active',t==='login');
+  document.getElementById('signupTab').classList.toggle('active',t==='signup');
+}
 function nextUrl(){return new URLSearchParams(location.search).get('next')||'teacher/dashboard.html'}
-async function doLogin(){const st=document.getElementById('authStatus');st.textContent='جاري تسجيل الدخول...';try{await Manarat.authSignIn({email:loginEmail.value,password:loginPassword.value});st.textContent='تم الدخول بنجاح.';location.href=Manarat.isAdmin()? 'admin/admin.html' : nextUrl();}catch(e){st.textContent='تعذر الدخول: '+(e.message||e);Manarat.toast(st.textContent,'error')}}
-async function doSignup(){const st=document.getElementById('authStatus');st.textContent='جاري إنشاء الحساب...';try{const r=await Manarat.authSignUp({name:signupName.value,school:signupSchool.value,email:signupEmail.value,password:signupPassword.value,role:'teacher',educator_gender:signupGender.value});if(r.session){st.textContent='تم إنشاء الحساب والدخول بنجاح.';location.href=Manarat.isAdmin()? 'admin/admin.html' : 'teacher/dashboard.html'}else{st.textContent='تم إنشاء الحساب. إذا كان تأكيد البريد مفعّلًا، افتح البريد وأكّد الحساب ثم سجّل الدخول.';switchAuth('login');loginEmail.value=signupEmail.value;}}catch(e){st.textContent='تعذر إنشاء الحساب: '+(e.message||e);Manarat.toast(st.textContent,'error')}}
-document.addEventListener('DOMContentLoaded',()=>{if(Manarat.isAuthenticated()){const u=Manarat.currentAuthUser();document.getElementById('authStatus').textContent='أنت مسجل دخول حاليًا باسم: '+(u.email||'');}});
-</script></body></html>
+async function doLogin(){
+  const st=document.getElementById('authStatus');st.textContent='جاري تسجيل الدخول...';
+  try{
+    await Manarat.authSignIn({email:loginEmail.value,password:loginPassword.value});
+    st.textContent='تم الدخول بنجاح.';
+    location.href=Manarat.isAdmin()?'admin/admin.html':nextUrl();
+  }catch(e){st.textContent='تعذر الدخول: '+(e.message||e);Manarat.toast(st.textContent,'error')}
+}
+async function doSignup(){
+  const st=document.getElementById('authStatus');st.textContent='جاري إنشاء الحساب...';
+  try{
+    const r=await Manarat.authSignUp({name:signupName.value,school:signupSchool.value,email:signupEmail.value,password:signupPassword.value,role:'teacher',educator_gender:signupGender.value});
+    if(r.session){
+      st.textContent='تم إنشاء الحساب والدخول بنجاح.';
+      location.href=Manarat.isAdmin()?'admin/admin.html':'teacher/dashboard.html';
+    }else{
+      st.textContent='تم إنشاء الحساب. إذا كان تأكيد البريد مفعّلًا، افتح البريد وأكّد الحساب ثم سجّل الدخول.';
+      switchAuth('login');loginEmail.value=signupEmail.value;
+    }
+  }catch(e){st.textContent='تعذر إنشاء الحساب: '+(e.message||e);Manarat.toast(st.textContent,'error')}
+}
+document.addEventListener('DOMContentLoaded',()=>{
+  if(Manarat.isAuthenticated()){
+    const u=Manarat.currentAuthUser();
+    document.getElementById('authStatus').textContent='أنت مسجل دخول حاليًا باسم: '+(u.email||'');
+  }
+});
+</script>
+</body>
+</html>
