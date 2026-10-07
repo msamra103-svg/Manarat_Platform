@@ -191,6 +191,49 @@ function renderContactSection(p){
   };
 }
 
+let v17RevealObserver=null;
+function refreshV17Reveal(){
+  const nodes=[...document.querySelectorAll('.home-premium>section,.feature-card-premium,.hero-quick-card,.v17-impact-item')];
+  if(!('IntersectionObserver' in window)){nodes.forEach(el=>el.classList.add('is-visible'));return}
+  if(!v17RevealObserver){
+    v17RevealObserver=new IntersectionObserver(entries=>{
+      entries.forEach(entry=>{
+        if(entry.isIntersecting){entry.target.classList.add('is-visible');v17RevealObserver.unobserve(entry.target)}
+      });
+    },{threshold:.08,rootMargin:'0px 0px -36px 0px'});
+  }
+  nodes.forEach(el=>{
+    if(el.classList.contains('is-visible'))return;
+    el.classList.add('v17-reveal');
+    v17RevealObserver.observe(el);
+  });
+}
+function setupV17UI(){
+  const toggle=document.getElementById('mobileNavToggle');
+  const nav=document.getElementById('homeNavLinks');
+  if(toggle&&nav){
+    toggle.onclick=()=>{
+      const open=nav.classList.toggle('open');
+      toggle.setAttribute('aria-expanded',String(open));
+      toggle.textContent=open?'×':'☰';
+    };
+    nav.addEventListener('click',e=>{
+      if(e.target.closest('a')){
+        nav.classList.remove('open');
+        toggle.setAttribute('aria-expanded','false');
+        toggle.textContent='☰';
+      }
+    });
+  }
+  const back=document.getElementById('v17BackTop');
+  if(back){
+    back.onclick=()=>window.scrollTo({top:0,behavior:'smooth'});
+    const syncBack=()=>back.classList.toggle('show',window.scrollY>620);
+    window.addEventListener('scroll',syncBack,{passive:true});
+    syncBack();
+  }
+}
+
 function fitHomeHeroText(){
   const box=Manarat.qs('#heroSection .hero-copy');
   const title=Manarat.qs('#homeTitle');
@@ -212,12 +255,19 @@ function fitHomeHeroText(){
 }
 
 function render(){const s=Manarat.store(),p=s.platform;Manarat.applyPlatform();const gender=Manarat.normalizedGender((s.profile||{}).educator_gender||p.uiGender);Manarat.qs('#homeKicker').textContent=p.homeKicker||'';const title=Manarat.qs('#homeTitle');let tt=Manarat.esc(Manarat.genderizeText(p.homeTitle||'',gender));const h=Manarat.esc(p.homeHighlight||'');if(h&&tt.includes(h))tt=tt.replace(h,`<span>${h}</span>`);title.innerHTML=tt;Manarat.qs('#homeText').textContent=Manarat.genderizeText(p.homeText||'',gender);Manarat.qs('#featuresTitle').textContent=p.featuresTitle||'';Manarat.qs('#featuresSubtitle').textContent=p.featuresSubtitle||'';Manarat.qs('#showcaseGameTitle').textContent=p.showcaseGameTitle||'';Manarat.qs('#showcaseGameText').textContent=p.showcaseGameText||'';Manarat.qs('#showcaseButton').textContent=p.showcaseButtonText||'ابدأ';Manarat.qs('#homeFooter').textContent=p.homeFooter||'';Manarat.qs('#homeMainLogo').src=Manarat.relAsset(p.logoImage);Manarat.qs('#homeNavLinks').innerHTML=renderButtons(homeNavLinks(p.navLinks));Manarat.qs('#homeHeroActions').innerHTML=renderButtons(p.heroButtons);
-const metrics=[{n:(p.features||[]).length||6,l:'خدمات رئيسية'},{n:8,l:'أنواع أسئلة'},{n:'AI',l:'فيديوهات وأفكار ذكية'},{n:'24/7',l:'منصة جاهزة للتشغيل'}];
+const publishedGames=(s.games||[]).filter(g=>Array.isArray(g.questions)&&g.questions.length).length;
+const videoCount=normalizeYTVideos(p.youtubeVideos||[]).length;
+const metrics=[
+  {n:(p.features||[]).length||6,l:'خدمات رقمية'},
+  {n:publishedGames||'جاهز',l:'ألعاب قابلة للتشغيل'},
+  {n:videoCount||'قناة',l:'نماذج فيديو'},
+  {n:'AI',l:'توليد ذكي للأسئلة'}
+];
 const quickCards=[
-  {icon:'🎬',title:'مكتبة الفيديوهات',desc:'انتقل مباشرة إلى قسم الفيديوهات ونماذج القناة.',href:'#youtubeShowcaseSection',tag:'مشاهدة الفيديوهات'},
-  {icon:'🤖',title:'فيديوهات الذكاء الاصطناعي',desc:'خدمة تصميم فيديوهات لشرح المناهج والأفكار الإبداعية.',href:'#showcaseSection',tag:'خدمة أساسية'},
-  {icon:'🎮',title:'الألعاب التعليمية',desc:'استعرض تجربة اللعب والأنماط التفاعلية داخل المنصة.',href:'#showcaseSection',tag:'تجربة اللعب'},
-  {icon:'🆕',title:'آخر الألعاب',desc:'تصفح آخر الألعاب المضافة والمتاحة للتشغيل.',href:'#latestPublicGamesSection',tag:'مكتبة الألعاب'}
+  {icon:'🎮',title:'الألعاب التعليمية',desc:'أنشئ وشغّل ألعابًا متعددة الأنماط وشاركها مع الطلاب.',href:'#showcaseSection',tag:'ابدأ التجربة'},
+  {icon:'🎬',title:'فيديوهات منارة',desc:'شاهد نماذج مختارة مباشرة من قناة منارة التعليمية.',href:'#youtubeShowcaseSection',tag:'شاهد النماذج'},
+  {icon:'🤖',title:'توليد ذكي للأسئلة',desc:'حوّل النصوص والملفات إلى أسئلة تعليمية قابلة للتعديل.',href:'auth.html',tag:'للمعلمين'},
+  {icon:'📊',title:'نتائج ومتابعة',desc:'تابع محاولات الطلاب وأدر محتواك من لوحة واحدة.',href:'auth.html',tag:'لوحة المعلم'}
 ];
 const serviceTags=['الألعاب التفاعلية','مكتبة الفيديوهات','فيديوهات المناهج بالذكاء الاصطناعي','تقارير وشهادات','استيراد وتوليد ذكي'];
 const highlights=['تشغيل فردي أو منافسة','اختيار عدد الأسئلة من شاشة اللعب','لوحة أرقام الأسئلة','اختيار عشوائي سينمائي','تصحيح يدوي للأسئلة المقالية'];
@@ -225,5 +275,9 @@ Manarat.qs('#heroMetrics').innerHTML=metrics.map(m=>`<div class="metric-chip"><b
 Manarat.qs('#heroQuickCards').innerHTML=quickCards.map(c=>`<a class="hero-quick-card" href="${Manarat.attr(c.href||'#')}"><div class="badge">${Manarat.esc(c.icon)}</div><div><b>${Manarat.esc(c.title)}</b><p>${Manarat.esc(c.desc)}</p><small>${Manarat.esc(c.tag||'انتقال')}</small></div></a>`).join('');
 Manarat.qs('#heroServiceTags').innerHTML=serviceTags.map(x=>`<span>${Manarat.esc(x)}</span>`).join('');
 Manarat.qs('#showcaseHighlights').innerHTML=highlights.map(x=>`<span class="showcase-chip">${Manarat.esc(x)}</span>`).join('');
-Manarat.qs('#featuresGrid').innerHTML=(p.features||[]).map(f=>`<div class="card feature-card-premium"><div class="badge">${Manarat.esc(f.icon||'✨')}</div><h3>${Manarat.esc(f.title||'ميزة')}</h3><p class="muted">${Manarat.esc(f.desc||'')}</p><div class="feature-glow"></div></div>`).join('');Manarat.qs('#featuresSection').style.display=p.showFeatures===false?'none':'';Manarat.qs('#showcaseSection').style.display=p.showShowcase===false?'none':'';renderYouTubeSection(p);renderLatestGames(s);renderContactSection(p);applyHomeSectionOrder(p);fitHomeHeroText();activateHomeNav();Manarat.applyGenderQuickText(document);}document.addEventListener('DOMContentLoaded',async()=>{await Manarat.cloudSyncTables?.();render()});document.addEventListener('manarat:store-updated',render);window.addEventListener('resize',()=>fitHomeHeroText());window.addEventListener('scroll',()=>activateHomeNav(),{passive:true});
+Manarat.qs('#featuresGrid').innerHTML=(p.features||[]).map(f=>`<div class="card feature-card-premium"><div class="badge">${Manarat.esc(f.icon||'✨')}</div><h3>${Manarat.esc(f.title||'ميزة')}</h3><p class="muted">${Manarat.esc(f.desc||'')}</p><div class="feature-glow"></div></div>`).join('');Manarat.qs('#featuresSection').style.display=p.showFeatures===false?'none':'';Manarat.qs('#showcaseSection').style.display=p.showShowcase===false?'none':'';renderYouTubeSection(p);renderLatestGames(s);renderContactSection(p);applyHomeSectionOrder(p);fitHomeHeroText();activateHomeNav();refreshV17Reveal();Manarat.applyGenderQuickText(document);}
+document.addEventListener('DOMContentLoaded',async()=>{setupV17UI();await Manarat.cloudSyncTables?.();render()});
+document.addEventListener('manarat:store-updated',render);
+window.addEventListener('resize',()=>fitHomeHeroText());
+window.addEventListener('scroll',()=>activateHomeNav(),{passive:true});
 })();
