@@ -216,9 +216,9 @@ window.copyGeminiSetupText=function(){
   M.copyText(txt);
 }
 
-window.testAIProvider=async function(){savePlatform();await M.testAIConnection();}
+window.testAIProvider=async function(){await savePlatform();await M.testAIConnection();}
 
-window.testSupabaseProvider=async function(){savePlatform();await M.testCloudConnection();}
+window.testSupabaseProvider=async function(){await savePlatform();await M.testCloudConnection();}
 window.syncCloudTablesNow=async function(){await M.syncCloudNow?.();renderAll();}
 window.forceReloadPlatformFromCloud=async function(){try{await M.cloudSyncTables?.();fill();M.applyPlatform?.();M.renderSiteFooter?.();M.toast('تم سحب إعدادات المنصة من السحابة')}catch(e){M.toast('تعذر سحب إعدادات المنصة: '+(e.message||e),'error')}}
 

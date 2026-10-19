@@ -43,4 +43,12 @@ await denied('anon',null,null,'select * from school_sessions','school student re
 await denied('authenticated',a,'a@test.invalid','select * from school_sessions','school data accessible only through checked API');
 assert.equal((await as('anon',null,null,'select * from manarat_games')).rows.length,0);
 console.log('PASS school migration and private answer keys');
+
+await db.exec(`update platform_state set data=jsonb_set(data,'{admins}','[{"email":"b@test.invalid","active":true}]') where id='main'`);
+await db.exec(fs.readFileSync(root+'supabase/03_ADMIN_V19_2.sql','utf8'));
+assert.equal((await db.query(`select role from profiles where id='${b}'`)).rows[0].role,'admin');
+await db.exec(`update profiles set role='teacher' where id='${b}'`);
+assert.equal((await as('authenticated',b,'b@test.invalid','select public.is_admin(auth.uid()) as allowed')).rows[0].allowed,false);
+assert.equal((await as('authenticated',owner,'m.samra103@gmail.com','select public.is_admin(auth.uid()) as allowed')).rows[0].allowed,true);
+console.log('PASS legacy role migration and immediate revocation');
 await db.close();console.log('SQL ALL PASS');})().catch(e=>{console.error(e);process.exit(1)});

@@ -987,7 +987,7 @@ function teacherOwnsGame(game){const id=currentTeacherId();return !game||game.te
 
 function currentProfile(){const s=store();const u=currentAuthUser&&currentAuthUser();return {...(s.profile||{}),id:(u&&u.id)||(s.profile||{}).id,email:(u&&u.email)||(s.profile||{}).email,role:(s.profile||{}).role||'teacher'}}
 function emailOf(v){return String(v||'').trim().toLowerCase()}
-function isAdmin(){if(!isAuthenticated())return false;const s=store();const p=currentProfile();const email=emailOf(p.email);const admins=Array.isArray(s.admins)?s.admins:[];if(p.status==='موقوف')return false;if(p.role==='admin')return true;return admins.some(a=>a.active!==false && emailOf(a.email)===email)}
+function isAdmin(){if(!isAuthenticated())return false;const p=currentProfile();return p.status!=='موقوف'&&p.role==='admin'}
 function ensureAdminBootstrap(){return false}
 async function ensureAdminCloudRole(){
   const u=currentAuthUser();if(!u)return false;

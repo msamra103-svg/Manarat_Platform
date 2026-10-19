@@ -11,4 +11,21 @@ let a=await call('answer',{id:s.id,secret:s.secret,question:'q1',value:0,points:
 a=await call('answer',{id:s.id,secret:s.secret,question:'q2',value:'إجابتي'});assert(a.json.pending);const end=await call('finish',{id:s.id,secret:s.secret});assert.equal(end.json.score,0);assert(end.json.pending);assert.equal((await call('grade',{id:s.id,question:'q2',points:10},'other')).status,400);assert.equal((await call('grade',{id:s.id,question:'q2',points:11},'teacher')).status,400);assert.equal((await call('grade',{id:s.id,question:'q2',points:8},'teacher')).status,200);assert.equal(tables.school_sessions[0].score,40);assert.equal(tables.school_sessions[0].pending,false);console.log('PASS essay review ownership and final grade');
 assert.equal((await call('start',{code:'secret-code',mode:'group',template:'race'})).status,400);const group=await call('start',{code:'secret-code',mode:'group',name:'ignored',template:'race'},'teacher');assert.equal(group.status,200);assert.equal(tables.school_sessions[1].student_name,'');assert.equal(tables.school_sessions[1].student_key,'');console.log('PASS classroom collective sessions exclude student identity');
 const good={name:'مدرسة الاختبار',primary:'#8a1538',background:'#ffffff',socials:[],sections:[]};assert.equal((await call('saveSettings',{data:good},'owner')).status,200);assert.equal(tables.school_settings[0].history.length,1);assert.equal((await call('restoreSettings',{index:0},'owner')).status,200);assert.equal(tables.school_settings[0].data.name,'المدرسة');console.log('PASS settings save and restoration');
+
+assert.equal((await call('profile',{},'owner')).json.admin,true);
+assert.equal((await call('profile',{},'teacher')).json.admin,false);
+assert.equal((await call('setRole',{id:'other',role:'admin'},'teacher')).status,400);
+assert.equal((await call('setRole',{id:'owner',role:'teacher'},'owner')).status,400);
+assert.equal((await call('setRole',{id:'other',role:'root'},'owner')).status,400);
+assert.equal((await call('setRole',{id:'other',role:'admin'},'owner')).status,200);
+assert.equal((await call('profile',{},'other')).json.admin,true);
+assert.equal((await call('setRole',{id:'other',role:'teacher'},'owner')).status,200);
+assert.equal((await call('saveSettings',{data:good},'other')).status,400);
+tables.profiles[0].email='m.samra103@gmail.com';
+await call('setRole',{id:'other',role:'admin'},'owner');
+assert.equal((await call('teacherStatus',{id:'owner',active:false},'other')).status,400);
+assert.equal((await call('setRole',{id:'owner',role:'teacher'},'other')).status,400);
+assert.equal((await call('teacherStatus',{id:'other',active:false},'owner')).status,200);
+assert.equal((await call('profile',{},'other')).status,400);
+console.log('PASS role promotion/revocation, suspension, protected owner and self');
 console.log('SCHOOL API ALL PASS');})().catch(e=>{console.error(e);process.exit(1)});
