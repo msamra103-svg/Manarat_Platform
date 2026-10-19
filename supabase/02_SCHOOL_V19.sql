@@ -1,0 +1,20 @@
+begin;
+create table if not exists public.school_settings(id boolean primary key default true check(id), data jsonb not null, history jsonb not null default '[]', updated_at timestamptz not null default now());
+insert into public.school_settings(id,data) values(true,'{"name":"مدرسة أبو عبيد الإعدادية للبنين","subtitle":"منصة التعلّم التفاعلي","primary":"#8a1538","background":"#f8f6f4","logo":"","hero":"تعلّم بطريقتك. وتقدّم كل يوم.","description":"ألعاب تعليمية ومهمات صفية وواجبات منزلية، في مساحة واحدة تجمع معلمي المدرسة وطلابها.","socials":[],"sections":["games","videos","about"]}') on conflict do nothing;
+create table if not exists public.school_assignments(id uuid primary key default gen_random_uuid(), teacher_id uuid not null references public.profiles(id), game_id text not null references public.manarat_games(id), code text not null unique default encode(extensions.gen_random_bytes(12),'hex'), title text not null, class_name text not null default '', settings jsonb not null default '{}', active boolean not null default true, created_at timestamptz not null default now());
+create table if not exists public.school_sessions(id uuid primary key default gen_random_uuid(), secret text not null default encode(extensions.gen_random_bytes(24),'hex'), assignment_id uuid not null references public.school_assignments(id), teacher_id uuid not null references public.profiles(id), student_name text not null default '', student_key text not null default '', mode text not null check(mode in ('home','individual','group')), template text not null, questions jsonb not null, answers jsonb not null default '{}', score integer, pending boolean not null default false, finished_at timestamptz, created_at timestamptz not null default now());
+create table if not exists public.school_videos(id uuid primary key default gen_random_uuid(), teacher_id uuid not null references public.profiles(id), title text not null, subject text not null default '', url text not null, game_id text references public.manarat_games(id), created_at timestamptz not null default now());
+create table if not exists public.school_rate_limits(key text primary key, hits integer not null default 1, expires_at timestamptz not null);
+create or replace function public.school_rate_limit(k text, maximum integer, seconds integer) returns boolean language plpgsql set search_path='' as $$ declare n integer; begin
+ insert into public.school_rate_limits(key,hits,expires_at) values(k,1,now()+make_interval(secs=>seconds)) on conflict(key) do update set hits=case when school_rate_limits.expires_at<now() then 1 else school_rate_limits.hits+1 end, expires_at=case when school_rate_limits.expires_at<now() then now()+make_interval(secs=>seconds) else school_rate_limits.expires_at end returning hits into n; return n<=maximum; end $$;
+revoke all on function public.school_rate_limit(text,integer,integer) from public,anon,authenticated;
+grant execute on function public.school_rate_limit(text,integer,integer) to service_role;
+do $$ declare t text; begin foreach t in array array['school_settings','school_assignments','school_sessions','school_videos','school_rate_limits'] loop execute format('alter table public.%I enable row level security',t); execute format('revoke all on public.%I from anon,authenticated',t); execute format('grant all on public.%I to service_role',t); end loop; end $$;
+create index if not exists school_assignments_teacher_idx on public.school_assignments(teacher_id);
+create index if not exists school_sessions_teacher_idx on public.school_sessions(teacher_id,created_at desc);
+create index if not exists school_sessions_assignment_idx on public.school_sessions(assignment_id);
+create index if not exists school_videos_teacher_idx on public.school_videos(teacher_id);
+-- School assessments keep answer keys private. Access is through the checked API.
+drop policy if exists "games read" on public.manarat_games;
+create policy "games read" on public.manarat_games for select to authenticated using(teacher_id=auth.uid() or manarat_private.is_admin());
+commit;

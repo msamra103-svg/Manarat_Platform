@@ -9,7 +9,7 @@ const EMBEDDED_AI_CONFIG_VERSION='2026-05-06-edge-gemini-file-api-v13-dynamic-ha
 const DEFAULT_GEMINI_ENDPOINT='https://generativelanguage.googleapis.com/v1beta/models';
 const DEFAULT_GEMINI_API_KEY='';
 const DEFAULT_GEMINI_MODEL='gemini-2.5-flash';
-const CLOUD_STATE_ID='main';
+const CLOUD_STATE_ID='public';
 const AUTH_SESSION_KEY='manarat_v10_auth_session';
 // دخول الأدمن يعتمد على Supabase Auth. لا يوجد أدمن مؤقت في نسخة الإنتاج.
 const TEMP_ADMIN_BYPASS=false;
@@ -48,7 +48,7 @@ function defaultPlatform(){return{brandName:'منارة التعلم الرقم�
     ],heroButtons:[{label:'دخول المعلم',href:'auth.html',style:'primary'},{label:'شاهد فيديوهاتنا',href:'#youtubeShowcaseSection',style:'dark'}],tabs:{home:'الرئيسية',teacher:'لوحة المعلمة',admin:'الأدمن',player:'اللعبة'},cloud:{enabled:true,supabaseUrl:DEFAULT_SUPABASE_URL,publishableKey:DEFAULT_SUPABASE_PUBLISHABLE_KEY,syncMode:'supabase_first',configVersion:EMBEDDED_SUPABASE_CONFIG_VERSION},ai:{endpoint:DEFAULT_GEMINI_ENDPOINT,apiKey:'',model:DEFAULT_GEMINI_MODEL,temperature:0.3,useEdgeFunction:true,edgeFunctionName:'dynamic-handler',configVersion:EMBEDDED_AI_CONFIG_VERSION}}}
 function configuredAdminRecord(){return{id:CONFIGURED_ADMIN_ID,name:'مدير المنصة',email:CONFIGURED_ADMIN_EMAIL,role:'owner',active:true,created_at:'2026-05-05T00:00:00.000Z'}}
 function ensureConfiguredAdmin(s){s=s||{};s.admins=Array.isArray(s.admins)?s.admins:[];const exists=s.admins.some(a=>String(a.email||'').trim().toLowerCase()===CONFIGURED_ADMIN_EMAIL);if(!exists)s.admins.unshift(configuredAdminRecord());return s}
-function defaultStore(){return ensureConfiguredAdmin({version:'17.0.0-premium-redesign',role:'admin',platform:defaultPlatform(),profile:{id:'t1',name:'أ. فاطمة الهاجري',school:'منارة التعلم الرقمي',email:'teacher@manarat.local',avatar:'',icon:'👩‍🏫',educator_gender:'female'},teachers:[{id:'t1',name:'أ. فاطمة الهاجري',school:'مدرسة قطرية',email:'teacher@manarat.local',status:'نشط',avatar:'',icon:'👩‍🏫',educator_gender:'female'}],questionBanks:[{id:'bank-demo',title:'بنك العلوم التفاعلي',subject:'علوم',grade:'رابع',created_at:new Date().toISOString(),questions:sampleQuestions}],games:[{id:'demo-adventure',title:'مغامرة المعرفة',school:'منارة التعلم الرقمي',teacher:'أ. فاطمة الهاجري',teacher_id:'t1',subject:'علوم',grade:'الصف الرابع',folder:'ألعاب نموذجية',favorite:true,timer:90,per_question_timer:0,passing_score:70,show_answer:true,allow_retry:true,show_retry_button:true,shuffle_questions:true,shuffle_options:true,question_count:7,description:'لعبة تفاعلية بتصميم سينمائي من هوية منارة التعلم الرقمي.',theme:'cosmic',created_at:new Date().toISOString(),questions:sampleQuestions}],attempts:[],certificates:[],admins:[],messages:[],studentRosters:[],auditLogs:[]})}
+function defaultStore(){return ensureConfiguredAdmin({version:'19.0.0-school',role:'admin',platform:defaultPlatform(),profile:{id:'t1',name:'أ. فاطمة الهاجري',school:'منارة التعلم الرقمي',email:'teacher@manarat.local',avatar:'',icon:'👩‍🏫',educator_gender:'female'},teachers:[{id:'t1',name:'أ. فاطمة الهاجري',school:'مدرسة قطرية',email:'teacher@manarat.local',status:'نشط',avatar:'',icon:'👩‍🏫',educator_gender:'female'}],questionBanks:[{id:'bank-demo',title:'بنك العلوم التفاعلي',subject:'علوم',grade:'رابع',created_at:new Date().toISOString(),questions:sampleQuestions}],games:[{id:'demo-adventure',title:'مغامرة المعرفة',school:'منارة التعلم الرقمي',teacher:'أ. فاطمة الهاجري',teacher_id:'t1',subject:'علوم',grade:'الصف الرابع',folder:'ألعاب نموذجية',favorite:true,timer:90,per_question_timer:0,passing_score:70,show_answer:true,allow_retry:true,show_retry_button:true,shuffle_questions:true,shuffle_options:true,question_count:7,description:'لعبة تفاعلية بتصميم سينمائي من هوية منارة التعلم الرقمي.',theme:'cosmic',created_at:new Date().toISOString(),questions:sampleQuestions}],attempts:[],certificates:[],admins:[],messages:[],studentRosters:[],auditLogs:[]})}
 function enforceEmbeddedCloudConfig(base){
   base.platform=base.platform||{};
   base.platform.cloud=base.platform.cloud||{};
@@ -65,7 +65,7 @@ function enforceEmbeddedAIConfig(base){
   }
   return base;
 }
-function mergeStore(base){const d=defaultStore();base=base||{};base.platform={...d.platform,...(base.platform||{})};base.platform.ai={...d.platform.ai,...(base.platform.ai||{})};base.platform.socialLinks={...d.platform.socialLinks,...(base.platform.socialLinks||{})};base.platform.cloud={...d.platform.cloud,...(base.platform.cloud||{})};base=enforceEmbeddedCloudConfig(base);base=enforceEmbeddedAIConfig(base);base.platform.tabs={...d.platform.tabs,...(base.platform.tabs||{})};['teachers','games','attempts','certificates','questionBanks','admins','messages','studentRosters','auditLogs'].forEach(k=>{if(!Array.isArray(base[k]))base[k]=d[k]});base=ensureConfiguredAdmin(base);if(!base.profile)base.profile=d.profile;base.version='17.0.0-premium-redesign';return base}
+function mergeStore(base){const d=defaultStore();base=base||{};base.platform={...d.platform,...(base.platform||{})};base.platform.ai={...d.platform.ai,...(base.platform.ai||{})};base.platform.socialLinks={...d.platform.socialLinks,...(base.platform.socialLinks||{})};base.platform.cloud={...d.platform.cloud,...(base.platform.cloud||{})};base=enforceEmbeddedCloudConfig(base);base=enforceEmbeddedAIConfig(base);base.platform.tabs={...d.platform.tabs,...(base.platform.tabs||{})};['teachers','games','attempts','certificates','questionBanks','admins','messages','studentRosters','auditLogs'].forEach(k=>{if(!Array.isArray(base[k]))base[k]=d[k]});base=ensureConfiguredAdmin(base);if(!base.profile)base.profile=d.profile;base.version='19.0.0-school';return base}
 function itemTime(x){const v=Date.parse((x&& (x.updated_at||x.created_at))||'');return Number.isFinite(v)?v:0}
 function mergeEntity(old={},x={}){
   const newer=itemTime(x)>=itemTime(old)?{...old,...x}:{...x,...old};
@@ -114,14 +114,16 @@ function mergePlatformFromCloud(localP={},remoteP={}){
   return p;
 }
 function mergeLocalAndRemote(local,remote){
+  const remoteAdmins=Array.isArray(remote?.admins)?remote.admins:null;
   local=mergeStore(local||{});
   remote=mergeStore(remote||{});
   const out={...remote,...local};
   // إعدادات المنصة في platform_state السحابي هي المرجع الأعلى؛ حتى لا يعيد جهاز قديم الشعار/الأيقونة/الواتساب القديم.
   out.platform=mergePlatformFromCloud(local.platform||{},remote.platform||{});
   ['teachers','games','attempts','certificates','questionBanks','admins','messages','studentRosters','auditLogs'].forEach(k=>{out[k]=mergeById(local[k],remote[k])});
+  if(remoteAdmins)out.admins=remoteAdmins;
   out.profile=local.profile||remote.profile;
-  out.version='16.13.0-home-navigation-tabs';
+  out.version='18.1.0-classic-refined';
   return mergeStore(out)
 }
 function seed(){const s=defaultStore();localStorage.setItem(STORE_KEY,JSON.stringify(s));return s}
@@ -134,24 +136,44 @@ function cloudReady(c){return !!(c&&c.enabled&&cleanSupabaseUrl(c.supabaseUrl)&&
 function realAccessToken(){const sess=authSession();return (sess&&sess.access_token)?sess.access_token:''}
 function isTemporaryAdminBypass(){return TEMP_ADMIN_BYPASS===true && !realAccessToken()}
 function cloudHeaders(c,extra={}){const key=String(c.publishableKey||'').trim();const h={'apikey':key,'Content-Type':'application/json',...extra};const token=realAccessToken();if(token)h.Authorization='Bearer '+token;return h}
-async function cloudFetchState(c=cloudConfig()){if(!cloudReady(c))return null;const stateId=isAdmin()?'main':'public';const url=cleanSupabaseUrl(c.supabaseUrl)+`/rest/v1/platform_state?select=data,updated_at&id=eq.${encodeURIComponent(stateId)}&limit=1`;const res=await fetch(url,{headers:cloudHeaders(c,{Accept:'application/json'})});const json=await res.json().catch(()=>null);if(!res.ok)throw new Error((json&&json.message)||`Supabase read failed (${res.status})`);const row=Array.isArray(json)?json[0]:null;if(row&&row.data){row.data.platform=row.data.platform||{};row.data.platform.updated_at=row.data.platform.updated_at||row.updated_at||new Date().toISOString()}return row}
+async function cloudRequest(url,options={}){
+  const controller=new AbortController();const timer=setTimeout(()=>controller.abort(),15000);
+  try{return await fetch(url,{...options,signal:options.signal||controller.signal})}
+  catch(e){if(e.name==='AbortError')throw new Error('انتهت مهلة الاتصال بالسحابة. تحقق من الإنترنت ثم أعد المحاولة.');throw e}
+  finally{clearTimeout(timer)}
+}
+function publicPlatformState(s){
+  const platform=JSON.parse(JSON.stringify(s.platform||{}));
+  if(platform.ai)platform.ai.apiKey='';
+  return {version:'19.0.0-school',platform};
+}
+async function cloudFetchState(c=cloudConfig()){
+  if(!cloudReady(c))return null;
+  await ensureFreshSession();
+  const url=cleanSupabaseUrl(c.supabaseUrl)+'/rest/v1/platform_state?select=id,data,updated_at&id=in.(public,main)';
+  const res=await cloudRequest(url,{headers:cloudHeaders(c,{Accept:'application/json'})});
+  const json=await res.json().catch(()=>null);
+  if(!res.ok)throw new Error((json&&json.message)||`Supabase read failed (${res.status})`);
+  const rows=Array.isArray(json)?json:[];
+  const main=rows.find(r=>r.id==='public')||rows.find(r=>!r.id);
+  const admin=rows.find(r=>r.id==='main');
+  if(!main&&!admin)return null;
+  // RLS returns main only to authorized administrators.
+  const data={...(admin?.data||{}),...publicPlatformState(main?.data||admin?.data||{})};
+  return {data,updated_at:main?.updated_at||admin?.updated_at};
+}
 async function cloudSaveStore(s){
-  const c=cloudConfig(s);if(!cloudReady(c))return false;
-  if(!isAdmin())return false;
+  const c=cloudConfig(s);if(!cloudReady(c))throw new Error('المزامنة السحابية غير مفعلة');
+  await ensureFreshSession();
+  if(!isAdmin())throw new Error('حفظ إعدادات المنصة يتطلب حساب أدمن');
   cloudSaving=true;
   try{
-    const payload=mergeStore(s);
-    payload.platform=payload.platform||{};
-    payload.platform.updated_at=payload.platform.updated_at||new Date().toISOString();
-    const publicPayload={version:payload.version,platform:payload.platform};
-    const url=cleanSupabaseUrl(c.supabaseUrl)+'/rest/v1/platform_state';
-    const rows=[
-      {id:'main',data:payload,updated_at:new Date().toISOString()},
-      {id:'public',data:publicPayload,updated_at:new Date().toISOString()}
-    ];
-    const res=await fetch(url,{method:'POST',headers:cloudHeaders(c,{Prefer:'resolution=merge-duplicates,return=minimal'}),body:JSON.stringify(rows)});
-    if(!res.ok){const json=await res.json().catch(()=>({}));throw new Error(json.message||`Supabase save failed (${res.status})`)}
-    return true
+    const payload=mergeStore(s),updated_at=new Date().toISOString();
+    payload.platform.updated_at=updated_at;
+    const rows=[{id:'public',data:publicPlatformState(payload),updated_at},{id:'main',data:payload,updated_at}];
+    const res=await cloudRequest(cleanSupabaseUrl(c.supabaseUrl)+'/rest/v1/platform_state',{method:'POST',headers:cloudHeaders(c,{Prefer:'resolution=merge-duplicates,return=minimal'}),body:JSON.stringify(rows)});
+    if(!res.ok){const j=await res.json().catch(()=>({}));throw new Error(j.message||`Supabase save failed (${res.status})`)}
+    return true;
   }finally{cloudSaving=false}
 }
 async function cloudForceSavePlatform(s=store()){
@@ -164,7 +186,7 @@ async function cloudForceSavePlatform(s=store()){
 function queueCloudSave(s){const c=cloudConfig(s);if(!cloudReady(c))return;if(!isAdmin())return;clearTimeout(cloudTimer);cloudTimer=setTimeout(()=>cloudSaveStore(s).catch(e=>console.warn('Supabase platform sync save failed',e)),650)}
 async function initCloudSync(){if(cloudHydrated)return;cloudHydrated=true;const local=store(),c=cloudConfig(local);if(!cloudReady(c))return;try{if(isAdmin()&&!isTemporaryAdminBypass())await ensureAdminCloudRole();const remote=await cloudFetchState(c);if(remote&&remote.data){const merged=mergeLocalAndRemote(local,remote.data);cloudSaving=true;localStorage.setItem(STORE_KEY,JSON.stringify(merged));cloudSaving=false;document.dispatchEvent(new CustomEvent('manarat:store-updated'));toast('تمت مزامنة المنصة مع قاعدة البيانات')}else if(isAdmin()){await cloudSaveStore(local);toast('تم إنشاء أول نسخة سحابية للمنصة في Supabase')}}catch(e){console.warn('Supabase sync failed',e);toast('تعذر تفعيل Supabase: '+(e.message||'تحقق من تشغيل ملف قاعدة البيانات النهائي'),'warn')}}
 async function testCloudConnection(){const c=cloudConfig();if(!cloudReady(c)){toast('ضع رابط Supabase والمفتاح أولًا','error');return false}try{await cloudFetchState(c);await cloudSaveStore(store());toast('تم الاتصال والكتابة في Supabase بنجاح');return true}catch(e){console.error(e);toast('فشل اتصال Supabase: '+(e.message||'تحقق من تشغيل ملف قاعدة البيانات النهائي'),'error');return false}}
-async function syncCloudNow(){try{if(isAdmin())await cloudSaveStore(store());await cloudSaveAllTables();await cloudSyncTables();toast('تمت مزامنة بيانات المنصة مع Supabase');return true}catch(e){toast('فشل رفع البيانات: '+(e.message||'خطأ غير معروف'),'error');return false}}
+async function syncCloudNow(){try{if(isAdmin())await cloudSaveStore(store());await cloudSaveAllTables();if(!await cloudSyncTables())throw new Error('لم تكتمل قراءة البيانات من السحابة');toast('تمت مزامنة بيانات المنصة مع Supabase');return true}catch(e){toast('فشل رفع البيانات: '+(e.message||'خطأ غير معروف'),'error');return false}}
 
 function cloudBearerHeaders(c=cloudConfig(),extra={}){
   const key=String(c.publishableKey||'').trim();
@@ -180,7 +202,8 @@ function cloudTableUrl(table,query=''){
 async function cloudRest(table,query='',opts={}){
   const c=cloudConfig();
   if(!cloudReady(c))throw new Error('إعدادات Supabase غير مكتملة');
-  const res=await fetch(cloudTableUrl(table,query),{...opts,headers:{...cloudBearerHeaders(c),...(opts.headers||{})}});
+  await ensureFreshSession();
+  const res=await cloudRequest(cloudTableUrl(table,query),{...opts,headers:{...cloudBearerHeaders(c),...(opts.headers||{})}});
   const text=await res.text();
   let json=null; try{json=text?JSON.parse(text):null}catch(e){json=text}
   if(!res.ok)throw new Error((json&&json.message)||String(json||'Supabase error '+res.status));
@@ -229,23 +252,24 @@ async function cloudFetchProfiles(){
 function safeTeacherUUID(){const u=hasRealAuthSession()?currentAuthUser():null;return (u&&isUUID(u.id))?u.id:null}
 function isGameApprovedPublic(game){const p=(store().platform||{});return !!game.show_in_home_public && (p.publicLibraryRequiresApproval===false || game.public_status==='approved' || game.public_approved===true)}
 function isGameApprovedShared(game){const p=(store().platform||{});return !!game.share_with_teachers && (p.publicLibraryRequiresApproval===false || game.sharing_status==='approved' || game.shared_approved===true)}
-function gamePayload(game){return {id:String(game.id),teacher_id:safeTeacherUUID(),teacher_email:String(game.teacher_email||currentProfile().email||''),title:game.title||'لعبة جديدة',subject:game.subject||'',grade:game.grade||'',status:game.status||'published',is_public:isGameApprovedPublic(game),is_shared:isGameApprovedShared(game),data:game,updated_at:new Date().toISOString(),created_at:game.created_at||new Date().toISOString()}}
+function gamePayload(game){return {id:String(game.id),teacher_id:isUUID(game.teacher_id)?game.teacher_id:safeTeacherUUID(),teacher_email:String(game.teacher_email||currentProfile().email||''),title:game.title||'لعبة جديدة',subject:game.subject||'',grade:game.grade||'',status:game.status||'published',is_public:isGameApprovedPublic(game),is_shared:isGameApprovedShared(game),data:game,updated_at:new Date().toISOString(),created_at:game.created_at||new Date().toISOString()}}
 async function cloudUpsertGame(game){
   const payload=gamePayload(game);
   const out=await cloudRest('manarat_games','',{method:'POST',headers:{Prefer:'resolution=merge-duplicates,return=representation'},body:JSON.stringify(payload)});
+  const s=store(),local=s.games.find(g=>String(g.id)===String(game.id));if(local){local._cloudSynced=true;local._pendingCloud=false;localStorage.setItem(STORE_KEY,JSON.stringify(s))}
   return Array.isArray(out)?out[0]:out;
 }
 async function cloudDeleteGame(id){return cloudRest('manarat_games','id=eq.'+encodeURIComponent(String(id)),{method:'DELETE',headers:{Prefer:'return=minimal'}})}
 async function cloudFetchGames(){
   const rows=await cloudRest('manarat_games','select=*&order=updated_at.desc',{method:'GET',headers:{Accept:'application/json'}});
-  return (rows||[]).map(r=>{const d=r.data||{};const gp={...d,id:String(r.id),teacher_id:d.teacher_id||r.teacher_id,teacher_email:d.teacher_email||r.teacher_email,title:d.title||r.title,subject:d.subject||r.subject,grade:d.grade||r.grade,show_in_home_public:!!(d.show_in_home_public||r.is_public),share_with_teachers:!!(d.share_with_teachers||r.is_shared),public_status:d.public_status||(r.is_public?'approved':(d.show_in_home_public?'pending':'private')),sharing_status:d.sharing_status||(r.is_shared?'approved':(d.share_with_teachers?'pending':'private')),public_approved:!!(d.public_approved||r.is_public),shared_approved:!!(d.shared_approved||r.is_shared),questions:Array.isArray(d.questions)?d.questions:[],updated_at:r.updated_at,created_at:d.created_at||r.created_at};return gp});
+  return (rows||[]).map(r=>{const d=r.data||{};const gp={...d,id:String(r.id),teacher_id:r.teacher_id||d.teacher_id,teacher_email:r.teacher_email||d.teacher_email,title:d.title||r.title,subject:d.subject||r.subject,grade:d.grade||r.grade,show_in_home_public:!!(d.show_in_home_public||r.is_public),share_with_teachers:!!(d.share_with_teachers||r.is_shared),public_status:r.is_public?'approved':(d.show_in_home_public?'pending':'private'),sharing_status:r.is_shared?'approved':(d.share_with_teachers?'pending':'private'),public_approved:!!r.is_public,shared_approved:!!r.is_shared,questions:Array.isArray(d.questions)?d.questions:[],updated_at:r.updated_at,created_at:d.created_at||r.created_at};return gp});
 }
-function bankPayload(bank){return {id:String(bank.id),owner_id:safeTeacherUUID(),owner_email:String(currentProfile().email||''),title:bank.title||'بنك أسئلة',subject:bank.subject||'',grade:bank.grade||'',data:bank,updated_at:new Date().toISOString(),created_at:bank.created_at||new Date().toISOString()}}
+function bankPayload(bank){return {id:String(bank.id),owner_id:isUUID(bank.owner_id)?bank.owner_id:safeTeacherUUID(),owner_email:String(bank.owner_email||currentProfile().email||''),title:bank.title||'بنك أسئلة',subject:bank.subject||'',grade:bank.grade||'',data:bank,updated_at:new Date().toISOString(),created_at:bank.created_at||new Date().toISOString()}}
 async function cloudUpsertBank(bank){const out=await cloudRest('manarat_question_banks','',{method:'POST',headers:{Prefer:'resolution=merge-duplicates,return=representation'},body:JSON.stringify(bankPayload(bank))});return Array.isArray(out)?out[0]:out}
-async function cloudFetchBanks(){const rows=await cloudRest('manarat_question_banks','select=*&order=updated_at.desc',{method:'GET',headers:{Accept:'application/json'}});return (rows||[]).map(r=>({...r.data,id:String(r.id),title:r.data?.title||r.title,subject:r.data?.subject||r.subject,grade:r.data?.grade||r.grade}))}
-async function cloudUpsertRoster(roster){const payload={id:String(roster.id),teacher_id:safeTeacherUUID(),teacher_email:String(currentProfile().email||roster.teacher_email||''),title:roster.title||'قائمة أسماء',data:roster,updated_at:new Date().toISOString(),created_at:roster.created_at||new Date().toISOString()};const out=await cloudRest('manarat_rosters','',{method:'POST',headers:{Prefer:'resolution=merge-duplicates,return=representation'},body:JSON.stringify(payload)});return Array.isArray(out)?out[0]:out}
-async function cloudFetchRosters(){const rows=await cloudRest('manarat_rosters','select=*&order=updated_at.desc',{method:'GET',headers:{Accept:'application/json'}});return (rows||[]).map(r=>({...r.data,id:String(r.id),title:r.data?.title||r.title}))}
-async function cloudInsertAttempt(attempt){const g=(store().games||[]).find(x=>String(x.id)===String(attempt.game_id))||{};const tid=isUUID(g.teacher_id)?g.teacher_id:null;const payload={id:String(attempt.id||uuid()),game_id:String(attempt.game_id||''),teacher_id:tid,teacher_email:g.teacher_email||'',student_name:attempt.student_name||'',score:Number(attempt.score||0),data:attempt,created_at:attempt.created_at||new Date().toISOString()};await cloudRest('manarat_attempts','',{method:'POST',headers:{Prefer:'return=minimal'},body:JSON.stringify(payload)});return true}
+async function cloudFetchBanks(){const rows=await cloudRest('manarat_question_banks','select=*&order=updated_at.desc',{method:'GET',headers:{Accept:'application/json'}});return (rows||[]).map(r=>({...r.data,id:String(r.id),owner_id:r.owner_id,owner_email:r.owner_email,title:r.data?.title||r.title,subject:r.data?.subject||r.subject,grade:r.data?.grade||r.grade}))}
+async function cloudUpsertRoster(roster){const payload={id:String(roster.id),teacher_id:isUUID(roster.teacher_id)?roster.teacher_id:safeTeacherUUID(),teacher_email:String(roster.teacher_email||currentProfile().email||''),title:roster.title||'قائمة أسماء',data:roster,updated_at:new Date().toISOString(),created_at:roster.created_at||new Date().toISOString()};const out=await cloudRest('manarat_rosters','',{method:'POST',headers:{Prefer:'resolution=merge-duplicates,return=representation'},body:JSON.stringify(payload)});return Array.isArray(out)?out[0]:out}
+async function cloudFetchRosters(){const rows=await cloudRest('manarat_rosters','select=*&order=updated_at.desc',{method:'GET',headers:{Accept:'application/json'}});return (rows||[]).map(r=>({...r.data,id:String(r.id),teacher_id:r.teacher_id,teacher_email:r.teacher_email,title:r.data?.title||r.title}))}
+async function cloudInsertAttempt(attempt){return cloudRest('rpc/submit_manarat_attempt','',{method:'POST',body:JSON.stringify({p:attempt})})}
 async function cloudFetchAttempts(){const rows=await cloudRest('manarat_attempts','select=*&order=created_at.desc',{method:'GET',headers:{Accept:'application/json'}});return (rows||[]).map(r=>({...r.data,id:String(r.id),game_id:String(r.game_id),student_name:r.student_name,score:r.score,created_at:r.created_at}))}
 
 async function cloudInsertAudit(log={}){
@@ -262,45 +286,44 @@ async function cloudFetchAuditLogs(){
     return (rows||[]).map(r=>({id:r.id,action:r.action,target:r.target,details:r.details||{},admin_email:r.admin_email,admin_name:r.admin_name,created_at:r.created_at}));
   }catch(e){console.warn('cloudFetchAuditLogs failed',e);return []}
 }
+async function cloudUpsertMessage(message){
+ const p=currentProfile(),uid=currentTeacherId();
+ const payload={id:String(message.id),from_id:isUUID(message.from_id)?message.from_id:uid,from_email:message.from||p.email||'',to_id:isUUID(message.to)?message.to:null,to_role:['all','admins'].includes(message.to)?message.to:null,subject:message.subject||'',body:message.body||'',read:!!message.read,data:message,created_at:message.created_at||new Date().toISOString()};
+ return cloudRest('manarat_messages','',{method:'POST',headers:{Prefer:'resolution=merge-duplicates,return=minimal'},body:JSON.stringify(payload)});
+}
+async function cloudDeleteMessage(id){return cloudRest('manarat_messages','id=eq.'+encodeURIComponent(id),{method:'DELETE'})}
+async function cloudFetchMessages(){const rows=await cloudRest('manarat_messages','select=*&order=created_at.desc');return (rows||[]).map(r=>({...r.data,id:r.id,from_id:r.from_id,from:r.from_email,to:r.to_id||r.to_role,body:r.body,subject:r.subject,read:r.read,created_at:r.created_at}))}
+function mergeCloudCollection(local=[],remote=[]){
+ const incoming=remote.map(x=>({...x,_cloudSynced:true,_pendingCloud:false}));
+ const ids=new Set(incoming.map(x=>String(x.id)));
+ const retained=local.filter(x=>x._pendingCloud===true||(!x._cloudSynced&&!ids.has(String(x.id))));
+ return mergeById(retained,incoming);
+}
 async function cloudSyncTables(){
-  if(!cloudReady(cloudConfig()))return false;
-  try{
-    const s=store();
-    const [stateRow,games,banks,rosters,attempts,profiles,auditRows]=await Promise.all([
-      cloudFetchState().catch(()=>null),
-      cloudFetchGames().catch(()=>[]),
-      cloudFetchBanks().catch(()=>[]),
-      cloudFetchRosters().catch(()=>[]),
-      cloudFetchAttempts().catch(()=>[]),
-      cloudFetchProfiles().catch(()=>[]),
-      cloudFetchAuditLogs().catch(()=>[])
-    ]);
-    let baseState=s;
-    if(stateRow&&stateRow.data){
-      baseState=mergeLocalAndRemote(s,stateRow.data);
-    }
-    const merged={...baseState,
-      games:mergeById(baseState.games,games),
-      questionBanks:mergeById(baseState.questionBanks,banks),
-      studentRosters:mergeById(baseState.studentRosters,rosters),
-      attempts:mergeById(baseState.attempts,attempts),
-      auditLogs:mergeById(baseState.auditLogs,auditRows)
-    };
-    merged.teachers=mergeTeachersFromSources(baseState.teachers,profiles,merged.games);
-    const u=currentAuthUser(); if(u&&Array.isArray(profiles)){const cp=profiles.find(p=>String(p.id)===String(u.id)||String(p.email||'').toLowerCase()===String(u.email||'').toLowerCase()); if(cp)merged.profile={...(merged.profile||{}),...profileToTeacher(cp)}}
-    localStorage.setItem(STORE_KEY,JSON.stringify(mergeStore(merged)));
-    document.dispatchEvent(new CustomEvent('manarat:store-updated',{detail:{source:'cloudSyncTables'}}));
-    return true;
-  }catch(e){console.warn('cloudSyncTables failed',e);return false}
+ if(!cloudReady(cloudConfig()))return false;
+ const signed=hasRealAuthSession();
+ const tasks=[['state',cloudFetchState],['games',cloudFetchGames]];
+ if(signed)tasks.push(['questionBanks',cloudFetchBanks],['studentRosters',cloudFetchRosters],['attempts',cloudFetchAttempts],['profiles',()=>cloudRest('profiles','select=*&order=updated_at.desc')],['messages',cloudFetchMessages]);
+ if(isAdmin())tasks.push(['auditLogs',()=>cloudRest('manarat_audit_logs','select=*&order=created_at.desc&limit=300')]);
+ const results=await Promise.allSettled(tasks.map(([,run])=>run()));
+ const successful={},errors=[];results.forEach((r,i)=>{if(r.status==='fulfilled')successful[tasks[i][0]]=r.value;else errors.push(tasks[i][0]+': '+r.reason.message)});
+ let base=store();if(successful.state?.data)base=mergeLocalAndRemote(base,successful.state.data);
+ for(const key of ['games','questionBanks','studentRosters','attempts','messages','auditLogs']){if(successful[key])base[key]=mergeCloudCollection(base[key],successful[key])}
+ if(successful.profiles){base.teachers=mergeTeachersFromSources(base.teachers,successful.profiles,base.games);const u=currentAuthUser(),p=successful.profiles.find(x=>x.id===u?.id);if(p)base.profile=profileToTeacher(p)}
+ base.syncStatus={ok:!errors.length,checked_at:new Date().toISOString(),errors};
+ localStorage.setItem(STORE_KEY,JSON.stringify(mergeStore(base)));
+ document.dispatchEvent(new CustomEvent('manarat:store-updated',{detail:{source:'cloudSyncTables'}}));
+ if(errors.length)console.warn('Incomplete cloud synchronization',errors);
+ return !errors.length;
 }
 async function cloudSaveAllTables(){
-  const s=store();
-  await Promise.allSettled((s.games||[]).map(cloudUpsertGame));
-  await Promise.allSettled((s.questionBanks||[]).map(cloudUpsertBank));
-  await Promise.allSettled((s.studentRosters||[]).map(cloudUpsertRoster));
-  await Promise.allSettled((s.auditLogs||[]).slice(0,100).map(cloudInsertAudit));
-  await cloudUpsertProfile(currentProfile()).catch(e=>console.warn('profile cloud save failed',e));
-  toast('تمت مزامنة الجداول السحابية بنجاح');
+  if(!hasRealAuthSession())throw new Error('سجّل الدخول للمزامنة');
+  const s=store(),admin=isAdmin(),uid=currentTeacherId();
+  const jobs=[...(s.games||[]).filter(g=>isUUID(g.teacher_id)&&(admin||g.teacher_id===uid)).map(cloudUpsertGame),
+    ...(s.questionBanks||[]).filter(b=>b.id!=='bank-demo'&&(admin||!b.owner_id||b.owner_id===uid)).map(cloudUpsertBank),
+    ...(s.studentRosters||[]).filter(r=>admin||!r.teacher_id||r.teacher_id===uid).map(cloudUpsertRoster),cloudUpsertProfile(currentProfile())];
+  const results=await Promise.allSettled(jobs),errors=results.filter(r=>r.status==='rejected');
+  if(errors.length)throw new Error(`تعذر حفظ ${errors.length} من ${results.length} عمليات المزامنة: `+errors[0].reason.message);
   return true;
 }
 async function callAIEdgeFunction(prompt,files=[],ai={}){
@@ -343,7 +366,7 @@ function humanErrorMessage(msg=''){
   const lower=raw.toLowerCase();
   if(/quota|rate limit|resource_exhausted|exceeded your current quota|free_tier/i.test(raw))return 'تم الوصول إلى الحد المجاني لمفتاح Gemini. انتظر قليلًا ثم أعد المحاولة، أو فعّل الفوترة في Google AI Studio/Google Cloud، ويفضل توليد عدد أقل من الأسئلة.';
   if(/failed to fetch|networkerror|load failed/i.test(raw))return 'تعذر الوصول إلى دالة الذكاء الاصطناعي. تأكد من اسم Edge Function، وإعداد CORS/Verify JWT، ثم جرّب مرة أخرى.';
-  if(/unauthorized|401|jwt/i.test(raw))return 'الدالة رفضت الطلب بسبب صلاحيات الدخول. سجّل الدخول بحساب صحيح أو عطّل Verify JWT مؤقتًا للتجربة.';
+  if(/unauthorized|401|jwt/i.test(raw))return 'انتهت جلسة الدخول أو لا يملك الحساب الصلاحية المطلوبة. سجّل الدخول مجددًا.';
   if(/function not found|404/i.test(raw))return 'لم يتم العثور على الدالة في Supabase. تأكد من اسم الدالة المكتوب في إعدادات الذكاء الاصطناعي.';
   if(/payload too large|413|too large|file size/i.test(raw))return 'الملف كبير جدًا. جرّب ملفًا أصغر أو قلل عدد الصفحات قبل الرفع.';
   if(/gemini_api_key|api key|invalid key/i.test(raw))return 'مفتاح Gemini غير مضبوط أو غير صحيح. ضعه في Supabase Secrets باسم GEMINI_API_KEY ثم أعد نشر الدالة.';
@@ -352,10 +375,10 @@ function humanErrorMessage(msg=''){
   return raw;
 }
 
-function relAsset(path){if(!path)path=logoClean;if(/^data:|^https?:|^\.\.|^\//i.test(path))return path;const p=location.pathname;const prefix=(p.includes('/teacher/')||p.includes('/player/')||p.includes('/admin/'))?'../../assets/':'../assets/';return prefix+path.replace(/^assets\//,'')}
+function relAsset(path){if(!path)path=logoClean;if(/^data:|^https?:|^\.\.|^\//i.test(path))return path;return rootPublic()+'assets/'+path.replace(/^assets\//,'')}
 function rootPublic(){const href=location.href.split('#')[0].split('?')[0];const normalized=href.replace(/\\/g,'/');const idx=normalized.indexOf('/public/');if(idx>=0)return normalized.slice(0,idx+8);const markers=['/teacher/','/admin/','/player/'];for(const marker of markers){const pos=normalized.indexOf(marker);if(pos>=0)return normalized.slice(0,pos+1)}return normalized.replace(/[^/]*$/,'')}
 function getGameLink(id){return rootPublic()+'player/game.html?game='+encodeURIComponent(id)}
-function playTone(type='click'){const s=store();if(!s.platform.playerSounds)return;try{const C=window.AudioContext||window.webkitAudioContext;const ctx=new C();const osc=ctx.createOscillator();const gain=ctx.createGain();const map={hover:390,click:540,success:860,fail:180,finish:980};osc.frequency.value=map[type]||520;osc.type=type==='fail'?'sawtooth':'sine';osc.connect(gain);gain.connect(ctx.destination);gain.gain.setValueAtTime(.0001,ctx.currentTime);gain.gain.exponentialRampToValueAtTime(.075,ctx.currentTime+.02);gain.gain.exponentialRampToValueAtTime(.0001,ctx.currentTime+((type==='success'||type==='finish') ? .28 : .12));osc.start();osc.stop(ctx.currentTime+((type==='success'||type==='finish') ? .3 : .14))}catch(e){}}
+function playTone(type='click'){const s=store();if(!s.platform.playerSounds)return;try{const C=window.AudioContext||window.webkitAudioContext;const ctx=new C();const osc=ctx.createOscillator();const gain=ctx.createGain();const map={hover:390,click:540,success:860,fail:180,finish:980};osc.frequency.value=map[type]||520;osc.type=type==='fail'?'sawtooth':'sine';osc.connect(gain);gain.connect(ctx.destination);gain.gain.setValueAtTime(.0001,ctx.currentTime);gain.gain.exponentialRampToValueAtTime(.075,ctx.currentTime+.02);gain.gain.exponentialRampToValueAtTime(.0001,ctx.currentTime+((type==='success'||type==='finish') ? .28 : .12));osc.onended=()=>ctx.close();osc.start();osc.stop(ctx.currentTime+((type==='success'||type==='finish') ? .3 : .14))}catch(e){}}
 function toast(msg,type='success'){msg=humanErrorMessage(msg);qsa('.toast').forEach(x=>x.remove());const el=document.createElement('div');el.className='toast '+(type==='error'?'error':type==='warn'?'warn':'');el.textContent=msg;document.body.appendChild(el);setTimeout(()=>el.remove(),3300)}
 function burst(kind='good',message=''){
   if(!store().platform.playerFx)return;
@@ -932,39 +955,43 @@ function exportStandalone(game){const s=store();downloadFile(sanitizeFilename(ga
 function copyText(t){navigator.clipboard?.writeText(t).then(()=>toast('تم النسخ بنجاح')).catch(()=>prompt('انسخ الرابط:',t))}
 
 function authSession(){try{return JSON.parse(localStorage.getItem(AUTH_SESSION_KEY)||'null')}catch(e){return null}}
-function saveAuthSession(session){if(session)localStorage.setItem(AUTH_SESSION_KEY,JSON.stringify(session));else localStorage.removeItem(AUTH_SESSION_KEY)}
+function saveAuthSession(session){const old=authSession();if(!session||(old?.user?.id&&old.user.id!==session.user?.id)){const prev=store(),clean=defaultStore();clean.platform=prev.platform;localStorage.setItem(STORE_KEY,JSON.stringify(clean));clearTimeout(cloudTimer)}if(session)localStorage.setItem(AUTH_SESSION_KEY,JSON.stringify(session));else localStorage.removeItem(AUTH_SESSION_KEY)}
 function authBaseUrl(){const c=cloudConfig();const u=cleanSupabaseUrl(c.supabaseUrl);if(!u)throw new Error('رابط Supabase غير محفوظ');return u}
 function authKey(){const c=cloudConfig();const k=String(c.publishableKey||'').trim();if(!k)throw new Error('مفتاح Supabase غير محفوظ');return k}
 function authHeaders(extra={}){const k=authKey();return {'apikey':k,'Content-Type':'application/json',...extra}}
-async function authFetch(path,opts={}){const url=authBaseUrl()+path;const res=await fetch(url,{...opts,headers:{...authHeaders(),...(opts.headers||{})}});const json=await res.json().catch(()=>({}));if(!res.ok){throw new Error(json.error_description||json.msg||json.message||('فشل الاتصال بخدمة التسجيل ('+res.status+')'))}return json}
-function profileFromUser(user,fallback={}){const m=(user&&user.user_metadata)||{};const eg=normalizedGender(m.educator_gender||m.gender||fallback.educator_gender||fallback.gender||((m.role||fallback.role)==='admin'?'male':platformGender()));return {id:(user&&user.id)||fallback.id||uuid(),name:m.name||fallback.name||String(user?.email||fallback.email||(eg==='male'?'معلم':'معلمة')).split('@')[0],school:m.school||fallback.school||'',email:user?.email||fallback.email||'',role:m.role||fallback.role||'teacher',status:'نشط',avatar:m.avatar||fallback.avatar||'',icon:m.icon||fallback.icon||(eg==='male'?'👨‍🏫':'👩‍🏫'),educator_gender:eg}}
-function setProfileFromAuth(user){const s=store();const p=profileFromUser(user,s.profile||{});s.profile={...s.profile,...p};s.platform=s.platform||defaultPlatform();s.platform.uiGender=p.educator_gender||s.platform.uiGender||'female';s.teachers=mergeTeachersFromSources(s.teachers,[p],s.games||[]);saveStore(s);setTimeout(()=>cloudUpsertProfile(p).catch(e=>console.warn('profile cloud sync failed',e)),0);document.dispatchEvent(new CustomEvent('manarat:auth-updated'));return p}
-async function authSignUp({email,password,name,school,role='teacher',educator_gender}){email=String(email||'').trim();password=String(password||'');if(!email||!password)throw new Error('اكتب البريد الإلكتروني وكلمة المرور');if(password.length<6)throw new Error('كلمة المرور يجب ألا تقل عن 6 أحرف');if(email.toLowerCase()===CONFIGURED_ADMIN_EMAIL)role='admin';const eg=normalizedGender(educator_gender||((role==='admin')?'male':'female'));const json=await authFetch('/auth/v1/signup',{method:'POST',body:JSON.stringify({email,password,data:{name:name||'مدير المنصة',school:school||'منارة التعلم الرقمي',role,educator_gender:eg,icon:eg==='male'?'👨‍🏫':'👩‍🏫'}})});const session=json.session||null;if(session){saveAuthSession(session);setProfileFromAuth(session.user||json.user)}else if(json.user){setProfileFromAuth(json.user)}return json}
+async function authFetch(path,opts={}){const url=authBaseUrl()+path;const res=await cloudRequest(url,{...opts,headers:{...authHeaders(),...(opts.headers||{})}});const json=await res.json().catch(()=>({}));if(!res.ok){throw new Error(json.error_description||json.msg||json.message||('فشل الاتصال بخدمة التسجيل ('+res.status+')'))}return json}
+function profileFromUser(user,fallback={}){const m=(user&&user.user_metadata)||{};const eg=normalizedGender(m.educator_gender||m.gender||fallback.educator_gender||fallback.gender||((m.role||fallback.role)==='admin'?'male':platformGender()));return {id:(user&&user.id)||fallback.id||uuid(),name:m.name||fallback.name||String(user?.email||fallback.email||(eg==='male'?'معلم':'معلمة')).split('@')[0],school:m.school||fallback.school||'',email:user?.email||fallback.email||'',role:fallback.role||'teacher',status:'نشط',avatar:m.avatar||fallback.avatar||'',icon:m.icon||fallback.icon||(eg==='male'?'👨‍🏫':'👩‍🏫'),educator_gender:eg}}
+function setProfileFromAuth(user){const s=store();const p=profileFromUser(user,s.profile||{});s.profile={...s.profile,...p};s.platform=s.platform||defaultPlatform();s.platform.uiGender=p.educator_gender||s.platform.uiGender||'female';s.teachers=mergeTeachersFromSources(s.teachers,[p],s.games||[]);saveStore(s);document.dispatchEvent(new CustomEvent('manarat:auth-updated'));return p}
+async function authSignUp({email,password,name,school,role='teacher',educator_gender}){email=String(email||'').trim();password=String(password||'');if(!email||!password)throw new Error('اكتب البريد الإلكتروني وكلمة المرور');if(password.length<6)throw new Error('كلمة المرور يجب ألا تقل عن 6 أحرف');if(email.toLowerCase()===CONFIGURED_ADMIN_EMAIL)role='admin';const eg=normalizedGender(educator_gender||((role==='admin')?'male':'female'));const json=await authFetch('/auth/v1/signup',{method:'POST',body:JSON.stringify({email,password,data:{name:name||'مدير المنصة',school:school||'منارة التعلم الرقمي',role,educator_gender:eg,icon:eg==='male'?'👨‍🏫':'👩‍🏫'}})});const session=json.session||(json.access_token&&json.user?json:null);if(session){saveAuthSession(session);setProfileFromAuth(session.user||json.user)}return {...json,session}}
 function configuredAdminCredentials(email,password){return false}
 function activateLocalConfiguredAdmin(){const s=ensureConfiguredAdmin(store());s.profile={...(s.profile||{}),id:CONFIGURED_ADMIN_ID,name:'مدير المنصة',school:'منارة التعلم الرقمي',email:CONFIGURED_ADMIN_EMAIL,role:'admin',status:'نشط',icon:'🛡️',educator_gender:'male'};s.platform=s.platform||defaultPlatform();s.platform.uiGender='male';saveStore(s);document.dispatchEvent(new CustomEvent('manarat:auth-updated'));return{temporary:false,user:TEMP_ADMIN_USER,message:'تم تفعيل دخول الأدمن'}}
-async function authSignIn({email,password}){email=String(email||'').trim();password=String(password||'');if(!email||!password)throw new Error('اكتب البريد الإلكتروني وكلمة المرور');try{const json=await authFetch('/auth/v1/token?grant_type=password',{method:'POST',body:JSON.stringify({email,password})});if(!json.access_token||!json.user)throw new Error('لم يتم استلام جلسة دخول صالحة');saveAuthSession(json);setProfileFromAuth(json.user);return json}catch(e){if(configuredAdminCredentials(email,password)&&TEMP_ADMIN_BYPASS===true){console.warn('Supabase login failed; local bypass is disabled in production',e);return activateLocalConfiguredAdmin()}throw e}}
+async function authSignIn({email,password}){email=String(email||'').trim();password=String(password||'');if(!email||!password)throw new Error('اكتب البريد الإلكتروني وكلمة المرور');try{const json=await authFetch('/auth/v1/token?grant_type=password',{method:'POST',body:JSON.stringify({email,password})});if(!json.access_token||!json.user)throw new Error('لم يتم استلام جلسة دخول صالحة');saveAuthSession(json);setProfileFromAuth(json.user);await cloudSyncTables();return json}catch(e){if(configuredAdminCredentials(email,password)&&TEMP_ADMIN_BYPASS===true){console.warn('Supabase login failed; local bypass is disabled in production',e);return activateLocalConfiguredAdmin()}throw e}}
 async function authSignOut(){const sess=authSession();try{if(sess&&sess.access_token){await fetch(authBaseUrl()+'/auth/v1/logout',{method:'POST',headers:{...authHeaders(),Authorization:'Bearer '+sess.access_token}})}}catch(e){console.warn(e)}saveAuthSession(null);toast('تم تسجيل الخروج');setTimeout(()=>{location.href=rootPublic()+'auth.html'},350)}
-async function authRefreshSession(){const sess=authSession();if(!sess||!sess.refresh_token)return null;try{const json=await authFetch('/auth/v1/token?grant_type=refresh_token',{method:'POST',body:JSON.stringify({refresh_token:sess.refresh_token})});if(json&&json.access_token){saveAuthSession(json);setProfileFromAuth(json.user);return json}}catch(e){console.warn('refresh failed',e);saveAuthSession(null)}return null}
+async function authRefreshSession(){const sess=authSession();if(!sess||!sess.refresh_token)return null;try{const json=await authFetch('/auth/v1/token?grant_type=refresh_token',{method:'POST',body:JSON.stringify({refresh_token:sess.refresh_token})});if(json&&json.access_token){saveAuthSession(json);setProfileFromAuth(json.user);return json}}catch(e){console.warn('refresh failed',e)}return null}
+let refreshPromise=null;
+async function ensureFreshSession(){
+  const sess=authSession();if(!sess?.refresh_token)return sess;
+  let exp=Number(sess.expires_at||0);
+  if(!exp){try{exp=JSON.parse(atob(sess.access_token.split('.')[1].replace(/-/g,'+').replace(/_/g,'/'))).exp||0}catch(e){}}
+  if(!exp||exp*1000>Date.now()+60000)return sess;
+  if(!refreshPromise)refreshPromise=authRefreshSession().finally(()=>{refreshPromise=null});
+  const fresh=await refreshPromise;if(!fresh)throw new Error('انتهت جلسة الدخول. سجّل الدخول مجددًا.');return fresh;
+}
 function hasRealAuthSession(){const sess=authSession();return !!(sess&&sess.access_token&&sess.user)}
 function isAuthenticated(){return hasRealAuthSession()}
 function currentAuthUser(){const sess=authSession();if(sess&&sess.user)return sess.user;return null}
 function currentTeacherId(){return (store().profile||{}).id||currentAuthUser()?.id||'t1'}
-function currentPublicPath(){const p=location.pathname.replace(/\\/g,'/');const idx=p.indexOf('/public/');return idx>=0?p.slice(idx+8)+location.search:p.split('/').pop()+location.search}
+function currentPublicPath(){const url=new URL(location.href);const base=new URL(rootPublic());return url.pathname.slice(base.pathname.length)+url.search}
 function requireTeacherAuth(){if(isAuthenticated())return true;const next=encodeURIComponent(currentPublicPath());toast('سجّل دخول '+genderWord('teacher')+' أولًا','warn');setTimeout(()=>{location.href=rootPublic()+'auth.html?next='+next},350);return false}
 function teacherOwnsGame(game){const id=currentTeacherId();return !game||game.teacher_id===id||String(game.teacher_email||'').toLowerCase()===String((store().profile||{}).email||'').toLowerCase()}
 
-function currentProfile(){const s=store();const u=currentAuthUser&&currentAuthUser();return {...(s.profile||{}),id:(u&&u.id)||(s.profile||{}).id,email:(u&&u.email)||(s.profile||{}).email,role:(u&&u.user_metadata&&u.user_metadata.role)||(s.profile||{}).role}}
+function currentProfile(){const s=store();const u=currentAuthUser&&currentAuthUser();return {...(s.profile||{}),id:(u&&u.id)||(s.profile||{}).id,email:(u&&u.email)||(s.profile||{}).email,role:(s.profile||{}).role||'teacher'}}
 function emailOf(v){return String(v||'').trim().toLowerCase()}
-function isAdmin(){if(!isAuthenticated())return false;const s=store();const p=currentProfile();const email=emailOf(p.email);const admins=Array.isArray(s.admins)?s.admins:[];if(!admins.length)return isAuthenticated();if(admins.length===1 && emailOf(admins[0].email)==='admin@manarat.local')return isAuthenticated();return admins.some(a=>a.active!==false && emailOf(a.email)===email)}
-function ensureAdminBootstrap(){if(isTemporaryAdminBypass())return true;const s=store();const p=currentProfile();if(isAuthenticated() && (!Array.isArray(s.admins)||!s.admins.length||(s.admins.length===1&&emailOf(s.admins[0].email)==='admin@manarat.local'))){s.admins=[{id:p.id||uuid(),name:p.name||p.email||'مدير المنصة',email:p.email,role:'owner',active:true,created_at:new Date().toISOString()}];saveStore(s);return true}return false}
+function isAdmin(){if(!isAuthenticated())return false;const s=store();const p=currentProfile();const email=emailOf(p.email);const admins=Array.isArray(s.admins)?s.admins:[];if(p.status==='موقوف')return false;if(p.role==='admin')return true;return admins.some(a=>a.active!==false && emailOf(a.email)===email)}
+function ensureAdminBootstrap(){return false}
 async function ensureAdminCloudRole(){
-  const u=currentAuthUser();
-  if(isTemporaryAdminBypass()||!u||!isAdmin()||!cloudReady(cloudConfig()))return false;
-  const p=currentProfile();
-  try{
-    await cloudRest('profiles','',{method:'POST',headers:{Prefer:'resolution=merge-duplicates,return=minimal'},body:JSON.stringify({id:u.id,email:u.email||p.email||'',name:p.name||u.email||'مدير المنصة',school:p.school||'',role:'admin',status:'نشط',educator_gender:p.educator_gender||'male',updated_at:new Date().toISOString()})});
-    return true;
-  }catch(e){console.warn('admin cloud role sync failed',e);return false}
+  const u=currentAuthUser();if(!u)return false;
+  try{const rows=await cloudRest('profiles','select=*&id=eq.'+encodeURIComponent(u.id));const p=rows?.[0];if(p){const s=store();s.profile=profileToTeacher(p);localStorage.setItem(STORE_KEY,JSON.stringify(s))}return !!p&&p.role==='admin'}catch(e){return false}
 }
 function requireAdminAuth(){if(!isAuthenticated()){const next=encodeURIComponent(currentPublicPath());toast('سجّل دخول الأدمن أولًا','warn');setTimeout(()=>{location.href=rootPublic()+'auth.html?next='+next},350);return false}ensureAdminBootstrap();if(isAdmin())return true;document.body.innerHTML='<main class="page"><div class="wrap"><section class="card" style="text-align:center"><h1>غير مصرح بالدخول</h1><p class="muted">هذا القسم مخصص لمدير المنصة فقط. اطلب من الأدمن إضافتك كمدير.</p><a class="btn" href="'+rootPublic()+'index.html">العودة للرئيسية</a></section></div></main>';return false}
 
@@ -1001,21 +1028,26 @@ function genderPack(gender){
     puzzleVoicePhrases:['رائع جدًا! اكتمل البازل بنجاح.','أحسنتِ، اكتملت الصورة بشكل صحيح.']
   };
 }
+function replaceGenderWords(text,pairs){
+  const map=new Map(pairs),keys=[...map.keys()].sort((a,b)=>b.length-a.length);
+  const escaped=keys.map(k=>k.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'));
+  return text.replace(new RegExp('(?<![\\p{L}\\p{M}])(?:'+escaped.join('|')+')(?![\\p{L}\\p{M}])','gu'),m=>map.get(m));
+}
 function genderizeText(text,gender){
   let v=String(text??''); const g=normalizedGender(gender);
   const malePairs=[['الطالبات','الطلاب'],['الطالبتان','الطالبان'],['الطالبة','الطالب'],['المعلمات','المعلمين'],['المعلمة','المعلم'],['دخول المعلمة','دخول المعلم'],['لوحة المعلمة','لوحة المعلم'],['إنشاء حساب معلمة','إنشاء حساب معلم'],['اسم المعلمة','اسم المعلم'],['أحسنتِ','أحسنت'],['أبدعتِ','أبدعت'],['ممتازة','ممتاز'],['رائعة','رائع'],['بطلة','بطل'],['حاولي','حاول'],['راجعي','راجع'],['واصلي','واصل'],['اختاري','اختر'],['اضغطي','اضغط'],['اسحبي','اسحب'],['ضعي','ضع'],['اكتبي','اكتب'],['رتّبي','رتّب'],['رتبي','رتب'],['وصّلي','وصّل'],['صِلِي','صِلْ'],['طابقي','طابق'],['ستتقدمين','ستتقدم'],['لإكمالها','لإكماله'],['الخاصة بها','الخاصة به']];
   const femalePairs=[['الطلاب','الطالبات'],['الطالبان','الطالبتان'],['الطالب','الطالبة'],['المعلمين','المعلمات'],['المعلم','المعلمة'],['دخول المعلم','دخول المعلمة'],['لوحة المعلم','لوحة المعلمة'],['إنشاء حساب معلم','إنشاء حساب معلمة'],['اسم المعلم','اسم المعلمة'],['أحسنت يا بطل','أحسنتِ يا بطلة'],['أحسنت','أحسنتِ'],['أبدعت','أبدعتِ'],['ممتاز!','ممتازة!'],['رائع يا بطل','رائع يا بطلة'],['رائع','رائعة'],['بطل','بطلة'],['حاول مرة أخرى','حاولي مرة أخرى'],['حاول','حاولي'],['راجع','راجعي'],['واصل','واصلي'],['اختر','اختاري'],['اضغط','اضغطي'],['اسحب','اسحبي'],['ضع','ضعي'],['اكتب','اكتبي'],['رتّب','رتّبي'],['رتب','رتبي'],['وصّل','وصّلي'],['طابق','طابقي'],['ستتقدم','ستتقدمين'],['لإكماله','لإكمالها'],['الخاصة به','الخاصة بها']];
-  (g==='male'?malePairs:femalePairs).forEach(([a,b])=>{v=v.split(a).join(b)});
+  v=replaceGenderWords(v,g==='male'?malePairs:femalePairs);
   const vocalMale=[['أَحْسَنْتِ','أَحْسَنْتَ'],['مُمْتَازَةٌ','مُمْتَازٌ'],['رائِعَةٌ','رائِعٌ'],['اخْتِيارُكِ','اخْتِيارُكَ'],['أَبْدَعْتِ','أَبْدَعْتَ'],['بَطَلَة','بَطَل'],['حاوِلِي','حاوِلْ'],['راجِعِي','راجِعْ'],['فَكِّرِي','فَكِّرْ'],['واصِلِي','واصِلْ'],['رَكَّبْتِ','رَكَّبْتَ'],['اكتملتِ','اكتمل']];
   const vocalFemale=[['أَحْسَنْتَ','أَحْسَنْتِ'],['مُمْتَازٌ','مُمْتَازَةٌ'],['رائِعٌ','رائِعَةٌ'],['اخْتِيارُكَ','اخْتِيارُكِ'],['أَبْدَعْتَ','أَبْدَعْتِ'],['بَطَل','بَطَلَة'],['حاوِلْ','حاوِلِي'],['راجِعْ','راجِعِي'],['فَكِّرْ','فَكِّرِي'],['واصِلْ','واصِلِي'],['رَكَّبْتَ','رَكَّبْتِ']];
-  (g==='male'?vocalMale:vocalFemale).forEach(([a,b])=>{v=v.split(a).join(b)});
+  v=replaceGenderWords(v,g==='male'?vocalMale:vocalFemale);
   return v;
 }
 
 function platformGender(){const s=store();return normalizedGender((s.profile&&s.profile.educator_gender)||(s.profile&&s.profile.gender)||(s.platform&&s.platform.uiGender)||'female')}
 function genderWord(key,gender=platformGender()){const m={teacher:{female:'المعلمة',male:'المعلم'},teachers:{female:'المعلمات',male:'المعلمين'},student:{female:'الطالبة',male:'الطالب'},students:{female:'الطالبات',male:'الطلاب'},loginTeacher:{female:'دخول المعلمة',male:'دخول المعلم'},teacherDashboard:{female:'لوحة المعلمة',male:'لوحة المعلم'},createAccount:{female:'إنشاء حساب معلمة',male:'إنشاء حساب معلم'},startPlaceholder:{female:'اكتبي اسمك هنا',male:'اكتب اسمك هنا'},tryAgain:{female:'حاولي مرة أخرى',male:'حاول مرة أخرى'},excellent:{female:'أحسنتِ',male:'أحسنت'},finalTry:{female:'راجعي الدرس جيدًا وستتقدمين',male:'راجع الدرس جيدًا وستتقدم'}};return (m[key]&&m[key][gender])||key}
 function applyAdminVisibility(){const admin=isAdmin();qsa('.admin-only,[data-admin-only]').forEach(el=>{el.style.display=admin?'':'none'});qsa('a[href*="admin/admin.html"]').forEach(el=>{if(!admin)el.style.display='none';else el.style.display=''})}
-function applyGenderQuickText(root=document){const gender=platformGender();const malePairs=[
+function applyGenderQuickText(root=document){if(document.body.classList.contains('school-app'))return;const gender=platformGender();const malePairs=[
 ['منصة ألعاب تعليمية سينمائية تشعل حماس الطالبات','منصة ألعاب تعليمية سينمائية تشعل حماس الطلاب'],['تمنح هذه الشهادة للطالبة','تمنح هذه الشهادة للطالب'],['نورة أحمد','أحمد محمد'],['لإكمالها','لإكماله'],['جاهزة لخوض','جاهز لخوض'],['المعلمات','المعلمين'],['المعلمة','المعلم'],['الطالبات','الطلاب'],['الطالبة','الطالب'],['دخول المعلمة','دخول المعلم'],['لوحة المعلمة','لوحة المعلم'],['إنشاء حساب معلمة','إنشاء حساب معلم'],['اسم المعلمة','اسم المعلم'],['تظهر لها','تظهر له'],['الخاصة بها','الخاصة به'],['أحسنتِ','أحسنت'],['راجعي','راجع'],['حاولي','حاول'],['اكتبي','اكتب'],['ابدئي','ابدأ'],['تستطيعين','تستطيع']];
 const femalePairs=[['منصة ألعاب تعليمية سينمائية تشعل حماس الطلاب','منصة ألعاب تعليمية سينمائية تشعل حماس الطالبات'],['تمنح هذه الشهادة للطالب','تمنح هذه الشهادة للطالبة'],['أحمد محمد','نورة أحمد'],['لإكماله','لإكمالها'],['جاهز لخوض','جاهزة لخوض'],['المعلمين','المعلمات'],['المعلم','المعلمة'],['الطلاب','الطالبات'],['الطالب','الطالبة'],['دخول المعلم','دخول المعلمة'],['لوحة المعلم','لوحة المعلمة'],['إنشاء حساب معلم','إنشاء حساب معلمة'],['اسم المعلم','اسم المعلمة'],['تظهر له','تظهر لها'],['الخاصة به','الخاصة بها'],['أحسنت يا بطل','أحسنتِ يا بطلة'],['أحسنت','أحسنتِ'],['راجع','راجعي'],['حاول','حاولي'],['اكتب','اكتبي'],['ابدأ','ابدئي'],['تستطيع','تستطيعين']];
 const replacements=gender==='male'?malePairs:femalePairs; const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT,{acceptNode(n){if(!n.nodeValue.trim())return NodeFilter.FILTER_REJECT; if(n.parentElement&&n.parentElement.closest('textarea,script,style,.question-box,.q,.q-admin-card'))return NodeFilter.FILTER_REJECT; return NodeFilter.FILTER_ACCEPT}}); let node; while(node=walker.nextNode()){let v=node.nodeValue; replacements.forEach(([a,b])=>v=v.split(a).join(b)); node.nodeValue=v} qsa('input,textarea',root).forEach(el=>{if(el.placeholder){let v=el.placeholder; replacements.forEach(([a,b])=>v=v.split(a).join(b)); el.placeholder=v}})}
@@ -1030,9 +1062,9 @@ function siteFooterHTML(platform=store().platform||{}){
   if(!about&&!contact&&!links)return'';
   return `<footer class="site-footer-global no-print"><div class="site-footer-shell"><div class="site-footer-header"><div class="site-footer-badge">✨</div><div><div class="site-footer-kicker">منارة التعلم الرقمي</div><h2>من نحن وتواصل معنا</h2></div></div><div class="site-footer-inner"><section class="footer-card footer-about"><div class="footer-card-title"><span>💡</span><h3>من نحن</h3></div><p>${esc(about||'منارة التعلم الرقمي')}</p></section><section class="footer-card footer-contact"><div class="footer-card-title"><span>☎️</span><h3>تواصل معنا</h3></div><p>${esc(contact||'تابعونا عبر منصاتنا الرسمية.')}</p></section></div>${links?`<div class="footer-social-wrap compact"><div class="footer-social-title">القنوات الرسمية</div><div class="social-links">${links}</div></div>`:''}</div></footer>`;
 }
-function renderSiteFooter(){try{qsa('.site-footer-global').forEach(el=>el.remove());const html=siteFooterHTML(store().platform||{});if(html)document.body.insertAdjacentHTML('beforeend',html)}catch(e){console.warn('footer render failed',e)}}
+function renderSiteFooter(){if(document.body.classList.contains('school-app'))return;try{qsa('.site-footer-global').forEach(el=>el.remove());const html=siteFooterHTML(store().platform||{});if(html)document.body.insertAdjacentHTML('beforeend',html)}catch(e){console.warn('footer render failed',e)}}
 
-function clearRuntimeCache(){try{sessionStorage.clear();Object.keys(localStorage).filter(k=>k.includes('temp')||k.includes('cache')).forEach(k=>localStorage.removeItem(k));if('caches'in window)caches.keys().then(keys=>keys.filter(k=>/manarat|temp|cache/i.test(k)).forEach(k=>caches.delete(k)))}catch(e){}}
-window.Manarat={qs,qsa,esc,attr,uuid,shuffle,norm,seconds,store,saveStore,seed,relAsset,rootPublic,getGameLink,playTone,toast,burst,downloadFile,sanitizeFilename,normalizeQuestion,normalizeQuestions,applyPlatform,readFileText,fileToDataURL,compressImageDataURL,compressImageFile,localGenerateQuestions,aiGenerateQuestions,testAIConnection,testCloudConnection,syncCloudNow,cloudSyncTables,cloudSaveAllTables,cloudForceSavePlatform,cloudUpsertGame,cloudDeleteGame,cloudUpsertBank,cloudInsertAttempt,cloudUploadFile,cloudUpsertProfile,cloudDeleteProfile,cloudDeleteAuthUser,cloudFetchProfiles,cloudInsertAudit,cloudFetchAuditLogs,initCloudSync,exportStandalone,copyText,authSession,hasRealAuthSession,isTemporaryAdminBypass,authSignUp,authSignIn,authSignOut,authRefreshSession,isAuthenticated,currentAuthUser,currentTeacherId,currentPublicPath,requireTeacherAuth,teacherOwnsGame,currentProfile,isAdmin,ensureAdminBootstrap,ensureAdminCloudRole,requireAdminAuth,genderWord,genderPack,genderizeText,normalizedGender,applyAdminVisibility,applyGenderQuickText,clearRuntimeCache,renderSiteFooter,siteFooterHTML,isGameApprovedPublic,isGameApprovedShared,defaultPlatform,STORE_KEY,AUTH_SESSION_KEY};
-document.addEventListener('DOMContentLoaded',()=>{applyPlatform();clearRuntimeCache();initCloudSync();applyAdminVisibility();applyGenderQuickText();renderSiteFooter();document.addEventListener('manarat:auth-updated',()=>{applyAdminVisibility();applyGenderQuickText();renderSiteFooter()});document.addEventListener('manarat:store-updated',()=>{renderSiteFooter()});document.body.addEventListener('pointerover',e=>{if(store().platform.hoverSounds&&e.target.closest('button,.btn,.answer,.tile'))playTone('hover')},{passive:true});document.body.addEventListener('click',e=>{if(e.target.closest('button,.btn,.answer,.tile'))playTone('click')},{passive:true})});
+function clearRuntimeCache(){/* No origin-wide cache or sessionStorage deletion. */}
+window.Manarat={mergeCloudCollection,publicPlatformState,ensureFreshSession,qs,qsa,esc,attr,uuid,shuffle,norm,seconds,store,saveStore,seed,relAsset,rootPublic,getGameLink,playTone,toast,burst,downloadFile,sanitizeFilename,normalizeQuestion,normalizeQuestions,applyPlatform,readFileText,fileToDataURL,compressImageDataURL,compressImageFile,localGenerateQuestions,aiGenerateQuestions,testAIConnection,testCloudConnection,syncCloudNow,cloudSyncTables,cloudSaveAllTables,cloudForceSavePlatform,cloudUpsertMessage,cloudDeleteMessage,cloudUpsertGame,cloudDeleteGame,cloudUpsertBank,cloudInsertAttempt,cloudUploadFile,cloudUpsertProfile,cloudDeleteProfile,cloudDeleteAuthUser,cloudFetchProfiles,cloudInsertAudit,cloudFetchAuditLogs,initCloudSync,exportStandalone,copyText,authSession,hasRealAuthSession,isTemporaryAdminBypass,authSignUp,authSignIn,authSignOut,authRefreshSession,isAuthenticated,currentAuthUser,currentTeacherId,currentPublicPath,requireTeacherAuth,teacherOwnsGame,currentProfile,isAdmin,ensureAdminBootstrap,ensureAdminCloudRole,requireAdminAuth,genderWord,genderPack,genderizeText,normalizedGender,applyAdminVisibility,applyGenderQuickText,clearRuntimeCache,renderSiteFooter,siteFooterHTML,isGameApprovedPublic,isGameApprovedShared,defaultPlatform,STORE_KEY,AUTH_SESSION_KEY};
+document.addEventListener('DOMContentLoaded',()=>{if(document.body.classList.contains('school-app'))return;applyPlatform();clearRuntimeCache();initCloudSync();applyAdminVisibility();applyGenderQuickText();renderSiteFooter();document.addEventListener('manarat:auth-updated',()=>{applyAdminVisibility();applyGenderQuickText();renderSiteFooter()});document.addEventListener('manarat:store-updated',()=>{renderSiteFooter()});document.body.addEventListener('pointerover',e=>{if(store().platform.hoverSounds&&e.target.closest('button,.btn,.answer,.tile'))playTone('hover')},{passive:true});document.body.addEventListener('click',e=>{if(e.target.closest('button,.btn,.answer,.tile'))playTone('click')},{passive:true})});
 })();

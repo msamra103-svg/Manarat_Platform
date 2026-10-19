@@ -1,6 +1,23 @@
 (function(){
 let selectedYT=0;
 
+function homeIcon(symbol){
+ const paths={
+ '🎮':'<path d="M6 7h12a3 3 0 0 1 3 3l1 6a2 2 0 0 1-3 2l-3-2H8l-3 2a2 2 0 0 1-3-2l1-6a3 3 0 0 1 3-3Z"/><path d="M6 10v4m-2-2h4m8-1h.01M19 13h.01"/>',
+ '🎬':'<rect x="3" y="5" width="18" height="15" rx="3"/><path d="m10 9 5 3-5 3V9ZM3 8h18M7 5l2 3m5-3 2 3"/>',
+ '🤖':'<rect x="4" y="7" width="16" height="13" rx="4"/><path d="M12 3v4M8 12h.01M16 12h.01M8 16h8M1 11v5m22-5v5"/>',
+ '📚':'<path d="M12 6v15M3 4h5a4 4 0 0 1 4 3 4 4 0 0 1 4-3h5v15h-5a5 5 0 0 0-4 2 5 5 0 0 0-4-2H3V4Z"/>',
+ '🧩':'<path d="M8 3H3v6a3 3 0 1 1 0 6v6h6a3 3 0 1 1 6 0h6v-6a3 3 0 1 1 0-6V3h-6a3 3 0 1 1-7 0Z"/>',
+ '📊':'<path d="M4 20V9h4v11m4 0V4h4v16m4 0V1M2 22h20"/>',
+ '🏠':'<path d="m3 10 9-7 9 7M5 9v12h14V9M9 21v-7h6v7"/>',
+ '✨':'<path d="m12 3 2.8 6.2L21 12l-6.2 2.8L12 21l-2.8-6.2L3 12l6.2-2.8L12 3Z"/>',
+ '💬':'<path d="M20 16a3 3 0 0 1-3 3H9l-5 3v-5a3 3 0 0 1-2-3V7a3 3 0 0 1 3-3h12a3 3 0 0 1 3 3v9Z"/><path d="M6 9h10M6 13h6"/>',
+ '👩‍🏫':'<circle cx="12" cy="7" r="4"/><path d="M4 21v-3a8 8 0 0 1 16 0v3"/>'
+ };
+ return paths[symbol]?`<svg class="home-line-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths[symbol]}</svg>`:Manarat.esc(symbol||'');
+}
+
+
 const HOME_NAV_TABS=[
   {icon:'🏠',label:'الرئيسية',href:'#heroSection',style:'tab'},
   {icon:'✨',label:'الخدمات',href:'#featuresSection',style:'tab'},
@@ -20,7 +37,7 @@ function homeNavLinks(list=[]){
 }
 
 function btnClass(style){return style==='ghost'?'btn ghost':style==='dark'?'btn dark':'btn'}
-function renderButtons(list){return (list||[]).filter(x=>!String(x.href||'').includes('admin/admin.html')).map(x=>`<a class="${x.style==='tab'?'nav-tab':btnClass(x.style)}" href="${Manarat.esc(x.href||'#')}" data-nav-href="${Manarat.esc(x.href||'#')}"><span>${Manarat.esc(x.icon||'')}</span><b>${Manarat.esc(x.label||'زر')}</b></a>`).join('')}
+function renderButtons(list){return (list||[]).filter(x=>!String(x.href||'').includes('admin/admin.html')).map(x=>`<a class="${x.style==='tab'?'nav-tab':btnClass(x.style)}" href="${Manarat.esc(x.href||'#')}" data-nav-href="${Manarat.esc(x.href||'#')}"><span>${homeIcon(x.icon||'')}</span><b>${Manarat.esc(x.label||'زر')}</b></a>`).join('')}
 function activateHomeNav(){
   const tabs=[...document.querySelectorAll('.nav-tab')];
   if(!tabs.length)return;
@@ -101,7 +118,7 @@ function ytId(url=''){
 }
 function normalizeYTVideos(list=[]){return (Array.isArray(list)?list:[]).map((v,i)=>typeof v==='string'?{title:'فيديو '+(i+1),url:v}:v).map((v,i)=>({...v,id:ytId(v.url||v.id||''),title:v.title||('فيديو '+(i+1))})).filter(v=>v.id).slice(0,6)}
 function renderYouTubeSection(p){
-  const sec=ensureBeforeFooter('youtubeShowcaseSection','<div class="youtube-pro card premium-youtube"><div class="youtube-pro-head"><div><div class="kicker">🎬 قناة منارة التعلم</div><h2 id="youtubeSectionTitle"></h2><p id="youtubeSectionText" class="muted"></p></div><a id="youtubeChannelButton" class="btn dark" target="_blank" rel="noopener">زيارة القناة ▶️</a></div><div class="youtube-pro-grid"><div class="youtube-player-wrap"><iframe id="youtubeMainFrame" title="فيديو منارة التعلم الرقمي" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe><div class="youtube-current-info"><b id="youtubeCurrentTitle"></b><a id="youtubeCurrentLink" class="btn small ghost" target="_blank" rel="noopener">فتح الفيديو في يوتيوب</a></div></div><div id="youtubeThumbs" class="youtube-pro-thumbs"></div></div></div>');
+  const sec=ensureBeforeFooter('youtubeShowcaseSection','<div class="youtube-pro card premium-youtube"><div class="youtube-pro-head"><div><div class="kicker">🎬 قناة منارة التعلم</div><h2 id="youtubeSectionTitle"></h2><p id="youtubeSectionText" class="muted"></p></div><a id="youtubeChannelButton" class="btn dark" target="_blank" rel="noopener">زيارة القناة ▶️</a></div><div class="youtube-pro-grid"><div class="youtube-player-wrap"><div class="video-preview" id="videoPreview"><img id="youtubePoster" alt=""><button type="button" id="playFeaturedVideo" aria-label="تشغيل الفيديو المختار"><span aria-hidden="true">▶</span><b>مشاهدة الفيديو</b></button></div><iframe id="youtubeMainFrame" hidden title="فيديو منارة التعلم الرقمي" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe><div class="youtube-current-info"><b id="youtubeCurrentTitle"></b><a id="youtubeCurrentLink" class="btn small ghost" target="_blank" rel="noopener">فتح الفيديو في يوتيوب</a></div></div><div id="youtubeThumbs" class="youtube-pro-thumbs"></div></div></div>');
   const videos=normalizeYTVideos(p.youtubeVideos||[]);
   sec.dataset.empty=videos.length?'false':'true';sec.style.display=(p.showYoutubeSection===false||!videos.length)?'none':'';
   if(!videos.length)return;
@@ -110,7 +127,7 @@ function renderYouTubeSection(p){
   Manarat.qs('#youtubeSectionTitle').textContent=p.youtubeSectionTitle||'فيديوهات منارة التعلم الرقمي';
   Manarat.qs('#youtubeSectionText').textContent=p.youtubeSectionText||'اختر فيديو وشاهد نماذج من القناة.';
   const ch=Manarat.qs('#youtubeChannelButton');ch.href=p.youtubeChannelUrl||p.socialLinks?.youtube||'#';
-  Manarat.qs('#youtubeMainFrame').src=`https://www.youtube.com/embed/${encodeURIComponent(current.id)}`;
+  const frame=Manarat.qs('#youtubeMainFrame'),poster=Manarat.qs('#youtubePoster'),preview=Manarat.qs('#videoPreview');frame.removeAttribute('src');frame.hidden=true;preview.hidden=false;poster.hidden=false;poster.src='https://img.youtube.com/vi/'+current.id+'/hqdefault.jpg';poster.onerror=()=>poster.hidden=true;Manarat.qs('#playFeaturedVideo').onclick=()=>{preview.hidden=true;frame.hidden=false;frame.src='https://www.youtube.com/embed/'+encodeURIComponent(current.id)+'?autoplay=1';};
   Manarat.qs('#youtubeCurrentTitle').textContent=current.title||'فيديو منارة التعلم الرقمي';
   const currentUrl=current.url||`https://www.youtube.com/watch?v=${encodeURIComponent(current.id)}`;
   Manarat.qs('#youtubeCurrentLink').href=currentUrl;
@@ -191,23 +208,7 @@ function renderContactSection(p){
   };
 }
 
-let v17RevealObserver=null;
-function refreshV17Reveal(){
-  const nodes=[...document.querySelectorAll('.home-premium>section,.feature-card-premium,.hero-quick-card,.v17-impact-item')];
-  if(!('IntersectionObserver' in window)){nodes.forEach(el=>el.classList.add('is-visible'));return}
-  if(!v17RevealObserver){
-    v17RevealObserver=new IntersectionObserver(entries=>{
-      entries.forEach(entry=>{
-        if(entry.isIntersecting){entry.target.classList.add('is-visible');v17RevealObserver.unobserve(entry.target)}
-      });
-    },{threshold:.08,rootMargin:'0px 0px -36px 0px'});
-  }
-  nodes.forEach(el=>{
-    if(el.classList.contains('is-visible'))return;
-    el.classList.add('v17-reveal');
-    v17RevealObserver.observe(el);
-  });
-}
+function refreshV17Reveal(){document.querySelectorAll('.v17-reveal').forEach(el=>{el.classList.remove('v17-reveal');el.classList.add('is-visible')})}
 function setupV17UI(){
   const toggle=document.getElementById('mobileNavToggle');
   const nav=document.getElementById('homeNavLinks');
@@ -255,28 +256,17 @@ function fitHomeHeroText(){
 }
 
 function render(){const s=Manarat.store(),p=s.platform;Manarat.applyPlatform();const gender=Manarat.normalizedGender((s.profile||{}).educator_gender||p.uiGender);Manarat.qs('#homeKicker').textContent=p.homeKicker||'';const title=Manarat.qs('#homeTitle');let tt=Manarat.esc(Manarat.genderizeText(p.homeTitle||'',gender));const h=Manarat.esc(p.homeHighlight||'');if(h&&tt.includes(h))tt=tt.replace(h,`<span>${h}</span>`);title.innerHTML=tt;Manarat.qs('#homeText').textContent=Manarat.genderizeText(p.homeText||'',gender);Manarat.qs('#featuresTitle').textContent=p.featuresTitle||'';Manarat.qs('#featuresSubtitle').textContent=p.featuresSubtitle||'';Manarat.qs('#showcaseGameTitle').textContent=p.showcaseGameTitle||'';Manarat.qs('#showcaseGameText').textContent=p.showcaseGameText||'';Manarat.qs('#showcaseButton').textContent=p.showcaseButtonText||'ابدأ';Manarat.qs('#homeFooter').textContent=p.homeFooter||'';Manarat.qs('#homeMainLogo').src=Manarat.relAsset(p.logoImage);Manarat.qs('#homeNavLinks').innerHTML=renderButtons(homeNavLinks(p.navLinks));Manarat.qs('#homeHeroActions').innerHTML=renderButtons(p.heroButtons);
-const publishedGames=(s.games||[]).filter(g=>Array.isArray(g.questions)&&g.questions.length).length;
-const videoCount=normalizeYTVideos(p.youtubeVideos||[]).length;
-const metrics=[
-  {n:(p.features||[]).length||6,l:'خدمات رقمية'},
-  {n:publishedGames||'جاهز',l:'ألعاب قابلة للتشغيل'},
-  {n:videoCount||'قناة',l:'نماذج فيديو'},
-  {n:'AI',l:'توليد ذكي للأسئلة'}
-];
 const quickCards=[
   {icon:'🎮',title:'الألعاب التعليمية',desc:'أنشئ وشغّل ألعابًا متعددة الأنماط وشاركها مع الطلاب.',href:'#showcaseSection',tag:'ابدأ التجربة'},
   {icon:'🎬',title:'فيديوهات منارة',desc:'شاهد نماذج مختارة مباشرة من قناة منارة التعليمية.',href:'#youtubeShowcaseSection',tag:'شاهد النماذج'},
   {icon:'🤖',title:'توليد ذكي للأسئلة',desc:'حوّل النصوص والملفات إلى أسئلة تعليمية قابلة للتعديل.',href:'auth.html',tag:'للمعلمين'},
   {icon:'📊',title:'نتائج ومتابعة',desc:'تابع محاولات الطلاب وأدر محتواك من لوحة واحدة.',href:'auth.html',tag:'لوحة المعلم'}
 ];
-const serviceTags=['الألعاب التفاعلية','مكتبة الفيديوهات','فيديوهات المناهج بالذكاء الاصطناعي','تقارير وشهادات','استيراد وتوليد ذكي'];
 const highlights=['تشغيل فردي أو منافسة','اختيار عدد الأسئلة من شاشة اللعب','لوحة أرقام الأسئلة','اختيار عشوائي سينمائي','تصحيح يدوي للأسئلة المقالية'];
-Manarat.qs('#heroMetrics').innerHTML=metrics.map(m=>`<div class="metric-chip"><b>${Manarat.esc(String(m.n))}</b><span>${Manarat.esc(m.l)}</span></div>`).join('');
-Manarat.qs('#heroQuickCards').innerHTML=quickCards.map(c=>`<a class="hero-quick-card" href="${Manarat.attr(c.href||'#')}"><div class="badge">${Manarat.esc(c.icon)}</div><div><b>${Manarat.esc(c.title)}</b><p>${Manarat.esc(c.desc)}</p><small>${Manarat.esc(c.tag||'انتقال')}</small></div></a>`).join('');
-Manarat.qs('#heroServiceTags').innerHTML=serviceTags.map(x=>`<span>${Manarat.esc(x)}</span>`).join('');
+Manarat.qs('#heroQuickCards').innerHTML=quickCards.map(c=>`<a class="hero-quick-card" href="${Manarat.attr(c.href||'#')}"><div class="badge">${homeIcon(c.icon)}</div><div><b>${Manarat.esc(c.title)}</b><p>${Manarat.esc(c.desc)}</p><small>${Manarat.esc(c.tag||'انتقال')}</small></div></a>`).join('');
 Manarat.qs('#showcaseHighlights').innerHTML=highlights.map(x=>`<span class="showcase-chip">${Manarat.esc(x)}</span>`).join('');
-Manarat.qs('#featuresGrid').innerHTML=(p.features||[]).map(f=>`<div class="card feature-card-premium"><div class="badge">${Manarat.esc(f.icon||'✨')}</div><h3>${Manarat.esc(f.title||'ميزة')}</h3><p class="muted">${Manarat.esc(f.desc||'')}</p><div class="feature-glow"></div></div>`).join('');Manarat.qs('#featuresSection').style.display=p.showFeatures===false?'none':'';Manarat.qs('#showcaseSection').style.display=p.showShowcase===false?'none':'';renderYouTubeSection(p);renderLatestGames(s);renderContactSection(p);applyHomeSectionOrder(p);fitHomeHeroText();activateHomeNav();refreshV17Reveal();Manarat.applyGenderQuickText(document);}
-document.addEventListener('DOMContentLoaded',async()=>{setupV17UI();await Manarat.cloudSyncTables?.();render()});
+Manarat.qs('#featuresGrid').innerHTML=(p.features||[]).map(f=>`<div class="card feature-card-premium"><div class="badge">${homeIcon(f.icon||'✨')}</div><h3>${Manarat.esc(f.title||'ميزة')}</h3><p class="muted">${Manarat.esc(f.desc||'')}</p><div class="feature-glow"></div></div>`).join('');Manarat.qs('#featuresSection').style.display=p.showFeatures===false?'none':'';Manarat.qs('#showcaseSection').style.display=p.showShowcase===false?'none':'';renderYouTubeSection(p);renderLatestGames(s);renderContactSection(p);applyHomeSectionOrder(p);fitHomeHeroText();activateHomeNav();refreshV17Reveal();Manarat.applyGenderQuickText(document);}
+document.addEventListener('DOMContentLoaded',async()=>{setupV17UI();render();await Manarat.cloudSyncTables?.();render()});
 document.addEventListener('manarat:store-updated',render);
 window.addEventListener('resize',()=>fitHomeHeroText());
 window.addEventListener('scroll',()=>activateHomeNav(),{passive:true});

@@ -1,4 +1,4 @@
-name: Manarat V17 Quality Check
+name: School V19 Quality Check
 
 on:
   push:
@@ -19,7 +19,10 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 24
 
       - name: Validate platform files
         run: node scripts/smoke-check.js
+
+      - name: Check school authorization and grading
+        run: node tests/school-api.cjs

@@ -128,6 +128,18 @@ Deno.serve(async (req) => {
   if (req.method !== 'POST') return json({ error: 'Method not allowed' }, 405);
 
   try {
+    const authorization=req.headers.get('authorization')||'';
+    const supabaseUrl=Deno.env.get('SUPABASE_URL');
+    const supabaseKey=Deno.env.get('SUPABASE_ANON_KEY');
+    if(!authorization.startsWith('Bearer '))return json({error:'تسجيل الدخول مطلوب'},401);
+    if(!supabaseUrl||!supabaseKey)return json({error:'إعدادات التحقق من الحساب غير مكتملة'},500);
+    const authRes=await fetch(supabaseUrl+'/auth/v1/user',{headers:{apikey:supabaseKey,Authorization:authorization}});
+    if(!authRes.ok)return json({error:'جلسة الدخول غير صالحة'},401);
+    const user=await authRes.json();
+    if(!user.id)return json({error:'جلسة الدخول غير صالحة'},401);
+    const profileRes=await fetch(supabaseUrl+'/rest/v1/profiles?select=status&id=eq.'+encodeURIComponent(user.id),{headers:{apikey:supabaseKey,Authorization:authorization}});
+    const profiles=await profileRes.json().catch(()=>[]);
+    if(!profileRes.ok||!profiles[0]||profiles[0].status==='موقوف')return json({error:'الحساب غير مفعّل'},403);
     const apiKey = Deno.env.get('GEMINI_API_KEY');
     if (!apiKey) return json({ error: 'GEMINI_API_KEY غير موجود في Supabase Secrets.' }, 500);
 

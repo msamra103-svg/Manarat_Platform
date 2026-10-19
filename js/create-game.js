@@ -97,7 +97,8 @@ function storeSizeInfo(s){try{return Math.round(JSON.stringify(s).length/1024)}c
 window.saveGame=async function(){
   const s=fresh();
   const p=s.profile||{};
-  const g=await optimizeGameImages({...readGame(),teacher_id:p.id||M.currentTeacherId(),teacher_email:p.email||'',teacher:p.name||'',school:p.school||'',status:'published'});
+  const g=await optimizeGameImages({...readGame(),teacher_id:(M.isAdmin()&&game?.teacher_id)||p.id||M.currentTeacherId(),teacher_email:(M.isAdmin()&&game?.teacher_email)||p.email||'',teacher:(M.isAdmin()&&game?.teacher)||p.name||'',school:(M.isAdmin()&&game?.school)||p.school||'',status:'published',_pendingCloud:true});
+  if(!g.questions?.length){M.toast('أضف سؤالًا صالحًا واحدًا على الأقل قبل حفظ اللعبة','warn');return null}
   s.games=Array.isArray(s.games)?s.games:[];
   const idx=s.games.findIndex(x=>String(x.id)===String(g.id));
   if(idx>=0)s.games[idx]=g;else s.games.unshift(g);
@@ -111,12 +112,13 @@ window.saveGame=async function(){
     console.error('local save failed',e);
     return M.toast('تعذر حفظ اللعبة محليًا. غالبًا حجم الصور كبير. صغّر الصور أو احذف بعض صور البازل ثم احفظ مرة أخرى. حجم البيانات الحالي تقريبًا: '+storeSizeInfo(s)+'KB','error')
   }
-  try{await M.cloudUpsertGame?.(g)}catch(e){console.warn('cloudUpsertGame failed',e);M.toast('حُفظت محليًا، لكن تعذر رفعها للسحابة: '+(e.message||''),'warn')}
+  let cloudSaved=false;try{await M.cloudUpsertGame(g);cloudSaved=true}catch(e){console.warn('cloudUpsertGame failed',e);M.toast('حُفظت محليًا، لكن تعذر رفعها للسحابة: '+(e.message||''),'warn')}
   editId=g.id; game=g; history.replaceState(null,'','?edit='+encodeURIComponent(g.id));
-  await M.cloudSyncTables?.();
+  if(cloudSaved)await M.cloudSyncTables?.();
   const verify=M.store().games.some(x=>String(x.id)===String(g.id));
-  if(verify){M.toast('تم حفظ اللعبة بنجاح وظهرت في لوحة المعلم والأدمن')}
-  else{M.toast('لم يتم تأكيد الحفظ. اضغط حفظ مرة أخرى أو تحقق من إعدادات Supabase.','error')}
+  if(verify&&cloudSaved){M.toast('تم حفظ اللعبة محليًا وفي السحابة')}
+  else if(!verify){M.toast('لم يتم تأكيد الحفظ.','error')}
+  return g;
 }
 
 function cleanRosterFromText(v){return [...new Set(String(v||'').split(/\n+/).map(x=>x.trim()).filter(Boolean))]}
@@ -328,6 +330,6 @@ function showAIRetry(show){const b=$('aiRetryBtn');if(b)b.style.display=show?'in
 window.retryAIQuestions=function(){return window.generateAIQuestions(true)}
 window.generateAIQuestions=async function(isRetry=false){showAIRetry(false);const files=[...($('aiFiles')?.files||[])];const types=[...document.querySelectorAll('.aiType:checked')].map(x=>x.value);$('aiStatus').textContent=isRetry?(files.length?'جاري إعادة المحاولة من الملف نفسه...':'جاري إعادة المحاولة من النص...'):(files.length?`جاري تحليل الملف واستخراج أسئلة حقيقية من محتواه...`:'جاري توليد الأسئلة من النص...');try{const qs=await M.aiGenerateQuestions({text:$('aiText').value,files,count:Math.min(Number($('aiCount').value||10),Number((M.store().platform||{}).maxAIQuestions||50)),types});if(!qs.length){$('aiStatus').textContent='لم يتم توليد أسئلة حقيقية من الملف. يمكنك الضغط على زر إعادة المحاولة أو لصق نص الدرس يدويًا.';showAIRetry(true);return M.toast('لم يتم توليد أسئلة صالحة','error')}questions.push(...qs);renderQuestions();showAIRetry(false);$('aiStatus').textContent=`تمت إضافة ${qs.length} سؤالًا حقيقيًا من محتوى الدرس.`;M.toast('تم توليد وإضافة الأسئلة')}catch(e){console.error(e);const msg=e.message||'خطأ غير معروف';M.toast('حدث خطأ أثناء التوليد: '+msg,'error');showAIRetry(true);$('aiStatus').textContent='فشل التوليد: '+msg+' — يمكنك الضغط على إعادة المحاولة أو لصق نص الدرس مباشرة.'}}
 window.buildAIPrompt=function(){const types=[...document.querySelectorAll('.aiType:checked')].map(x=>x.value).join(', ');const prompt=`ولّد بنك أسئلة عربي بصيغة JSON فقط من النص المرفق. الأنواع المطلوبة: ${types}. العدد: ${$('aiCount').value}. الصيغة: {"questions":[{"type":"multiple_choice","emoji":"📖","text":"...","options":["..."],"correct":0,"explanation":"..."},{"type":"matching","pairs":[{"left":"...","right":"..."}]},{"type":"ordering","items":["..."]},{"type":"classification","text":"صنّف العناصر الآتية","categories":[{"title":"عنوان العمود","items":[{"text":"كلمة","image":""}]}]},{"type":"open_text","answers":["..."]}]}. النص:\n${$('aiText').value}`;M.copyText(prompt)}
-window.previewGame=async function(){await saveGame();window.open('../player/game.html?game='+encodeURIComponent(game.id),'_blank')};window.exportCurrentGame=function(){const g=readGame();M.exportStandalone(g)}
-M.qsa('.tab-btn').forEach(btn=>btn.addEventListener('click',()=>{M.qsa('.builder-tab').forEach(x=>x.style.display='none');M.qsa('.tab-btn').forEach(x=>x.classList.remove('active'));btn.classList.add('active');$('tab-'+btn.dataset.tab).style.display='block'}));document.addEventListener('DOMContentLoaded',async()=>{await M.authRefreshSession();if(!M.requireTeacherAuth())return;await M.cloudSyncTables?.();fill();M.applyGenderQuickText(document);renderSavedRosters();$('aiFiles')?.addEventListener('change',refreshAIFileList);$('questionsJSONFile')?.addEventListener('change',e=>{importQuestionsJSON(e.target.files?.[0]);e.target.value=''});$('qType')?.addEventListener('change',updatePuzzleControls);$('qPuzzleFile')?.addEventListener('change',handlePuzzleUpload);$('qPuzzleGrid')?.addEventListener('change',renderPuzzlePreview);refreshAIFileList();});document.addEventListener('manarat:store-updated',()=>{if(editingIndex<0){fill();M.applyGenderQuickText(document);renderSavedRosters();}});
+window.previewGame=async function(){const saved=await saveGame();if(saved?.id)window.open('../player/game.html?game='+encodeURIComponent(saved.id),'_blank')};window.exportCurrentGame=function(){const g=readGame();M.exportStandalone(g)}
+M.qsa('.tab-btn').forEach(btn=>btn.addEventListener('click',()=>{M.qsa('.builder-tab').forEach(x=>x.style.display='none');M.qsa('.tab-btn').forEach(x=>x.classList.remove('active'));btn.classList.add('active');$('tab-'+btn.dataset.tab).style.display='block'}));document.addEventListener('DOMContentLoaded',async()=>{try{await M.ensureFreshSession()}catch(e){M.toast(e.message,'warn')}if(!M.requireTeacherAuth())return;await M.cloudSyncTables?.();fill();M.applyGenderQuickText(document);renderSavedRosters();$('aiFiles')?.addEventListener('change',refreshAIFileList);$('questionsJSONFile')?.addEventListener('change',e=>{importQuestionsJSON(e.target.files?.[0]);e.target.value=''});$('qType')?.addEventListener('change',updatePuzzleControls);$('qPuzzleFile')?.addEventListener('change',handlePuzzleUpload);$('qPuzzleGrid')?.addEventListener('change',renderPuzzlePreview);refreshAIFileList();});document.addEventListener('manarat:store-updated',()=>{renderSavedRosters();});
 })();

@@ -1,15 +1,22 @@
 {
   "name": "manarat-learning-platform",
-  "version": "17.0.0",
+  "version": "19.0.0",
   "private": true,
   "scripts": {
-    "start": "npx serve . -l 4173",
+    "start": "node scripts/serve.js",
     "check:js": "node --check js/core.js && node --check js/home.js && node --check js/admin.js && node --check js/dashboard.js && node --check js/create-game.js && node --check js/player.js",
     "smoke": "node scripts/smoke-check.js",
-    "check": "node scripts/smoke-check.js"
+    "check": "node scripts/smoke-check.js",
+    "test:db": "node tests/database.cjs && node tests/upgrade.cjs",
+    "test:browser": "node tests/school-browser.cjs",
+    "test": "npm run check && npm run test:db && npm run test:school && npm run test:edge",
+    "test:edge": "node tests/edge.cjs",
+    "test:school": "node tests/school-api.cjs && node tests/school-browser.cjs"
   },
-  "dependencies": {
-    "serve": "latest"
-  },
-  "description": "Manarat Platform V17 Premium Experience"
+  "dependencies": {},
+  "description": "Abu Obaid school learning platform",
+  "devDependencies": {
+    "@electric-sql/pglite": "0.5.8",
+    "playwright": "1.61.1"
+  }
 }

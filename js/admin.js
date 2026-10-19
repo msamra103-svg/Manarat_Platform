@@ -208,7 +208,7 @@ window.setGeminiPreset=function(){
 }
 
 window.copySupabaseSetupText=function(){
-  const txt=`Supabase Project URL:\nhttps://yltlzogrhwvnmxcnaesu.supabase.co\n\nSupabase publishable / anon key:\nsb_publishable_W-XxH2FTvSZq66b-eHt-TQ_a8ZuqGRD\n\nSQL المطلوب تشغيله:\nsupabase/00_START_HERE_CREATE_DATABASE.sql\n\nبعد النشر أضف رابط Netlify في:\nAuthentication → URL Configuration → Site URL + Redirect URLs`;
+  const txt=`Supabase Project URL:\nhttps://yltlzogrhwvnmxcnaesu.supabase.co\n\nSupabase publishable / anon key:\nsb_publishable_W-XxH2FTvSZq66b-eHt-TQ_a8ZuqGRD\n\nSQL لتحديث قاعدة قائمة:\nsupabase/01_UPGRADE_V17_1.sql\nSQL لمشروع جديد فقط:\nsupabase/00_START_HERE_CREATE_DATABASE.sql\n\nبعد النشر أضف رابط Netlify في:\nAuthentication → URL Configuration → Site URL + Redirect URLs`;
   M.copyText(txt);
 }
 window.copyGeminiSetupText=function(){
@@ -303,11 +303,11 @@ function renderStats(){const s=fresh();$('teachersCount').textContent=(s.teacher
 async function saveAdminState(s,msg='تم الحفظ والمزامنة',opts={}){
   M.saveStore(s);
   try{
-    await M.syncCloudNow?.();
+    if(!await M.syncCloudNow())throw new Error('تعذر تأكيد المزامنة');
     await M.cloudSyncTables?.();
   }catch(e){
     console.warn('admin cloud sync failed',e);
-    if(opts.warn!==false)M.toast('تم الحفظ محليًا، وتعذرت المزامنة السحابية: '+(e.message||e),'warn');
+    if(opts.warn!==false)M.toast('تم الحفظ محليًا، وتعذرت المزامنة السحابية: '+(e.message||e),'warn');if(opts.render!==false)renderAll();return false;
   }
   if(opts.render!==false)renderAll();
   if(msg)M.toast(msg);
@@ -372,11 +372,11 @@ window.deleteTeacher=async function(id){
 
 function renderAdmins(){const s=fresh();const admins=s.admins||[];$('adminsList').innerHTML=admins.map(a=>`<div class="card"><div class="toolbar"><div><h3>${M.esc(a.name||a.email)}</h3><p class="muted">${M.esc(a.email)} · ${a.active===false?'موقوف':'نشط'} · ${M.esc(a.role||'admin')}</p></div><div class="q-actions"><button class="btn small" onclick="toggleAdminUser('${a.id}')">تفعيل/إيقاف</button><button class="btn bad small" onclick="removeAdminUser('${a.id}')">حذف</button></div></div></div>`).join('')||'<p class="muted">لا يوجد أدمن مسجل. أول مستخدم يدخل لوحة الأدمن يمكن اعتماده كأدمن.</p>'}
 window.addAdminUser=async function(){const email=($('adminEmail')?.value||'').trim().toLowerCase(),name=($('adminName')?.value||'').trim()||email;if(!email)return M.toast('اكتب بريد الأدمن','error');const s=fresh();s.admins=s.admins||[];if(s.admins.some(a=>String(a.email||'').toLowerCase()===email))return M.toast('هذا البريد موجود بالفعل كأدمن','warn');s.admins.push({id:M.uuid(),name,email,role:'admin',active:true,created_at:new Date().toISOString(),updated_at:new Date().toISOString()});addAudit('إضافة أدمن','admin',{email});$('adminEmail').value='';$('adminName').value='';await saveAdminState(s,'تمت إضافة أدمن جديد ومزامنته')}
-window.toggleAdminUser=async function(id){const s=fresh();const a=(s.admins||[]).find(x=>x.id===id);if(a){a.active=a.active===false;a.updated_at=new Date().toISOString();addAudit('تحديث حالة أدمن','admin',{id,email:a.email,active:a.active})}await saveAdminState(s,'تم تحديث حالة الأدمن ومزامنتها')}
-window.removeAdminUser=async function(id){if(!confirm('حذف هذا الأدمن؟'))return;const s=fresh();s.admins=(s.admins||[]).filter(a=>a.id!==id);addAudit('حذف أدمن','admin',{id});await saveAdminState(s,'تم حذف الأدمن ومزامنته')}
+window.toggleAdminUser=async function(id){const s=fresh();if((s.admins||[]).find(a=>a.id===id)?.email===M.currentProfile().email)return M.toast('لا يمكن إيقاف حسابك الحالي','warn');const a=(s.admins||[]).find(x=>x.id===id);if(a){a.active=a.active===false;a.updated_at=new Date().toISOString();addAudit('تحديث حالة أدمن','admin',{id,email:a.email,active:a.active})}await saveAdminState(s,'تم تحديث حالة الأدمن ومزامنتها')}
+window.removeAdminUser=async function(id){if((fresh().admins||[]).find(a=>a.id===id)?.email===M.currentProfile().email)return M.toast('لا يمكن حذف حسابك الحالي','warn');if(!confirm('حذف هذا الأدمن؟'))return;const s=fresh();s.admins=(s.admins||[]).filter(a=>a.id!==id);addAudit('حذف أدمن','admin',{id});await saveAdminState(s,'تم حذف الأدمن ومزامنته')}
 function renderMessages(){const s=fresh();const teachers=s.teachers||[];if($('msgTarget'))$('msgTarget').innerHTML='<option value="all">كل المعلمين/المعلمات</option>'+teachers.map(t=>`<option value="${M.attr(t.id)}">${M.esc(t.name||t.email)}</option>`).join('');const msgs=(s.messages||[]).slice().reverse();$('messagesList').innerHTML=msgs.map(m=>`<div class="card"><div class="toolbar"><div><h3>${M.esc(m.subject||'رسالة')}</h3><p class="muted">من: ${M.esc(m.from_name||m.from||'')} → إلى: ${M.esc(m.to_name||m.to||'')} · ${new Date(m.created_at).toLocaleString('ar')}</p></div><button class="btn bad small" onclick="deleteMessage('${m.id}')">حذف</button></div><p>${M.esc(m.body||'')}</p></div>`).join('')||'<p class="muted">لا توجد رسائل بعد.</p>'}
-window.sendAdminMessage=async function(){const s=fresh(),p=M.currentProfile();const to=$('msgTarget')?.value||'all';const teacher=(s.teachers||[]).find(t=>t.id===to);const body=($('msgBody')?.value||'').trim();if(!body)return M.toast('اكتب نص الرسالة','error');s.messages=s.messages||[];s.messages.push({id:M.uuid(),from:p.email||'admin',from_name:p.name||'الأدمن',to,to_name:to==='all'?'كل المعلمين/المعلمات':(teacher?.name||teacher?.email||to),subject:($('msgSubject')?.value||'رسالة من الأدمن').trim(),body,read:false,created_at:new Date().toISOString(),updated_at:new Date().toISOString()});addAudit('إرسال رسالة','messages',{to});$('msgBody').value='';$('msgSubject').value='';await saveAdminState(s,'تم إرسال الرسالة ومزامنتها')}
-window.deleteMessage=async function(id){const s=fresh();s.messages=(s.messages||[]).filter(m=>m.id!==id);addAudit('حذف رسالة','messages',{id});await saveAdminState(s,'تم حذف الرسالة ومزامنتها')}
+window.sendAdminMessage=async function(){const s=fresh(),p=M.currentProfile();const to=$('msgTarget')?.value||'all';const teacher=(s.teachers||[]).find(t=>t.id===to);const body=($('msgBody')?.value||'').trim();if(!body)return M.toast('اكتب نص الرسالة','error');s.messages=s.messages||[];s.messages.push({id:M.uuid(),from:p.email||'admin',from_name:p.name||'الأدمن',to,to_name:to==='all'?'كل المعلمين/المعلمات':(teacher?.name||teacher?.email||to),subject:($('msgSubject')?.value||'رسالة من الأدمن').trim(),body,read:false,created_at:new Date().toISOString(),updated_at:new Date().toISOString()});addAudit('إرسال رسالة','messages',{to});$('msgBody').value='';$('msgSubject').value='';try{await M.cloudUpsertMessage(s.messages[s.messages.length-1])}catch(e){M.toast('تعذر إرسال الرسالة: '+e.message,'error');return}await saveAdminState(s,'تم إرسال الرسالة ومزامنتها')}
+window.deleteMessage=async function(id){try{await M.cloudDeleteMessage(id)}catch(e){M.toast('تعذر حذف الرسالة: '+e.message,'error');return}const s=fresh();s.messages=(s.messages||[]).filter(m=>m.id!==id);addAudit('حذف رسالة','messages',{id});await saveAdminState(s,'تم حذف الرسالة ومزامنتها')}
 
 function renderReports(){
   const s=fresh();
@@ -427,11 +427,11 @@ window.runSystemHealth=async function(){
   const key=String(cloud.publishableKey||'').trim();
   const token=M.authSession?.()?.access_token||'';
   const items=[];
-  items.push(await healthItem('إعدادات Supabase',async()=>cloud.enabled&&base&&key?'الرابط والمفتاح موجودان':'إعدادات Supabase غير مكتملة'));
-  items.push(await healthItem('الاتصال بقاعدة البيانات',async()=>{await M.cloudSyncTables?.();return'تمت قراءة البيانات والجداول'}));
-  items.push(await healthItem('حفظ إعدادات المنصة والفوتر',async()=>{if(!M.isAdmin())return'يتطلب حساب أدمن للحفظ';await M.syncCloudNow?.();return'تم الحفظ والمزامنة'}));
-  items.push(await healthItem('دالة الذكاء الاصطناعي dynamic-handler',async()=>{if(!base||!key)return'إعدادات Supabase غير مكتملة';const r=await fetch(base+'/functions/v1/'+(ai.edgeFunctionName||'dynamic-handler'),{method:'OPTIONS'});return r.ok?'الدالة موجودة وتستجيب':'استجابة: '+r.status}));
-  items.push(await healthItem('دالة حذف المعلم dynamic-api',async()=>{if(!base||!key)return'إعدادات Supabase غير مكتملة';const r=await fetch(base+'/functions/v1/dynamic-api',{method:'OPTIONS'});return r.ok?'الدالة موجودة وتستجيب':'استجابة: '+r.status}));
+  items.push(await healthItem('إعدادات Supabase',async()=>{if(!cloud.enabled||!base||!key)throw new Error('إعدادات Supabase غير مكتملة');return 'الرابط والمفتاح موجودان'}));
+  items.push(await healthItem('الاتصال بقاعدة البيانات',async()=>{if(!await M.cloudSyncTables())throw new Error('تعذرت قراءة بعض الجداول');return'تمت قراءة البيانات والجداول'}));
+  items.push(await healthItem('حفظ إعدادات المنصة والفوتر',async()=>{if(!M.isAdmin())throw new Error('يتطلب حساب أدمن للحفظ');if(!await M.syncCloudNow())throw new Error('لم يتم تأكيد الحفظ');return'تم الحفظ والمزامنة'}));
+  items.push(await healthItem('دالة الذكاء الاصطناعي dynamic-handler',async()=>{if(!base||!key)return'إعدادات Supabase غير مكتملة';const r=await fetch(base+'/functions/v1/'+(ai.edgeFunctionName||'dynamic-handler'),{method:'OPTIONS'});if(!r.ok)throw new Error('استجابة: '+r.status);return 'استجابة OPTIONS فقط؛ التشغيل الفعلي يحتاج تجربة'}));
+  items.push(await healthItem('دالة حذف المعلم dynamic-api',async()=>{if(!base||!key)return'إعدادات Supabase غير مكتملة';const r=await fetch(base+'/functions/v1/dynamic-api',{method:'OPTIONS'});if(!r.ok)throw new Error('استجابة: '+r.status);return 'استجابة OPTIONS فقط؛ التشغيل الفعلي يحتاج تجربة'}));
   items.push(await healthItem('جلسة الأدمن',async()=>M.isAdmin()?(token?'أدمن بجلسة Supabase حقيقية':'أدمن محلي/جلسة غير حقيقية'):'الحساب الحالي ليس أدمن'));
   items.push(await healthItem('النسخ الاحتياطي',async()=>{const test=JSON.stringify(buildBackupPayload()).length;return'حجم النسخة الحالية تقريبًا '+Math.round(test/1024)+'KB'}));
   renderHealth(items);
@@ -528,5 +528,5 @@ document.addEventListener('click',e=>{
   if(btn)btn.click();
 });
 
-document.addEventListener('DOMContentLoaded',async()=>{await M.authRefreshSession();if(!M.requireAdminAuth())return;await M.ensureAdminCloudRole?.();await M.cloudSyncTables?.();fill();renderHealth?.([]);['input','change','keyup'].forEach(ev=>document.body.addEventListener(ev,e=>{if(e.target.closest('#tab-identity,#tab-player'))live()}));$('logoUpload')?.addEventListener('change',()=>fileToData('logoUpload','logoImage'));$('markUpload')?.addEventListener('change',()=>fileToData('markUpload','markImage'));$('bgUpload')?.addEventListener('change',()=>fileToData('bgUpload','customBgImage'));document.body.addEventListener('change',e=>{if(e.target?.id==='logoUpload')fileToData('logoUpload','logoImage');if(e.target?.id==='markUpload')fileToData('markUpload','markImage');if(e.target?.id==='bgUpload')fileToData('bgUpload','customBgImage')},true);$('backupImportFile')?.addEventListener('change',e=>importBackupJSON(e.target.files?.[0]));});
+document.addEventListener('DOMContentLoaded',async()=>{try{await M.ensureFreshSession()}catch(e){M.toast(e.message,'warn')}await M.cloudSyncTables?.();if(!M.requireAdminAuth())return;await M.ensureAdminCloudRole?.();fill();renderHealth?.([]);['input','change','keyup'].forEach(ev=>document.body.addEventListener(ev,e=>{if(e.target.closest('#tab-identity,#tab-player'))live()}));$('logoUpload')?.addEventListener('change',()=>fileToData('logoUpload','logoImage'));$('markUpload')?.addEventListener('change',()=>fileToData('markUpload','markImage'));$('bgUpload')?.addEventListener('change',()=>fileToData('bgUpload','customBgImage'));document.body.addEventListener('change',e=>{if(e.target?.id==='logoUpload')fileToData('logoUpload','logoImage');if(e.target?.id==='markUpload')fileToData('markUpload','markImage');if(e.target?.id==='bgUpload')fileToData('bgUpload','customBgImage')},true);$('backupImportFile')?.addEventListener('change',e=>importBackupJSON(e.target.files?.[0]));});
 })();

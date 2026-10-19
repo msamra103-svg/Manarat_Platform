@@ -55,17 +55,11 @@ async function getCaller(req: Request) {
   return user;
 }
 
-async function isAdmin(user: any) {
-  const email = String(user?.email || "").toLowerCase();
-  if (email === OWNER_EMAIL) return true;
-  const res = await sbFetch(`/rest/v1/profiles?select=role,status,email&id=eq.${encodeURIComponent(user.id)}&limit=1`, {
-    headers: { Accept: "application/json" },
-  });
-  const rows = await res.json().catch(() => []);
-  const row = Array.isArray(rows) ? rows[0] : null;
-  const role = String(row?.role || "").toLowerCase();
-  const status = String(row?.status || "نشط");
-  return ["admin", "owner", "super_admin"].includes(role) && status !== "موقوف";
+async function isAdmin(user: any, authorization: string) {
+  const url=Deno.env.get('SUPABASE_URL'),key=Deno.env.get('SUPABASE_ANON_KEY');
+  if(!url||!key)return false;
+  const res=await fetch(url+'/rest/v1/rpc/is_admin',{method:'POST',headers:{apikey:key,Authorization:authorization,'Content-Type':'application/json'},body:JSON.stringify({uid:user.id})});
+  return res.ok&&(await res.json())===true;
 }
 
 async function findUserIdByEmail(email: string) {
@@ -82,7 +76,7 @@ Deno.serve(async (req) => {
   if (req.method !== "POST") return json({ error: "Method not allowed" }, 405);
   try {
     const caller = await getCaller(req);
-    if (!(await isAdmin(caller))) return json({ error: "غير مسموح: الحساب الحالي ليس أدمن" }, 403);
+    if (!(await isAdmin(caller,req.headers.get("authorization")||""))) return json({ error: "غير مسموح: الحساب الحالي ليس أدمن" }, 403);
 
     const body = await req.json().catch(() => ({}));
     let id = String(body.id || body.user_id || "").trim();
@@ -90,6 +84,10 @@ Deno.serve(async (req) => {
 
     if (!id && email) id = await findUserIdByEmail(email);
     if (!id) return json({ error: "لم يتم العثور على معرف المستخدم في Supabase Auth" }, 404);
+    const targetRes = await sbFetch(`/auth/v1/admin/users/${encodeURIComponent(id)}`, { method: "GET" });
+    const target = await targetRes.json().catch(() => null);
+    if (!targetRes.ok || !target?.id) return json({ error: "تعذر التحقق من الحساب المطلوب حذفه" }, 404);
+    if (String(target.email || "").toLowerCase() === OWNER_EMAIL) return json({error:"لا يمكن حذف مالك المنصة"},400);
     if (id === caller.id) return json({ error: "لا يمكن للأدمن حذف حسابه الحالي من داخل المنصة" }, 400);
 
     const del = await sbFetch(`/auth/v1/admin/users/${encodeURIComponent(id)}`, { method: "DELETE" });

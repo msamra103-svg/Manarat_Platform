@@ -1,6 +1,5 @@
 {
   "version": 2,
-  "cleanUrls": true,
   "trailingSlash": false,
   "headers": [
     {
@@ -48,5 +47,6 @@
       "source": "/auth",
       "destination": "/auth.html"
     }
-  ]
+  ],
+  "outputDirectory": "public"
 }

@@ -1,30 +1,10 @@
-# نشر التوليد الذكي من PDF عبر Supabase Edge Function
+# دوال الإصدار V17.1
 
-هذه النسخة تستخدم دالة آمنة باسم:
+الدالة الافتراضية لتوليد الأسئلة هي `dynamic-handler`. الأسماء البديلة `generate-questions` و`generate-questions-from-pdf` لها المصدر نفسه.
+دالة حذف الحسابات الافتراضية `dynamic-api`، والبديل `delete-user-admin`.
 
-`generate-questions-from-pdf`
+حدّث مصدر الدوال التي تستخدمها من الحزمة بعد تطبيق SQL. تحقق من وجود GEMINI_API_KEY في أسرار المشروع للتوليد، ومن أسرار Supabase الافتراضية (URL و ANON_KEY و SERVICE_ROLE_KEY). لا تضع المفاتيح السرية في الواجهة.
 
-## الخطوات
-
-من جذر المشروع وبعد تثبيت Supabase CLI:
-
-```bash
-supabase login
-supabase link --project-ref YOUR_PROJECT_REF
-supabase secrets set GEMINI_API_KEY=YOUR_GEMINI_KEY
-supabase functions deploy generate-questions-from-pdf
-```
-
-يوجد أيضًا مجلد `generate-questions` كنسخة توافق قديمة، لكن الاسم المعتمد في المنصة هو:
-
-`generate-questions-from-pdf`
-
-## داخل المنصة
-
-في لوحة الأدمن > الذكاء الاصطناعي:
-
-- فعّل: استخدام Supabase Edge Function الآمنة
-- اسم الدالة: `generate-questions-from-pdf`
-- النموذج: `gemini-2.5-flash`
-
-بهذا الشكل لا يحتاج المتصفح إلى قراءة PDF بنفسه، ولا يظهر مفتاح Gemini للطلاب أو المعلمين.
+الدوال تتحقق داخليًا من جلسة Supabase وحالة المستخدم؛ ودالة الحذف تتحقق أيضًا من صلاحية الأدمن من قاعدة البيانات ومن هوية الحساب المستهدف.
+اختبر بعد النشر بجلسة مستخدم حقيقية. نجاح طلب OPTIONS لا يعني نجاح التوليد.
+لم تُنشر الدوال أو تُختبر مع Gemini الحي أثناء هذه المراجعة.
