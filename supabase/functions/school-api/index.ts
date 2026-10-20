@@ -32,7 +32,7 @@ export async function handle(req:Request){if(req.method==='OPTIONS')return new R
  }else if(a==='loginAlias')out={email:String(b.username||'').includes('@')?String(b.username).trim():await alias(b.username)};
  else if(a==='open'){
  const as=(await db('school_assignments','code=eq.'+enc(b.code)+'&active=eq.true'))[0];if(!as)throw new Error('الرابط غير صالح أو أوقف المعلم المهمة.');if(as.settings.deadline&&new Date(as.settings.deadline)<new Date())throw new Error('انتهى موعد المهمة.');const g=(await db('manarat_games','id=eq.'+enc(as.game_id)))[0];
- const vs=await db('school_videos','teacher_id=eq.'+as.teacher_id);out={id:as.id,title:as.title,class_name:as.class_name,settings:as.settings,types:[...new Set((g.data.questions||[]).map((q:any)=>q.type))].filter(t=>types.includes(t as string)),videos:vs.filter((v:any)=>!v.game_id||v.game_id===g.id)};
+ const vs=await db('school_videos','teacher_id=eq.'+as.teacher_id);out={id:as.id,title:as.title,subject:String(g.data.subject||''),teacher:String(g.data.teacher||''),class_name:as.class_name,settings:as.settings,types:[...new Set((g.data.questions||[]).map((q:any)=>q.type))].filter(t=>types.includes(t as string)),videos:vs.filter((v:any)=>!v.game_id||v.game_id===g.id)};
  }else if(a==='start'){
  const as=(await db('school_assignments','code=eq.'+enc(b.code)+'&active=eq.true'))[0];if(!as)throw new Error('المهمة غير متاحة.');if(as.settings.deadline&&new Date(as.settings.deadline)<new Date())throw new Error('انتهى موعد المهمة.');
  const mode=b.mode||'home';if(!['home','individual','group'].includes(mode))throw new Error('نمط غير صالح.');if(mode!=='home'){const p=await requireUser(req);if(p.id!==as.teacher_id&&!p.admin)throw new Error('التشغيل الصفي متاح لصاحب المهمة.');}

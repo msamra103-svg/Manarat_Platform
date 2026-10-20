@@ -5005,6 +5005,7 @@ const UIController = {
   },
 
   toggleFullscreen() {
+    if(window.parent!==window){parent.postMessage({type:'school-race-fullscreen'},location.origin);return;}
     const docEl = document.documentElement;
     if (!document.fullscreenElement && !document.webkitFullscreenElement) {
       if (docEl.requestFullscreen) {
@@ -5848,7 +5849,7 @@ window.__STUDENT_ONLY_BUILD__=true;
 let schoolRaceConfig, schoolConfigResolve;
 function schoolConfiguration(){return new Promise(resolve=>{schoolConfigResolve=resolve;parent.postMessage({type:'school-race-ready'},location.origin);});}
 window.addEventListener('message',e=>{if(e.origin!==location.origin||e.source!==parent)return;
-if(e.data?.type==='school-race-config'&&schoolConfigResolve){schoolRaceConfig=e.data;APP_CONFIG={...createDefaultConfig(),schoolName:e.data.school,gameTitle:e.data.title,teacherName:'معلم المادة',deptName:'منصة المدرسة',carModel:'supercar',checkpointCount:e.data.count,checkpointSpacing:100,maxSpeed:150,autoDrive:true,questions:Array.from({length:e.data.count},(_,i)=>({id:'q'+i,text:'سؤال المهمة',type:'mcq',options:[],enabled:true})),volMusic:0};schoolConfigResolve();schoolConfigResolve=null;}
+if(e.data?.type==='school-race-config'&&schoolConfigResolve){schoolRaceConfig=e.data;APP_CONFIG={...createDefaultConfig(),schoolName:e.data.school,gameTitle:e.data.title,teacherName:e.data.teacher||'',deptName:e.data.subject||'منصة المدرسة',carModel:'supercar',checkpointCount:e.data.count,checkpointSpacing:100,maxSpeed:150,autoDrive:true,questions:Array.from({length:e.data.count},(_,i)=>({id:'q'+i,text:'سؤال المهمة',type:'mcq',options:[],enabled:true})),volMusic:0};schoolConfigResolve();schoolConfigResolve=null;}
 if(e.data?.type==='school-race-continue'&&GameEngine.state==='QUESTION'){
  const cp=GameEngine.checkpoints[GameEngine.currentCheckpointIndex];if(e.data.correct)GameEngine.triggerCorrectAnswerCelebration(null);else{GameEngine.stats.wrongAttempts++;GameEngine.stats.pausedTimeAccum+=performance.now()-GameEngine.stats.pauseStartStamp;cp.isOpen=true;cp.targetAngle=Math.PI*.48;GameEngine.state='CORRECT_CELEBRATION';GameEngine.celebrationDriveThroughActive=true;UIController.showBanner('راجع التغذية الراجعة، ثم واصل الطريق','warning');}}
 });
