@@ -28,4 +28,4 @@ assert.equal((await call('setRole',{id:'owner',role:'teacher'},'other')).status,
 assert.equal((await call('teacherStatus',{id:'other',active:false},'owner')).status,200);
 assert.equal((await call('profile',{},'other')).status,400);
 console.log('PASS role promotion/revocation, suspension, protected owner and self');
-console.log('SCHOOL API ALL PASS');})().catch(e=>{console.error(e);process.exit(1)});
+const panel=await call('dashboard',{panel:'teachers'},'owner');assert.equal(panel.status,200);assert(panel.json.teachers.length>0);assert.equal(panel.json.games.length,0);assert.equal(panel.json.sessions.length,0);const full=await call('dashboard',{},'owner');assert(full.json.games.length>0);console.log('PASS panel-specific response and full dashboard compatibility');console.log('SCHOOL API ALL PASS');})().catch(e=>{console.error(e);process.exit(1)});
