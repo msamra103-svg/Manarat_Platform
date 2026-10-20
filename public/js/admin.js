@@ -298,7 +298,7 @@ window.handleBrandFileDirect=async function(targetId,file){
   }
 }
 
-function renderStats(){const s=fresh();$('teachersCount').textContent=(s.teachers||[]).length;$('banksCount').textContent=(s.questionBanks||[]).length;$('gamesCount').textContent=(s.games||[]).length;$('attemptsCount').textContent=(s.attempts||[]).length}
+function renderStats(){if(!$('teachersCount'))return;const s=fresh();$('teachersCount').textContent=(s.teachers||[]).length;$('banksCount').textContent=(s.questionBanks||[]).length;$('gamesCount').textContent=(s.games||[]).length;$('attemptsCount').textContent=(s.attempts||[]).length}
 
 async function saveAdminState(s,msg='تم الحفظ والمزامنة',opts={}){
   M.saveStore(s);
