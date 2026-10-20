@@ -1,0 +1,21 @@
+/* Shared page navigation and explicit game lifecycle controls. */
+(()=>{'use strict';if(window.parent!==window)return;
+const script=document.currentScript,home=new URL('../index.html',script.src).href;
+const standalone=/\/games\/(?:race\.html|puzzle\.html|(?:football|basketball|bowling|volleyball|fishing|puzzle|classic)\/index\.html)$/.test(location.pathname);
+let busy=false,bar,queued=false;
+const api=()=>window.ManaratGameControls;
+const active=()=>api()?.isActive?.()??standalone;
+const controls=()=>'<button type="button" data-platform-nav="home">⌂ الرئيسية</button>'+((api()?.canRestart?.()??standalone)?'<button type="button" data-platform-nav="restart">↻ البدء من جديد</button>':'')+(active()?'<button type="button" data-platform-nav="end">إنهاء اللعبة</button>':'');
+function update(){if(!bar)return;const html=controls();if(bar.innerHTML!==html)bar.innerHTML=html;document.querySelectorAll('[data-game-nav-slot]').forEach(n=>{if(n.innerHTML!==html)n.innerHTML=html;});}
+async function perform(action){if(busy)return;if(api()?.isBusy?.()){alert('انتظر انتهاء حفظ الإجابة، ثم أعد المحاولة.');return;}if(active()&&!confirm(action==='restart'?'بدء محاولة جديدة من أول سؤال؟ ستظل المحاولة الحالية غير مكتملة.':action==='end'?'إنهاء اللعب الآن؟ ستظل المحاولة الحالية غير مكتملة.':'العودة إلى الرئيسية والخروج من المحاولة الحالية؟'))return;busy=true;try{if(action==='home')location.assign(home);else if(action==='restart'){if(api()?.restart)await api().restart();else location.reload();}else if(action==='end'){if(api()?.end)await api().end();else location.assign(home);}}catch(e){alert(e.message||'تعذر تنفيذ العملية. حاول مرة أخرى.');}finally{busy=false;update();}}
+function mount(){if(document.getElementById('platform-navigation'))return;
+const style=document.createElement('style');style.textContent='#platform-navigation,[data-game-nav-slot]{display:flex!important;gap:8px;flex-wrap:wrap;align-items:center;direction:rtl}#platform-navigation{position:sticky;top:0;z-index:10000;padding:8px 14px;background:#fff;border-bottom:1px solid #e6dce0;min-height:48px;box-sizing:border-box}#platform-navigation button,[data-game-nav-slot] button{font:600 13px/1.4 Tahoma,Arial,sans-serif;padding:8px 13px;border:1px solid #dfd3d9;border-radius:9px;background:#faf6f8;color:#751735;cursor:pointer;min-height:36px}[data-game-nav-slot]{margin-bottom:10px}[data-game-nav-slot] button{font-size:12px}body.playing-game #app{padding-top:5px}body.playing-game .football-host iframe,body.playing-game iframe#originalRace{height:calc(100svh - 245px)!important;min-height:220px!important}.playing-game .game-session-hud{top:52px}@media(max-width:650px){#platform-navigation{padding:6px;gap:5px}#platform-navigation button{font-size:11px;padding:7px 10px}body.playing-game .football-host iframe,body.playing-game iframe#originalRace{height:calc(100svh - 235px)!important;min-height:220px!important}}@media(max-height:500px) and (orientation:landscape){body.playing-game .football-host iframe,body.playing-game iframe#originalRace{height:calc(100svh - 155px)!important;min-height:160px!important}}';
+document.head.appendChild(style);bar=document.createElement('div');bar.id='platform-navigation';bar.setAttribute('role','navigation');bar.setAttribute('aria-label','التنقل والتحكم في اللعبة');document.body.prepend(bar);update();
+if(standalone){const scene=document.getElementById('stadium');if(scene){scene.style.height='calc(100svh - 52px)';scene.style.top='52px';}}
+new MutationObserver(()=>{if(queued)return;queued=true;queueMicrotask(()=>{queued=false;update();});}).observe(document.body,{childList:true,subtree:true});
+document.addEventListener('fullscreenchange',()=>{const host=document.fullscreenElement||document.body;if(!host.contains(bar)||!document.fullscreenElement)host.prepend(bar);});
+}
+document.addEventListener('click',e=>{const b=e.target.closest('[data-platform-nav]');if(!b)return;e.preventDefault();perform(b.dataset.platformNav);});
+window.ManaratNavigation={update,perform,slot:()=>'<div data-game-nav-slot></div>'};
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',mount,{once:true});else mount();
+})();

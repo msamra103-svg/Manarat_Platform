@@ -5855,5 +5855,5 @@ if(e.data?.type==='school-race-continue'&&GameEngine.state==='QUESTION'){
 });
 function setupSchoolRace(){GameEngine.openQuestionForCurrentCheckpoint=function(){this.state='QUESTION';this.stats.pauseStartStamp=performance.now();parent.postMessage({type:'school-race-question',index:this.currentCheckpointIndex},location.origin);};UIController.showResultsModal=function(){parent.postMessage({type:'school-race-finished'},location.origin);};document.getElementById('btn-open-admin')?.remove();}
 </script>
-</body>
+<script src="../js/platform-nav.js?v=20.1"></script></body>
 </html>

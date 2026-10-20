@@ -2843,4 +2843,4 @@ body.admin-open{overflow:hidden!important;}
 window.addEventListener('message',e=>{if(e.origin!==location.origin||e.source!==parent||e.data?.type!=='school-puzzle-config')return;
 Object.assign(window.GAME_CONFIG,{customImageDataUrl:e.data.image,schoolName:e.data.school,gameTitle:e.data.title,defaultPieces:e.data.pieces||6,allowedPieces:[e.data.pieces||6],targetGender:'male'});selectedDifficulty=e.data.pieces||6;game.applyConfigToUI();game.loadInitialImage();});
 parent.postMessage({type:'school-puzzle-ready'},location.origin);
-</script></body></html>
+</script><script src="../js/platform-nav.js?v=20.1"></script></body></html>
