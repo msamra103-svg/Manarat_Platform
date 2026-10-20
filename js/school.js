@@ -17,7 +17,7 @@ if(adminPanel&&window.parent&&window.parent!==window){try{const broker=window.pa
 function notice(msg){$('notice').textContent=msg;$('notice').style.display='block';clearTimeout(noticeTimer);noticeTimer=setTimeout(()=>$('notice').style.display='none',5500);}
 async function run(fn,button){if(button)button.disabled=true;try{return await fn();}catch(e){notice(e.message||'تعذر تنفيذ العملية.');if($('app').querySelector('.loading'))show('<section class="card"><h2>تعذر فتح الصفحة</h2><p>'+esc(e.message)+'</p><a class="button" href="index.html">العودة للرئيسية</a></section>');}finally{if(button)button.disabled=false;}}
 function show(html){document.body.classList.toggle?.('playing-game',html.includes('class="game-session-hud"'));$('app').innerHTML=html;window.scrollTo(0,0);}
-function dialog(html){$('modalContent').innerHTML=html;if(!$('modal').open)$('modal').showModal();}
+function dialog(html){$('modal').classList.toggle('scene-question',!!play&&['volleyball','fishing','puzzle','classic'].includes(play.template)&&html.includes('game-layout'));$('modalContent').innerHTML=html;if(!$('modal').open)$('modal').showModal();}
 function close(){$('modal').close();}
 function button(text,action,id='',cls=''){return `<button type="button" class="${cls}" data-action="${action}" data-id="${esc(id)}">${text}</button>`;}
 function field(label,id,value='',type='text'){return `<label for="${id}">${label}</label><input id="${id}" type="${type}" value="${esc(value)}">`;}
