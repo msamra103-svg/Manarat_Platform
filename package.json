@@ -1,6 +1,6 @@
 {
   "name": "manarat-learning-platform",
-  "version": "19.3.0",
+  "version": "19.4.0",
   "private": true,
   "scripts": {
     "start": "node scripts/serve.js",
@@ -13,7 +13,8 @@
     "test:edge": "node tests/edge.cjs",
     "test:school": "node tests/school-api.cjs && node tests/school-browser.cjs",
     "test:football": "node tests/football.cjs && node tests/football-integration.cjs",
-    "test:sports": "node tests/sports-motion.cjs && node tests/sports-flow.cjs"
+    "test:sports": "node tests/sports-motion.cjs && node tests/sports-flow.cjs",
+    "test:bowling": "node tests/bowling-physics.cjs && node tests/bowling-flow.cjs && node tests/bowling-scene.cjs"
   },
   "dependencies": {},
   "description": "Abu Obaid school learning platform",
