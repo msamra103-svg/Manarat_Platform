@@ -1,0 +1,5 @@
+// Render a single actual game scene, return a still and release the iframe/GPU.
+(()=>{'use strict';const sport=new URLSearchParams(location.search).get('sport');if(!['football','basketball','bowling'].includes(sport))return;const canvas=document.getElementById('scene');let view;
+try{const bowling=sport==='bowling',world=bowling?BowlingPhysics.create():null;view=bowling?BowlingScene.create(canvas):SportScene.create(canvas,sport==='basketball');const state={phase:'ready',elapsed:0,round:0,total:3,goals:0,aim:'center',flight:0,correct:false,pending:false,keeper:'ready',result:'',start:0,angle:0,power:.65,spin:0};
+setTimeout(()=>{try{if(bowling){for(let i=0;i<40;i++)view.update(world,state,.05);}else view.update(state,.016);parent.postMessage({type:'manarat-scene-cover',sport,image:canvas.toDataURL('image/webp',.8)},location.origin);}catch{parent.postMessage({type:'manarat-scene-cover',sport,error:true},location.origin);}finally{view.dispose();}},500);
+}catch{view?.dispose();parent.postMessage({type:'manarat-scene-cover',sport,error:true},location.origin);}})();

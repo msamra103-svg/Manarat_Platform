@@ -1,5 +1,5 @@
 /* One administration shell; current school data and legacy technical controls. */
-(()=>{'use strict';const $=id=>document.getElementById(id),side=document.querySelector('.admin-side'),host=side.nextElementSibling;
+(()=>{'use strict';window.MANARAT_UNIFIED_ADMIN=true;const $=id=>document.getElementById(id),side=document.querySelector('.admin-side'),host=side.nextElementSibling;
 const mapped={identity:'settings',home:'settings',contact:'settings',teachers:'teachers',admins:'teachers',reports:'reports'};
 Object.keys(mapped).forEach(k=>{$('tab-'+k).style.display='none';document.querySelector(`[data-tab="${k}"]`)?.remove();});
 // Exported classic games still use their presentation controls.
