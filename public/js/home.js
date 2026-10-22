@@ -22,8 +22,7 @@ const HOME_NAV_TABS=[
   {icon:'🏠',label:'الرئيسية',href:'#heroSection',style:'tab'},
   {icon:'✨',label:'الخدمات',href:'#featuresSection',style:'tab'},
   {icon:'🎬',label:'الفيديوهات',href:'#youtubeShowcaseSection',style:'tab'},
-  {icon:'🎮',label:'الألعاب',href:'#latestPublicGamesSection',style:'tab'},
-  {icon:'💬',label:'تواصل معنا',href:'#contactWhatsAppSection',style:'tab'}
+  {icon:'🎮',label:'الألعاب',href:'#latestPublicGamesSection',style:'tab'}
 ];
 function homeNavLinks(list=[]){
   const src=Array.isArray(list)?list:[];
@@ -56,7 +55,6 @@ const HOME_SECTIONS=[
   {id:'showcaseSection',label:'تجربة اللاعب'},
   {id:'youtubeShowcaseSection',label:'فيديوهات اليوتيوب'},
   {id:'latestPublicGamesSection',label:'آخر الألعاب المضافة'},
-  {id:'contactWhatsAppSection',label:'نموذج مراسلة واتساب'},
   {id:'homeFooterCard',label:'فوتر الصفحة الرئيسية'}
 ];
 function normalizeHomeSections(list=[]){
@@ -76,8 +74,7 @@ function applyHomeSectionOrder(p){
   const visibility={
     featuresSection:p.showFeatures!==false,
     showcaseSection:p.showShowcase!==false,
-    youtubeShowcaseSection:p.showYoutubeSection!==false,
-    contactWhatsAppSection:p.showContactForm!==false
+    youtubeShowcaseSection:p.showYoutubeSection!==false
   };
   const visibleEls=[];
   sections.forEach(s=>{
@@ -134,79 +131,7 @@ function renderYouTubeSection(p){
   Manarat.qs('#youtubeThumbs').innerHTML=videos.map((v,i)=>`<button class="yt-pro-thumb ${i===selectedYT?'active':''}" data-yt="${i}"><img src="${Manarat.attr(v.thumbnail||('https://img.youtube.com/vi/'+v.id+'/hqdefault.jpg'))}" alt=""><span>${Manarat.esc(v.title)}</span><small>مشاهدة الآن</small></button>`).join('');
   Manarat.qsa('.yt-pro-thumb').forEach(btn=>btn.addEventListener('click',()=>{selectedYT=Number(btn.dataset.yt)||0;renderYouTubeSection(Manarat.store().platform)}));
 }
-function waTarget(link=''){
-  link=String(link||'').trim();
-  if(!link)return '';
-  if(/^https?:\/\//i.test(link))return link;
-  const digits=link.replace(/[^\d+]/g,'').replace(/^\+/,'');
-  return digits?`https://wa.me/${digits}`:'';
-}
 
-async function sendWhatsAppDirect(p,payload){
-  const cloud=p.cloud||{};
-  const fn=(p.whatsappDirect&&p.whatsappDirect.edgeFunctionName)||'send-whatsapp-message';
-  const base=String(cloud.supabaseUrl||'').replace(/\/+$/,'');
-  const key=String(cloud.publishableKey||'').trim();
-  if(!base||!key)throw new Error('إعدادات Supabase غير مكتملة');
-  const res=await fetch(base+'/functions/v1/'+encodeURIComponent(fn),{
-    method:'POST',
-    headers:{'apikey':key,'Content-Type':'application/json'},
-    body:JSON.stringify(payload)
-  });
-  const json=await res.json().catch(()=>({}));
-  if(!res.ok||json.ok===false)throw new Error(json.error||json.message||'فشل إرسال رسالة واتساب');
-  return json;
-}
-
-function renderContactSection(p){
-  const sec=ensureBeforeFooter('contactWhatsAppSection','<div class="contact-home card premium-contact"><div><div class="kicker">📩 تواصل معنا</div><h2 id="contactFormTitle"></h2><p id="contactFormText" class="muted"></p></div><form id="whatsappContactForm" class="contact-form"><input id="contactName" class="input" autocomplete="name" placeholder="الاسم"><input id="contactPhone" class="input" autocomplete="tel" placeholder="رقم التواصل"><textarea id="contactMessage" class="input" rows="4" placeholder="اكتب رسالتك"></textarea><input id="contactHoney" type="text" tabindex="-1" autocomplete="off" style="position:absolute;left:-9999px" aria-hidden="true"><button id="contactSubmitButton" class="btn" type="submit">إرسال عبر واتساب 💬</button><p id="contactHint" class="muted"></p></form></div>');
-  sec.dataset.empty='false';sec.style.display=p.showContactForm===false?'none':'';
-  Manarat.qs('#contactFormTitle').textContent=p.contactFormTitle||'راسل منارة التعلم الرقمي';
-  Manarat.qs('#contactFormText').textContent=p.contactFormText||'اكتب رسالتك وسنفتح واتساب لإرسالها.';
-  const target=waTarget(p.contactWhatsApp||p.socialLinks?.whatsapp||'');
-  Manarat.qs('#contactHint').textContent=target?'':'ضع رقم واتساب الرسائل من لوحة الأدمن لتفعيل الإرسال المباشر.';
-  const form=Manarat.qs('#whatsappContactForm');
-  form.onsubmit=async(e)=>{
-    e.preventDefault();
-    const name=Manarat.qs('#contactName').value.trim();
-    const phone=Manarat.qs('#contactPhone').value.trim();
-    const msg=Manarat.qs('#contactMessage').value.trim();
-    const honey=Manarat.qs('#contactHoney')?.value||'';
-    if(!msg)return Manarat.toast('اكتب نص الرسالة أولًا','warn');
-    const btn=Manarat.qs('#contactSubmitButton');
-    if(btn){btn.disabled=true;btn.textContent='جاري الإرسال...'}
-    const payload={name,phone,message:msg,page:location.href,honeypot:honey,created_at:new Date().toISOString()};
-    const direct=p.whatsappDirect&&p.whatsappDirect.enabled===true;
-    try{
-      if(direct){
-        await sendWhatsAppDirect(p,payload);
-        Manarat.toast(p.whatsappDirect?.successMessage||'تم إرسال رسالتك بنجاح إلى فريق منارة التعلم الرقمي.');
-        form.reset();
-        return;
-      }
-      throw new Error('direct disabled');
-    }catch(err){
-      console.warn('direct whatsapp failed',err);
-      if(direct&&p.whatsappDirect?.fallbackToLink===false){
-        Manarat.toast('تعذر إرسال الرسالة مباشرة: '+(err.message||err),'error');
-        return;
-      }
-      const body=`السلام عليكم، رسالة من موقع منارة التعلم الرقمي.%0A%0Aالاسم: ${encodeURIComponent(name||'غير مذكور')}%0Aرقم التواصل: ${encodeURIComponent(phone||'غير مذكور')}%0A%0Aالرسالة:%0A${encodeURIComponent(msg)}`;
-      const t=waTarget(p.contactWhatsApp||p.socialLinks?.whatsapp||'');
-      if(!t)return Manarat.toast('لم يتم ضبط رقم واتساب الرسائل من لوحة الأدمن','error');
-      let url=t;
-      if(/wa\.me|api\.whatsapp\.com|web\.whatsapp\.com/i.test(t)){
-        url += (t.includes('?')?'&':'?')+'text='+body;
-      }else if(/chat\.whatsapp\.com/i.test(t)){
-        navigator.clipboard?.writeText(decodeURIComponent(body.replace(/%0A/g,'\n'))).catch(()=>{});
-        Manarat.toast('رابط الواتساب الحالي جروب؛ تم نسخ الرسالة، الصقها بعد فتح الجروب','warn');
-      }
-      window.open(url,'_blank','noopener');
-    }finally{
-      if(btn){btn.disabled=false;btn.textContent='إرسال عبر واتساب 💬'}
-    }
-  };
-}
 
 function refreshV17Reveal(){document.querySelectorAll('.v17-reveal').forEach(el=>{el.classList.remove('v17-reveal');el.classList.add('is-visible')})}
 function setupV17UI(){
@@ -265,7 +190,7 @@ const quickCards=[
 const highlights=['تشغيل فردي أو منافسة','اختيار عدد الأسئلة من شاشة اللعب','لوحة أرقام الأسئلة','اختيار عشوائي سينمائي','تصحيح يدوي للأسئلة المقالية'];
 Manarat.qs('#heroQuickCards').innerHTML=quickCards.map(c=>`<a class="hero-quick-card" href="${Manarat.attr(c.href||'#')}"><div class="badge">${homeIcon(c.icon)}</div><div><b>${Manarat.esc(c.title)}</b><p>${Manarat.esc(c.desc)}</p><small>${Manarat.esc(c.tag||'انتقال')}</small></div></a>`).join('');
 Manarat.qs('#showcaseHighlights').innerHTML=highlights.map(x=>`<span class="showcase-chip">${Manarat.esc(x)}</span>`).join('');
-Manarat.qs('#featuresGrid').innerHTML=(p.features||[]).map(f=>`<div class="card feature-card-premium"><div class="badge">${homeIcon(f.icon||'✨')}</div><h3>${Manarat.esc(f.title||'ميزة')}</h3><p class="muted">${Manarat.esc(f.desc||'')}</p><div class="feature-glow"></div></div>`).join('');Manarat.qs('#featuresSection').style.display=p.showFeatures===false?'none':'';Manarat.qs('#showcaseSection').style.display=p.showShowcase===false?'none':'';renderYouTubeSection(p);renderLatestGames(s);renderContactSection(p);applyHomeSectionOrder(p);fitHomeHeroText();activateHomeNav();refreshV17Reveal();Manarat.applyGenderQuickText(document);}
+Manarat.qs('#featuresGrid').innerHTML=(p.features||[]).map(f=>`<div class="card feature-card-premium"><div class="badge">${homeIcon(f.icon||'✨')}</div><h3>${Manarat.esc(f.title||'ميزة')}</h3><p class="muted">${Manarat.esc(f.desc||'')}</p><div class="feature-glow"></div></div>`).join('');Manarat.qs('#featuresSection').style.display=p.showFeatures===false?'none':'';Manarat.qs('#showcaseSection').style.display=p.showShowcase===false?'none':'';renderYouTubeSection(p);renderLatestGames(s);applyHomeSectionOrder(p);fitHomeHeroText();activateHomeNav();refreshV17Reveal();Manarat.applyGenderQuickText(document);}
 document.addEventListener('DOMContentLoaded',async()=>{setupV17UI();render();await Manarat.cloudSyncTables?.();render()});
 document.addEventListener('manarat:store-updated',render);
 window.addEventListener('resize',()=>fitHomeHeroText());

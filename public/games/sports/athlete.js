@@ -24,7 +24,7 @@ for(const [label,s]of [['L',-1],['R',1]]){
  Object.assign(joints,{['hip'+label]:hip,['knee'+label]:knee,['ankle'+label]:ankle,['arm'+label]:shoulder,['elbow'+label]:elbow,['wrist'+label]:wrist});hands[label]=wrist;
 }
 if(detail){
- const seam=material('#ffffff',.8);for(const side of [-1,1]){const trim=oval(torso,seam,side*.205,.19,0,.009,.19,.12);trim.scale.z=.8;}
+ const seam=material('#ffffff',.8);for(const side of [-1,1]){const trim=oval(torso,seam,side*.205,.19,0,.009,.19,.08);trim.scale.z=.08;}
  const front=number.clone();front.material=number.material;front.position.z=.14;front.rotation.y=0;front.scale.setScalar(.72);torso.add(front);
  const kneepad=material('#222931',.85);for(const label of ['L','R'])oval(joints['knee'+label],kneepad,0,.005,.049,.067,.075,.035);
  // Cloth folds and skin pores remain local and deterministic.

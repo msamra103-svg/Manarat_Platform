@@ -13,4 +13,7 @@ for(const file of walk(root)){
 }
 for(const dir of ['js','css','assets','admin','teacher','player','games'])for(const file of walk(path.join(root,dir))){const rel=path.relative(root,file),mirror=path.join(root,'public',rel);if(!fs.existsSync(mirror)||!fs.readFileSync(file).equals(fs.readFileSync(mirror)))errors.push('Mirror mismatch: '+rel)}
 for(const rel of ['public/index.html','public/auth.html','supabase/01_UPGRADE_V17_1.sql','scripts/serve.js','vercel.json','netlify.toml'])if(!fs.existsSync(path.join(root,rel)))errors.push('Missing '+rel);
-if(errors.length){console.error(errors.join('\n'));process.exit(1)}console.log(`PASS: ${scripts} JS/inline syntax checks; ${links} local references; mirrored assets; private-key scan.`);
+if(fs.existsSync(path.join(root,'supabase/functions/send-whatsapp-message')))errors.push('Forbidden WhatsApp Edge Function exists');
+for(const file of walk(root)){const rel=path.relative(root,file);if(rel==='scripts/smoke-check.js'||rel.startsWith('.playwright-cli'))continue;if(/\.(js|ts|html|css|env|example|md)$/i.test(file)&&/WHATSAPP_|send-whatsapp-message|contactWhatsApp|whatsappDirect|wa\.me\//i.test(fs.readFileSync(file,'utf8')))errors.push('Forbidden WhatsApp reference in '+rel)}
+if(errors.length){console.error(errors.join('\n'));process.exit(1)}console.log(`PASS: ${scripts} JS/inline syntax checks; ${links} local references; mirrored assets; private-key & zero-WhatsApp scan.`);
+

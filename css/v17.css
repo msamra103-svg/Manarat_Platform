@@ -165,7 +165,7 @@ body::before{opacity:.34}
 .v17-impact-item b{display:block;font-size:14px}.v17-impact-item span{font-size:12px;color:#9fb0c8}
 
 /* Section headers */
-.features-premium,.showcase-premium,#youtubeShowcaseSection,#latestPublicGamesSection,#contactWhatsAppSection{
+.features-premium,.showcase-premium,#youtubeShowcaseSection,#latestPublicGamesSection{
   scroll-margin-top:110px
 }
 .premium-toolbar,.toolbar{
