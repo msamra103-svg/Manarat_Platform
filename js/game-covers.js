@@ -1,5 +1,5 @@
 /* Only visible cards request one-off stills; no games run in the homepage. */
-(()=>{'use strict';const supported=['football','basketball','bowling','volleyball','fishing','puzzle','classic'],cache=new Map(),queued=new Set();let active=null,observer;
+(()=>{'use strict';const supported=['football','basketball','bowling','volleyball','fishing'],cache=new Map(),queued=new Set();let active=null,observer;
 function cached(s){if(cache.has(s))return cache.get(s);try{const v=sessionStorage.getItem('manarat-cover-20.0-'+s);if(v?.startsWith('data:image/webp')){cache.set(s,v);return v;}}catch{}return null;}
 function paint(s,image){document.querySelectorAll(`[data-scene="${s}"] img`).forEach(img=>{img.src=image;img.classList.add('scene-ready');});}
 function next(){if(active||!queued.size||document.hidden)return;const s=queued.values().next().value;queued.delete(s);if(cached(s)){paint(s,cached(s));return next();}const f=document.createElement('iframe');f.title='تجهيز معاينة '+s;f.setAttribute('aria-hidden','true');f.tabIndex=-1;f.style.cssText='position:fixed;left:-1000px;top:0;width:640px;height:360px;border:0;pointer-events:none';f.src='games/previews/index.html?sport='+s;active={sport:s,frame:f,timer:setTimeout(done,12000)};document.body.append(f);}
