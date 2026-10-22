@@ -28,4 +28,16 @@ assert.equal((await call('setRole',{id:'owner',role:'teacher'},'other')).status,
 assert.equal((await call('teacherStatus',{id:'other',active:false},'owner')).status,200);
 assert.equal((await call('profile',{},'other')).status,400);
 console.log('PASS role promotion/revocation, suspension, protected owner and self');
-const panel=await call('dashboard',{panel:'teachers'},'owner');assert.equal(panel.status,200);assert(panel.json.teachers.length>0);assert.equal(panel.json.games.length,0);assert.equal(panel.json.sessions.length,0);const full=await call('dashboard',{},'owner');assert(full.json.games.length>0);console.log('PASS panel-specific response and full dashboard compatibility');console.log('SCHOOL API ALL PASS');})().catch(e=>{console.error(e);process.exit(1)});
+const panel=await call('dashboard',{panel:'teachers'},'owner');assert.equal(panel.status,200);assert(panel.json.teachers.length>0);assert.equal(panel.json.games.length,0);assert.equal(panel.json.sessions.length,0);const full=await call('dashboard',{},'owner');assert(full.json.games.length>0);console.log('PASS panel-specific response and full dashboard compatibility');
+tables.school_assignments[0].class_name='الصف السابع / ١';
+tables.school_sessions[0].student_name='عبدالله محمد الكواري';
+await call('video',{title:'شرح العلوم التفاعلي',subject:'العلوم',url:'https://www.youtube.com/watch?v=dQw4w9WgXcQ'},'teacher');
+const hub=await call('homeHub',{now:new Date().toISOString()});
+assert.equal(hub.status,200);
+assert.equal(hub.json.videos.length,1);
+assert.equal(hub.json.videos[0].youtubeId,'dQw4w9WgXcQ');
+assert.equal(hub.json.weekly.champions.length,3);
+assert.equal(hub.json.weekly.champions[1].hasWinner,false);
+assert.equal(hub.json.weekly.champions[1].emptyPrompt,'من سيكون نجم الصف الثامن هذا الأسبوع؟');
+console.log('PASS homeHub endpoint returns public videos and Asia/Qatar weekly rankings');
+console.log('SCHOOL API ALL PASS');})().catch(e=>{console.error(e);process.exit(1)});

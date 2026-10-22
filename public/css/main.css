@@ -314,7 +314,7 @@ a{color:inherit;text-decoration:none}.wrap{width:min(1240px,94vw);margin:auto}.p
 
 
 
-/* V13.6 compact elegant footer + WhatsApp link */
+/* V13.6 compact elegant footer */
 .site-footer-global{
   margin:18px auto 34px!important;
   padding:18px!important;
@@ -399,7 +399,7 @@ a{color:inherit;text-decoration:none}.wrap{width:min(1240px,94vw);margin:auto}.p
 @media(max-width:760px){.identity-previews{grid-template-columns:1fr}}
 
 
-/* V15.7 homepage WhatsApp contact + YouTube showcase */
+/* V15.7 homepage YouTube showcase */
 .soft-sep{border:0;border-top:1px solid rgba(255,255,255,.13);margin:22px 0}
 .youtube-showcase{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(230px,.8fr);gap:16px;align-items:start}
 .youtube-main{padding:10px!important;overflow:hidden}
@@ -1043,7 +1043,7 @@ a{color:inherit;text-decoration:none}.wrap{width:min(1240px,94vw);margin:auto}.p
   border-radius:26px!important;
   background:linear-gradient(135deg,rgba(255,255,255,.10),rgba(255,255,255,.035))!important;
 }
-.features-premium,.showcase-premium,#youtubeShowcaseSection,#latestPublicGamesSection,#contactWhatsAppSection{
+.features-premium,.showcase-premium,#youtubeShowcaseSection,#latestPublicGamesSection{
   scroll-margin-top:90px;
 }
 .premium-feature-grid{
@@ -1575,7 +1575,7 @@ body:after{
 html{
   scroll-behavior:smooth;
 }
-#heroSection,#featuresSection,#showcaseSection,#youtubeShowcaseSection,#latestPublicGamesSection,#contactWhatsAppSection{
+#heroSection,#featuresSection,#showcaseSection,#youtubeShowcaseSection,#latestPublicGamesSection{
   scroll-margin-top:98px!important;
 }
 @media(max-width:980px){

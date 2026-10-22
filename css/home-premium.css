@@ -1,9 +1,983 @@
-body.school-app:not(.admin-embedded){background:radial-gradient(ellipse at 10% 0%,#dfc49519,transparent 45%),var(--bg)}
-.school-app:not(.admin-embedded)>header{background:#ffffffd9;max-width:none;padding-inline:max(24px,calc((100vw - 1216px)/2));backdrop-filter:blur(16px)}
-.school-app:not(.admin-embedded) .hero{gap:48px;padding:48px 0 55px;grid-template-columns:1fr 1.08fr;min-height:480px}.school-app .hero h1{font-size:clamp(36px,4.5vw,60px);letter-spacing:-1.5px;font-weight:800;line-height:1.3}.school-app .hero .eyebrow{border:1px solid #ddc6a4;background:#fff9ed;border-radius:30px;padding:6px 14px;font-size:12px;color:#71562e}.school-app .hero p{font-size:16px;line-height:1.95}
-.hero-showcase{position:relative;min-width:0;aspect-ratio:1.18;border-radius:24px;overflow:hidden;background:#12241e;box-shadow:0 28px 65px #39242620;border:1px solid #d2b88766;isolation:isolate}.hero-scene{position:absolute;inset:0}.hero-scene img{width:100%;height:100%;object-fit:cover;object-position:center}.hero-showcase:after{content:'';position:absolute;inset:0;background:linear-gradient(0deg,#101b20f5,transparent 80%);z-index:1}.hero-showcase-caption{position:absolute;bottom:25px;right:28px;left:25px;z-index:2;color:white}.hero-showcase-caption h3{font-size:30px;margin:12px 0 5px;font-weight:750}.hero-showcase-caption p{color:#e1e7e5!important;margin:0;font-size:13px!important}.hero-live{color:#ebd6aa;background:#ffffff14;border:1px solid #ffffff29;border-radius:24px;font-size:11px;padding:6px 12px}.hero-live:before{content:'';display:inline-block;width:6px;height:6px;background:#e0be7d;border-radius:50%;margin-inline-end:7px}
-.school-app .join{box-shadow:0 10px 30px #34232a06;border-color:#ddd0bb;padding:21px 25px}.games-gallery{gap:22px}.game-cover-card.card{padding:0;overflow:hidden;border-color:#e7e0d5;border-radius:18px;box-shadow:0 8px 30px #30222b06;transition:transform .2s,box-shadow .2s}.game-cover-card:hover{transform:translateY(-4px);box-shadow:0 16px 35px #30222b12}.game-cover{position:relative;aspect-ratio:16/9;background:#16252e;overflow:hidden}.game-cover img{width:100%;height:100%;display:block;object-fit:cover;transition:transform .45s}.game-cover-card:hover .game-cover img{transform:scale(1.025)}.game-cover:after{content:'';position:absolute;inset:0;pointer-events:none;border-bottom:1px solid #ffffff14}.cover-number{position:absolute;top:12px;right:12px;color:#fff;background:#17202a70;border:1px solid #ffffff30;border-radius:8px;padding:2px 8px;font-size:11px;backdrop-filter:blur(8px)}.game-cover-body{padding:17px 20px 21px}.game-cover-body h3{font-size:19px;margin:0 0 7px}.game-cover-body p{font-size:13px;min-height:24px;margin:0 0 14px}.game-cover-body .button{font-size:12px;padding:8px 14px}.school-app:not(.admin-embedded) .section-head{margin-top:45px;margin-bottom:22px}.school-app:not(.admin-embedded) footer{margin-top:35px}.school-app .hero .button,.school-app .hero button{min-height:46px}
-@media(max-width:900px){.school-app:not(.admin-embedded) .hero{gap:25px;min-height:0}.hero-showcase{aspect-ratio:1}.hero-showcase-caption h3{font-size:25px}.games-gallery{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media(max-width:650px){.school-app:not(.admin-embedded) .hero{grid-template-columns:1fr;padding:20px 0 30px}.hero-showcase{aspect-ratio:16/10}.school-app .hero h1{font-size:38px;margin-top:16px}.games-gallery{gap:12px}.game-cover-body{padding:13px}.game-cover-body h3{font-size:16px}.game-cover-body p{font-size:12px;min-height:44px}.school-app:not(.admin-embedded)>header{padding-inline:16px}.hero-showcase-caption{right:20px;bottom:20px}.school-app .join{padding:18px}.game-cover-body .button{padding:7px 9px}}
-@media(max-width:360px){.games-gallery{grid-template-columns:1fr}}
-@media(prefers-reduced-motion:reduce){.game-cover-card,.game-cover img{transition:none}.game-cover-card:hover{transform:none}}
+/* Abu Ubaida Preparatory School for Boys — Premium Interactive Homepage & Live Achievement Hub */
+body.school-app:not(.admin-embedded) {
+  background: radial-gradient(ellipse at 12% 0%, #dfc4951c, transparent 46%), var(--bg);
+}
+
+.school-app:not(.admin-embedded) > header {
+  background: #ffffffeb;
+  max-width: none;
+  padding-inline: max(24px, calc((100vw - 1216px) / 2));
+  backdrop-filter: blur(16px);
+  border-bottom: 1px solid #e7ddd0;
+}
+
+/* Section Headers & Kickers */
+.home-section {
+  margin-top: 34px;
+}
+
+.school-app:not(.admin-embedded) .section-head {
+  margin-top: 32px;
+  margin-bottom: 16px;
+  align-items: flex-end;
+  gap: 12px;
+}
+
+.section-kicker {
+  display: inline-block;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--primary);
+  margin-bottom: 4px;
+  letter-spacing: 0;
+}
+
+.ranking-rule-note,
+.video-count-note {
+  font-size: 12px;
+  color: #65555c;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* 2. Dynamic Rotating Game Hero */
+.school-app:not(.admin-embedded) .hero {
+  gap: 32px;
+  padding: 28px 0 32px;
+  grid-template-columns: 1fr 1.12fr;
+  min-height: 400px;
+  align-items: center;
+}
+
+.school-app .hero h1 {
+  font-size: clamp(30px, 3.6vw, 48px);
+  letter-spacing: -0.8px;
+  font-weight: 800;
+  line-height: 1.25;
+  margin: 10px 0 10px;
+  text-wrap: balance;
+}
+
+.school-app .hero .eyebrow {
+  border: 1px solid #ddc6a4;
+  background: #fff9ed;
+  border-radius: 8px;
+  padding: 5px 12px;
+  font-size: 12px;
+  color: #6e5229;
+  font-weight: 700;
+}
+
+.school-app .hero p {
+  font-size: 15px;
+  line-height: 1.8;
+  margin: 0;
+}
+
+.hero-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin: 16px 0 18px;
+}
+
+.hero-metric {
+  background: #ffffffd9;
+  border: 1px solid #e4d8c5;
+  border-radius: 12px;
+  padding: 9px 12px;
+  box-shadow: 0 3px 10px #2f1f2706;
+}
+
+.hero-metric b {
+  display: block;
+  font-size: 19px;
+  font-weight: 800;
+  color: var(--primary);
+  line-height: 1.15;
+  font-variant-numeric: tabular-nums;
+}
+
+.hero-metric span {
+  display: block;
+  font-size: 11.5px;
+  color: #5a4d53;
+  margin-top: 2px;
+}
+
+.hero-showcase {
+  position: relative;
+  min-width: 0;
+  aspect-ratio: 16 / 10;
+  border-radius: 20px;
+  overflow: hidden;
+  background: #122438;
+  box-shadow: 0 22px 50px #2b182022;
+  border: 1px solid #d2b88766;
+  isolation: isolate;
+  outline: none;
+}
+
+.hero-showcase:focus-visible {
+  box-shadow: 0 0 0 3px var(--primary), 0 22px 50px #2b182022;
+}
+
+.hero-scene {
+  position: absolute;
+  inset: 0;
+}
+
+.hero-scene img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  transition: opacity 0.25s ease, transform 0.45s ease;
+}
+
+.hero-showcase::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(0deg, #0b1522f5 10%, #101e2e8c 54%, #0b152240 100%);
+  z-index: 1;
+  pointer-events: none;
+}
+
+.hero-controls-top {
+  position: absolute;
+  top: 14px;
+  right: 16px;
+  left: 16px;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.hero-live {
+  color: #f4dfB4;
+  background: #0d1b2acc;
+  border: 1px solid #ffffff2e;
+  border-radius: 8px;
+  font-size: 11.5px;
+  font-weight: 700;
+  padding: 5px 11px;
+  backdrop-filter: blur(8px);
+}
+
+.hero-nav-arrows {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.hero-arrow-btn {
+  min-height: 32px !important;
+  width: 32px !important;
+  padding: 0 !important;
+  border-radius: 8px !important;
+  background: #0d1b2acc !important;
+  color: #ffffff !important;
+  border: 1px solid #ffffff30 !important;
+  font-size: 18px !important;
+  line-height: 1 !important;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.16s ease, border-color 0.16s ease;
+}
+
+.hero-arrow-btn:hover {
+  background: var(--primary) !important;
+  border-color: #ebd6aa !important;
+}
+
+.hero-showcase-caption {
+  position: absolute;
+  bottom: 16px;
+  right: 18px;
+  left: 18px;
+  z-index: 2;
+  color: #ffffff;
+}
+
+.hero-caption-row {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.hero-showcase-caption h3 {
+  font-size: clamp(18px, 2vw, 23px);
+  margin: 0 0 4px;
+  font-weight: 800;
+  line-height: 1.3;
+}
+
+.hero-showcase-caption p {
+  color: #e2e8f0 !important;
+  margin: 0;
+  font-size: 12.5px !important;
+  line-height: 1.55 !important;
+  max-width: 52ch;
+}
+
+.hero-try-cta {
+  flex-shrink: 0;
+  background: var(--primary) !important;
+  color: #ffffff !important;
+  border: 1px solid #e6c88c80 !important;
+  padding: 8px 14px !important;
+  font-size: 12px !important;
+  min-height: 36px !important;
+  border-radius: 10px !important;
+  white-space: nowrap;
+}
+
+.hero-switcher {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 11px;
+}
+
+.hero-chip {
+  min-height: 28px !important;
+  padding: 3px 9px !important;
+  font-size: 11px !important;
+  border-radius: 7px !important;
+  background: #101e2dcc !important;
+  color: #e8eceb !important;
+  border: 1px solid #ffffff24 !important;
+  backdrop-filter: blur(8px);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.16s ease, border-color 0.16s ease;
+}
+
+.hero-chip:hover,
+.hero-chip.active {
+  background: var(--primary) !important;
+  border-color: #ebd6aa !important;
+  color: #ffffff !important;
+}
+
+/* 3. Compact Assignment Join Bar */
+.school-app .join {
+  box-shadow: 0 8px 24px #34232a08;
+  border-color: #dcd0be;
+  padding: 14px 20px;
+  border-radius: 14px;
+  background: #ffffff;
+}
+
+/* 4. Compact 8-Game Gallery (4 per row on desktop, 3 on medium, 2 on tablet/mobile) */
+.games-gallery {
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  gap: 14px !important;
+}
+
+.game-cover-card.card {
+  padding: 0;
+  overflow: hidden;
+  border-color: #e5ddd1;
+  border-radius: 14px;
+  box-shadow: 0 4px 16px #30222b06;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+.game-cover-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 24px #30222b12;
+}
+
+.game-cover {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  background: #142434;
+  overflow: hidden;
+}
+
+.game-cover img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+  transition: transform 0.35s ease;
+}
+
+.game-cover-card:hover .game-cover img {
+  transform: scale(1.03);
+}
+
+.cover-number {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  color: #ffffff;
+  background: #101c28b3;
+  border: 1px solid #ffffff2e;
+  border-radius: 6px;
+  padding: 1px 6px;
+  font-size: 10.5px;
+  font-variant-numeric: tabular-nums;
+}
+
+.cover-badge {
+  position: absolute;
+  bottom: 8px;
+  left: 8px;
+  color: #f7ebd2;
+  background: #101c28cc;
+  border: 1px solid #ebd6aa40;
+  border-radius: 6px;
+  padding: 1px 7px;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.game-cover-body {
+  padding: 12px 14px 14px;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.game-cover-body h3 {
+  font-size: 15.5px;
+  margin: 0 0 4px;
+  font-weight: 800;
+  line-height: 1.3;
+}
+
+.game-cover-body p {
+  font-size: 12px;
+  line-height: 1.5;
+  min-height: 36px;
+  margin: 0 0 10px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.game-cover-body .button {
+  margin-top: auto;
+  font-size: 11.5px;
+  padding: 6px 11px;
+  min-height: 32px;
+  align-self: flex-start;
+}
+
+/* 5. Weekly Student Achievement Champions (Grade 7, Grade 8, Grade 9) */
+.champions-board {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.champion-box {
+  background: #ffffff;
+  border: 1px solid #e4d8c5;
+  border-radius: 16px;
+  padding: 18px 20px;
+  box-shadow: 0 6px 20px #2f1f2706;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-width: 0;
+  position: relative;
+}
+
+.champion-box.is-crowned {
+  background: linear-gradient(180deg, #fffdf8 0%, #ffffff 100%);
+  border-color: #d4af3788;
+}
+
+.champion-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.champion-grade-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.champion-emblem {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  background: #fdf6e4;
+  color: #b5891c;
+  border: 1px solid #ead39c;
+}
+
+.champion-box h3 {
+  font-size: 17px;
+  margin: 0 0 10px;
+  color: #1f161b;
+  font-weight: 800;
+}
+
+.champion-winner-body {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.champion-student-name {
+  font-size: 19px;
+  font-weight: 800;
+  color: var(--primary);
+  line-height: 1.3;
+}
+
+.champion-class-meta {
+  font-size: 12px;
+  color: #65555c;
+}
+
+.champion-metrics {
+  margin-top: 8px;
+  padding-top: 10px;
+  border-top: 1px solid #f0e8dc;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.champion-metrics b {
+  font-size: 20px;
+  font-weight: 800;
+  color: #122438;
+  font-variant-numeric: tabular-nums;
+}
+
+.champion-metrics span {
+  font-size: 12px;
+  color: #5c4e54;
+}
+
+.champion-empty-body {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.champion-prompt {
+  font-size: 14.5px;
+  font-weight: 700;
+  color: #2c2026;
+  margin: 0;
+}
+
+.champion-subtext {
+  font-size: 12px;
+  color: #685960;
+  margin: 0 0 8px;
+  line-height: 1.55;
+}
+
+.champion-cta {
+  align-self: flex-start;
+  font-size: 11.5px !important;
+  padding: 6px 12px !important;
+  min-height: 32px !important;
+}
+
+/* 6. Weekly Most-Played Games */
+.top-games-board {
+  background: #ffffff;
+  border: 1px solid #e6ddd0;
+  border-radius: 16px;
+  padding: 14px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.top-game-row {
+  display: grid;
+  grid-template-columns: 32px 68px 1fr auto;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid #f3ede4;
+}
+
+.top-game-row:last-child {
+  border-bottom: 0;
+}
+
+.top-game-rank {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--primary);
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+.top-game-thumb {
+  width: 68px;
+  height: 40px;
+  border-radius: 8px;
+  object-fit: cover;
+  background: #122438;
+}
+
+.top-game-info {
+  min-width: 0;
+}
+
+.top-game-title-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.top-game-title-row h3 {
+  font-size: 14.5px;
+  margin: 0;
+  font-weight: 750;
+}
+
+.top-game-stats {
+  font-size: 12px;
+  color: #615258;
+  font-variant-numeric: tabular-nums;
+}
+
+.top-game-bar-track {
+  height: 7px;
+  background: #f2ebe1;
+  border-radius: 99px;
+  overflow: hidden;
+}
+
+.top-game-bar-fill {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, var(--primary), #b88928);
+  border-radius: 99px;
+}
+
+.top-game-bar-fill.is-idle {
+  background: #d8ccb8;
+}
+
+.top-game-try {
+  font-size: 11.5px !important;
+  padding: 6px 11px !important;
+  min-height: 32px !important;
+  white-space: nowrap;
+}
+
+/* 7. Weekly Most-Active Teachers */
+.teachers-board {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 14px;
+}
+
+.teacher-box {
+  background: #ffffff;
+  border: 1px solid #e5ddd0;
+  border-radius: 14px;
+  padding: 15px 16px;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  min-width: 0;
+}
+
+.teacher-rank-badge {
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  background: #f9f2e4;
+  border: 1px solid #e4cfa1;
+  color: var(--primary);
+  font-weight: 800;
+  font-size: 13px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.teacher-info {
+  min-width: 0;
+}
+
+.teacher-info h3 {
+  font-size: 15px;
+  margin: 0 0 2px;
+  font-weight: 800;
+}
+
+.teacher-subject {
+  display: block;
+  font-size: 12px;
+  color: var(--primary);
+  font-weight: 600;
+}
+
+.teacher-metrics {
+  font-size: 12px;
+  color: #625359;
+  margin: 6px 0 0;
+}
+
+.teachers-empty-banner {
+  background: #ffffff;
+  border: 1px solid #e5ddd0;
+  border-radius: 14px;
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.teachers-empty-content h3 {
+  font-size: 15.5px;
+  margin: 0 0 4px;
+}
+
+.teachers-empty-content p {
+  font-size: 12.5px;
+  color: #625359;
+  margin: 0;
+}
+
+/* 8. Functional Educational Video Gallery */
+.video-gallery-board {
+  display: grid;
+  grid-template-columns: 1.55fr 1fr;
+  gap: 16px;
+  align-items: start;
+}
+
+.video-featured-stage {
+  background: #ffffff;
+  border: 1px solid #e4dacb;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 8px 24px #2b1d2308;
+}
+
+.home-video-player-frame {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  background: #0f1c2b;
+  width: 100%;
+}
+
+.home-video-iframe,
+.home-video-native {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  display: block;
+}
+
+.home-video-meta {
+  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.home-video-subject {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--primary);
+  display: block;
+  margin-bottom: 2px;
+}
+
+.home-video-meta h3 {
+  font-size: 16.5px;
+  margin: 0;
+  font-weight: 800;
+}
+
+.home-video-ext {
+  font-size: 11.5px !important;
+  padding: 6px 12px !important;
+  min-height: 32px !important;
+}
+
+.video-playlist {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 410px;
+  overflow-y: auto;
+}
+
+.video-thumb-btn {
+  display: grid;
+  grid-template-columns: 108px 1fr;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  text-align: right;
+  padding: 8px;
+  border-radius: 12px !important;
+  background: #ffffff !important;
+  color: #1f161b !important;
+  border: 1px solid #e5ddd0 !important;
+  cursor: pointer;
+  transition: border-color 0.16s ease, background 0.16s ease;
+}
+
+.video-thumb-btn:hover,
+.video-thumb-btn.active {
+  border-color: var(--primary) !important;
+  background: #fdf8f4 !important;
+}
+
+.video-thumb-preview {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #122438;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.video-thumb-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.video-thumb-fallback {
+  color: #ebd6aa;
+  font-size: 20px;
+}
+
+.video-thumb-index {
+  position: absolute;
+  bottom: 4px;
+  right: 4px;
+  background: #0d1b2acc;
+  color: #ffffff;
+  font-size: 10px;
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-variant-numeric: tabular-nums;
+}
+
+.video-thumb-caption {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.video-thumb-caption strong {
+  font-size: 13.5px;
+  font-weight: 750;
+  color: #1f161b;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.video-thumb-caption span {
+  font-size: 11.5px;
+  color: #66575d;
+}
+
+.video-empty-board {
+  background: #ffffff;
+  border: 1px solid #e5ddd0;
+  border-radius: 16px;
+  padding: 18px 22px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.video-empty-text h3 {
+  font-size: 16.5px;
+  margin: 0 0 4px;
+}
+
+.video-empty-text p {
+  font-size: 13px;
+  margin: 0;
+}
+
+/* 9. Compact School About & Contact Section */
+.about-board {
+  background: #ffffff;
+  border: 1px solid #e5ddd0;
+  border-radius: 16px;
+  padding: 20px 24px;
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 22px;
+  align-items: start;
+}
+
+.about-main h2 {
+  font-size: 20px;
+  margin: 2px 0 8px;
+}
+
+.about-main p,
+.about-contact p {
+  font-size: 13.5px;
+  line-height: 1.75;
+  color: #4f4247;
+  margin: 0 0 12px;
+}
+
+.about-contact {
+  background: #faf6f0;
+  border: 1px solid #eadfce;
+  border-radius: 12px;
+  padding: 14px 16px;
+}
+
+.about-contact h3 {
+  font-size: 15px;
+  margin: 0 0 6px;
+  color: var(--primary);
+}
+
+.school-app:not(.admin-embedded) footer {
+  margin-top: 32px;
+}
+
+.school-app .hero .button,
+.school-app .hero button {
+  min-height: 42px;
+}
+
+/* Responsive Breakpoints */
+@media (max-width: 1080px) {
+  .games-gallery {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  }
+  .video-gallery-board {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 900px) {
+  .school-app:not(.admin-embedded) .hero {
+    gap: 22px;
+    min-height: 0;
+  }
+  .champions-board {
+    grid-template-columns: 1fr;
+  }
+  .about-board {
+    grid-template-columns: 1fr;
+  }
+  .games-gallery {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
+@media (max-width: 650px) {
+  .school-app:not(.admin-embedded) > header {
+    padding-inline: 14px;
+  }
+  .school-app:not(.admin-embedded) .hero {
+    grid-template-columns: 1fr;
+    padding: 16px 0 22px;
+  }
+  .hero-showcase {
+    aspect-ratio: 16 / 11;
+  }
+  .school-app .hero h1 {
+    font-size: 30px;
+    margin-top: 10px;
+  }
+  .hero-metrics {
+    gap: 6px;
+  }
+  .hero-metric {
+    padding: 8px;
+  }
+  .hero-metric b {
+    font-size: 16px;
+  }
+  .hero-caption-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  .games-gallery {
+    gap: 10px !important;
+  }
+  .game-cover-body {
+    padding: 10px 11px 12px;
+  }
+  .game-cover-body h3 {
+    font-size: 14px;
+  }
+  .game-cover-body p {
+    font-size: 11.5px;
+    min-height: 32px;
+  }
+  .top-game-row {
+    grid-template-columns: 26px 52px 1fr;
+  }
+  .top-game-try {
+    grid-column: 1 / -1;
+    justify-self: start;
+  }
+  .school-app .join {
+    padding: 14px;
+  }
+}
+
+@media (max-width: 360px) {
+  .games-gallery {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .game-cover-card,
+  .game-cover img,
+  .hero-scene img {
+    transition: none;
+  }
+  .game-cover-card:hover {
+    transform: none;
+  }
+}
