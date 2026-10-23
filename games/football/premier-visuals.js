@@ -9,7 +9,7 @@ const PF=window.PremierFootball={cameraMode:'broadcast',quality:'auto',
  nextCamera(){const i=MODE.indexOf(this.cameraMode);return this.setCamera(MODE[(i+1)%MODE.length]);},
  attach({THREE:T,scene,camera,renderer,player,keeper,teammates,defenders,ball,goalZ}){
    const medium=(navigator.hardwareConcurrency||4)<=4 || (window.devicePixelRatio||1)>2.3;
-   const performance=medium || innerWidth<780;
+   const performance=medium || innerWidth<780 || /HeadlessChrome|SwiftShader/i.test(navigator.userAgent);
    const standMat=new T.MeshStandardMaterial({color:0x344451,roughness:.91,metalness:.13});
    const seatMat=new T.MeshStandardMaterial({color:0x661b39,roughness:.91});
    const edgeMat=new T.MeshStandardMaterial({color:0xd2c5a4,roughness:.45,metalness:.55});
@@ -18,7 +18,7 @@ const PF=window.PremierFootball={cameraMode:'broadcast',quality:'auto',
    const goldMat=new T.MeshBasicMaterial({color:0xf6d698});
    const concrete=new T.MeshStandardMaterial({color:0x828b90,roughness:.98});
    const metal=new T.MeshStandardMaterial({color:0xabb8bb,metalness:.78,roughness:.32});
-   const glass=new T.MeshPhysicalMaterial({color:0xbacbd5,metalness:.22,roughness:.19,transparent:true,opacity:.27,side:T.DoubleSide,depthWrite:false});
+   const glass=new T.MeshBasicMaterial({color:0xbacbd5,transparent:true,opacity:.23,side:T.DoubleSide,depthWrite:false});
    const root=new T.Group();root.name='Abu-Ubaida-Broadcast-Stadium';scene.add(root);
    const make=(geo,mat,x,y,z,parent=root)=>{const o=new T.Mesh(geo,mat);o.position.set(x,y,z);o.receiveShadow=true;parent.add(o);return o;};
    const box=(x,y,z,sx,sy,sz,mat,parent=root)=>make(new T.BoxGeometry(sx,sy,sz),mat,x,y,z,parent);
@@ -28,7 +28,7 @@ const PF=window.PremierFootball={cameraMode:'broadcast',quality:'auto',
    for(let level=0;level<2;level++){
       const radius=performance?25.5+level*4:26+level*4.5;
       const baseY=level?5.75:1.1;
-      const bands=performance?36:56;
+      const bands=performance?18:36;
       for(let j=0;j<bands;j++){
         const a=j*Math.PI*2/bands,b=(j+1)*Math.PI*2/bands,m=(a+b)/2;
         const center=new T.Vector3(Math.sin(m)*radius,baseY+1.35,Math.cos(m)*radius-7);
@@ -40,11 +40,11 @@ const PF=window.PremierFootball={cameraMode:'broadcast',quality:'auto',
    }
    const roofOuter=make(new T.TorusGeometry(performance?33:35.5,.48,12,96),metal,0,12.5,-7);roofOuter.rotation.x=Math.PI/2;
    const roofInner=make(new T.TorusGeometry(performance?28:30.5,.24,10,96),edgeMat,0,12.2,-7);roofInner.rotation.x=Math.PI/2;
-   for(let a=0;a<Math.PI*2;a+=Math.PI/(performance?10:16)){
+   for(let a=0;a<Math.PI*2;a+=Math.PI/(performance?7:12)){
       line([Math.sin(a)*30,12.2,Math.cos(a)*30-7],[Math.sin(a)*35,12.6,Math.cos(a)*35-7],.12,metal);
    }
    // Actual seating silhouettes, with stable instancing and maroon/ivory colors.
-   const count=performance?1150:3100;
+   const count=performance?380:1700;
    const seatGeo=new T.BoxGeometry(.30,.075,.32);
    const seatMesh=new T.InstancedMesh(seatGeo,seatMat,count);
    const personGeo=new T.SphereGeometry(.15,8,6);
@@ -82,7 +82,7 @@ const PF=window.PremierFootball={cameraMode:'broadcast',quality:'auto',
        line([x,0,z],[x,15.5,z],.15,metal);
        box(x,15.55,z,2.9,.28,.7,nightMat);
        for(let a=-2;a<=2;a++)box(x+a*.5,15.6,z+.39,.36,.17,.09,lampGlow);
-       const light=new T.PointLight(0xe8f4ff,.8,37,2);light.position.set(x,14,z);scene.add(light);
+       if(!performance&&x<0&&z<0){const light=new T.PointLight(0xe8f4ff,.48,24,2);light.position.set(x,14,z);scene.add(light);}
    }
    // Broadcast gantry, glass press boxes and perimeter fencing.
    for(let i=0;i<20;i++){
@@ -92,7 +92,7 @@ const PF=window.PremierFootball={cameraMode:'broadcast',quality:'auto',
    const goalRibbon=make(new T.BoxGeometry(9.1,.16,.24),goldMat,0,2.9,goalZ-1.95);
    // Ground micro-detail (small batches; keep clear of players and critical goal lines).
    const grassGeo=new T.PlaneGeometry(.045,.16),grassMat=new T.MeshStandardMaterial({color:0x729b48,roughness:1,side:T.DoubleSide});
-   const ngrass=performance?450:1600;
+   const ngrass=performance?120:650;
    const blades=new T.InstancedMesh(grassGeo,grassMat,ngrass);
    for(let i=0;i<ngrass;i++){
        const x=(random()-.5)*37,z=(random()-.5)*47-7;
