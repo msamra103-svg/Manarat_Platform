@@ -25,7 +25,7 @@ assert.match(html,/data-shot-style="curl"/);
 assert.match(html,/data-shot-style="power"/);
 assert.match(html,/data-aim="left"/);
 assert.match(html,/data-aim="right"/);
-assert.match(scene,/const premier=!basket&&window\.PremierFootball/);
+assert.match(scene,/if\(!basket&&window\.PremierFootball/);
 assert.match(scene,/if\(premier\)premier\.frame\(S,dt\)/);
 assert.match(scene,/special\.shotPower/);
 assert.match(scene,/special\.shotCurve/);
