@@ -15,13 +15,14 @@
     "test:unit": "node --test tests/student-analytics.test.cjs tests/homepage-hub.test.cjs",
     "test:db": "node tests/database.cjs && node tests/upgrade.cjs",
     "test:browser": "node tests/school-browser.cjs",
-    "test": "npm run test:unit && npm run check && npm run test:db && npm run test:school && npm run test:edge",
+    "test": "npm run build && npm run test:unit && npm run check && npm run test:db && npm run test:school && npm run test:edge && npm run test:race-v8",
     "test:edge": "node tests/edge.cjs",
     "test:school": "node tests/school-api.cjs && node tests/school-browser.cjs",
     "test:football": "node tests/football.cjs && node tests/football-integration.cjs",
     "test:sports": "node tests/sports-motion.cjs && node tests/sports-flow.cjs",
     "test:bowling": "node tests/bowling-physics.cjs && node tests/bowling-flow.cjs && node tests/bowling-scene.cjs",
-    "test:experiences": "node tests/experiences-motion.cjs && node tests/experiences-flow.cjs && node tests/experiences-scene.cjs"
+    "test:experiences": "node tests/experiences-motion.cjs && node tests/experiences-flow.cjs && node tests/experiences-scene.cjs",
+    "test:race-v8": "node tests/champions-race-bridge.test.cjs && node tests/champions-race-package.test.cjs"
   },
   "dependencies": {
     "esbuild": "^0.28.2",

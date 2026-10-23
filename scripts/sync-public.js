@@ -4,6 +4,7 @@ const path = require('path');
 
 const root = path.resolve(__dirname, '..');
 const pub = path.join(root, 'public');
+require('./unpack-champions-race').unpackRace(root);
 
 function copyRecursive(src, dest) {
   const stat = fs.statSync(src);

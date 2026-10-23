@@ -1,0 +1,9 @@
+{
+  "name": "سباق الأبطال ثلاثي الأبعاد",
+  "short_name": "سباق الأبطال 3D",
+  "start_url": "./index.html",
+  "display": "fullscreen",
+  "orientation": "any",
+  "background_color": "#070b14",
+  "theme_color": "#ef4444"
+}
