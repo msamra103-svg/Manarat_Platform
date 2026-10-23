@@ -7,7 +7,7 @@
     "start": "node scripts/serve.js",
     "sync": "node scripts/sync-public.js",
     "build:analytics": "./node_modules/.bin/esbuild src/student-analytics.jsx --bundle --format=iife --target=es2020 --minify --define:process.env.NODE_ENV='\"production\"' --outfile=js/student-analytics.js",
-    "build": "npm run build:analytics && node scripts/fetch-football-real-assets.cjs && node scripts/sync-public.js && node scripts/smoke-check.js",
+    "build": "npm run build:analytics && node scripts/sync-public.js && node scripts/smoke-check.js",
     "lint": "npm run check:js && node scripts/smoke-check.js",
     "check:js": "node --check js/core.js && node --check js/home.js && node --check js/admin.js && node --check js/dashboard.js && node --check js/create-game.js && node --check js/player.js && node --check js/school.js && node --check js/student-analytics-logic.js && node --check js/student-analytics.js && node --check js/homepage-hub-logic.js",
     "smoke": "node scripts/smoke-check.js",
