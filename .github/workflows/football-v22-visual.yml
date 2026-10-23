@@ -5,6 +5,7 @@ on:
       - feat/football-real-players-v22
     paths:
       - .github/workflows/football-v22-visual.yml
+      - games/football/realistic-players.js
   workflow_dispatch:
 permissions:
   contents: read
