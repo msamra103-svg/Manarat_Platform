@@ -27,5 +27,7 @@ jobs:
         run: npm run test:race-v8
       - name: Validate whole site assets and links
         run: npm run check
+      - name: Install Chromium for browser regression tests
+        run: npx playwright install --with-deps chromium
       - name: Validate school API and grading
         run: npm run test:school
