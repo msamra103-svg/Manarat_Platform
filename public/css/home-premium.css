@@ -1,19 +1,407 @@
-/* Abu Ubaida Preparatory School for Boys — Premium Interactive Homepage & Live Achievement Hub */
-body.school-app:not(.admin-embedded) {
-  background: radial-gradient(ellipse at 12% 0%, #dfc4951c, transparent 46%), var(--bg);
+/* Abu Ubaida Preparatory School for Boys — Qatari Interactive Educational Gaming Platform & Experience Studio */
+:root {
+  --secondary: #122438;
+  --accent: #c89b3c;
+  --card-radius: 18px;
+  --brand-logo-size: 52px;
+  --ministry-logo-size: 46px;
+  --school-img-pos: center 38%;
+  --school-overlay-alpha: 0.52;
+  --surface-elevated: #ffffff;
+  --surface-subtle: #faf6f0;
+  --border-warm: #e4d8c5;
 }
 
-.school-app:not(.admin-embedded) > header {
-  background: #ffffffeb;
+html,
+body.school-app {
+  overflow-x: clip;
+  max-width: 100%;
+}
+
+body.school-app:not(.admin-embedded) {
+  background:
+    radial-gradient(ellipse at 14% 0%, color-mix(in srgb, var(--accent, #c89b3c) 14%, transparent), transparent 48%),
+    radial-gradient(ellipse at 88% 8%, color-mix(in srgb, var(--primary, #8a1538) 8%, transparent), transparent 42%),
+    var(--bg);
+}
+
+/* Dark / Midnight Cyber Theme Preset Support */
+body.school-app[data-theme-preset="midnight-cyber"]:not(.admin-embedded) {
+  --ink: #f1f5f9;
+  --muted: #94a3b8;
+  --line: #1e293b;
+  --surface-elevated: #111c2d;
+  --surface-subtle: #0f172a;
+  --border-warm: #26354d;
+  color: #f1f5f9;
+}
+
+body.school-app[data-theme-preset="midnight-cyber"]:not(.admin-embedded) .card,
+body.school-app[data-theme-preset="midnight-cyber"]:not(.admin-embedded) .champion-box,
+body.school-app[data-theme-preset="midnight-cyber"]:not(.admin-embedded) .top-games-board,
+body.school-app[data-theme-preset="midnight-cyber"]:not(.admin-embedded) .teacher-box,
+body.school-app[data-theme-preset="midnight-cyber"]:not(.admin-embedded) .video-featured-stage,
+body.school-app[data-theme-preset="midnight-cyber"]:not(.admin-embedded) .about-board,
+body.school-app[data-theme-preset="midnight-cyber"]:not(.admin-embedded) .join {
+  background: #111c2d;
+  border-color: #26354d;
+  color: #f1f5f9;
+}
+
+body.school-app[data-theme-preset="midnight-cyber"]:not(.admin-embedded) h1,
+body.school-app[data-theme-preset="midnight-cyber"]:not(.admin-embedded) h2,
+body.school-app[data-theme-preset="midnight-cyber"]:not(.admin-embedded) h3,
+body.school-app[data-theme-preset="midnight-cyber"]:not(.admin-embedded) .champion-metrics b {
+  color: #f8fafc;
+}
+
+/* 1. Interactive Gaming-Platform Top Header & Dual Identity Bar */
+.school-app:not(.admin-embedded) > header.platform-top-header {
+  background: color-mix(in srgb, var(--surface-elevated, #ffffff) 92%, transparent);
   max-width: none;
-  padding-inline: max(24px, calc((100vw - 1216px) / 2));
-  backdrop-filter: blur(16px);
-  border-bottom: 1px solid #e7ddd0;
+  padding: 12px max(20px, calc((100vw - 1260px) / 2));
+  backdrop-filter: blur(18px);
+  border-bottom: 1px solid var(--border-warm, #e7ddd0);
+  box-shadow: 0 10px 30px -18px rgba(18, 36, 56, 0.14);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  position: sticky;
+  top: 0;
+  z-index: 60;
+}
+
+.header-brand-cluster {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  flex-shrink: 1;
+}
+
+.header-brand-cluster .brand {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  min-width: 0;
+}
+
+.header-brand-cluster .mark {
+  width: var(--brand-logo-size, 52px);
+  height: var(--brand-logo-size, 52px);
+  border-radius: 14px;
+  background: #ffffff;
+  border: 1px solid #e6dac8;
+  box-shadow: 0 4px 14px rgba(138, 21, 56, 0.08);
+  padding: 4px;
+  flex-shrink: 0;
+  object-fit: contain;
+}
+
+.brand-text-wrap {
+  min-width: 0;
+}
+
+.brand-text-wrap b {
+  display: block;
+  font-size: clamp(14px, 1.35vw, 17px);
+  font-weight: 800;
+  color: var(--ink);
+  line-height: 1.3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.brand-text-wrap small {
+  display: block;
+  font-size: 11.5px;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.brand-divider {
+  width: 1px;
+  height: 36px;
+  background: linear-gradient(180deg, transparent, #d9cbb8, transparent);
+  flex-shrink: 0;
+}
+
+.ministry-logo-slot {
+  display: inline-flex;
+  align-items: center;
+  background: #ffffff;
+  border: 1px solid #e7ddd0;
+  border-radius: 12px;
+  padding: 4px 10px;
+  box-shadow: 0 3px 10px rgba(18, 36, 56, 0.05);
+  flex-shrink: 0;
+}
+
+.ministry-logo-slot img {
+  height: var(--ministry-logo-size, 44px);
+  width: auto;
+  max-width: 165px;
+  object-fit: contain;
+  display: block;
+}
+
+/* Gaming Platform Interactive Navigation Tabs */
+.gaming-top-nav {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: color-mix(in srgb, var(--primary, #8a1538) 5%, #f7f3ec);
+  border: 1px solid #e5d9c7;
+  border-radius: 14px;
+  padding: 5px;
+  flex-shrink: 0;
+}
+
+.gaming-top-nav .nav-tab-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 38px !important;
+  padding: 6px 13px !important;
+  border-radius: 10px !important;
+  background: transparent;
+  color: #3b2d34;
+  font-size: 12.5px;
+  font-weight: 700;
+  border: 1px solid transparent;
+  text-decoration: none;
+  position: relative;
+  transition: transform 0.18s cubic-bezier(0.22, 1, 0.36, 1), background 0.18s ease, color 0.18s ease, box-shadow 0.18s ease;
+  white-space: nowrap;
+}
+
+.gaming-top-nav .nav-tab-btn:hover {
+  background: #ffffff;
+  color: var(--primary);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(138, 21, 56, 0.08);
+}
+
+.gaming-top-nav .nav-tab-btn:active {
+  transform: translateY(0) scale(0.98);
+}
+
+.gaming-top-nav .nav-tab-btn.active {
+  background: var(--primary);
+  color: #ffffff;
+  border-color: color-mix(in srgb, var(--accent, #c89b3c) 55%, transparent);
+  box-shadow: 0 6px 16px color-mix(in srgb, var(--primary, #8a1538) 28%, transparent);
+}
+
+.nav-tab-icon {
+  font-size: 13px;
+  line-height: 1;
+  opacity: 0.9;
+}
+
+.header-action-cluster {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.mobile-nav-toggle {
+  display: none !important;
+  min-height: 38px !important;
+  width: 38px !important;
+  padding: 0 !important;
+  border-radius: 10px !important;
+  font-size: 18px;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 1.5 Architectural School Building Identity Showcase */
+.school-identity-showcase {
+  margin: 6px 0 26px;
+}
+
+.school-architectural-banner {
+  position: relative;
+  border-radius: calc(var(--card-radius, 18px) + 6px);
+  overflow: hidden;
+  min-height: 330px;
+  background: #122438;
+  border: 1px solid #d5bc8d88;
+  box-shadow: 0 24px 54px -16px rgba(18, 36, 56, 0.24);
+  display: flex;
+  align-items: flex-end;
+  isolation: isolate;
+}
+
+.school-architectural-banner.style-split-arch {
+  display: grid;
+  grid-template-columns: 1.15fr 1fr;
+  min-height: 310px;
+  align-items: stretch;
+}
+
+.school-architectural-banner.style-glass-badge {
+  min-height: 270px;
+}
+
+.school-banner-media,
+.school-photo-frame {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+
+.school-architectural-banner.style-split-arch .school-banner-media,
+.school-architectural-banner.style-split-arch .school-photo-frame {
+  position: relative;
+  order: 2;
+  min-height: 260px;
+}
+
+.school-building-photo,
+.school-photo-frame img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: var(--school-img-pos, center 38%);
+  display: block;
+  transform: scale(1.01);
+  transition: transform 0.7s ease;
+}
+
+.school-architectural-banner:hover .school-building-photo,
+.school-architectural-banner:hover .school-photo-frame img {
+  transform: scale(1.035);
+}
+
+.school-banner-overlay,
+.school-photo-scrim {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(90deg, rgba(14, 25, 38, calc(var(--school-overlay, 0.52) + 0.28)) 0%, rgba(18, 36, 56, var(--school-overlay, 0.52)) 52%, rgba(18, 36, 56, 0.18) 100%),
+    linear-gradient(0deg, rgba(11, 20, 31, 0.86) 0%, transparent 65%);
+}
+
+.school-architectural-banner.style-split-arch .school-banner-overlay {
+  background: linear-gradient(90deg, rgba(18, 36, 56, 0.25), transparent 50%);
+}
+
+.school-identity-plaque {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  padding: 28px 32px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  flex-wrap: wrap;
+  color: #ffffff;
+}
+
+.school-architectural-banner.style-split-arch .school-identity-plaque {
+  order: 1;
+  background: linear-gradient(135deg, #122438 0%, #2a1221 100%);
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+}
+
+.plaque-badges,
+.plaque-top-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 10px;
+  width: 100%;
+}
+
+.plaque-badge,
+.plaque-ministry-kicker,
+.plaque-grade-scope {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  font-weight: 700;
+  padding: 4px 12px;
+  border-radius: 8px;
+  background: rgba(138, 21, 56, 0.88);
+  color: #f9ebd0;
+  border: 1px solid rgba(235, 214, 170, 0.45);
+  backdrop-filter: blur(8px);
+}
+
+.plaque-badge.gold,
+.plaque-grade-scope {
+  background: rgba(18, 36, 56, 0.82);
+  color: #ebd6aa;
+}
+
+.school-arabic-title,
+.plaque-school-name {
+  font-size: clamp(24px, 3vw, 38px);
+  font-weight: 900;
+  margin: 0 0 6px;
+  color: #ffffff !important;
+  letter-spacing: -0.4px;
+  line-height: 1.25;
+  text-shadow: 0 2px 16px rgba(0, 0, 0, 0.45);
+  width: 100%;
+}
+
+.school-arabic-subtitle,
+.plaque-school-sub {
+  font-size: clamp(13.5px, 1.35vw, 16px);
+  color: #f1e4c8;
+  margin: 0;
+  max-width: 64ch;
+  line-height: 1.65;
+  font-weight: 600;
+}
+
+.plaque-stats-strip {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.plaque-stat {
+  background: rgba(13, 25, 38, 0.78);
+  border: 1px solid rgba(235, 214, 170, 0.35);
+  backdrop-filter: blur(10px);
+  border-radius: 12px;
+  padding: 10px 14px;
+  min-width: 110px;
+  text-align: center;
+}
+
+.plaque-stat b {
+  display: block;
+  font-size: 15px;
+  font-weight: 800;
+  color: #f6dfac;
+}
+
+.plaque-stat span {
+  display: block;
+  font-size: 11px;
+  color: #d8e2ec;
+  margin-top: 2px;
 }
 
 /* Section Headers & Kickers */
 .home-section {
-  margin-top: 34px;
+  margin-top: 36px;
+  scroll-margin-top: 96px;
 }
 
 .school-app:not(.admin-embedded) .section-head {
@@ -43,15 +431,15 @@ body.school-app:not(.admin-embedded) {
 /* 2. Dynamic Rotating Game Hero */
 .school-app:not(.admin-embedded) .hero {
   gap: 32px;
-  padding: 28px 0 32px;
-  grid-template-columns: 1fr 1.12fr;
-  min-height: 400px;
+  padding: 20px 0 28px;
+  grid-template-columns: 1fr 1.14fr;
+  min-height: 390px;
   align-items: center;
 }
 
 .school-app .hero h1 {
-  font-size: clamp(30px, 3.6vw, 48px);
-  letter-spacing: -0.8px;
+  font-size: clamp(28px, 3.4vw, 44px);
+  letter-spacing: -0.6px;
   font-weight: 800;
   line-height: 1.25;
   margin: 10px 0 10px;
@@ -82,10 +470,10 @@ body.school-app:not(.admin-embedded) {
 }
 
 .hero-metric {
-  background: #ffffffd9;
-  border: 1px solid #e4d8c5;
+  background: var(--surface-elevated, #ffffffd9);
+  border: 1px solid var(--border-warm, #e4d8c5);
   border-radius: 12px;
-  padding: 9px 12px;
+  padding: 10px 12px;
   box-shadow: 0 3px 10px #2f1f2706;
 }
 
@@ -101,7 +489,7 @@ body.school-app:not(.admin-embedded) {
 .hero-metric span {
   display: block;
   font-size: 11.5px;
-  color: #5a4d53;
+  color: var(--muted, #5a4d53);
   margin-top: 2px;
 }
 
@@ -216,6 +604,7 @@ body.school-app:not(.admin-embedded) {
   margin: 0 0 4px;
   font-weight: 800;
   line-height: 1.3;
+  color: #ffffff !important;
 }
 
 .hero-showcase-caption p {
@@ -270,12 +659,40 @@ body.school-app:not(.admin-embedded) {
 .school-app .join {
   box-shadow: 0 8px 24px #34232a08;
   border-color: #dcd0be;
-  padding: 14px 20px;
-  border-radius: 14px;
-  background: #ffffff;
+  padding: 16px 22px;
+  border-radius: 16px;
+  background: var(--surface-elevated, #ffffff);
 }
 
-/* 4. Compact 8-Game Gallery (4 per row on desktop, 3 on medium, 2 on tablet/mobile) */
+/* 4. Interactive 8-Game Gallery & Category Filters */
+.gallery-filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.gallery-filter-btn {
+  min-height: 34px !important;
+  padding: 5px 13px !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  border-radius: 10px !important;
+  background: #ffffff !important;
+  color: #4b3b42 !important;
+  border: 1px solid #e2d6c3 !important;
+  cursor: pointer;
+  transition: all 0.16s ease;
+}
+
+.gallery-filter-btn:hover,
+.gallery-filter-btn.active {
+  background: var(--primary) !important;
+  color: #ffffff !important;
+  border-color: var(--primary) !important;
+  box-shadow: 0 4px 12px rgba(138, 21, 56, 0.18);
+}
+
 .games-gallery {
   grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
   gap: 14px !important;
@@ -285,16 +702,22 @@ body.school-app:not(.admin-embedded) {
   padding: 0;
   overflow: hidden;
   border-color: #e5ddd1;
-  border-radius: 14px;
+  border-radius: var(--card-radius, 16px);
   box-shadow: 0 4px 16px #30222b06;
   display: flex;
   flex-direction: column;
-  transition: transform 0.18s ease, box-shadow 0.18s ease;
+  transition: transform 0.2s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.2s ease, opacity 0.2s ease;
+}
+
+.game-cover-card.is-filtered-out {
+  opacity: 0.22;
+  transform: scale(0.96);
+  filter: grayscale(0.6);
 }
 
 .game-cover-card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 12px 24px #30222b12;
+  transform: translateY(-4px);
+  box-shadow: 0 14px 28px #30222b14;
 }
 
 .game-cover {
@@ -313,7 +736,7 @@ body.school-app:not(.admin-embedded) {
 }
 
 .game-cover-card:hover .game-cover img {
-  transform: scale(1.03);
+  transform: scale(1.04);
 }
 
 .cover-number {
@@ -383,9 +806,9 @@ body.school-app:not(.admin-embedded) {
 }
 
 .champion-box {
-  background: #ffffff;
-  border: 1px solid #e4d8c5;
-  border-radius: 16px;
+  background: var(--surface-elevated, #ffffff);
+  border: 1px solid var(--border-warm, #e4d8c5);
+  border-radius: var(--card-radius, 16px);
   padding: 18px 20px;
   box-shadow: 0 6px 20px #2f1f2706;
   display: flex;
@@ -414,8 +837,8 @@ body.school-app:not(.admin-embedded) {
 }
 
 .champion-emblem {
-  width: 28px;
-  height: 28px;
+  width: 30px;
+  height: 30px;
   border-radius: 8px;
   display: inline-flex;
   align-items: center;
@@ -449,6 +872,21 @@ body.school-app:not(.admin-embedded) {
 .champion-class-meta {
   font-size: 12px;
   color: #65555c;
+}
+
+.champion-score-bar {
+  height: 6px;
+  background: #f1e9dc;
+  border-radius: 99px;
+  overflow: hidden;
+  margin-top: 4px;
+}
+
+.champion-score-fill {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, var(--primary), var(--accent, #c89b3c));
+  border-radius: 99px;
 }
 
 .champion-metrics {
@@ -500,11 +938,42 @@ body.school-app:not(.admin-embedded) {
   min-height: 32px !important;
 }
 
-/* 6. Weekly Most-Played Games */
+/* 6. Weekly Most-Played Games & Engagement KPIs */
+.engagement-kpi-strip {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.engagement-kpi-item {
+  background: var(--surface-elevated, #ffffff);
+  border: 1px solid var(--border-warm, #e6ddd0);
+  border-radius: 14px;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.engagement-kpi-item b {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.engagement-kpi-item span {
+  font-size: 12px;
+  color: var(--muted, #615258);
+  font-weight: 600;
+}
+
 .top-games-board {
-  background: #ffffff;
-  border: 1px solid #e6ddd0;
-  border-radius: 16px;
+  background: var(--surface-elevated, #ffffff);
+  border: 1px solid var(--border-warm, #e6ddd0);
+  border-radius: var(--card-radius, 16px);
   padding: 14px 18px;
   display: flex;
   flex-direction: column;
@@ -597,8 +1066,8 @@ body.school-app:not(.admin-embedded) {
 }
 
 .teacher-box {
-  background: #ffffff;
-  border: 1px solid #e5ddd0;
+  background: var(--surface-elevated, #ffffff);
+  border: 1px solid var(--border-warm, #e5ddd0);
   border-radius: 14px;
   padding: 15px 16px;
   display: flex;
@@ -647,8 +1116,8 @@ body.school-app:not(.admin-embedded) {
 }
 
 .teachers-empty-banner {
-  background: #ffffff;
-  border: 1px solid #e5ddd0;
+  background: var(--surface-elevated, #ffffff);
+  border: 1px solid var(--border-warm, #e5ddd0);
   border-radius: 14px;
   padding: 16px 20px;
   display: flex;
@@ -669,7 +1138,7 @@ body.school-app:not(.admin-embedded) {
   margin: 0;
 }
 
-/* 8. Functional Educational Video Gallery */
+/* 8. Functional Educational Video Gallery & Multi-Layouts */
 .video-gallery-board {
   display: grid;
   grid-template-columns: 1.55fr 1fr;
@@ -677,10 +1146,34 @@ body.school-app:not(.admin-embedded) {
   align-items: start;
 }
 
+.video-gallery-board.layout-grid,
+.video-gallery-board.layout-carousel {
+  grid-template-columns: 1fr;
+}
+
+.video-gallery-board.layout-grid .video-playlist {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  max-height: none;
+}
+
+.video-gallery-board.layout-carousel .video-playlist {
+  display: flex;
+  flex-direction: row;
+  overflow-x: auto;
+  max-height: none;
+  padding-bottom: 6px;
+}
+
+.video-gallery-board.layout-carousel .video-thumb-btn {
+  min-width: 260px;
+  flex: 0 0 270px;
+}
+
 .video-featured-stage {
-  background: #ffffff;
-  border: 1px solid #e4dacb;
-  border-radius: 16px;
+  background: var(--surface-elevated, #ffffff);
+  border: 1px solid var(--border-warm, #e4dacb);
+  border-radius: var(--card-radius, 16px);
   overflow: hidden;
   box-shadow: 0 8px 24px #2b1d2308;
 }
@@ -817,8 +1310,8 @@ body.school-app:not(.admin-embedded) {
 }
 
 .video-empty-board {
-  background: #ffffff;
-  border: 1px solid #e5ddd0;
+  background: var(--surface-elevated, #ffffff);
+  border: 1px solid var(--border-warm, #e5ddd0);
   border-radius: 16px;
   padding: 18px 22px;
   display: flex;
@@ -840,9 +1333,9 @@ body.school-app:not(.admin-embedded) {
 
 /* 9. Compact School About & Contact Section */
 .about-board {
-  background: #ffffff;
-  border: 1px solid #e5ddd0;
-  border-radius: 16px;
+  background: var(--surface-elevated, #ffffff);
+  border: 1px solid var(--border-warm, #e5ddd0);
+  border-radius: var(--card-radius, 16px);
   padding: 20px 24px;
   display: grid;
   grid-template-columns: 1.4fr 1fr;
@@ -863,6 +1356,23 @@ body.school-app:not(.admin-embedded) {
   margin: 0 0 12px;
 }
 
+.about-badges-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.about-pill {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--primary);
+  background: #faf3e8;
+  border: 1px solid #ead8bc;
+  padding: 4px 10px;
+  border-radius: 8px;
+}
+
 .about-contact {
   background: #faf6f0;
   border: 1px solid #eadfce;
@@ -876,6 +1386,462 @@ body.school-app:not(.admin-embedded) {
   color: var(--primary);
 }
 
+.contact-detail-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+  color: #5c4d53;
+  margin-bottom: 12px;
+}
+
+/* 10. Administrative Design & Experience Studio */
+.admin-experience-studio {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.studio-header-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  background: linear-gradient(115deg, #ffffff 0%, #fcf8f2 100%);
+  border: 1px solid #e4d8c5;
+  border-inline-start: 4px solid var(--primary);
+}
+
+.studio-header-bar h2 {
+  font-size: 22px;
+  margin: 4px 0 6px;
+}
+
+.studio-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.studio-module-tabs {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #ffffff;
+  border: 1px solid #e4d8c5;
+  border-radius: 14px;
+  padding: 6px;
+  overflow-x: auto;
+  margin-bottom: 14px;
+}
+
+.studio-module-btn,
+.studio-tab-btn {
+  min-height: 38px !important;
+  padding: 6px 14px !important;
+  border-radius: 10px !important;
+  background: transparent;
+  color: #4f4247;
+  font-size: 12.5px;
+  font-weight: 700;
+  border: 1px solid transparent;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.studio-module-btn.active,
+.studio-tab-btn.active {
+  background: var(--primary);
+  color: #ffffff;
+}
+
+.studio-workspace-split,
+#settingsForm.studio-grid {
+  display: grid;
+  grid-template-columns: 1.15fr 0.85fr;
+  gap: 20px;
+  align-items: start;
+}
+
+.studio-controls-pane,
+.studio-controls-col {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+
+.studio-module-pane {
+  display: none;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.studio-module-pane.active {
+  display: flex;
+}
+
+.studio-card h3,
+.studio-module-card h3 {
+  font-size: 17px;
+  margin: 0 0 12px;
+  color: var(--primary);
+}
+
+.studio-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.studio-span-2 {
+  grid-column: 1 / -1;
+}
+
+.studio-subbox {
+  background: #faf7f2;
+  border: 1px solid #e6dccb;
+  border-radius: 14px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.studio-subbox h4 {
+  margin: 0 0 4px;
+  font-size: 14.5px;
+  color: #2f2027;
+}
+
+.studio-subbox-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.studio-upload-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.studio-thumb-preview {
+  width: 58px;
+  height: 44px;
+  object-fit: contain;
+  background: #ffffff;
+  border: 1px solid #e2d6c5;
+  border-radius: 8px;
+  padding: 3px;
+}
+
+.studio-building-thumb {
+  width: 110px;
+  height: 62px;
+  object-fit: cover;
+  border-radius: 10px;
+  border: 1px solid #d8c8b0;
+}
+
+.studio-color-input {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.studio-color-input input[type="color"] {
+  width: 48px;
+  height: 42px;
+  padding: 2px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.studio-sections-list,
+.studio-nav-list,
+.studio-section-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.studio-section-row,
+.studio-nav-row,
+.studio-section-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px;
+  background: #faf7f2;
+  border: 1px solid #e5dac8;
+  border-radius: 12px;
+  flex-wrap: wrap;
+}
+
+.studio-section-check {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+}
+
+.studio-section-check div strong {
+  display: block;
+  font-size: 13.5px;
+}
+
+.studio-section-check div small {
+  display: block;
+  font-size: 11px;
+  color: #6b5c62;
+}
+
+.studio-row-arrows {
+  display: flex;
+  gap: 4px;
+}
+
+.studio-row-arrows button,
+.studio-nav-row button {
+  min-height: 32px !important;
+  padding: 4px 10px !important;
+  font-size: 12px !important;
+}
+
+.studio-nav-row input[type="text"] {
+  flex: 1;
+  min-width: 120px;
+}
+
+.studio-inline-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  margin: 0;
+}
+
+.studio-preview-dock {
+  position: sticky;
+  top: 96px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.studio-preview-toolbar,
+.preview-dock-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.studio-device-switcher,
+.preview-device-btns {
+  display: flex;
+  gap: 4px;
+  background: #f4efe6;
+  padding: 4px;
+  border-radius: 10px;
+}
+
+.studio-device-btn,
+.preview-device-btns button {
+  min-height: 30px !important;
+  padding: 4px 10px !important;
+  font-size: 11.5px !important;
+  border-radius: 7px !important;
+  background: transparent;
+  color: #54464c;
+}
+
+.studio-device-btn.active,
+.preview-device-btns button.active {
+  background: var(--primary) !important;
+  color: #ffffff !important;
+}
+
+.studio-preview-stage,
+.settings-preview {
+  transition: max-width 0.25s ease;
+  width: 100%;
+  margin-inline: auto;
+  border-radius: 16px;
+  border: 1px solid #dfd3c0;
+  padding: 14px;
+}
+
+.studio-preview-stage.device-tablet,
+.settings-preview.device-tablet {
+  max-width: 420px;
+}
+
+.studio-preview-stage.device-mobile,
+.settings-preview.device-mobile {
+  max-width: 310px;
+}
+
+.studio-live-card {
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid #dfd3c0;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.studio-mini-header,
+.preview-mini-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  background: #ffffff;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid #eadfce;
+}
+
+.studio-mini-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.studio-mini-brand img {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+  border-radius: 7px;
+}
+
+.studio-mini-brand b {
+  display: block;
+  font-size: 12px;
+  color: #1f161b;
+}
+
+.studio-mini-brand small {
+  display: block;
+  font-size: 10px;
+  color: #6b5b62;
+}
+
+.studio-mini-ministry {
+  height: 26px;
+  width: auto;
+  object-fit: contain;
+}
+
+.studio-mini-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.studio-mini-nav span {
+  font-size: 10px;
+  background: #ffffff;
+  border: 1px solid #e4d8c5;
+  padding: 2px 7px;
+  border-radius: 6px;
+  color: #3f3137;
+}
+
+.studio-mini-building {
+  position: relative;
+  height: 110px;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #122438;
+}
+
+.studio-mini-building img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.studio-mini-building-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(0deg, rgba(12, 22, 34, 0.85), rgba(12, 22, 34, 0.25));
+  color: #ffffff;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+.studio-mini-building-overlay strong {
+  font-size: 12.5px;
+}
+
+.studio-mini-building-overlay span {
+  font-size: 10px;
+  color: #ebd6aa;
+}
+
+.studio-mini-hero {
+  background: #ffffff;
+  border: 1px solid #eadfce;
+  border-radius: 12px;
+  padding: 10px 12px;
+}
+
+.studio-mini-eyebrow {
+  font-size: 10px;
+  color: #8a1538;
+  font-weight: 700;
+}
+
+.studio-mini-hero h4 {
+  font-size: 14px;
+  margin: 4px 0;
+  color: #1f161b;
+}
+
+.studio-mini-hero p {
+  font-size: 11px;
+  color: #5f5056;
+  margin: 0 0 8px;
+}
+
+.studio-mini-sections {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.studio-mini-sec-pill {
+  font-size: 10px;
+  background: #f5efe6;
+  color: #4f4046;
+  padding: 2px 7px;
+  border-radius: 6px;
+}
+
+.studio-version-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 0;
+  border-bottom: 1px solid #f0e8dc;
+  font-size: 12px;
+}
+
 .school-app:not(.admin-embedded) footer {
   margin-top: 32px;
 }
@@ -885,7 +1851,40 @@ body.school-app:not(.admin-embedded) {
   min-height: 42px;
 }
 
-/* Responsive Breakpoints */
+/* Responsive Breakpoints & Overflow Protection */
+@media (max-width: 1140px) {
+  .gaming-top-nav {
+    display: none;
+    position: absolute;
+    top: calc(100% + 6px);
+    right: 16px;
+    left: 16px;
+    background: #ffffff;
+    border: 1px solid #dfd2bf;
+    box-shadow: 0 18px 40px rgba(18, 36, 56, 0.16);
+    padding: 10px;
+    flex-direction: column;
+    align-items: stretch;
+    z-index: 80;
+  }
+
+  .gaming-top-nav.is-open {
+    display: flex;
+  }
+
+  .mobile-nav-toggle {
+    display: inline-flex !important;
+  }
+
+  .studio-workspace-split {
+    grid-template-columns: 1fr;
+  }
+
+  .studio-preview-dock {
+    position: static;
+  }
+}
+
 @media (max-width: 1080px) {
   .games-gallery {
     grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
@@ -900,7 +1899,11 @@ body.school-app:not(.admin-embedded) {
     gap: 22px;
     min-height: 0;
   }
-  .champions-board {
+  .school-architectural-banner.style-split-arch {
+    grid-template-columns: 1fr;
+  }
+  .champions-board,
+  .engagement-kpi-strip {
     grid-template-columns: 1fr;
   }
   .about-board {
@@ -909,21 +1912,67 @@ body.school-app:not(.admin-embedded) {
   .games-gallery {
     grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
   }
+  .studio-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
-@media (max-width: 650px) {
-  .school-app:not(.admin-embedded) > header {
-    padding-inline: 14px;
+@media (max-width: 680px) {
+  .school-app:not(.admin-embedded) > header.platform-top-header {
+    padding: 10px 14px;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .brand-divider {
+    display: none;
+  }
+  .ministry-logo-slot {
+    padding: 3px 7px;
+  }
+  .ministry-logo-slot img {
+    height: 32px;
+    max-width: 118px;
+  }
+  .header-brand-cluster .mark {
+    width: 40px;
+    height: 40px;
+  }
+  .brand-text-wrap b {
+    font-size: 13.5px;
+    white-space: normal;
+  }
+  .brand-text-wrap small {
+    display: none;
+  }
+  .header-action-cluster {
+    width: 100%;
+    justify-content: space-between;
+  }
+  .header-action-cluster .button {
+    padding: 6px 10px !important;
+    font-size: 12px !important;
+    min-height: 36px !important;
+  }
+  .school-architectural-banner {
+    min-height: 250px;
+  }
+  .school-identity-plaque {
+    padding: 18px 16px;
+    gap: 14px;
+  }
+  .plaque-stat {
+    min-width: 90px;
+    padding: 7px 10px;
   }
   .school-app:not(.admin-embedded) .hero {
     grid-template-columns: 1fr;
-    padding: 16px 0 22px;
+    padding: 14px 0 22px;
   }
   .hero-showcase {
     aspect-ratio: 16 / 11;
   }
   .school-app .hero h1 {
-    font-size: 30px;
+    font-size: 28px;
     margin-top: 10px;
   }
   .hero-metrics {
@@ -971,13 +2020,18 @@ body.school-app:not(.admin-embedded) {
   }
 }
 
+/* Motion Sensitivity & Admin Motion Modes */
+body[data-motion-mode="minimal"] *,
 @media (prefers-reduced-motion: reduce) {
   .game-cover-card,
   .game-cover img,
-  .hero-scene img {
-    transition: none;
+  .hero-scene img,
+  .school-building-photo,
+  .gaming-top-nav .nav-tab-btn {
+    transition: none !important;
   }
-  .game-cover-card:hover {
-    transform: none;
+  .game-cover-card:hover,
+  .school-architectural-banner:hover .school-building-photo {
+    transform: none !important;
   }
 }

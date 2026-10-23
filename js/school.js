@@ -1,14 +1,74 @@
-/* School V19: same question bank, separate assignment / play / reporting flows. */
+/* School V21: Complete Cinematic Educational Gaming Platform + Full Admin Experience Studio */
 (()=>{'use strict';
 const M=window.Manarat,$=id=>document.getElementById(id),esc=M.esc;
 const endpoint='https://yltlzogrhwvnmxcnaesu.supabase.co/functions/v1/school-api';
 const adminPanel=new URLSearchParams(location.search).get('adminPanel');
 if(adminPanel)document.body.classList.add('admin-embedded');
 const KEY='sb_publishable_W-XxH2FTvSZq66b-eHt-TQ_a8ZuqGRD';
+const OFFICIAL_SCHOOL_NAME='مدرسة أبو عبيدة الإعدادية للبنين';
 const games={race:['🏎️','سباق السيارات'],football:['⚽','كرة القدم'],basketball:['🏀','كرة السلة'],volleyball:['🏐','الكرة الطائرة'],bowling:['🎳','البولينج'],fishing:['🎣','صيد الأسماك'],puzzle:['🧩','بازل الصور'],classic:['✦','تحدّي المعرفة']};
+const gameCategories={race:'speed',football:'sports',basketball:'sports',volleyball:'sports',bowling:'speed',fishing:'mind',puzzle:'mind',classic:'mind'};
 const types={multiple_choice:'اختيار من متعدد',true_false:'صح وخطأ',open_text:'مقالي',matching:'مطابقة',connecting:'توصيل',ordering:'ترتيب',classification:'تصنيف',puzzle_image:'بازل الصور'};
 function gameIcon(k){const paths={race:'<path d="M3 15l2-6h14l2 6v4H3zM7 9l2-4h6l2 4M6 19v2m12-2v2M6 14h2m8 0h2"/>',football:'<circle cx="12" cy="12" r="9"/><path d="M12 7l5 4-2 6H9l-2-6zM12 3v4m9 5l-4-1m-2 6l3 3M9 17l-3 3M3 12l4-1"/>',basketball:'<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3v18M5 5q12 7 0 14M19 5q-12 7 0 14"/>',volleyball:'<circle cx="12" cy="12" r="9"/><path d="M12 3q-4 6 0 9t0 9M3 12q5-3 9 0M12 12q3-5 8-6M5 6q3 6 2 12"/>',bowling:'<path d="M8 3h4v5l3 9q1 4-5 4t-5-4l3-9zM8 7h4"/><circle cx="18" cy="17" r="4"/><path d="M17 16h.1m2 0h.1"/>',fishing:'<path d="M14 3v9q0 5-5 5t-4-5M5 12l2 2M4 5l16-3"/><path d="M12 20q4-6 8-2l3-2v6l-3-2q-4 3-8 0z"/>',puzzle:'<path d="M4 4h6q-2 6 3 5t2-5h5v6q-6-2-5 3t5 2v5h-6q2-6-3-5t-2 5H4v-6q6 2 5-3t-5-2z"/>',classic:'<path d="M12 2l3 7 7 3-7 3-3 7-3-7-7-3 7-3z"/>'};return `<svg viewBox="0 0 24 24" aria-hidden="true" width="25" height="25" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">${paths[k]||paths.classic}</svg>`;}
-let config={name:'مدرسة أبو عبيدة الإعدادية للبنين',subtitle:'منصة التعلّم التفاعلي',primary:'#8a1538',background:'#f8f6f4',hero:'تعلّم بطريقتك. وتقدّم كل يوم.',description:'مساحة واحدة تجمع معلمي المدرسة وطلابها.',socials:[],sections:['games','videos','about']},data=null,tab='games',assignment=null,play=null,selected='race',noticeTimer,settingsDraft;
+
+const DEFAULT_NAV_ITEMS=[
+ {id:'hero',label:'الرئيسية',href:'#heroShowcaseSection',icon:'⌂',visible:true},
+ {id:'games',label:'الألعاب التعليمية',href:'#gamesGallerySection',icon:'🎮',visible:true},
+ {id:'champions',label:'نجوم التميز',href:'#weeklyChampionsSection',icon:'🏆',visible:true},
+ {id:'topGames',label:'الأكثر تفاعلًا',href:'#weeklyTopGamesSection',icon:'🔥',visible:true},
+ {id:'videos',label:'مكتبة الفيديو',href:'#schoolVideosSection',icon:'🎬',visible:true},
+ {id:'about',label:'عن المنصة',href:'#aboutSchoolSection',icon:'🏛️',visible:true}
+];
+
+const THEME_PRESETS={
+ 'qatar-arena':{label:'العنابي القطري والذهبي (الافتراضي)',primary:'#8a1538',background:'#f6f4f0',accent:'#d4af37',surface:'#ffffff',ink:'#18151c'},
+ 'midnight-cyber':{label:'الساحة الليلية السينمائية (كحلي ملكي)',primary:'#9e1b42',background:'#0b1322',accent:'#38bdf8',surface:'#131f35',ink:'#f8fafc'},
+ 'doha-oasis':{label:'واحة الدوحة التعليمية (زمردي وذهبي)',primary:'#065f46',background:'#f3f7f5',accent:'#d97706',surface:'#ffffff',ink:'#0f172a'},
+ 'royal-gold':{label:'القصر التعليمي الفاخر (عنابي عميق وعاجي)',primary:'#701a32',background:'#faf7f2',accent:'#b45309',surface:'#ffffff',ink:'#1e1b24'}
+};
+
+function defaultConfig(){
+ return {
+  name:OFFICIAL_SCHOOL_NAME,
+  subtitle:'منصة التعلّم التفاعلي والألعاب التعليمية',
+  primary:'#8a1538',
+  background:'#f6f4f0',
+  accent:'#d4af37',
+  themePreset:'qatar-arena',
+  fontFamily:'Tajawal',
+  cardRadius:18,
+  motionLevel:'balanced',
+  layoutDensity:'comfortable',
+  stickyHeader:true,
+  logo:'',
+  logoSize:44,
+  ministryLogo:'assets/qatar-moehe-logo.svg',
+  showMinistryLogo:true,
+  ministryLogoSize:44,
+  schoolImage:'assets/school-building.png',
+  showSchoolImage:true,
+  schoolImageStyle:'cinematic-glass',
+  schoolImagePos:'center',
+  schoolImageOverlay:52,
+  hero:'تعلّم بطريقتك. وتقدّم كل يوم.',
+  description:'منصة الألعاب التعليمية التفاعلية ثلاثية الأبعاد — مهمات صفية، واجبات منزلية، وتقارير إنجاز مباشرة تجمع معلمي المدرسة وطلابها.',
+  heroIntervalSeconds:6,
+  heroAutoRotate:true,
+  enablePuzzleInHero:false,
+  galleryColumns:4,
+  rankingsEnabled:true,
+  teacherRecognitionEnabled:true,
+  studentPrivacyMode:'abbreviated',
+  videoLayout:'featured-split',
+  socials:[],
+  homepageVideos:[],
+  navItems:structuredClone(DEFAULT_NAV_ITEMS),
+  sections:['games','champions','topGames','activeTeachers','videos','about']
+ };
+}
+
+let config=defaultConfig(),data=null,tab='games',assignment=null,play=null,selected='race',noticeTimer,settingsDraft,studioModule='all',previewDeviceMode='desktop',activeGameCategory='all',activeVideoSubject='all';
+
 function gameHUD(){if(!play||!assignment)return '';const maximum=play.questions.reduce((n,q)=>n+Math.max(1,Math.min(100,Number(q.points)||10)),0),score=maximum?Math.round((play.points||0)*100/maximum):0;return `<header class="game-session-hud"><div class="session-identity"><span>${esc(config.name)}</span><strong>${esc(assignment.title)}</strong><div class="session-details"><span>${esc(games[play.template]?.[1]||'')}</span><span>المادة: ${esc(assignment.subject||'غير محددة')}</span>${assignment.teacher?`<span>المعلم: ${esc(assignment.teacher)}</span>`:''}${assignment.class_name?`<span>${esc(assignment.class_name)}</span>`:''}</div></div><div class="session-scores"><div><small>النقاط التعليمية</small><b>${play.points||0}<em> / ${maximum}</em></b></div><div><small>${assignment.mode==='group'?'النمط':play.pendingCount?'الدرجة المبدئية':'الدرجة'}</small><b>${assignment.mode==='group'?'جماعي':score+'%'}</b></div><div><small>الإجابات</small><b>${play.completed||0}<em> / ${play.questions.length}</em></b></div></div>${play.demo?'<p class="session-note">تجربة تدريبية — لا تُسجّل نتائجها في حسابات الطلاب.</p>':play.pendingCount?'<p class="session-note">توجد إجابات تنتظر تصحيح المعلم.</p>':''}</header>`;}
 
 function controlsBusy(){return !!play?.answerPending||!!play?.lifecyclePending;}
@@ -22,16 +82,62 @@ function startDemo(sport){if(sport==='puzzle')return home();if(!['race','footbal
 async function api(action,payload={}){if(play?.demo&&payload.id===play.id){if(action==='answer'){const q=play.questions.find(q=>q.id===payload.question);if(!q)throw new Error('سؤال غير صالح.');const correct=payload.value===q.correct;return {correct,pending:false,points:correct?q.points:0,max:q.points,feedback:correct?'إجابة صحيحة، أحسنت!':'إجابة غير صحيحة، واصل المحاولة.',explanation:''};}if(action==='finish'){const total=play.questions.reduce((n,q)=>n+q.points,0);const score=Math.round((play.points||0)/total*100);return {score,pending:false,passed:score>=70,group:false};}if(action==='leaderboard')return [];}
 if(adminPanel&&window.parent&&window.parent!==window){try{const broker=window.parent.ManaratAdminRequests;if(broker)return await broker.request(action,payload);}catch(e){throw e;}}if(!['settings','homeHub'].includes(action))await M.ensureFreshSession();const token=M.authSession()?.access_token;const res=await fetch(endpoint,{method:'POST',headers:{apikey:KEY,'Content-Type':'application/json',...(token?{Authorization:'Bearer '+token}:{})},body:JSON.stringify({action,...payload})});const j=await res.json();if(!res.ok)throw new Error(j.error||'تعذر الاتصال.');return j;}
 function notice(msg){$('notice').textContent=msg;$('notice').style.display='block';clearTimeout(noticeTimer);noticeTimer=setTimeout(()=>$('notice').style.display='none',5500);}
-async function run(fn,button){if(button)button.disabled=true;try{return await fn();}catch(e){notice(e.message||'تعذر تنفيذ العملية.');if($('app').querySelector('.loading'))show('<section class="card"><h2>تعذر فتح الصفحة</h2><p>'+esc(e.message)+'</p><a class="button" href="index.html">العودة للرئيسية</a></section>');}finally{if(button)button.disabled=false;}}
+async function run(fn,button){if(button)button.disabled=true;try{return await fn();}catch(e){notice(e.message||'تعذر تنفيذ العملية.');if($('app').querySelector?.('.loading'))show('<section class="card"><h2>تعذر فتح الصفحة</h2><p>'+esc(e.message)+'</p><a class="button" href="index.html">العودة للرئيسية</a></section>');}finally{if(button)button.disabled=false;}}
 function show(html){document.body.classList.toggle?.('playing-game',html.includes('class="game-session-hud"'));$('app').innerHTML=html;window.scrollTo(0,0);}
-function dialog(html){$('modal').classList.toggle('scene-question',!!play&&['volleyball','fishing','puzzle','classic'].includes(play.template)&&html.includes('game-layout'));$('modalContent').innerHTML=(html.includes('game-layout')?'<div data-game-nav-slot></div>':'')+html;if(!$('modal').open)$('modal').showModal();}
+function dialog(html){$('modal').classList.toggle?.('scene-question',!!play&&['volleyball','fishing','puzzle','classic'].includes(play.template)&&html.includes('game-layout'));$('modalContent').innerHTML=(html.includes('game-layout')?'<div data-game-nav-slot></div>':'')+html;if(!$('modal').open)$('modal').showModal();}
 function close(){$('modal').close();}
 function button(text,action,id='',cls=''){return `<button type="button" class="${cls}" data-action="${action}" data-id="${esc(id)}">${text}</button>`;}
 function field(label,id,value='',type='text'){return `<label for="${id}">${label}</label><input id="${id}" type="${type}" value="${esc(value)}">`;}
-function applyBrand(c){document.documentElement.style.setProperty('--primary',c.primary);document.documentElement.style.setProperty('--bg',c.background);$('brandName').textContent=c.name;$('brandSubtitle').textContent=c.subtitle;document.title=c.name+' | منصة التعلم';$('brandMark').innerHTML=c.logo?`<img alt="شعار المدرسة" src="${esc(c.logo)}">`:'أ';$('footer').innerHTML=`<span>${esc(c.footerText||c.name+' · مساحة للتعلّم والإنجاز')}</span><div class="row">${(c.socials||[]).filter(s=>s.visible!==false&&/^https:\/\//.test(s.url)).map(s=>`<a href="${esc(s.url)}" target="_blank" rel="noopener">${esc(s.label)}</a>`).join('')}</div>`;}
+
+function resolveNavItems(c){
+ const list=Array.isArray(c?.navItems)&&c.navItems.length?c.navItems:DEFAULT_NAV_ITEMS;
+ return list.filter(item=>item&&item.visible!==false&&item.label);
+}
+
+function applyBrand(c){
+ const cfg={...defaultConfig(),...(c||{})};
+ const preset=THEME_PRESETS[cfg.themePreset]||THEME_PRESETS['qatar-arena'];
+ const primary=cfg.primary||preset.primary||'#8a1538';
+ const background=cfg.background||preset.background||'#f6f4f0';
+ const accent=cfg.accent||preset.accent||'#d4af37';
+ const isDark=cfg.themePreset==='midnight-cyber'||/^#0[0-9a-f]/i.test(background);
+ const rootStyle=document.documentElement.style;
+ rootStyle.setProperty('--primary',primary);
+ rootStyle.setProperty('--bg',background);
+ rootStyle.setProperty('--accent',accent);
+ rootStyle.setProperty('--ui-radius',(Number(cfg.cardRadius)||18)+'px');
+ rootStyle.setProperty('--logo-size',(Math.max(32,Math.min(72,Number(cfg.logoSize)||44)))+'px');
+ rootStyle.setProperty('--ministry-logo-size',(Math.max(32,Math.min(72,Number(cfg.ministryLogoSize)||44)))+'px');
+ rootStyle.setProperty('--school-overlay',(Math.max(15,Math.min(88,Number(cfg.schoolImageOverlay)??52))/100).toFixed(2));
+ rootStyle.setProperty('--gallery-cols',String(Math.max(2,Math.min(4,Number(cfg.galleryColumns)||4))));
+ if(document.body?.dataset){
+  document.body.dataset.themePreset=cfg.themePreset||(isDark?'midnight-cyber':'qatar-arena');
+  document.body.dataset.motionLevel=cfg.motionLevel||'balanced';
+  document.body.dataset.layoutDensity=cfg.layoutDensity||'comfortable';
+  document.body.dataset.fontFamily=cfg.fontFamily||'Tajawal';
+ }
+ const hdr=$('platformHeader');
+ if(hdr&&hdr.classList?.toggle){hdr.classList.toggle('is-sticky',cfg.stickyHeader!==false);}
+ $('brandName').textContent=cfg.name;
+ $('brandSubtitle').textContent=cfg.subtitle;
+ document.title=cfg.name+' | منصة التعلم';
+ $('brandMark').innerHTML=cfg.logo?`<img alt="شعار المدرسة" src="${esc(cfg.logo)}" referrerpolicy="no-referrer">`:'أ';
+ const minSlot=$('ministryBrandSlot'),minImg=$('ministryLogoImg');
+ if(minSlot){
+  minSlot.hidden=cfg.showMinistryLogo===false;
+  if(minImg&&cfg.ministryLogo)minImg.src=cfg.ministryLogo;
+ }
+ const navTrack=$('primaryNavTabs');
+ if(navTrack){
+  const items=resolveNavItems(cfg);
+  navTrack.innerHTML=items.map((it,idx)=>`<a href="${esc(it.href||'#')}" class="nav-tab-btn ${idx===0?'active':''}" data-nav-href="${esc(it.href||'#')}"><span class="nav-tab-icon" aria-hidden="true">${esc(it.icon||'✦')}</span><span class="nav-tab-label">${esc(it.label)}</span></a>`).join('');
+ }
+ $('footer').innerHTML=`<div class="footer-brand-row"><strong>${esc(cfg.name)}</strong><span>·</span><span>${esc(cfg.footerText||cfg.name+' · مساحة للتعلّم التفاعلي والإنجاز الرقمي')}</span></div><div class="row footer-links-row">${(cfg.socials||[]).filter(s=>s.visible!==false&&/^https:\/\//.test(s.url)).map(s=>`<a href="${esc(s.url)}" target="_blank" rel="noopener">${esc(s.label)}</a>`).join('')}</div>`;
+}
+
 async function navigation(){if($('adminLink')){$('adminLink').hidden=true;if(M.isAuthenticated())try{const p=await api('profile');$('adminLink').hidden=!p.admin;}catch{}}$('dashboardLink').hidden=!M.isAuthenticated();$('loginLink').textContent=M.isAuthenticated()?'خروج':'دخول المعلم';}
 let hubData={videos:[],weekly:null,puzzleAvailable:false},heroIdx=0,heroTimer=null,heroPaused=false,activeVideoKey='';
-const sectionLabels={games:'الألعاب التعليمية',champions:'نجوم التميز الأسبوعي',topGames:'الألعاب الأكثر تفاعلًا',activeTeachers:'المعلمون الأكثر تفعيلًا',videos:'مكتبة الفيديوهات التعليمية',about:'عن المنصة والتواصل'};
+const sectionLabels={schoolIdentity:'واجهة مبنى المدرسة والهوية',games:'الألعاب التعليمية',champions:'نجوم التميز الأسبوعي',topGames:'الألعاب الأكثر تفاعلًا',activeTeachers:'المعلمون الأكثر تفعيلًا',videos:'مكتبة الفيديوهات التعليمية',about:'عن المنصة والتواصل'};
 const heroCatalog={
  football:{key:'football',name:'كرة القدم',badge:'ملعب ثلاثي الأبعاد',headline:'مرّر بذكاء، أجب بدقة، وسجّل هدف الفوز',pitch:'واجه حارس المرمى في بيئة ثلاثية الأبعاد وحوّل كل إجابة صحيحة إلى هجمة متقنة.',cover:'assets/game-covers/football.svg'},
  volleyball:{key:'volleyball',name:'الكرة الطائرة',badge:'تداول 6×6',headline:'استقبل، أعدّ الكرة، واضرب ساحقًا بالمعرفة',pitch:'تبادل الكرات فوق الشبكة مع فريقك وتقدّم في الأشواط عبر الإجابات المتتالية.',cover:'assets/game-covers/volleyball.svg'},
@@ -53,24 +159,26 @@ function updateHeroDOM(idx){
  const slides=getActiveHeroSlides();if(!slides.length)return;
  heroIdx=((idx%slides.length)+slides.length)%slides.length;
  const s=slides[heroIdx],box=$('heroSceneBox'),img=$('heroSceneImg'),title=$('heroSceneTitle'),desc=$('heroSceneDesc'),badge=$('heroSceneBadge'),cta=$('heroPlayLink');
- if(box)box.dataset.scene=s.key;
+ if(box?.dataset)box.dataset.scene=s.key;
  if(img){const cardImg=document.querySelector?.(`.game-cover[data-scene="${s.key}"] img`);img.src=cardImg?.src||s.cover;img.alt='مشهد لعبة '+s.name;}
  if(title)title.textContent=s.headline;
  if(desc)desc.textContent=s.pitch;
  if(badge)badge.textContent=s.name+' · '+s.badge;
  if(cta){cta.textContent=s.ctaLabel+' ←';cta.href=s.ctaHref;}
- document.querySelectorAll?.('.hero-chip').forEach((c,i)=>{const active=c.dataset.id===s.key;c.classList.toggle('active',active);c.setAttribute?.('aria-selected',active?'true':'false');});
+ document.querySelectorAll?.('.hero-chip').forEach(c=>{const active=c.dataset.id===s.key;c.classList.toggle('active',active);c.setAttribute?.('aria-selected',active?'true':'false');});
  document.querySelectorAll?.('.hero-dot').forEach((d,i)=>d.classList.toggle('active',i===heroIdx));
  window.ManaratCovers?.refresh();
 }
 function scheduleHeroRotation(){
  clearTimeout(heroTimer);
+ if(config?.heroAutoRotate===false||!document.querySelector)return;
  if(typeof window!=='undefined'&&window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches)return;
  const sec=Math.max(4,Math.min(15,Number(config?.heroIntervalSeconds)||6));
  heroTimer=setTimeout(()=>{
   if(!heroPaused&&$('heroSceneBox'))updateHeroDOM(heroIdx+1);
   if($('heroSceneBox'))scheduleHeroRotation();
  },sec*1000);
+ heroTimer?.unref?.();
 }
 function resolveHomeVideos(){
  const hub=window.ManaratHomepageHub;
@@ -114,11 +222,34 @@ function resolveHomepageSections(){
  const isLegacyDefault=raw.length===3&&raw[0]==='games'&&raw[1]==='videos'&&raw[2]==='about';
  const list=isLegacyDefault?['games','champions','topGames','activeTeachers','videos','about']:[...raw];
  return list.filter(s=>{
+  if(s==='schoolIdentity'&&config.showSchoolImage===false)return false;
   if((s==='champions'||s==='topGames')&&config.rankingsEnabled===false)return false;
   if(s==='activeTeachers'&&(config.rankingsEnabled===false||config.teacherRecognitionEnabled===false))return false;
   return true;
  });
 }
+
+function renderSchoolBuildingShowcase(){
+ if(config.showSchoolImage===false)return '';
+ const imgSrc=config.schoolImage||'assets/school-building.png';
+ const styleMode=config.schoolImageStyle||'cinematic-glass';
+ const posMode=config.schoolImagePos||'center';
+ return `<div class="school-architectural-banner style-${esc(styleMode)}" data-testid="school-building-showcase">
+  <div class="school-photo-frame">
+   <img src="${esc(imgSrc)}" alt="المبنى المدرسي — ${esc(config.name||OFFICIAL_SCHOOL_NAME)}" style="object-position:${esc(posMode)}" loading="eager" decoding="async" referrerpolicy="no-referrer">
+   <div class="school-photo-scrim" aria-hidden="true"></div>
+  </div>
+  <div class="school-identity-plaque">
+   <div class="plaque-top-row">
+    <span class="plaque-ministry-kicker">وزارة التربية والتعليم والتعليم العالي · دولة قطر</span>
+    <span class="plaque-grade-scope">المرحلة الإعدادية · الصفوف ٧ – ٨ – ٩</span>
+   </div>
+   <h2 class="plaque-school-name">${esc(config.name||OFFICIAL_SCHOOL_NAME)}</h2>
+   <p class="plaque-school-sub">${esc(config.subtitle||'منصة التعلّم التفاعلي والألعاب التعليمية')}</p>
+  </div>
+ </div>`;
+}
+
 function home(){
  const slides=getActiveHeroSlides();
  if(heroIdx>=slides.length)heroIdx=0;
@@ -127,23 +258,57 @@ function home(){
  const videosList=resolveHomeVideos();
  const activeVid=videosList.find(v=>v.key===activeVideoKey)||videosList[0]||null;
  if(activeVid)activeVideoKey=activeVid.key;
+ const totalWeekSessions=weekly.topGames.reduce((sum,g)=>sum+(Number(g.sessionsCount)||0),0);
+ const totalWeekStudents=weekly.topGames.reduce((sum,g)=>sum+(Number(g.uniqueStudents)||0),0);
+ const vidLayout=config.videoLayout||'featured-split';
 
  const sections={
-  games:`<section class="home-section" id="gamesGallerySection"><div class="section-head"><div><span class="section-kicker">ميدان التعلّم التفاعلي</span><h2>اختر ملعبك. وابدأ التحدّي.</h2><p>اختر التجربة التفاعلية ثلاثية الأبعاد التي تحبها من الألعاب التي يتيحها معلمك.</p></div><span class="tag">8 تجارب تعلّم تفاعلية ثلاثية الأبعاد</span></div><div class="grid games-gallery">${Object.entries(games).map(([k,g],idx)=>`<article class="card game-cover-card"><div class="game-cover" data-scene="${k}"><img src="assets/game-covers/${k}.svg" alt="مشهد ${g[1]}" width="640" height="360" loading="lazy" decoding="async" referrerpolicy="no-referrer"><span class="cover-number">0${idx+1}</span><span class="cover-badge">${({race:'سباق 3D',football:'ملعب 3D',basketball:'صالة 3D',volleyball:'تداول 6×6',bowling:'فيزياء 10 قوارير',fishing:'بيئة مائية 3D',puzzle:'أسئلة الصور',classic:'مسابقة معرفية'})[k]}</span></div><div class="game-cover-body"><h3>${g[1]}</h3><p class="muted">${({race:'تقدّم بسيارتك وتجاوز الحواجز مع كل إجابة صحيحة.',football:'مرّر الكرة وسدّد نحو المرمى في مواجهة الحارس.',basketball:'راوغ وصوّب رميتك الثلاثية نحو السلة بدقة.',volleyball:'تبادل الإرسال والإعداد والضرب الساحق على الشبكة.',bowling:'اضبط الزاوية والدوران وأسقط القوارير العشر.',fishing:'راقب حركة الأسماك تحت الماء واصطد إجابتك الصحيحة.',puzzle:'ركّب أجزاء الصورة التعليمية بالسحب والإفلات.',classic:'ركّز في الأسئلة المباشرة وتابع تقدمك الدراسي.'})[k]}</p>${k==='puzzle'?`<button type="button" class="button quiet" data-action="joinFocus">متاح في مهام الصور ←</button>`:`<a class="button quiet" href="index.html?demo=${k}">${k==='race'?'جرّب السباق':'جرّب اللعبة'} ←</a>`}</div></article>`).join('')}</div></section>`,
+  schoolIdentity:`<section class="home-section school-identity-section" id="schoolIdentitySection">${renderSchoolBuildingShowcase()}</section>`,
 
-  champions:`<section class="home-section champions-section" id="weeklyChampionsSection" data-testid="weekly-champions-section"><div class="section-head"><div><span class="section-kicker">لوحة الشرف المدرسية · تحديث أسبوعي (${esc(weekly.week?.labelAr||'الأحد – السبت')})</span><h2>نجوم التميز لهذا الأسبوع</h2><p>يُحتسب التميز تلقائيًا من نتائج المهمات الفردية المكتملة لكل صف دراسي وفق توقيت الدوحة.</p></div><span class="ranking-rule-note">الصفوف الإعدادية: السابع · الثامن · التاسع</span></div><div class="champions-board">${weekly.champions.map(c=>`<article class="champion-box ${c.hasWinner?'is-crowned':'is-awaiting'}" data-grade="${esc(c.grade)}" data-testid="champion-card-grade-${esc(c.grade)}"><div class="champion-header"><span class="champion-grade-label">${esc(c.gradeLabel)}</span><span class="champion-emblem" aria-hidden="true">${c.hasWinner?'★':'☆'}</span></div><h3>${esc(c.title)}</h3>${c.hasWinner?`<div class="champion-winner-body"><strong class="champion-student-name">${esc(c.studentName)}</strong><span class="champion-class-meta">${esc(c.className)}</span><div class="champion-metrics"><b>${c.avgScore}%</b><span>${esc(c.metricLabel)}</span></div></div>`:`<div class="champion-empty-body"><p class="champion-prompt">${esc(c.emptyPrompt)}</p><p class="champion-subtext">${esc(c.metricLabel)}</p>${button('ادخل رمز المهمة ونافس الآن ←','joinFocus','','quiet champion-cta')}</div>`}</article>`).join('')}</div></section>`,
+  games:`<section class="home-section" id="gamesGallerySection"><div class="section-head"><div><span class="section-kicker">ميدان التعلّم التفاعلي · بيئات ثلاثية الأبعاد</span><h2>اختر ملعبك. وابدأ التحدّي.</h2><p>اختر التجربة التفاعلية ثلاثية الأبعاد التي تحبها من الألعاب التي يتيحها معلمك، وأجب بدقة لتحسم الجولة.</p></div><div class="gallery-filter-bar" role="group" aria-label="تصنيف الألعاب"><button type="button" class="gallery-filter-btn ${activeGameCategory==='all'?'active':''}" data-action="filterGames" data-id="all">الكل (8)</button><button type="button" class="gallery-filter-btn ${activeGameCategory==='sports'?'active':''}" data-action="filterGames" data-id="sports">ملاعب رياضية 3D</button><button type="button" class="gallery-filter-btn ${activeGameCategory==='speed'?'active':''}" data-action="filterGames" data-id="speed">سباقات وفيزياء</button><button type="button" class="gallery-filter-btn ${activeGameCategory==='mind'?'active':''}" data-action="filterGames" data-id="mind">تحديات وتركيز</button></div></div><div class="grid games-gallery" data-cols="${esc(config.galleryColumns||4)}">${Object.entries(games).map(([k,g],idx)=>{const cat=gameCategories[k]||'mind';const dimmed=activeGameCategory!=='all'&&activeGameCategory!==cat;return `<article class="card game-cover-card ${dimmed?'is-filtered-out':''}" data-game-cat="${cat}"><div class="game-cover" data-scene="${k}"><img src="assets/game-covers/${k}.svg" alt="مشهد ${g[1]}" width="640" height="360" loading="lazy" decoding="async" referrerpolicy="no-referrer"><span class="cover-number">0${idx+1}</span><span class="cover-badge">${({race:'سباق 3D',football:'ملعب 3D',basketball:'صالة 3D',volleyball:'تداول 6×6',bowling:'فيزياء 10 قوارير',fishing:'بيئة مائية 3D',puzzle:'أسئلة الصور',classic:'مسابقة معرفية'})[k]}</span></div><div class="game-cover-body"><div class="game-card-title-row"><h3>${g[1]}</h3><span class="game-card-icon" aria-hidden="true">${gameIcon(k)}</span></div><p class="muted">${({race:'تقدّم بسيارتك وتجاوز الحواجز مع كل إجابة صحيحة.',football:'مرّر الكرة وسدّد نحو المرمى في مواجهة الحارس.',basketball:'راوغ وصوّب رميتك الثلاثية نحو السلة بدقة.',volleyball:'تبادل الإرسال والإعداد والضرب الساحق على الشبكة.',bowling:'اضبط الزاوية والدوران وأسقط القوارير العشر.',fishing:'راقب حركة الأسماك تحت الماء واصطد إجابتك الصحيحة.',puzzle:'ركّب أجزاء الصورة التعليمية بالسحب والإفلات.',classic:'ركّز في الأسئلة المباشرة وتابع تقدمك الدراسي.'})[k]}</p>${k==='puzzle'?`<button type="button" class="button quiet game-launch-btn" data-action="joinFocus">متاح في مهام الصور ←</button>`:`<a class="button quiet game-launch-btn" href="index.html?demo=${k}">${k==='race'?'جرّب السباق':'جرّب اللعبة'} ←</a>`}</div></article>`;}).join('')}</div></section>`,
 
-  topGames:`<section class="home-section top-games-section" id="weeklyTopGamesSection" data-testid="weekly-top-games-section"><div class="section-head"><div><span class="section-kicker">مؤشر التفاعل الطلابي الأسبوعي</span><h2>الألعاب الأكثر تفاعلًا هذا الأسبوع</h2><p>أكثر الألعاب التعليمية اختيارًا وتشغيلًا في المهمات الصفية والواجبات المنزلية خلال الأسبوع الحالي.</p></div></div>${weekly.topGames.length?`<div class="top-games-board">${weekly.topGames.map(g=>`<div class="top-game-row" data-testid="top-game-row"><div class="top-game-rank">0${g.rank}</div><img class="top-game-thumb" src="${esc(g.cover)}" alt="${esc(g.name)}" width="80" height="45" loading="lazy"><div class="top-game-info"><div class="top-game-title-row"><h3>${esc(g.name)}</h3><span class="top-game-stats"><b>${g.sessionsCount}</b> جولة مكتملة${g.uniqueStudents?` · ${g.uniqueStudents} طالب`:''}</span></div><div class="top-game-bar-track" role="progressbar" aria-valuenow="${g.sharePercent}" aria-valuemin="0" aria-valuemax="100"><span class="top-game-bar-fill" style="width:${g.sharePercent}%"></span></div></div><a class="button quiet top-game-try" href="index.html?demo=${esc(g.key)}">جرّبها ←</a></div>`).join('')}</div>`:`<div class="top-games-board is-empty-week">${['football','volleyball','basketball','race','bowling'].map((k,i)=>`<div class="top-game-row"><div class="top-game-rank">0${i+1}</div><img class="top-game-thumb" src="assets/game-covers/${k}.svg" alt="${esc(games[k][1])}" width="80" height="45" loading="lazy"><div class="top-game-info"><div class="top-game-title-row"><h3>${esc(games[k][1])}</h3><span class="top-game-stats">بانتظار انطلاق جولات هذا الأسبوع</span></div><div class="top-game-bar-track"><span class="top-game-bar-fill is-idle" style="width:14%"></span></div></div><a class="button quiet top-game-try" href="index.html?demo=${k}">ابدأ أول جولة ←</a></div>`).join('')}</div>`}</section>`,
+  champions:`<section class="home-section champions-section" id="weeklyChampionsSection" data-testid="weekly-champions-section"><div class="section-head"><div><span class="section-kicker">لوحة الشرف المدرسية · تحديث أسبوعي (${esc(weekly.week?.labelAr||'الأحد – السبت')})</span><h2>نجوم التميز لهذا الأسبوع</h2><p>يُحتسب التميز تلقائيًا من نتائج المهمات الفردية المكتملة لكل صف دراسي وفق توقيت الدوحة.</p></div><span class="ranking-rule-note">الصفوف الإعدادية: السابع · الثامن · التاسع</span></div><div class="champions-board">${weekly.champions.map(c=>`<article class="champion-box ${c.hasWinner?'is-crowned':'is-awaiting'}" data-grade="${esc(c.grade)}" data-testid="champion-card-grade-${esc(c.grade)}"><div class="champion-header"><span class="champion-grade-label">${esc(c.gradeLabel)}</span><span class="champion-emblem" aria-hidden="true">${c.hasWinner?'🏆':'☆'}</span></div><h3>${esc(c.title)}</h3>${c.hasWinner?`<div class="champion-winner-body"><strong class="champion-student-name">${esc(c.studentName)}</strong><span class="champion-class-meta">${esc(c.className)}</span><div class="champion-score-bar" aria-hidden="true"><span style="width:${Math.min(100,Math.max(20,Number(c.avgScore)||80))}%"></span></div><div class="champion-metrics"><b>${c.avgScore}%</b><span>${esc(c.metricLabel)}</span></div></div>`:`<div class="champion-empty-body"><p class="champion-prompt">${esc(c.emptyPrompt)}</p><p class="champion-subtext">${esc(c.metricLabel)}</p>${button('ادخل رمز المهمة ونافس الآن ←','joinFocus','','quiet champion-cta')}</div>`}</article>`).join('')}</div></section>`,
 
-  activeTeachers:`<section class="home-section active-teachers-section" id="weeklyTeachersSection" data-testid="weekly-teachers-section"><div class="section-head"><div><span class="section-kicker">تقدير العطاء التربوي</span><h2>المعلمون الأكثر تفعيلًا للمنصة</h2><p>إشادة أسبوعية بمعلمي المدرسة الأكثر إطلاقًا للمهمات التفاعلية ومتابعةً لإنجاز الطلاب.</p></div></div>${weekly.activeTeachers.length?`<div class="teachers-board">${weekly.activeTeachers.map((t,idx)=>`<article class="teacher-box" data-testid="active-teacher-card"><div class="teacher-rank-badge">#${idx+1}</div><div class="teacher-info"><h3>${esc(t.name)}</h3><span class="teacher-subject">${esc(t.subject)}</span><p class="teacher-metrics">${esc(t.summaryText)}</p></div></article>`).join('')}</div>`:`<div class="teachers-empty-banner"><div class="teachers-empty-content"><h3>لوحة التميز التربوي لهذا الأسبوع</h3><p>تُحدّث قائمة المعلمين الأكثر تفعيلًا تلقائيًا مع إطلاق المهمات الصفية والواجبات المنزلية خلال الأسبوع الدراسي.</p></div>${button('دخول مساحة المعلم لإطلاق مهمة ←','dashboard','','quiet')}</div>`}</section>`,
+  topGames:`<section class="home-section top-games-section" id="weeklyTopGamesSection" data-testid="weekly-top-games-section"><div class="section-head"><div><span class="section-kicker">مؤشر التفاعل الطلابي الأسبوعي · إحصاءات مباشرة</span><h2>الألعاب الأكثر تفاعلًا هذا الأسبوع</h2><p>أكثر الألعاب التعليمية اختيارًا وتشغيلًا في المهمات الصفية والواجبات المنزلية خلال الأسبوع الحالي.</p></div><div class="engagement-kpi-strip"><span>إجمالي الجولات: <b>${totalWeekSessions}</b></span><span>·</span><span>مشاركات الطلاب: <b>${totalWeekStudents}</b></span></div></div>${weekly.topGames.length?`<div class="top-games-board">${weekly.topGames.map(g=>`<div class="top-game-row" data-testid="top-game-row"><div class="top-game-rank">0${g.rank}</div><img class="top-game-thumb" src="${esc(g.cover)}" alt="${esc(g.name)}" width="80" height="45" loading="lazy"><div class="top-game-info"><div class="top-game-title-row"><h3>${esc(g.name)}</h3><span class="top-game-stats"><b>${g.sessionsCount}</b> جولة مكتملة${g.uniqueStudents?` · ${g.uniqueStudents} طالب`:''}${g.avgScore?` · متوسط ${g.avgScore}%`:''}</span></div><div class="top-game-bar-track" role="progressbar" aria-valuenow="${g.sharePercent}" aria-valuemin="0" aria-valuemax="100"><span class="top-game-bar-fill" style="width:${g.sharePercent}%"></span></div></div><a class="button quiet top-game-try" href="index.html?demo=${esc(g.key)}">جرّبها ←</a></div>`).join('')}</div>`:`<div class="top-games-board is-empty-week">${['football','volleyball','basketball','race','bowling'].map((k,i)=>`<div class="top-game-row"><div class="top-game-rank">0${i+1}</div><img class="top-game-thumb" src="assets/game-covers/${k}.svg" alt="${esc(games[k][1])}" width="80" height="45" loading="lazy"><div class="top-game-info"><div class="top-game-title-row"><h3>${esc(games[k][1])}</h3><span class="top-game-stats">بانتظار انطلاق جولات هذا الأسبوع</span></div><div class="top-game-bar-track"><span class="top-game-bar-fill is-idle" style="width:14%"></span></div></div><a class="button quiet top-game-try" href="index.html?demo=${k}">ابدأ أول جولة ←</a></div>`).join('')}</div>`}</section>`,
 
-  videos:`<section class="home-section videos-gallery-section" id="schoolVideosSection" data-testid="homepage-video-gallery"><div class="section-head"><div><span class="section-kicker">الشروحات المرئية والمحتوى الإثرائي</span><h2>مكتبة الفيديوهات التعليمية</h2><p>شاهد الشروحات المرئية المعتمدة من إدارة المدرسة والمعلمين، واستعدّ جيدًا قبل بدء التحديات التعليمية.</p></div><span class="video-count-note">${videosList.length?`${videosList.length} فيديو متاح للمشاهدة`:'مرتبطة بالمهمات والقناة التعليمية'}</span></div>${videosList.length?`<div class="video-gallery-board"><div class="video-featured-stage" id="featuredVideoStage">${renderVideoStageMarkup(activeVid)}</div>${videosList.length>1?`<div class="video-playlist" role="list" aria-label="قائمة الفيديوهات التعليمية">${videosList.map((v,idx)=>`<button type="button" class="video-thumb-btn ${v.key===activeVid?.key?'active':''}" data-action="selectHomeVideo" data-id="${esc(v.key)}" aria-label="تشغيل ${esc(v.title)}"><div class="video-thumb-preview">${v.thumbnail?`<img src="${esc(v.thumbnail)}" alt="" loading="lazy" referrerpolicy="no-referrer">`:`<span class="video-thumb-fallback">▷</span>`}<span class="video-thumb-index">0${idx+1}</span></div><div class="video-thumb-caption"><strong>${esc(v.title)}</strong><span>${esc(v.subject||'مكتبة المدرسة')}</span></div></button>`).join('')}</div>`:''}</div>`:`<div class="video-empty-board"><div class="video-empty-text"><h3>شاهد، افهم، ثم جرّب</h3><p class="muted">تجد فيديوهات المادة التي أضافها معلمك داخل رابط المهمة، كما تظهر هنا الفيديوهات العامة المنشورة من إدارة المدرسة.</p></div><div class="row">${button('لديّ رمز مهمة تعليمية ←','joinFocus','','quiet')}${button('إدارة مكتبة الفيديو (للمعلمين)','dashboard','','outline')}</div></div>`}</section>`,
+  activeTeachers:`<section class="home-section active-teachers-section" id="weeklyTeachersSection" data-testid="weekly-teachers-section"><div class="section-head"><div><span class="section-kicker">تقدير العطاء التربوي · مبادرات التعلم التفاعلي</span><h2>المعلمون الأكثر تفعيلًا للمنصة</h2><p>إشادة أسبوعية بمعلمي المدرسة الأكثر إطلاقًا للمهمات التفاعلية ومتابعةً لإنجاز الطلاب.</p></div></div>${weekly.activeTeachers.length?`<div class="teachers-board">${weekly.activeTeachers.map((t,idx)=>`<article class="teacher-box" data-testid="active-teacher-card"><div class="teacher-rank-badge">#${idx+1}</div><div class="teacher-info"><h3>${esc(t.name)}</h3><span class="teacher-subject">${esc(t.subject)}</span><p class="teacher-metrics">${esc(t.summaryText)}</p></div></article>`).join('')}</div>`:`<div class="teachers-empty-banner"><div class="teachers-empty-content"><h3>لوحة التميز التربوي لهذا الأسبوع</h3><p>تُحدّث قائمة المعلمين الأكثر تفعيلًا تلقائيًا مع إطلاق المهمات الصفية والواجبات المنزلية خلال الأسبوع الدراسي.</p></div>${button('دخول مساحة المعلم لإطلاق مهمة ←','dashboard','','quiet')}</div>`}</section>`,
 
-  about:`<section class="home-section about-school-section" id="aboutSchoolSection"><div class="about-board"><div class="about-main"><span class="section-kicker">الهوية المدرسية والرسالة التربوية</span><h2>من نحن · ${esc(config.name)}</h2><p>${esc(config.about||config.description)}</p><div class="row">${(config.socials||[]).filter(s=>s.visible!==false&&/^https:\/\//.test(s.url)).map(s=>`<a class="button quiet" href="${esc(s.url)}" target="_blank" rel="noopener">${esc(s.label)}</a>`).join('')}</div></div>${config.contactText?`<div class="about-contact"><h3>تواصل معنا</h3><p>${esc(config.contactText)}</p></div>`:''}</div></section>`
+  videos:`<section class="home-section videos-gallery-section" id="schoolVideosSection" data-testid="homepage-video-gallery"><div class="section-head"><div><span class="section-kicker">الشروحات المرئية والمحتوى الإثرائي</span><h2>مكتبة الفيديوهات التعليمية</h2><p>شاهد الشروحات المرئية المعتمدة من إدارة المدرسة والمعلمين، واستعدّ جيدًا قبل بدء التحديات التعليمية.</p></div><span class="video-count-note">${videosList.length?`${videosList.length} فيديو متاح للمشاهدة`:'مرتبطة بالمهمات والقناة التعليمية'}</span></div>${videosList.length?`<div class="video-gallery-board layout-${esc(vidLayout)}"><div class="video-featured-stage" id="featuredVideoStage">${renderVideoStageMarkup(activeVid)}</div>${videosList.length>1?`<div class="video-playlist" role="list" aria-label="قائمة الفيديوهات التعليمية">${videosList.map((v,idx)=>`<button type="button" class="video-thumb-btn ${v.key===activeVid?.key?'active':''}" data-action="selectHomeVideo" data-id="${esc(v.key)}" aria-label="تشغيل ${esc(v.title)}"><div class="video-thumb-preview">${v.thumbnail?`<img src="${esc(v.thumbnail)}" alt="" loading="lazy" referrerpolicy="no-referrer">`:`<span class="video-thumb-fallback">▷</span>`}<span class="video-thumb-index">0${idx+1}</span></div><div class="video-thumb-caption"><strong>${esc(v.title)}</strong><span>${esc(v.subject||'مكتبة المدرسة')}</span></div></button>`).join('')}</div>`:''}</div>`:`<div class="video-empty-board"><div class="video-empty-text"><h3>شاهد، افهم، ثم جرّب</h3><p class="muted">تجد فيديوهات المادة التي أضافها معلمك داخل رابط المهمة، كما تظهر هنا الفيديوهات العامة المنشورة من إدارة المدرسة.</p></div><div class="row">${button('لديّ رمز مهمة تعليمية ←','joinFocus','','quiet')}${button('إدارة مكتبة الفيديو (للمعلمين)','dashboard','','outline')}</div></div>`}</section>`,
+
+  about:`<section class="home-section about-school-section" id="aboutSchoolSection"><div class="about-board"><div class="about-main"><span class="section-kicker">الهوية المدرسية والرسالة التربوية</span><h2>من نحن · ${esc(config.name)}</h2><p>${esc(config.about||config.description)}</p><div class="row">${(config.socials||[]).filter(s=>s.visible!==false&&/^https:\/\//.test(s.url)).map(s=>`<a class="button quiet" href="${esc(s.url)}" target="_blank" rel="noopener">${esc(s.label)}</a>`).join('')}</div></div>${config.contactText?`<div class="about-contact"><h3>تواصل معنا</h3><p>${esc(config.contactText)}</p></div>`:`<div class="about-contact"><h3>بيئة تعليمية قطرية معتمدة</h3><p>تجمع المنصة بين الألعاب التفاعلية ثلاثية الأبعاد، الواجبات الذكية، وتقارير المتابعة الفورية لطلاب المرحلة الإعدادية.</p></div>`}</div></section>`
  };
 
  const activeSections=resolveHomepageSections();
- show(`<div class="platform-home"><section class="hero"><div><span class="eyebrow">مدرسة أبو عبيدة الإعدادية للبنين · تعلّم تفاعلي · إنجاز يومي</span><h1>${esc(config.hero)}</h1><p>${esc(config.description)}</p><div class="hero-metrics"><div class="hero-metric"><b>8</b><span>ألعاب وتجارب 3D</span></div><div class="hero-metric"><b>8</b><span>أنماط أسئلة ذكية</span></div><div class="hero-metric"><b>100%</b><span>متوافق مع السبورة التفاعلية</span></div></div><div class="row">${button('دخول مساحة المعلم ←','dashboard')}${button('لديّ رابط أو رمز مهمة','joinFocus','','outline')}</div></div><div class="hero-showcase" id="heroShowcaseContainer" tabindex="0" role="region" aria-label="معرض الألعاب التفاعلية"><div class="hero-scene" id="heroSceneBox" data-scene="${esc(curSlide.key)}"><img id="heroSceneImg" src="${esc(curSlide.cover)}" alt="مشهد لعبة ${esc(curSlide.name)}" width="640" height="360" decoding="async" referrerpolicy="no-referrer"></div><div class="hero-controls-top"><span class="hero-live" id="heroSceneBadge">${esc(curSlide.name+' · '+curSlide.badge)}</span><div class="hero-nav-arrows">${button('‹','heroPrev','','hero-arrow-btn')}${button('›','heroNext','','hero-arrow-btn')}</div></div><div class="hero-showcase-caption"><div class="hero-caption-row"><div><h3 id="heroSceneTitle">${esc(curSlide.headline)}</h3><p id="heroSceneDesc">${esc(curSlide.pitch)}</p></div><a id="heroPlayLink" class="button hero-try-cta" href="${esc(curSlide.ctaHref)}">${esc(curSlide.ctaLabel)} ←</a></div><div class="hero-switcher" role="tablist" aria-label="اختيار اللعبة المعروضة">${slides.map((s,i)=>`<button type="button" role="tab" aria-selected="${i===heroIdx?'true':'false'}" class="hero-chip ${i===heroIdx?'active':''}" data-action="heroScene" data-id="${esc(s.key)}">${esc(s.name)}</button>`).join('')}</div></div></div></section><form id="joinForm" class="join row"><label for="joinCode" style="margin:0;font-weight:700">ابدأ مهمتك</label><input id="joinCode" autocomplete="off" placeholder="الصق رابط المهمة أو رمز الدخول" required><button>انضمّ للمهمة ←</button><span class="help">الدخول للطالب بالاسم فقط</span></form>${activeSections.map(s=>sections[s]||'').join('')}</div>`);
+ const showTopSchoolBanner=config.showSchoolImage!==false&&!activeSections.includes('schoolIdentity');
+ show(`<div class="platform-home">
+  ${showTopSchoolBanner?renderSchoolBuildingShowcase():''}
+  <section class="hero" id="heroShowcaseSection">
+   <div class="hero-copy-column">
+    <span class="eyebrow">مدرسة أبو عبيدة الإعدادية للبنين · تعلّم تفاعلي · إنجاز يومي</span>
+    <h1>${esc(config.hero)}</h1>
+    <p>${esc(config.description)}</p>
+    <div class="hero-metrics">
+     <div class="hero-metric"><b>8</b><span>ألعاب وتجارب 3D</span></div>
+     <div class="hero-metric"><b>8</b><span>أنماط أسئلة ذكية</span></div>
+     <div class="hero-metric"><b>100%</b><span>متوافق مع السبورة التفاعلية</span></div>
+    </div>
+    <div class="row hero-cta-row">${button('دخول مساحة المعلم ←','dashboard')}${button('لديّ رابط أو رمز مهمة','joinFocus','','outline')}</div>
+   </div>
+   <div class="hero-showcase" id="heroShowcaseContainer" tabindex="0" role="region" aria-label="معرض الألعاب التفاعلية">
+    <div class="hero-scene" id="heroSceneBox" data-scene="${esc(curSlide.key)}"><img id="heroSceneImg" src="${esc(curSlide.cover)}" alt="مشهد لعبة ${esc(curSlide.name)}" width="640" height="360" decoding="async" referrerpolicy="no-referrer"></div>
+    <div class="hero-controls-top"><span class="hero-live" id="heroSceneBadge">${esc(curSlide.name+' · '+curSlide.badge)}</span><div class="hero-nav-arrows">${button('‹','heroPrev','','hero-arrow-btn')}${button('›','heroNext','','hero-arrow-btn')}</div></div>
+    <div class="hero-showcase-caption">
+     <div class="hero-caption-row">
+      <div><h3 id="heroSceneTitle">${esc(curSlide.headline)}</h3><p id="heroSceneDesc">${esc(curSlide.pitch)}</p></div>
+      <a id="heroPlayLink" class="button hero-try-cta" href="${esc(curSlide.ctaHref)}">${esc(curSlide.ctaLabel)} ←</a>
+     </div>
+     <div class="hero-switcher" role="tablist" aria-label="اختيار اللعبة المعروضة">${slides.map((s,i)=>`<button type="button" role="tab" aria-selected="${i===heroIdx?'true':'false'}" class="hero-chip ${i===heroIdx?'active':''}" data-action="heroScene" data-id="${esc(s.key)}">${esc(s.name)}</button>`).join('')}</div>
+    </div>
+   </div>
+  </section>
+  <form id="joinForm" class="join row"><label for="joinCode" style="margin:0;font-weight:700">ابدأ مهمتك التعليمية</label><input id="joinCode" autocomplete="off" placeholder="الصق رابط المهمة أو رمز الدخول من معلمك" required><button type="submit">انضمّ للمهمة ←</button><span class="help">الدخول للطالب بالاسم فقط دون كلمة مرور</span></form>
+  ${activeSections.map(s=>sections[s]||'').join('')}
+ </div>`);
  bindHeroInteractions();
  scheduleHeroRotation();
  window.ManaratCovers?.refresh();
@@ -168,10 +333,10 @@ function bindHeroInteractions(){
   touchStartX=null;heroPaused=false;scheduleHeroRotation();
  },{passive:true});
 }
-function auth(signup=false){show(`<section class="auth card"><span class="eyebrow">مساحة المعلمين</span><h1>${signup?'أنشئ حسابك':'أهلًا بعودتك'}</h1><p class="muted">${signup?'اسم مستخدم وكلمة مرور؛ لا تحتاج إلى بريد إلكتروني.':'أدخل اسم المستخدم. يمكن للأدمن استخدام بريده الحالي.'}</p><form id="authForm" data-signup="${signup}">${signup?field('الاسم الكامل','fullName'):''}${field('اسم المستخدم'+(signup?'':' أو بريد الأدمن'),'username')}${field('كلمة المرور','password','','password')}<p class="help">${signup?'8 أحرف على الأقل. اسم المستخدم فريد ولا يحتوي على مسافات.':'نسيت كلمة المرور؟ تواصل مع إدارة المدرسة لإعادة تعيينها.'}</p><button style="width:100%">${signup?'إنشاء الحساب':'تسجيل الدخول'}</button></form><div style="margin-top:18px">${button(signup?'لديّ حساب بالفعل':'إنشاء حساب معلم',signup?'login':'signup','','quiet')}</div></section>`);$('username').autocomplete='username';$('password').autocomplete=signup?'new-password':'current-password';}
+function auth(signup=false){show(`<section class="auth card"><span class="eyebrow">مساحة المعلمين · ${esc(config.name)}</span><h1>${signup?'أنشئ حسابك':'أهلًا بعودتك'}</h1><p class="muted">${signup?'اسم مستخدم وكلمة مرور؛ لا تحتاج إلى بريد إلكتروني.':'أدخل اسم المستخدم. يمكن للأدمن استخدام بريده الحالي.'}</p><form id="authForm" data-signup="${signup}">${signup?field('الاسم الكامل','fullName'):''}${field('اسم المستخدم'+(signup?'':' أو بريد الأدمن'),'username')}${field('كلمة المرور','password','','password')}<p class="help">${signup?'8 أحرف على الأقل. اسم المستخدم فريد ولا يحتوي على مسافات.':'نسيت كلمة المرور؟ تواصل مع إدارة المدرسة لإعادة تعيينها.'}</p><button style="width:100%">${signup?'إنشاء الحساب':'تسجيل الدخول'}</button></form><div style="margin-top:18px">${button(signup?'لديّ حساب بالفعل':'إنشاء حساب معلم',signup?'login':'signup','','quiet')}</div></section>`);$('username').autocomplete='username';$('password').autocomplete=signup?'new-password':'current-password';}
 async function dashboard(){if(!M.isAuthenticated())return auth();if(!data)show('<p class="loading">جارٍ تحميل مساحتك…</p>');data=adminPanel==='settings'?{profile:await api('profile')}:await api('dashboard',adminPanel?{panel:adminPanel}:{});if($('adminLink'))$('adminLink').hidden=!data.profile.admin;if(adminPanel){if(!data.profile.admin)throw new Error('هذه اللوحة متاحة للإدارة فقط.');tab=['settings','teachers','students','reports','assignments','videos','games'].includes(adminPanel)?adminPanel:'settings';}renderDashboard();}
 function mountStudentAnalytics(initialTaskFilter=''){if(typeof window!=='undefined'&&window.ManaratStudentAnalytics?.mount){window.ManaratStudentAnalytics.mount('studentAnalyticsMount',{sessions:data?.sessions||[],assignments:data?.assignments||[],games:data?.games||[],initialTaskFilter});}}
-function renderDashboard(){if(adminPanel){show('<section id="panel"></section>');renderPanel();return;}const group=data.sessions.filter(s=>s.mode==='group'),individual=data.sessions.filter(s=>s.mode!=='group'&&s.finished_at);const showTopAnalytics=['games','analytics'].includes(tab);show(`<div class="teacher-workspace"><div class="section-head workspace-heading"><div><span class="eyebrow">${data.profile.admin?'إدارة المدرسة':'مساحة المعلم'}</span><h1 style="margin:5px 0">أهلًا، ${esc(data.profile.name)}</h1><p>نظّم المحتوى، فعّل التعلّم، وتابع أثره.</p></div><div class="workspace-actions">${data.profile.admin?'<a class="button quiet" href="admin/admin.html">لوحة التحكم ←</a>':''}<a class="button" href="teacher/create-game.html">＋ إنشاء لعبة</a></div></div><div class="stats"><div class="card stat"><b>${data.games.length}</b><span>لعبة أنشئت</span></div><div class="card stat"><b>${new Set(data.sessions.map(s=>s.assignment_id)).size}</b><span>مهمة تم تشغيلها</span></div><div class="card stat"><b>${group.length}</b><span>جلسة جماعية في الصف</span></div><div class="card stat"><b>${individual.length}</b><span>محاولة فردية مكتملة</span></div></div><div class="tabs">${[['games','ألعابي'],['assignments','المهمات والواجبات'],['videos','فيديوهاتي'],['reports','سجل الإنجاز'],['analytics','تطور مستوى الطلاب'],...(data.profile.admin?[['teachers','المعلمون'],['settings','هوية المدرسة']]:[])].map(([k,t])=>button(t,'tab',k,k===tab?'active':'')).join('')}</div>${showTopAnalytics?'<div id="studentAnalyticsMount"></div>':''}<section id="panel"></section></div>`);if(showTopAnalytics)mountStudentAnalytics('');renderPanel();}
+function renderDashboard(){if(adminPanel){show('<section id="panel"></section>');renderPanel();return;}const group=data.sessions.filter(s=>s.mode==='group'),individual=data.sessions.filter(s=>s.mode!=='group'&&s.finished_at);const showTopAnalytics=['games','analytics'].includes(tab);show(`<div class="teacher-workspace"><div class="section-head workspace-heading"><div><span class="eyebrow">${data.profile.admin?'إدارة المدرسة':'مساحة المعلم'}</span><h1 style="margin:5px 0">أهلًا، ${esc(data.profile.name)}</h1><p>نظّم المحتوى، فعّل التعلّم، وتابع أثره.</p></div><div class="workspace-actions">${data.profile.admin?'<a class="button quiet" href="admin/admin.html">لوحة التحكم ←</a>':''}<a class="button" href="teacher/create-game.html">＋ إنشاء لعبة</a></div></div><div class="stats"><div class="card stat"><b>${data.games.length}</b><span>لعبة أنشئت</span></div><div class="card stat"><b>${new Set(data.sessions.map(s=>s.assignment_id)).size}</b><span>مهمة تم تشغيلها</span></div><div class="card stat"><b>${group.length}</b><span>جلسة جماعية في الصف</span></div><div class="card stat"><b>${individual.length}</b><span>محاولة فردية مكتملة</span></div></div><div class="tabs">${[['games','ألعابي'],['assignments','المهمات والواجبات'],['videos','فيديوهاتي'],['reports','سجل الإنجاز'],['analytics','تطور مستوى الطلاب'],...(data.profile.admin?[['teachers','المعلمون'],['settings','استوديو الهوية والتصميم']]:[])].map(([k,t])=>button(t,'tab',k,k===tab?'active':'')).join('')}</div>${showTopAnalytics?'<div id="studentAnalyticsMount"></div>':''}<section id="panel"></section></div>`);if(showTopAnalytics)mountStudentAnalytics('');renderPanel();}
 const empty=(s)=>`<div class="empty">${s}</div>`;
 function renderPanel(){const p=$('panel');if(tab==='games')p.innerHTML=data.games.length?`<div class="grid">${data.games.map(g=>`<article class="card"><span class="tag">${esc(g.subject||'مادة تعليمية')}</span><h3>${esc(g.title)}</h3><p class="muted">${(g.data.questions||[]).length} سؤال · ${esc(g.grade||'اختر الصف عند الإسناد')}</p><div class="row">${button('إسناد وتشغيل','assign',g.id)}<a class="button quiet" href="teacher/create-game.html?edit=${encodeURIComponent(g.id)}">تحرير</a></div></article>`).join('')}</div>`:empty('ابدأ بإنشاء لعبة وأضف أسئلتك يدويًا أو بالذكاء الاصطناعي.');
 if(tab==='assignments')p.innerHTML=data.assignments.length?`<div class="grid">${data.assignments.map(a=>`<article class="card"><span class="tag">${esc(a.class_name||'مهمة تعليمية')} · ${a.active?'متاحة':'متوقفة'}</span><h3>${esc(a.title)}</h3><p class="muted">${a.settings.templates.map(k=>games[k]?.[1]).join(' · ')}</p><div class="stack"><div class="row">${button('نسخ رابط الواجب','copy',a.id)}${button('تشغيل صفي','class',a.id,'quiet')}</div>${button(a.active?'إيقاف المهمة':'إعادة التفعيل','toggle',a.id,'outline')}</div></article>`).join('')}</div>`:empty('أنشئ إسنادًا من تبويب ألعابي، ثم شارك رابط الواجب مع الطلاب.');
@@ -179,7 +344,7 @@ if(tab==='videos')p.innerHTML=`<div class="section-head"><div><h2>مكتبتك �
 if(tab==='analytics')p.innerHTML='';
 if(tab==='reports')renderReports();if(tab==='settings')renderSettings();if(tab==='teachers')renderAccounts();if(tab==='students')renderStudents();
 }
-function assignmentForm(id){const g=data.games.find(g=>g.id===id),available=[...new Set((g.data.questions||[]).map(q=>q.type))];dialog(`<h2>إسناد «${esc(g.title)}»</h2><form id="assignmentForm" data-game="${esc(id)}">${field('عنوان المهمة','assignmentTitle',g.title)}${field('الصف / الشعبة','className')}<label>الألعاب المتاحة للطالب</label><div class="check-grid">${Object.entries(games).map(([k,g])=>`<label class="check"><input type="checkbox" name="templates" value="${k}" checked>${gameIcon(k)} ${g[1]}</label>`).join('')}</div><label>أنواع الأسئلة المتاحة</label><div class="check-grid">${available.map(k=>`<label class="check"><input type="checkbox" name="types" value="${esc(k)}" checked>${types[k]||esc(k)}</label>`).join('')}</div><div class="two-col"><div>${field('درجة الاجتياز %','passingScore',70,'number')}</div><div>${field('موعد الإغلاق (اختياري)','deadline','','datetime-local')}</div></div><label class="check"><input id="leaderboard" type="checkbox" checked>إظهار قائمة الصدارة للمشاركين</label><p class="help">اللعب الجماعي يُحتسب جلسة للمعلم. الفردي فقط يُسجّل باسم الطالب ودرجته.</p><button>إنشاء رابط المهمة</button></form>`);}
+function assignmentForm(id){const g=data.games.find(g=>g.id===id),available=[...new Set((g.data.questions||[]).map(q=>q.type))];dialog(`<h2>إسناد «${esc(g.title)}»</h2><form id="assignmentForm" data-game="${esc(id)}">${field('عنوان المهمة','assignmentTitle',g.title)}${field('الصف / الشعبة','className')}<label>الألعاب المتاحة للطالب</label><div class="check-grid">${Object.entries(games).map(([k,g])=>`<label class="check"><input type="checkbox" name="templates" value="${k}" checked>${gameIcon(k)} ${g[1]}</label>`).join('')}</div><label>أنواع الأسئلة المتاحة</label><div class="check-grid">${available.map(k=>`<label class="check"><input type="checkbox" name="types" value="${esc(k)}" checked>${types[k]||esc(k)}</label>`).join('')}</div><div class="two-col"><div>${field('درجة الاجتياز %','passingScore',70,'number')}</div><div>${field('موعد الإغلاق (اختاري)','deadline','','datetime-local')}</div></div><label class="check"><input id="leaderboard" type="checkbox" checked>إظهار قائمة الصدارة للمشاركين</label><p class="help">اللعب الجماعي يُحتسب جلسة للمعلم. الفردي فقط يُسجّل باسم الطالب ودرجته.</p><button>إنشاء رابط المهمة</button></form>`);}
 function link(a){const u=new URL('index.html',location.href);u.searchParams.set('task',a.code);return u.href;}
 function videoForm(){dialog(`<h2>إضافة فيديو تعليمي</h2><form id="videoForm">${field('العنوان','videoTitle')}${field('المادة','videoSubject')}${field('رابط الفيديو (يوتيوب أو ملف فيديو)','videoUrl','','url')}<label for="videoFile">أو ارفع ملف فيديو (حتى 40 MB)</label><input id="videoFile" type="file" accept="video/mp4,video/webm"><label for="videoGame">نطاق العرض</label><select id="videoGame"><option value="">عام — الصفحة الرئيسية للمدرسة وجميع مهماتي</option>${data.games.map(g=>`<option value="${esc(g.id)}">خاص بلعبة: ${esc(g.title)}</option>`).join('')}</select>${data?.profile?.admin?`<label class="check" style="margin-top:10px"><input id="videoPinHomepage" type="checkbox" checked>تثبيت أيضًا في قائمة فيديوهات الصفحة الرئيسية للمدرسة</label>`:''}<button style="margin-top:18px">حفظ الفيديو</button></form>`);}
 function watch(v){let u;try{u=new URL(v.url);}catch{return;}const youtube=['youtube.com','www.youtube.com','m.youtube.com','youtu.be'].includes(u.hostname);let id=u.hostname==='youtu.be'?u.pathname.slice(1):u.searchParams.get('v')||u.pathname.match(/\/(?:embed|shorts)\/([^/]+)/)?.[1];dialog(`<h2>${esc(v.title)}</h2>${youtube&&/^[\w-]{11}$/.test(id||'')?`<iframe class="media" title="${esc(v.title)}" src="https://www.youtube-nocookie.com/embed/${id}" allow="fullscreen" allowfullscreen></iframe>`:/\.(mp4|webm)(\?|$)/i.test(v.url)?`<video class="media" controls src="${esc(v.url)}"></video>`:`<a class="button" href="${esc(v.url)}" target="_blank" rel="noopener">فتح الفيديو</a>`}`);}
@@ -190,9 +355,287 @@ async function review(id){const s=await api('review',{id});dialog(`<h2>إجاب�
 function renderAccounts(){const owner='m.samra103@gmail.com';$('panel').innerHTML=`<h2>المستخدمون والصلاحيات</h2><p class="muted">المعلم يدير محتواه ونتائج طلابه. مدير المنصة يدير جميع الحسابات والإعدادات. التسجيل متاح من صفحة الدخول.</p><div class="table-wrap"><table><thead><tr><th>الحساب</th><th>الصلاحية</th><th>الحالة</th><th>إدارة الحساب</th></tr></thead><tbody>${data.teachers.map(t=>`<tr><td><b>${esc(t.name)}</b><br><small>${esc(t.email)}</small></td><td>${t.role==='admin'?'مدير المنصة':'معلم'}</td><td>${esc(t.status)}</td><td>${t.id===data.profile.id||t.email?.toLowerCase()===owner?'حساب محمي':button(t.role==='admin'?'تحويل إلى معلم':'منح إدارة كاملة','role',t.id,'outline')+' '+button(t.status==='موقوف'?'تفعيل':'إيقاف','teacherStatus',t.id,'quiet')}${t.role==='teacher'?' '+button('إعادة كلمة المرور','reset',t.id,'quiet'):''}</td></tr>`).join('')}</tbody></table></div>`;}
 function renderStudents(){const students=new Map();for(const s of data.sessions.filter(s=>s.mode!=='group')){const key=s.student_key||s.id;if(!students.has(key))students.set(key,{id:s.id,name:s.student_name,count:0,done:0});const t=students.get(key);t.count++;if(s.finished_at)t.done++;}$('panel').innerHTML=`<h2>الطلاب وسجلات التعلّم</h2><p class="muted">يدخل الطلاب بالاسم ورابط المهمة دون كلمة مرور. تحكّم في إتاحة الدخول من «المهمات والواجبات». يمكنك تصحيح الاسم وربط المحاولات من سجل الطالب.</p>${students.size?`<div class="table-wrap"><table><thead><tr><th>الطالب</th><th>المحاولات</th><th>المكتملة</th><th>السجل</th></tr></thead><tbody>${[...students.values()].map(t=>`<tr><td>${esc(t.name)}</td><td>${t.count}</td><td>${t.done}</td><td>${button('عرض وتعديل السجل','student',t.id,'quiet')}</td></tr>`).join('')}</tbody></table></div>`:empty('تظهر سجلات الطلاب بعد أول مشاركة في مهمة.')}`;}
 
-function renderSettings(){settingsDraft=structuredClone(config);settingsDraft.socials||=[];settingsDraft.homepageVideos||=[];if(!Array.isArray(settingsDraft.sections)||!settingsDraft.sections.length)settingsDraft.sections=['games','champions','topGames','activeTeachers','videos','about'];$('panel').innerHTML=`<div class="section-head"><div><h2>البيانات الرئيسية وهوية المدرسة</h2><p>راجع المعاينة أولًا. تظهر التغييرات للجميع بعد الحفظ فقط.</p></div>${button('الإصدارات السابقة','history','','quiet')}</div><form id="settingsForm" class="two-col"><div class="card"><h3>الاسم والصفحة الرئيسية</h3>${field('اسم المنصة / المدرسة','settingName',config.name)}${field('العنوان الفرعي','settingSubtitle',config.subtitle)}${field('عنوان الصفحة الرئيسية','settingHero',config.hero)}<label for="settingDescription">وصف الصفحة</label><textarea id="settingDescription">${esc(config.description)}</textarea><div class="two-col"><div>${field('اللون الأساسي','settingPrimary',config.primary,'color')}</div><div>${field('لون الخلفية','settingBackground',config.background,'color')}</div></div>${field('رابط الشعار','settingLogo',config.logo||'')}<label for="logoFile">أو ارفع الشعار</label><input id="logoFile" type="file" accept="image/png,image/jpeg,image/webp"><h3>نبذة عن المدرسة وتواصل معنا</h3><label for="settingAbout">نبذة عن المنصة</label><textarea id="settingAbout">${esc(config.about||config.description)}</textarea><label for="settingContact">بيانات التواصل الرسمية</label><textarea id="settingContact">${esc(config.contactText||'')}</textarea>${field('نص أسفل الموقع','settingFooter',config.footerText||'')}<h3>فيديوهات الصفحة الرئيسية للمدرسة</h3><p class="help">أضف روابط يوتيوب أو ملفات فيديو MP4/WebM لتظهر مباشرةً في مكتبة الفيديوهات بالصفحة الرئيسية.</p><div id="homepageVideosRows"></div>${button('＋ إضافة فيديو للرئيسية','addHomeVideo','','quiet')}<h3>روابط القنوات الرسمية</h3><div id="socialRows"></div>${button('＋ إضافة رابط','addSocial','','quiet')}<label>الأقسام الظاهرة وترتيبها بالأسهم</label><div id="sectionRows"></div><div class="row" style="margin-top:22px">${button('معاينة التغييرات','previewSettings','','outline')}<button>حفظ ونشر الهوية</button></div></div><aside><div id="settingsPreview" class="settings-preview"><h2>${esc(config.name)}</h2><p>${esc(config.hero)}</p><span class="button">نموذج زر</span></div><p class="help">تُحفظ آخر 10 نسخ من الإعدادات للاستعادة.</p>${adminPanel?'':'<a href="admin/admin.html" class="button outline">لوحة التحكم</a>'}</aside></form>`;drawSettingsRows();}
-function drawSettingsRows(){if($('socialRows'))$('socialRows').innerHTML=(settingsDraft.socials||[]).map((s,i)=>`<div class="card" style="padding:12px;margin:8px 0"><input data-social="label" data-index="${i}" value="${esc(s.label)}" aria-label="اسم الرابط"><input data-social="url" data-index="${i}" value="${esc(s.url)}" placeholder="https://" aria-label="الرابط"><div class="row">${button('↑','socialUp',i,'quiet')}${button('حذف','socialDelete',i,'outline')}<label class="check"><input data-social="visible" data-index="${i}" type="checkbox" ${s.visible!==false?'checked':''}>ظاهر</label></div></div>`).join('');if($('homepageVideosRows'))$('homepageVideosRows').innerHTML=(settingsDraft.homepageVideos||[]).map((v,i)=>`<div class="card" style="padding:12px;margin:8px 0"><input data-homevideo="title" data-index="${i}" value="${esc(v.title||'')}" placeholder="عنوان الفيديو التعليمي" aria-label="عنوان الفيديو"><input data-homevideo="subject" data-index="${i}" value="${esc(v.subject||'')}" placeholder="المادة / التصنيف (مثال: العلوم)" aria-label="تصنيف الفيديو"><input data-homevideo="url" data-index="${i}" value="${esc(v.url||'')}" placeholder="https://www.youtube.com/watch?v=..." aria-label="رابط الفيديو"><div class="row">${button('↑','homeVideoUp',i,'quiet')}${button('حذف','homeVideoDelete',i,'outline')}<label class="check"><input data-homevideo="visible" data-index="${i}" type="checkbox" ${v.visible!==false?'checked':''}>ظاهر في الرئيسية</label><label class="check"><input data-homevideo="featured" data-index="${i}" type="checkbox" ${v.featured?'checked':''}>مميز</label></div></div>`).join('');const allKeys=['games','champions','topGames','activeTeachers','videos','about'];const order=[...settingsDraft.sections,...allKeys.filter(k=>!settingsDraft.sections.includes(k))];if($('sectionRows'))$('sectionRows').innerHTML=order.map(k=>`<div class="row" style="margin:8px 0"><label class="check"><input data-section="${k}" type="checkbox" ${settingsDraft.sections.includes(k)?'checked':''}>${sectionLabels[k]||k}</label>${button('↑','sectionUp',k,'quiet')}</div>`).join('');}
-function readSettings(){return {...settingsDraft,name:($('settingName')?.value||'').trim(),subtitle:$('settingSubtitle')?.value||'',hero:$('settingHero')?.value||'',description:$('settingDescription')?.value||'',primary:$('settingPrimary')?.value||'#8a1538',background:$('settingBackground')?.value||'#f8f6f4',logo:($('settingLogo')?.value||'').trim(),about:($('settingAbout')?.value||'').trim(),contactText:($('settingContact')?.value||'').trim(),footerText:($('settingFooter')?.value||'').trim()};}
+function renderSettings(){
+ settingsDraft={...defaultConfig(),...structuredClone(config)};
+ settingsDraft.socials=Array.isArray(settingsDraft.socials)?settingsDraft.socials:[];
+ settingsDraft.homepageVideos=Array.isArray(settingsDraft.homepageVideos)?settingsDraft.homepageVideos:[];
+ settingsDraft.navItems=Array.isArray(settingsDraft.navItems)&&settingsDraft.navItems.length?settingsDraft.navItems:structuredClone(DEFAULT_NAV_ITEMS);
+ if(!Array.isArray(settingsDraft.sections)||!settingsDraft.sections.length){
+  settingsDraft.sections=['games','champions','topGames','activeTeachers','videos','about'];
+ }
+ $('panel').innerHTML=`<div class="section-head studio-top-bar">
+  <div>
+   <span class="section-kicker">استوديو التصميم وتجربة المنصة · تحكم كامل ومباشر</span>
+   <h2>البيانات الرئيسية وهوية المدرسة</h2>
+   <p>تحكّم في الثيم العام، شعار الوزارة والمدرسة، صورة المبنى المدرسي، ترتيب الأقسام، شريط التنقل، ومكتبة الفيديو مع معاينة فورية.</p>
+  </div>
+  <div class="row">
+   ${button('استعادة الافتراضي','resetDefaultSettings','','outline')}
+   ${button('تصدير التصميم JSON','exportSettingsJson','','quiet')}
+   ${button('الإصدارات السابقة','history','','quiet')}
+  </div>
+ </div>
+ <div class="studio-module-tabs" role="tablist" aria-label="وحدات استوديو التصميم">
+  ${[
+   ['all','كل الوحدات'],
+   ['branding','🏛️ الهوية والشعارات والمبنى'],
+   ['theme','🎨 الثيم والألوان والحركة'],
+   ['builder','🧩 باني الصفحة الرئيسية'],
+   ['navigation','🧭 مدير شريط التنقل'],
+   ['media','🎬 الفيديو والتواصل والخصوصية']
+  ].map(([k,lbl])=>`<button type="button" class="studio-tab-btn ${studioModule===k?'active':''}" data-action="studioTab" data-id="${k}">${lbl}</button>`).join('')}
+ </div>
+ <form id="settingsForm" class="two-col studio-grid">
+  <div class="studio-controls-col stack">
+   <div class="card studio-module-card" data-studio-module="branding">
+    <h3>🏛️ الهوية الرسمية والشعارات وصورة مبنى المدرسة</h3>
+    ${field('اسم المنصة / المدرسة','settingName',settingsDraft.name)}
+    ${field('العنوان الفرعي','settingSubtitle',settingsDraft.subtitle)}
+    ${field('عنوان الصفحة الرئيسية','settingHero',settingsDraft.hero)}
+    <label for="settingDescription">وصف الصفحة</label>
+    <textarea id="settingDescription">${esc(settingsDraft.description)}</textarea>
+    <div class="studio-subbox">
+     <h4>شعار المدرسة والمنصة</h4>
+     ${field('رابط الشعار','settingLogo',settingsDraft.logo||'')}
+     <div class="two-col">
+      <div><label for="logoFile">أو ارفع الشعار</label><input id="logoFile" type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml"></div>
+      <div>${field('حجم شعار المدرسة (px)','settingLogoSize',settingsDraft.logoSize||44,'number')}</div>
+     </div>
+    </div>
+    <div class="studio-subbox">
+     <h4>شعار وزارة التربية والتعليم والتعليم العالي</h4>
+     <label class="check"><input id="settingShowMinistryLogo" type="checkbox" ${settingsDraft.showMinistryLogo!==false?'checked':''}>إظهار شعار الوزارة الرسمي في الهيدر</label>
+     ${field('رابط أو مسار شعار الوزارة','settingMinistryLogo',settingsDraft.ministryLogo||'assets/qatar-moehe-logo.svg')}
+     <div class="two-col">
+      <div><label for="ministryLogoFile">رفع شعار الوزارة (PNG/SVG/WebP)</label><input id="ministryLogoFile" type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml"></div>
+      <div>${field('ارتفاع شعار الوزارة (px)','settingMinistryLogoSize',settingsDraft.ministryLogoSize||44,'number')}</div>
+     </div>
+    </div>
+    <div class="studio-subbox">
+     <h4>صورة المبنى المدرسي الحقيقية (${esc(OFFICIAL_SCHOOL_NAME)})</h4>
+     <label class="check"><input id="settingShowSchoolImage" type="checkbox" ${settingsDraft.showSchoolImage!==false?'checked':''}>عرض واجهة المبنى المدرسي في الصفحة الرئيسية</label>
+     ${field('مسار أو رابط صورة المبنى المدرسي','settingSchoolImage',settingsDraft.schoolImage||'assets/school-building.png')}
+     <label for="schoolImageFile">رفع صورة جديدة لمبنى المدرسة</label>
+     <input id="schoolImageFile" type="file" accept="image/png,image/jpeg,image/webp">
+     <div class="two-col">
+      <div>
+       <label for="settingSchoolImageStyle">نمط العرض السينمائي</label>
+       <select id="settingSchoolImageStyle">
+        <option value="cinematic-glass" ${settingsDraft.schoolImageStyle==='cinematic-glass'?'selected':''}>لوحة زجاجية سينمائية فاخرة</option>
+        <option value="royal-frame" ${settingsDraft.schoolImageStyle==='royal-frame'?'selected':''}>إطار قطري ذهبي ملكي</option>
+        <option value="minimal-clean" ${settingsDraft.schoolImageStyle==='minimal-clean'?'selected':''}>واجهة معمارية هادئة</option>
+       </select>
+      </div>
+      <div>
+       <label for="settingSchoolImagePos">نقطة ارتكاز الصورة (Crop)</label>
+       <select id="settingSchoolImagePos">
+        <option value="center" ${settingsDraft.schoolImagePos==='center'?'selected':''}>المنتصف (واجهة المدخل)</option>
+        <option value="top" ${settingsDraft.schoolImagePos==='top'?'selected':''}>الأعلى (الأقواس المعمارية)</option>
+        <option value="bottom" ${settingsDraft.schoolImagePos==='bottom'?'selected':''}>الأسفل (الساحة والمدخل)</option>
+       </select>
+      </div>
+     </div>
+     <label for="settingSchoolImageOverlay">شدة التدرج اللوني فوق الصورة (%)</label>
+     <input id="settingSchoolImageOverlay" type="range" min="15" max="85" value="${Number(settingsDraft.schoolImageOverlay)??52}">
+    </div>
+   </div>
+
+   <div class="card studio-module-card" data-studio-module="theme">
+    <h3>🎨 الثيم العام، الألوان، الخطوط، والحركة</h3>
+    <label for="settingThemePreset">الثيم الجاهز للمنصة</label>
+    <select id="settingThemePreset">
+     ${Object.entries(THEME_PRESETS).map(([k,p])=>`<option value="${k}" ${settingsDraft.themePreset===k?'selected':''}>${esc(p.label)}</option>`).join('')}
+     <option value="custom" ${settingsDraft.themePreset==='custom'?'selected':''}>مخصص بالكامل</option>
+    </select>
+    <div class="two-col">
+     <div>${field('اللون الأساسي','settingPrimary',settingsDraft.primary,'color')}</div>
+     <div>${field('لون الخلفية','settingBackground',settingsDraft.background,'color')}</div>
+    </div>
+    <div class="two-col">
+     <div>${field('لون التمييز الذهبي / المساعد','settingAccent',settingsDraft.accent||'#d4af37','color')}</div>
+     <div>${field('استدارة البطاقات (px)','settingRadius',settingsDraft.cardRadius||18,'number')}</div>
+    </div>
+    <div class="two-col">
+     <div>
+      <label for="settingMotion">مستوى المؤثرات الحركية</label>
+      <select id="settingMotion">
+       <option value="minimal" ${settingsDraft.motionLevel==='minimal'?'selected':''}>هادئ (أقل حركة)</option>
+       <option value="balanced" ${(settingsDraft.motionLevel||'balanced')==='balanced'?'selected':''}>متوازن احترافي (موصى به)</option>
+       <option value="cinematic" ${settingsDraft.motionLevel==='cinematic'?'selected':''}>سينمائي غامر</option>
+      </select>
+     </div>
+     <div>
+      <label for="settingDensity">كثافة تخطيط الصفحة</label>
+      <select id="settingDensity">
+       <option value="compact" ${settingsDraft.layoutDensity==='compact'?'selected':''}>مدمج (شاشات الفصول)</option>
+       <option value="comfortable" ${(settingsDraft.layoutDensity||'comfortable')==='comfortable'?'selected':''}>متوازن مريح</option>
+       <option value="spacious" ${settingsDraft.layoutDensity==='spacious'?'selected':''}>رحب وواسع</option>
+      </select>
+     </div>
+    </div>
+   </div>
+
+   <div class="card studio-module-card" data-studio-module="builder">
+    <h3>🧩 باني الصفحة الرئيسية ومعرض الألعاب</h3>
+    <p class="help">رتّب أقسام الصفحة الرئيسية أو أخفِ أي قسم دون تعديل الكود. ينعكس الترتيب فورًا على الزوار بعد الحفظ.</p>
+    <label>الأقسام الظاهرة وترتيبها بالأسهم</label>
+    <div id="sectionRows" class="studio-section-rows"></div>
+    <div class="two-col" style="margin-top:12px">
+     <div>${field('ثواني تبديل الهيرو التلقائي','settingHeroInterval',settingsDraft.heroIntervalSeconds||6,'number')}</div>
+     <div>
+      <label for="settingGalleryCols">عدد أعمدة معرض الألعاب (سطح المكتب)</label>
+      <select id="settingGalleryCols">
+       <option value="4" ${(Number(settingsDraft.galleryColumns)||4)===4?'selected':''}>4 ألعاب في الصف (مدمج)</option>
+       <option value="3" ${Number(settingsDraft.galleryColumns)===3?'selected':''}>3 ألعاب في الصف (بطاقات كبيرة)</option>
+      </select>
+     </div>
+    </div>
+    <div class="check-grid" style="margin-top:10px">
+     <label class="check"><input id="settingHeroAutoRotate" type="checkbox" ${settingsDraft.heroAutoRotate!==false?'checked':''}>تدوير تلقائي لشرائح الهيرو</label>
+     <label class="check"><input id="settingHeroPuzzle" type="checkbox" ${settingsDraft.enablePuzzleInHero?'checked':''}>إظهار بازل الصور في الهيرو دائمًا</label>
+     <label class="check"><input id="settingRankingsEnabled" type="checkbox" ${settingsDraft.rankingsEnabled!==false?'checked':''}>تفعيل لوحة نجوم الأسبوع والأكثر تفاعلًا</label>
+     <label class="check"><input id="settingTeacherRecEnabled" type="checkbox" ${settingsDraft.teacherRecognitionEnabled!==false?'checked':''}>إظهار المعلمين الأكثر تفعيلًا</label>
+    </div>
+    <label for="settingPrivacyMode">نظام خصوصية أسماء الطلاب في لوحة الشرف العامة</label>
+    <select id="settingPrivacyMode">
+     <option value="abbreviated" ${(settingsDraft.studentPrivacyMode||'abbreviated')==='abbreviated'?'selected':''}>اسم مختصر آمن (مثال: عبدالله م. الكواري)</option>
+     <option value="full" ${settingsDraft.studentPrivacyMode==='full'?'selected':''}>الاسم الثلاثي الكامل</option>
+     <option value="approved_only" ${settingsDraft.studentPrivacyMode==='approved_only'?'selected':''}>الأسماء المعتمدة يدويًا فقط</option>
+    </select>
+   </div>
+
+   <div class="card studio-module-card" data-studio-module="navigation">
+    <h3>🧭 مدير شريط التنقل العلوي</h3>
+    <label class="check" style="margin-bottom:10px"><input id="settingStickyHeader" type="checkbox" ${settingsDraft.stickyHeader!==false?'checked':''}>تثبيت شريط التنقل في أعلى الشاشة عند التمرير (Sticky Header)</label>
+    <div id="navConfigRows" class="stack"></div>
+   </div>
+
+   <div class="card studio-module-card" data-studio-module="media">
+    <h3>🎬 مصمم مكتبة الفيديو وبيانات التواصل</h3>
+    <label for="settingVideoLayout">نمط عرض مكتبة الفيديو في الرئيسية</label>
+    <select id="settingVideoLayout">
+     <option value="featured-split" ${(settingsDraft.videoLayout||'featured-split')==='featured-split'?'selected':''}>مشغل سينمائي رئيسي + قائمة جانبية</option>
+     <option value="cinema-grid" ${settingsDraft.videoLayout==='cinema-grid'?'selected':''}>مسرح عريض + شبكة بطاقات سفلية</option>
+     <option value="compact-list" ${settingsDraft.videoLayout==='compact-list'?'selected':''}>عرض مدمج سريع</option>
+    </select>
+    <h4>فيديوهات الصفحة الرئيسية للمدرسة</h4>
+    <p class="help">أضف روابط يوتيوب أو ملفات فيديو MP4/WebM لتظهر مباشرةً في مكتبة الفيديوهات بالصفحة الرئيسية.</p>
+    <div id="homepageVideosRows"></div>
+    ${button('＋ إضافة فيديو للرئيسية','addHomeVideo','','quiet')}
+    <h4>نبذة عن المدرسة وتواصل معنا</h4>
+    <label for="settingAbout">نبذة عن المنصة</label>
+    <textarea id="settingAbout">${esc(settingsDraft.about||settingsDraft.description)}</textarea>
+    <label for="settingContact">بيانات التواصل الرسمية</label>
+    <textarea id="settingContact">${esc(settingsDraft.contactText||'')}</textarea>
+    ${field('نص أسفل الموقع','settingFooter',settingsDraft.footerText||'')}
+    <h4>روابط القنوات الرسمية</h4>
+    <div id="socialRows"></div>
+    ${button('＋ إضافة رابط','addSocial','','quiet')}
+   </div>
+
+   <div class="row studio-submit-bar" style="margin-top:16px">
+    ${button('معاينة التغييرات','previewSettings','','outline')}
+    <button type="submit">حفظ ونشر الهوية</button>
+   </div>
+  </div>
+  <aside class="studio-preview-dock">
+   <div class="preview-dock-header">
+    <strong>المعاينة الحية الفورية</strong>
+    <div class="preview-device-btns">
+     <button type="button" class="quiet ${previewDeviceMode==='desktop'?'active':''}" data-action="previewDevice" data-id="desktop">سطح المكتب</button>
+     <button type="button" class="quiet ${previewDeviceMode==='tablet'?'active':''}" data-action="previewDevice" data-id="tablet">تابلت</button>
+     <button type="button" class="quiet ${previewDeviceMode==='mobile'?'active':''}" data-action="previewDevice" data-id="mobile">جوال</button>
+    </div>
+   </div>
+   <div id="settingsPreview" class="settings-preview device-${esc(previewDeviceMode)}">
+    <h2>${esc(config.name)}</h2>
+    <p>${esc(config.hero)}</p>
+    <span class="button">نموذج زر</span>
+   </div>
+   <p class="help">تُحفظ آخر 10 نسخ من الإعدادات للاستعادة الفورية بأمان.</p>
+   ${adminPanel?'':'<a href="admin/admin.html" class="button outline">لوحة التحكم الشاملة</a>'}
+  </aside>
+ </form>`;
+ drawSettingsRows();
+ updateStudioPreview(settingsDraft);
+}
+
+function updateStudioPreview(c){
+ const box=$('settingsPreview');if(!box)return;
+ box.style.setProperty('--primary',c.primary||'#8a1538');
+ box.style.background=c.background||'#f6f4f0';
+ box.className=`settings-preview device-${previewDeviceMode}`;
+ const schoolImg=c.showSchoolImage!==false?(c.schoolImage||'assets/school-building.png'):'';
+ box.innerHTML=`<div class="preview-mini-header">
+  <div class="row" style="gap:8px">
+   ${c.logo?`<img src="${esc(c.logo)}" alt="معاينة الشعار" style="width:38px;height:38px;object-fit:contain;border-radius:8px">`:`<span class="mark" style="width:34px;height:34px;font-size:16px">أ</span>`}
+   <div><h2 style="margin:0;font-size:16px">${esc(c.name)}</h2><small>${esc(c.subtitle)}</small></div>
+  </div>
+  ${c.showMinistryLogo!==false?`<img src="${esc(c.ministryLogo||'assets/qatar-moehe-logo.svg')}" alt="شعار الوزارة" style="height:30px;object-fit:contain">`:''}
+ </div>
+ ${schoolImg?`<div class="preview-mini-building"><img src="${esc(schoolImg)}" alt="مبنى المدرسة" style="width:100%;height:110px;object-fit:cover;border-radius:10px;margin:10px 0"></div>`:''}
+ <h3 style="margin:8px 0 4px">${esc(c.hero)}</h3>
+ <p style="font-size:13px;margin:0 0 10px">${esc(c.description)}</p>
+ <div style="font-size:12px;border-top:1px solid #00000014;padding-top:8px">
+  <strong>من نحن:</strong> <p style="margin:4px 0">${esc(c.about)}</p>
+  <p style="margin:4px 0">${esc(c.contactText)}</p>
+  <div class="row" style="margin:6px 0">${(c.socials||[]).filter(s=>s.visible!==false).map(s=>`<span class="tag">${esc(s.label)}</span>`).join('')}</div>
+  <p style="margin:4px 0;opacity:.75">${esc(c.footerText)}</p>
+ </div>
+ <span class="button" style="margin-top:8px">نموذج زر تفاعلي</span>`;
+}
+
+function drawSettingsRows(){
+ if($('socialRows'))$('socialRows').innerHTML=(settingsDraft.socials||[]).map((s,i)=>`<div class="card" style="padding:12px;margin:8px 0"><input data-social="label" data-index="${i}" value="${esc(s.label)}" aria-label="اسم الرابط"><input data-social="url" data-index="${i}" value="${esc(s.url)}" placeholder="https://" aria-label="الرابط"><div class="row">${button('↑','socialUp',i,'quiet')}${button('حذف','socialDelete',i,'outline')}<label class="check"><input data-social="visible" data-index="${i}" type="checkbox" ${s.visible!==false?'checked':''}>ظاهر</label></div></div>`).join('');
+ if($('homepageVideosRows'))$('homepageVideosRows').innerHTML=(settingsDraft.homepageVideos||[]).map((v,i)=>`<div class="card" style="padding:12px;margin:8px 0"><input data-homevideo="title" data-index="${i}" value="${esc(v.title||'')}" placeholder="عنوان الفيديو التعليمي" aria-label="عنوان الفيديو"><input data-homevideo="subject" data-index="${i}" value="${esc(v.subject||'')}" placeholder="المادة / التصنيف (مثال: العلوم)" aria-label="تصنيف الفيديو"><input data-homevideo="url" data-index="${i}" value="${esc(v.url||'')}" placeholder="https://www.youtube.com/watch?v=..." aria-label="رابط الفيديو"><div class="row">${button('↑','homeVideoUp',i,'quiet')}${button('حذف','homeVideoDelete',i,'outline')}<label class="check"><input data-homevideo="visible" data-index="${i}" type="checkbox" ${v.visible!==false?'checked':''}>ظاهر في الرئيسية</label><label class="check"><input data-homevideo="featured" data-index="${i}" type="checkbox" ${v.featured?'checked':''}>مميز</label></div></div>`).join('');
+ if($('navConfigRows'))$('navConfigRows').innerHTML=(settingsDraft.navItems||DEFAULT_NAV_ITEMS).map((it,i)=>`<div class="row card" style="padding:10px 12px;justify-content:space-between"><input data-navitem="label" data-index="${i}" value="${esc(it.label)}" style="max-width:170px" aria-label="اسم التبويب"><input data-navitem="href" data-index="${i}" value="${esc(it.href)}" style="max-width:190px;direction:ltr" aria-label="الرابط"><div class="row">${button('↑','navItemUp',i,'quiet')}<label class="check"><input data-navitem="visible" data-index="${i}" type="checkbox" ${it.visible!==false?'checked':''}>ظاهر</label></div></div>`).join('');
+ const allKeys=['games','champions','topGames','activeTeachers','videos','about'];
+ const order=[...settingsDraft.sections,...allKeys.filter(k=>!settingsDraft.sections.includes(k))];
+ if($('sectionRows'))$('sectionRows').innerHTML=order.map(k=>`<div class="row studio-section-item" style="margin:8px 0;justify-content:space-between"><label class="check"><input data-section="${k}" type="checkbox" ${settingsDraft.sections.includes(k)?'checked':''}>${sectionLabels[k]||k}</label><div class="row">${button('↑','sectionUp',k,'quiet')}${button('↓','sectionDown',k,'quiet')}</div></div>`).join('');
+ document.querySelectorAll?.('.studio-module-card').forEach(card=>{
+  card.hidden=studioModule!=='all'&&card.dataset.studioModule!==studioModule;
+ });
+}
+
+function readSettings(){
+ return {
+  ...settingsDraft,
+  name:($('settingName')?.value||settingsDraft?.name||OFFICIAL_SCHOOL_NAME).trim(),
+  subtitle:$('settingSubtitle')?.value??settingsDraft?.subtitle??'',
+  hero:$('settingHero')?.value??settingsDraft?.hero??'',
+  description:$('settingDescription')?.value??settingsDraft?.description??'',
+  primary:$('settingPrimary')?.value||settingsDraft?.primary||'#8a1538',
+  background:$('settingBackground')?.value||settingsDraft?.background||'#f6f4f0',
+  accent:$('settingAccent')?.value||settingsDraft?.accent||'#d4af37',
+  themePreset:$('settingThemePreset')?.value||settingsDraft?.themePreset||'qatar-arena',
+  cardRadius:Number($('settingRadius')?.value||settingsDraft?.cardRadius||18),
+  motionLevel:$('settingMotion')?.value||settingsDraft?.motionLevel||'balanced',
+  layoutDensity:$('settingDensity')?.value||settingsDraft?.layoutDensity||'comfortable',
+  logo:($('settingLogo')?.value??settingsDraft?.logo??'').trim(),
+  logoSize:Number($('settingLogoSize')?.value||settingsDraft?.logoSize||44),
+  ministryLogo:($('settingMinistryLogo')?.value||settingsDraft?.ministryLogo||'assets/qatar-moehe-logo.svg').trim(),
+  showMinistryLogo:$('settingShowMinistryLogo')?$('settingShowMinistryLogo').checked:(settingsDraft?.showMinistryLogo!==false),
+  ministryLogoSize:Number($('settingMinistryLogoSize')?.value||settingsDraft?.ministryLogoSize||44),
+  schoolImage:($('settingSchoolImage')?.value||settingsDraft?.schoolImage||'assets/school-building.png').trim(),
+  showSchoolImage:$('settingShowSchoolImage')?$('settingShowSchoolImage').checked:(settingsDraft?.showSchoolImage!==false),
+  schoolImageStyle:$('settingSchoolImageStyle')?.value||settingsDraft?.schoolImageStyle||'cinematic-glass',
+  schoolImagePos:$('settingSchoolImagePos')?.value||settingsDraft?.schoolImagePos||'center',
+  schoolImageOverlay:Number($('settingSchoolImageOverlay')?.value??settingsDraft?.schoolImageOverlay??52),
+  heroIntervalSeconds:Math.max(4,Math.min(15,Number($('settingHeroInterval')?.value||settingsDraft?.heroIntervalSeconds||6))),
+  heroAutoRotate:$('settingHeroAutoRotate')?$('settingHeroAutoRotate').checked:(settingsDraft?.heroAutoRotate!==false),
+  enablePuzzleInHero:$('settingHeroPuzzle')?$('settingHeroPuzzle').checked:!!settingsDraft?.enablePuzzleInHero,
+  galleryColumns:Number($('settingGalleryCols')?.value||settingsDraft?.galleryColumns||4),
+  rankingsEnabled:$('settingRankingsEnabled')?$('settingRankingsEnabled').checked:(settingsDraft?.rankingsEnabled!==false),
+  teacherRecognitionEnabled:$('settingTeacherRecEnabled')?$('settingTeacherRecEnabled').checked:(settingsDraft?.teacherRecognitionEnabled!==false),
+  studentPrivacyMode:$('settingPrivacyMode')?.value||settingsDraft?.studentPrivacyMode||'abbreviated',
+  stickyHeader:$('settingStickyHeader')?$('settingStickyHeader').checked:(settingsDraft?.stickyHeader!==false),
+  videoLayout:$('settingVideoLayout')?.value||settingsDraft?.videoLayout||'featured-split',
+  about:($('settingAbout')?.value??settingsDraft?.about??'').trim(),
+  contactText:($('settingContact')?.value??settingsDraft?.contactText??'').trim(),
+  footerText:($('settingFooter')?.value??settingsDraft?.footerText??'').trim()
+ };
+}
+
 async function openAssignment(code,mode='home'){assignment=await api('open',{code});assignment.code=code;assignment.mode=mode;selected=assignment.settings.templates[0];renderJoin();}
 function availableTemplates(type=''){const hasPuzzle=assignment.types.includes('puzzle_image')&&assignment.settings.types.includes('puzzle_image');return assignment.settings.templates.filter(k=>games[k]&&(k!=='puzzle'||hasPuzzle&&(!type||type==='puzzle_image')));}
 function refreshTemplateChoices(){const type=$('questionType')?.value||'',allowed=availableTemplates(type);if(!allowed.includes(selected))selected=allowed[0]||'';const box=$('templateChoices');if(box)box.innerHTML=allowed.length?allowed.map(k=>`<button type="button" data-action="selectTemplate" data-id="${k}" class="${k===selected?'selected':''}"><b>${gameIcon(k)}</b>${games[k][1]}</button>`).join(''):'<p class="help">لا توجد طريقة لعب متاحة لهذا النوع من الأسئلة.</p>';const submit=$('startForm')?.querySelector('button[type="submit"]');if(submit)submit.disabled=!allowed.length;}
@@ -219,42 +662,110 @@ function renderQuestion(){const q=play.questions[play.index];const render=['race
 async function answer(value){if(play.answered||play.answerPending)return;play.answerPending=true;try{const q=play.questions[play.index],r=await api('answer',{id:play.id,secret:play.secret,question:q.id,value});play.answered=true;play.points=(play.points||0)+(Number(r.points)||0);play.completed=(play.completed||0)+1;play.pendingCount=(play.pendingCount||0)+(r.pending?1:0);updateGameHUD();play.lastCorrect=r.correct;if(r.correct)play.correct++;if(['football','basketball','bowling','volleyball','fishing'].includes(play.template)){close();$(play.template+'Game').contentWindow.postMessage({type:'school-'+play.template+'-result',token:play.sportToken,index:play.index,correct:r.correct,pending:r.pending,feedback:[r.feedback,r.explanation].filter(Boolean).join(' ')},location.origin);return;}$('answerArea').querySelectorAll('button,input,textarea,select').forEach(el=>el.disabled=true);$('feedback').innerHTML=`<div class="feedback ${!r.correct&&!r.pending?'wrong':''}"><b>${esc(r.feedback)}</b><p>${esc(r.explanation)}</p></div>${button(play.template==='race'?'واصل السباق ←':play.index===play.questions.length-1?'عرض النتيجة':'السؤال التالي ←','next')}`;if(document.querySelector('.arena'))document.querySelector('.arena').outerHTML=arena();}finally{play.answerPending=false;}}
 async function finish(){const session=play;if(session.lifecyclePending)return;session.lifecyclePending=true;try{const r=await api('finish',{id:play.id,secret:play.secret});play.finished=true;show(`<section class="auth card" style="text-align:center;max-width:650px"><span class="eyebrow">${esc(assignment.title)}</span><h1>${r.group?'اكتملت الجلسة الصفية':r.pending?'أحسنت، وصلت إجاباتك':r.passed?'أحسنت! اجتزت المهمة':'تجربة مفيدة، واصل التعلّم'}</h1>${r.group?'<p>سُجّلت جلسة جماعية في إنجاز المعلم دون درجات فردية للطلاب.</p>':`<div class="result-score">${r.score}%</div><p>${r.pending?'الدرجة مبدئية حتى مراجعة الأسئلة المقالية.':'درجة الاجتياز '+play.threshold+'%'}</p>`}<div class="row" style="justify-content:center">${button('العودة للمهمة','replay','','quiet')}${!r.group?button('قائمة الصدارة','leaderboard'):''}</div><div id="leaderboardResults"></div></section>`);}finally{session.lifecyclePending=false;}}
 function exportCSV(){const id=$('reportAssignment').value,rows=data.sessions.filter(s=>s.mode!=='group'&&(!id||s.assignment_id===id));const safe=v=>'"'+String(v??'').replace(/^[=+@\-\t\r]/,"'$&").replace(/"/g,'""')+'"';const values=[['الطالب','المهمة','الصف','المكان','الدرجة','الحالة','التاريخ'],...rows.map(s=>{const a=data.assignments.find(a=>a.id===s.assignment_id);return[s.student_name,a?.title,a?.class_name,s.mode==='home'?'المنزل':'الصف',s.score,s.pending?'بانتظار التصحيح':s.finished_at?'مكتملة':'غير مكتملة',s.created_at];})];M.downloadFile('سجل-إنجاز-الطلاب.csv','\ufeff'+values.map(r=>r.map(safe).join(',')).join('\r\n'),'text/csv;charset=utf-8');}
-document.addEventListener('click',e=>{const b=e.target.closest('[data-action]');if(!b)return;const a=b.dataset.action,id=b.dataset.id;e.preventDefault();run(async()=>{
-if(a==='raceQuestion'){if(play?.raceQuestion)renderQuestion();else notice('قد السيارة إلى الحاجز الأول.');}else if(a==='heroScene'){const slides=getActiveHeroSlides(),idx=slides.findIndex(s=>s.key===id);updateHeroDOM(idx>=0?idx:0);scheduleHeroRotation();}else if(a==='heroPrev'){updateHeroDOM(heroIdx-1);scheduleHeroRotation();}else if(a==='heroNext'){updateHeroDOM(heroIdx+1);scheduleHeroRotation();}else if(a==='selectHomeVideo'){activeVideoKey=id;const vids=resolveHomeVideos(),sel=vids.find(v=>v.key===id)||vids[0];if(sel&&$('featuredVideoStage')){$('featuredVideoStage').innerHTML=renderVideoStageMarkup(sel);document.querySelectorAll('.video-thumb-btn').forEach(btn=>btn.classList.toggle('active',btn.dataset.id===sel.key));}}else if(a==='dashboard')await dashboard();else if(a==='login')auth();else if(a==='signup')auth(true);else if(a==='joinFocus')$('joinCode').focus();else if(a==='tab'){tab=id;renderDashboard();}else if(a==='assign')assignmentForm(id);else if(a==='copy'){const u=link(data.assignments.find(x=>x.id===id));try{await navigator.clipboard.writeText(u);notice('تم نسخ رابط المهمة.');}catch{dialog(`<h2>رابط المهمة</h2><input class="link-field" readonly value="${esc(u)}">`);}}
-else if(a==='toggle'){const x=data.assignments.find(x=>x.id===id);await api('toggleAssignment',{id,active:!x.active});await dashboard();}
-else if(a==='class'){const x=data.assignments.find(x=>x.id===id);dialog(`<h2>طريقة التشغيل الصفي</h2><p>الجماعي إنجاز للمعلم فقط. الفردي يسجّل باسم الطالب.</p><div class="row">${button('جماعي على السبورة','classGroup',x.id)}${button('فردي باسم الطالب','classIndividual',x.id,'quiet')}</div>`);}
-else if(a==='classGroup'||a==='classIndividual'){close();await openAssignment(data.assignments.find(x=>x.id===id).code,a==='classGroup'?'group':'individual');}
-else if(a==='addVideo')videoForm();else if(a==='watch')watch(data.videos.find(v=>v.id===id));else if(a==='taskVideo')watch(assignment.videos.find(v=>v.id===id));else if(a==='deleteVideo'){dialog(`<h2>حذف الفيديو؟</h2><p>سيختفي الرابط من مهماتك.</p>${button('تأكيد الحذف','confirmDeleteVideo',id)}`);}else if(a==='confirmDeleteVideo'){await api('deleteVideo',{id});close();await dashboard();}
-else if(a==='review')await review(id);else if(a==='student')studentRecord(id);else if(a==='export')exportCSV();else if(a==='reset')dialog(`<h2>إعادة تعيين كلمة المرور</h2><form id="resetForm" data-id="${id}">${field('كلمة المرور الجديدة (8 أحرف على الأقل)','newPassword','','password')}<button style="margin-top:15px">حفظ كلمة المرور</button></form>`);
-else if(a==='role'){const t=data.teachers.find(t=>t.id===id),role=t.role==='admin'?'teacher':'admin';if(!confirm(role==='admin'?'منح هذا الحساب صلاحية إدارة المنصة بالكامل؟':'إلغاء صلاحية الإدارة وتحويل الحساب إلى معلم؟'))return;await api('setRole',{id,role});await dashboard();}
-else if(a==='teacherStatus'){const t=data.teachers.find(t=>t.id===id);await api('teacherStatus',{id,active:t.status==='موقوف'});await dashboard();}
-else if(a==='addSocial'){settingsDraft.socials.push({label:'رابط جديد',url:'https://',visible:true});drawSettingsRows();}else if(a==='socialDelete'){settingsDraft.socials.splice(Number(id),1);drawSettingsRows();}else if(a==='socialUp'){const i=Number(id);if(i>0)[settingsDraft.socials[i-1],settingsDraft.socials[i]]=[settingsDraft.socials[i],settingsDraft.socials[i-1]];drawSettingsRows();}
-else if(a==='addHomeVideo'){settingsDraft.homepageVideos=settingsDraft.homepageVideos||[];settingsDraft.homepageVideos.push({title:'شرح تعليمي جديد',subject:'مكتبة المدرسة',url:'https://www.youtube.com/watch?v=',visible:true,featured:false});drawSettingsRows();}else if(a==='homeVideoDelete'){settingsDraft.homepageVideos.splice(Number(id),1);drawSettingsRows();}else if(a==='homeVideoUp'){const i=Number(id);if(i>0)[settingsDraft.homepageVideos[i-1],settingsDraft.homepageVideos[i]]=[settingsDraft.homepageVideos[i],settingsDraft.homepageVideos[i-1]];drawSettingsRows();}
-else if(a==='sectionUp'){const i=settingsDraft.sections.indexOf(id);if(i>0)[settingsDraft.sections[i-1],settingsDraft.sections[i]]=[settingsDraft.sections[i],settingsDraft.sections[i-1]];drawSettingsRows();}
-else if(a==='previewSettings'){const c=readSettings();$('settingsPreview').style.setProperty('--primary',c.primary);$('settingsPreview').style.background=c.background;$('settingsPreview').innerHTML=`${c.logo?`<img src="${esc(c.logo)}" alt="معاينة الشعار" style="width:65px;height:65px;object-fit:contain">`:''}<h2>${esc(c.name)}</h2><small>${esc(c.subtitle)}</small><h3>${esc(c.hero)}</h3><p>${esc(c.description)}</p><h3>من نحن</h3><p>${esc(c.about)}</p><p>${esc(c.contactText)}</p><div class="row">${c.socials.filter(s=>s.visible!==false).map(s=>`<span class="tag">${esc(s.label)}</span>`).join('')}</div><p>${esc(c.footerText)}</p><span class="button">نموذج زر</span>`;}
-else if(a==='history'){const h=await api('settingsHistory');dialog(`<h2>الإعدادات السابقة</h2>${h.length?h.map((v,i)=>`<div class="card row"><span>${esc(v.data.name)} · ${new Date(v.at).toLocaleString('ar-QA')}</span>${button('استعادة','restore',i,'quiet')}</div>`).join(''):'لا توجد نسخ سابقة بعد.'}`);}
-else if(a==='restore'){await api('restoreSettings',{index:Number(id)});config=await api('settings');applyBrand(config);close();renderSettings();notice('تمت استعادة الإعدادات.');}
-else if(a==='selectTemplate'){if(!availableTemplates($('questionType')?.value||'').includes(id))return;selected=id;if(id==='puzzle')$('questionType').value='puzzle_image';refreshTemplateChoices();document.querySelectorAll('[data-action=selectTemplate]').forEach(x=>x.classList.toggle('selected',x.dataset.id===id));}
-else if(a==='answer')await answer(Number(id));else if(a==='textAnswer')await answer($('answerText')?.value||'');else if(a==='matchAnswer'){const q=play.questions[play.index],v=q.pairs.map((_,i)=>$('match'+i).value);if(v.some(x=>!x))throw new Error('أكمل كل الاختيارات.');await answer(v);}
-else if(a==='classAnswer'){const v={};for(const x of document.querySelectorAll('[data-class-id]')){if(x.value==='')throw new Error('صنّف كل العناصر.');v[x.dataset.classId]=Number(x.value);}await answer(v);}
-else if(a==='orderUp'){const i=Number(id);if(i>0)[play.order[i-1],play.order[i]]=[play.order[i],play.order[i-1]];$('answerArea').innerHTML=questionUI(play.questions[play.index]);}
-else if(a==='orderAnswer')await answer(play.order);else if(a==='tile'){const i=Number(id);if(play.tile===undefined)play.tile=i;else{[play.tiles[i],play.tiles[play.tile]]=[play.tiles[play.tile],play.tiles[i]];play.tile=undefined;}$('answerArea').innerHTML=questionUI(play.questions[play.index]);}
-else if(a==='puzzleAnswer')await answer(play.tiles);else if(a==='next'){if(play.template==='race'){play.raceQuestion=false;close();$('originalRace').contentWindow.postMessage({type:'school-race-continue',correct:play.lastCorrect},location.origin);return;}if(play.index===play.questions.length-1)await finish();else{play.index++;play.answered=false;play.order=null;play.tiles=null;play.tile=undefined;renderQuestion();}}
-else if(a==='replay'){if(play?.demo)startDemo(play.template);else renderJoin();}else if(a==='leaderboard'){const rows=await api('leaderboard',{id:play.id,secret:play.secret});$('leaderboardResults').innerHTML=`<h3>قائمة الصدارة</h3>${rows.length?rows.map((r,i)=>`<div class="row card" style="justify-content:space-between;margin-top:8px"><span>${i+1}. ${esc(r.student_name)}</span><b>${r.score}%</b></div>`).join(''):'لا توجد نتائج نهائية منشورة بعد.'}`;}
+
+document.addEventListener('click',e=>{
+ const navBtn=e.target.closest?.('.nav-tab-btn');
+ if(navBtn){
+  const href=navBtn.getAttribute('href')||'';
+  document.querySelectorAll?.('.nav-tab-btn').forEach(x=>{x.classList.toggle('active',x===navBtn);if(x===navBtn)x.setAttribute('aria-current','page');else x.removeAttribute('aria-current');});
+  const navTrack=$('primaryNavTabs'),mobBtn=$('mobileNavBtn');
+  if(navTrack?.classList.contains('is-open')){navTrack.classList.remove('is-open');mobBtn?.setAttribute('aria-expanded','false');}
+  if(href.startsWith('#')){
+   e.preventDefault();
+   if(!$('heroShowcaseSection'))home();
+   const target=$(href.slice(1));
+   if(target)target.scrollIntoView?.({behavior:'smooth',block:'start'});
+   return;
+  }
+ }
+ if(e.target.closest?.('#mobileNavBtn')){
+  const btn=e.target.closest('#mobileNavBtn'),track=$('primaryNavTabs');
+  if(track){const open=track.classList.toggle('is-open');btn.setAttribute('aria-expanded',open?'true':'false');}
+  return;
+ }
+ const b=e.target.closest('[data-action]');if(!b)return;const a=b.dataset.action,id=b.dataset.id;e.preventDefault();run(async()=>{
+ if(a==='raceQuestion'){if(play?.raceQuestion)renderQuestion();else notice('قد السيارة إلى الحاجز الأول.');}
+ else if(a==='heroScene'){const slides=getActiveHeroSlides(),idx=slides.findIndex(s=>s.key===id);updateHeroDOM(idx>=0?idx:0);scheduleHeroRotation();}
+ else if(a==='heroPrev'){updateHeroDOM(heroIdx-1);scheduleHeroRotation();}
+ else if(a==='heroNext'){updateHeroDOM(heroIdx+1);scheduleHeroRotation();}
+ else if(a==='filterGames'){activeGameCategory=id||'all';document.querySelectorAll?.('.gallery-filter-btn').forEach(btn=>btn.classList.toggle('active',btn.dataset.id===activeGameCategory));document.querySelectorAll?.('.game-cover-card').forEach(card=>{card.classList.toggle('is-filtered-out',activeGameCategory!=='all'&&card.dataset.gameCat!==activeGameCategory);});}
+ else if(a==='selectHomeVideo'){activeVideoKey=id;const vids=resolveHomeVideos(),sel=vids.find(v=>v.key===id)||vids[0];if(sel&&$('featuredVideoStage')){$('featuredVideoStage').innerHTML=renderVideoStageMarkup(sel);document.querySelectorAll('.video-thumb-btn').forEach(btn=>btn.classList.toggle('active',btn.dataset.id===sel.key));}}
+ else if(a==='dashboard')await dashboard();
+ else if(a==='login')auth();
+ else if(a==='signup')auth(true);
+ else if(a==='joinFocus'){$('joinCode')?.scrollIntoView?.({behavior:'smooth',block:'center'});$('joinCode')?.focus();}
+ else if(a==='tab'){tab=id;renderDashboard();}
+ else if(a==='studioTab'){studioModule=id||'all';document.querySelectorAll?.('.studio-tab-btn').forEach(btn=>btn.classList.toggle('active',btn.dataset.id===studioModule));drawSettingsRows();}
+ else if(a==='previewDevice'){previewDeviceMode=id||'desktop';document.querySelectorAll?.('[data-action="previewDevice"]').forEach(btn=>btn.classList.toggle('active',btn.dataset.id===previewDeviceMode));updateStudioPreview(readSettings());}
+ else if(a==='resetDefaultSettings'){settingsDraft=defaultConfig();renderSettings();notice('تمت استعادة الإعدادات الافتراضية في المعاينة. اضغط حفظ لاعتمادها.');}
+ else if(a==='exportSettingsJson'){const c=readSettings();M.downloadFile('manarat-school-design.json',JSON.stringify(c,null,2),'application/json;charset=utf-8');}
+ else if(a==='assign')assignmentForm(id);
+ else if(a==='copy'){const u=link(data.assignments.find(x=>x.id===id));try{await navigator.clipboard.writeText(u);notice('تم نسخ رابط المهمة.');}catch{dialog(`<h2>رابط المهمة</h2><input class="link-field" readonly value="${esc(u)}">`);}}
+ else if(a==='toggle'){const x=data.assignments.find(x=>x.id===id);await api('toggleAssignment',{id,active:!x.active});await dashboard();}
+ else if(a==='class'){const x=data.assignments.find(x=>x.id===id);dialog(`<h2>طريقة التشغيل الصفي</h2><p>الجماعي إنجاز للمعلم فقط. الفردي يسجّل باسم الطالب.</p><div class="row">${button('جماعي على السبورة','classGroup',x.id)}${button('فردي باسم الطالب','classIndividual',x.id,'quiet')}</div>`);}
+ else if(a==='classGroup'||a==='classIndividual'){close();await openAssignment(data.assignments.find(x=>x.id===id).code,a==='classGroup'?'group':'individual');}
+ else if(a==='addVideo')videoForm();else if(a==='watch')watch(data.videos.find(v=>v.id===id));else if(a==='taskVideo')watch(assignment.videos.find(v=>v.id===id));else if(a==='deleteVideo'){dialog(`<h2>حذف الفيديو؟</h2><p>سيختفي الرابط من مهماتك.</p>${button('تأكيد الحذف','confirmDeleteVideo',id)}`);}else if(a==='confirmDeleteVideo'){await api('deleteVideo',{id});close();await dashboard();}
+ else if(a==='review')await review(id);else if(a==='student')studentRecord(id);else if(a==='export')exportCSV();else if(a==='reset')dialog(`<h2>إعادة تعيين كلمة المرور</h2><form id="resetForm" data-id="${id}">${field('كلمة المرور الجديدة (8 أحرف على الأقل)','newPassword','','password')}<button style="margin-top:15px">حفظ كلمة المرور</button></form>`);
+ else if(a==='role'){const t=data.teachers.find(t=>t.id===id),role=t.role==='admin'?'teacher':'admin';if(!confirm(role==='admin'?'منح هذا الحساب صلاحية إدارة المنصة بالكامل؟':'إلغاء صلاحية الإدارة وتحويل الحساب إلى معلم؟'))return;await api('setRole',{id,role});await dashboard();}
+ else if(a==='teacherStatus'){const t=data.teachers.find(t=>t.id===id);await api('teacherStatus',{id,active:t.status==='موقوف'});await dashboard();}
+ else if(a==='addSocial'){settingsDraft.socials.push({label:'رابط جديد',url:'https://',visible:true});drawSettingsRows();}else if(a==='socialDelete'){settingsDraft.socials.splice(Number(id),1);drawSettingsRows();}else if(a==='socialUp'){const i=Number(id);if(i>0)[settingsDraft.socials[i-1],settingsDraft.socials[i]]=[settingsDraft.socials[i],settingsDraft.socials[i-1]];drawSettingsRows();}
+ else if(a==='addHomeVideo'){settingsDraft.homepageVideos=settingsDraft.homepageVideos||[];settingsDraft.homepageVideos.push({title:'شرح تعليمي جديد',subject:'مكتبة المدرسة',url:'https://www.youtube.com/watch?v=',visible:true,featured:false});drawSettingsRows();}else if(a==='homeVideoDelete'){settingsDraft.homepageVideos.splice(Number(id),1);drawSettingsRows();}else if(a==='homeVideoUp'){const i=Number(id);if(i>0)[settingsDraft.homepageVideos[i-1],settingsDraft.homepageVideos[i]]=[settingsDraft.homepageVideos[i],settingsDraft.homepageVideos[i-1]];drawSettingsRows();}
+ else if(a==='navItemUp'){const i=Number(id);if(i>0)[settingsDraft.navItems[i-1],settingsDraft.navItems[i]]=[settingsDraft.navItems[i],settingsDraft.navItems[i-1]];drawSettingsRows();}
+ else if(a==='sectionUp'){const i=settingsDraft.sections.indexOf(id);if(i>0)[settingsDraft.sections[i-1],settingsDraft.sections[i]]=[settingsDraft.sections[i],settingsDraft.sections[i-1]];drawSettingsRows();}
+ else if(a==='sectionDown'){const i=settingsDraft.sections.indexOf(id);if(i>=0&&i<settingsDraft.sections.length-1)[settingsDraft.sections[i+1],settingsDraft.sections[i]]=[settingsDraft.sections[i],settingsDraft.sections[i+1]];drawSettingsRows();}
+ else if(a==='previewSettings'){const c=readSettings();updateStudioPreview(c);}
+ else if(a==='history'){const h=await api('settingsHistory');dialog(`<h2>الإعدادات السابقة</h2>${h.length?h.map((v,i)=>`<div class="card row"><span>${esc(v.data.name)} · ${new Date(v.at).toLocaleString('ar-QA')}</span>${button('استعادة','restore',i,'quiet')}</div>`).join(''):'لا توجد نسخ سابقة بعد.'}`);}
+ else if(a==='restore'){await api('restoreSettings',{index:Number(id)});config=await api('settings');applyBrand(config);close();renderSettings();notice('تمت استعادة الإعدادات.');}
+ else if(a==='selectTemplate'){if(!availableTemplates($('questionType')?.value||'').includes(id))return;selected=id;if(id==='puzzle')$('questionType').value='puzzle_image';refreshTemplateChoices();document.querySelectorAll('[data-action=selectTemplate]').forEach(x=>x.classList.toggle('selected',x.dataset.id===id));}
+ else if(a==='answer')await answer(Number(id));else if(a==='textAnswer')await answer($('answerText')?.value||'');else if(a==='matchAnswer'){const q=play.questions[play.index],v=q.pairs.map((_,i)=>$('match'+i).value);if(v.some(x=>!x))throw new Error('أكمل كل الاختيارات.');await answer(v);}
+ else if(a==='classAnswer'){const v={};for(const x of document.querySelectorAll('[data-class-id]')){if(x.value==='')throw new Error('صنّف كل العناصر.');v[x.dataset.classId]=Number(x.value);}await answer(v);}
+ else if(a==='orderUp'){const i=Number(id);if(i>0)[play.order[i-1],play.order[i]]=[play.order[i],play.order[i-1]];$('answerArea').innerHTML=questionUI(play.questions[play.index]);}
+ else if(a==='orderAnswer')await answer(play.order);else if(a==='tile'){const i=Number(id);if(play.tile===undefined)play.tile=i;else{[play.tiles[i],play.tiles[play.tile]]=[play.tiles[play.tile],play.tiles[i]];play.tile=undefined;}$('answerArea').innerHTML=questionUI(play.questions[play.index]);}
+ else if(a==='puzzleAnswer')await answer(play.tiles);else if(a==='next'){if(play.template==='race'){play.raceQuestion=false;close();$('originalRace').contentWindow.postMessage({type:'school-race-continue',correct:play.lastCorrect},location.origin);return;}if(play.index===play.questions.length-1)await finish();else{play.index++;play.answered=false;play.order=null;play.tiles=null;play.tile=undefined;renderQuestion();}}
+ else if(a==='replay'){if(play?.demo)startDemo(play.template);else renderJoin();}else if(a==='leaderboard'){const rows=await api('leaderboard',{id:play.id,secret:play.secret});$('leaderboardResults').innerHTML=`<h3>قائمة الصدارة</h3>${rows.length?rows.map((r,i)=>`<div class="row card" style="justify-content:space-between;margin-top:8px"><span>${i+1}. ${esc(r.student_name)}</span><b>${r.score}%</b></div>`).join(''):'لا توجد نتائج نهائية منشورة بعد.'}`;}
 },b);});
+
 document.addEventListener('submit',e=>{const f=e.target;if(!['joinForm','authForm','assignmentForm','videoForm','renameForm','resetForm','settingsForm','startForm'].includes(f.id)&&!f.classList.contains('gradeForm'))return;e.preventDefault();run(async()=>{
-if(f.id==='joinForm'){let code=$('joinCode').value.trim();try{code=new URL(code).searchParams.get('task')||code;}catch{}await openAssignment(code);history.replaceState(null,'','?task='+encodeURIComponent(code));}
-else if(f.id==='authForm'){const username=$('username').value.trim(),password=$('password').value;if(f.dataset.signup==='true')await api('register',{username,password,name:$('fullName').value});const r=await api('loginAlias',{username});await M.authSignIn({email:r.email,password});await navigation();await dashboard();const next=new URLSearchParams(location.search).get('next');if(data.profile.admin&&next==='admin')location.href='admin/admin.html';}
-else if(f.id==='assignmentForm'){const r=await api('assignment',{game_id:f.dataset.game,title:$('assignmentTitle').value,class_name:$('className').value,templates:[...f.querySelectorAll('[name=templates]:checked')].map(x=>x.value),types:[...f.querySelectorAll('[name=types]:checked')].map(x=>x.value),passing_score:$('passingScore').value,deadline:$('deadline').value?new Date($('deadline').value).toISOString():null,leaderboard:$('leaderboard').checked});close();tab='assignments';await dashboard();dialog(`<h2>المهمة جاهزة</h2><p>أرسل هذا الرابط لطلابك. يدخلون بالاسم فقط.</p><input class="link-field" readonly value="${esc(link(r))}"><p></p>${button('نسخ الرابط','copy',r.id)}`);}
-else if(f.id==='videoForm'){let url=$('videoUrl').value.trim();const file=$('videoFile').files[0];if(file){if(file.size>40*1024*1024)throw new Error('الحد الأقصى للفيديو 40 MB.');if(!['video/mp4','video/webm'].includes(file.type))throw new Error('ارفع MP4 أو WebM.');const uploaded=await M.cloudUploadFile(file,{folder:'school-videos'});url=uploaded.url||uploaded.publicUrl||uploaded;}const title=$('videoTitle').value,subject=$('videoSubject').value,game_id=$('videoGame').value;await api('video',{title,subject,url,game_id});if(data?.profile?.admin&&$('videoPinHomepage')?.checked){const nextCfg=structuredClone(config);nextCfg.homepageVideos=Array.isArray(nextCfg.homepageVideos)?nextCfg.homepageVideos:[];nextCfg.homepageVideos.unshift({title,subject,url,visible:true,featured:false});try{await api('saveSettings',{data:nextCfg});config=nextCfg;}catch{}}close();await dashboard();}
-else if(f.id==='renameForm'){await api('renameStudent',{id:f.dataset.id,name:$('correctedName').value,student_key:$('mergeKey').value});close();await dashboard();}
-else if(f.id==='resetForm'){await api('resetPassword',{id:f.dataset.id,password:$('newPassword').value});close();notice('تم تغيير كلمة مرور المعلم.');}
-else if(f.classList.contains('gradeForm')){await api('grade',{id:f.dataset.id,question:f.dataset.q,points:f.elements.points.value,feedback:f.elements.feedback.value});notice('تم اعتماد الدرجة.');await review(f.dataset.id);data=await api('dashboard');}
-else if(f.id==='settingsForm'){const c=readSettings();await api('saveSettings',{data:c});config=c;applyBrand(c);if(adminPanel)parent.postMessage({type:'school-settings-saved'},location.origin);notice('حُفظت الهوية ونُشرت.');}
-else if(f.id==='startForm'){if(!availableTemplates($('questionType').value).includes(selected))throw new Error('اختر طريقة لعب متاحة لنوع السؤال.');const name=$('studentName')?.value||'';let key=localStorage.getItem('abuobaid_student_key');if(!key||localStorage.getItem('abuobaid_student_name')!==name)key=crypto.randomUUID();const startArgs={code:assignment.code,mode:assignment.mode,name,student_key:key,template:selected,type:selected==='puzzle'?'puzzle_image':$('questionType').value};play=await api('start',startArgs);Object.assign(play,{startArgs,index:0,correct:0,points:0,completed:0,pendingCount:0,template:selected});if(assignment.mode!=='group'){localStorage.setItem('abuobaid_student_name',name);localStorage.setItem('abuobaid_student_key',key);}if(play.template==='race')renderRace();else if(['football','basketball','bowling','volleyball','fishing'].includes(play.template))renderSport();else renderQuestion();}
+ if(f.id==='joinForm'){let code=$('joinCode').value.trim();try{code=new URL(code).searchParams.get('task')||code;}catch{}await openAssignment(code);history.replaceState(null,'','?task='+encodeURIComponent(code));}
+ else if(f.id==='authForm'){const username=$('username').value.trim(),password=$('password').value;if(f.dataset.signup==='true')await api('register',{username,password,name:$('fullName').value});const r=await api('loginAlias',{username});await M.authSignIn({email:r.email,password});await navigation();await dashboard();const next=new URLSearchParams(location.search).get('next');if(data.profile.admin&&next==='admin')location.href='admin/admin.html';}
+ else if(f.id==='assignmentForm'){const r=await api('assignment',{game_id:f.dataset.game,title:$('assignmentTitle').value,class_name:$('className').value,templates:[...f.querySelectorAll('[name=templates]:checked')].map(x=>x.value),types:[...f.querySelectorAll('[name=types]:checked')].map(x=>x.value),passing_score:$('passingScore').value,deadline:$('deadline').value?new Date($('deadline').value).toISOString():null,leaderboard:$('leaderboard').checked});close();tab='assignments';await dashboard();dialog(`<h2>المهمة جاهزة</h2><p>أرسل هذا الرابط لطلابك. يدخلون بالاسم فقط.</p><input class="link-field" readonly value="${esc(link(r))}"><p></p>${button('نسخ الرابط','copy',r.id)}`);}
+ else if(f.id==='videoForm'){let url=$('videoUrl').value.trim();const file=$('videoFile').files[0];if(file){if(file.size>40*1024*1024)throw new Error('الحد الأقصى للفيديو 40 MB.');if(!['video/mp4','video/webm'].includes(file.type))throw new Error('ارفع MP4 أو WebM.');const uploaded=await M.cloudUploadFile(file,{folder:'school-videos'});url=uploaded.url||uploaded.publicUrl||uploaded;}const title=$('videoTitle').value,subject=$('videoSubject').value,game_id=$('videoGame').value;await api('video',{title,subject,url,game_id});if(data?.profile?.admin&&$('videoPinHomepage')?.checked){const nextCfg=structuredClone(config);nextCfg.homepageVideos=Array.isArray(nextCfg.homepageVideos)?nextCfg.homepageVideos:[];nextCfg.homepageVideos.unshift({title,subject,url,visible:true,featured:false});try{await api('saveSettings',{data:nextCfg});config=nextCfg;}catch{}}close();await dashboard();}
+ else if(f.id==='renameForm'){await api('renameStudent',{id:f.dataset.id,name:$('correctedName').value,student_key:$('mergeKey').value});close();await dashboard();}
+ else if(f.id==='resetForm'){await api('resetPassword',{id:f.dataset.id,password:$('newPassword').value});close();notice('تم تغيير كلمة مرور المعلم.');}
+ else if(f.classList.contains('gradeForm')){await api('grade',{id:f.dataset.id,question:f.dataset.q,points:f.elements.points.value,feedback:f.elements.feedback.value});notice('تم اعتماد الدرجة.');await review(f.dataset.id);data=await api('dashboard');}
+ else if(f.id==='settingsForm'){const c=readSettings();await api('saveSettings',{data:c});config=c;applyBrand(c);if(adminPanel)parent.postMessage({type:'school-settings-saved'},location.origin);notice('حُفظت الهوية ونُشرت.');}
+ else if(f.id==='startForm'){if(!availableTemplates($('questionType').value).includes(selected))throw new Error('اختر طريقة لعب متاحة لنوع السؤال.');const name=$('studentName')?.value||'';let key=localStorage.getItem('abuobaid_student_key');if(!key||localStorage.getItem('abuobaid_student_name')!==name)key=crypto.randomUUID();const startArgs={code:assignment.code,mode:assignment.mode,name,student_key:key,template:selected,type:selected==='puzzle'?'puzzle_image':$('questionType').value};play=await api('start',startArgs);Object.assign(play,{startArgs,index:0,correct:0,points:0,completed:0,pendingCount:0,template:selected});if(assignment.mode!=='group'){localStorage.setItem('abuobaid_student_name',name);localStorage.setItem('abuobaid_student_key',key);}if(play.template==='race')renderRace();else if(['football','basketball','bowling','volleyball','fishing'].includes(play.template))renderSport();else renderQuestion();}
 },f.querySelector('button[type=submit]')||f.querySelector('button:last-child'));});
-document.addEventListener('input',e=>{const el=e.target;if(el.dataset.social&&settingsDraft){const s=settingsDraft.socials[Number(el.dataset.index)];if(s)s[el.dataset.social]=el.type==='checkbox'?el.checked:el.value;}if(el.dataset.homevideo&&settingsDraft?.homepageVideos){const v=settingsDraft.homepageVideos[Number(el.dataset.index)];if(v)v[el.dataset.homevideo]=el.type==='checkbox'?el.checked:el.value;}});
-document.addEventListener('change',e=>{const el=e.target;if(el.id==='questionType')refreshTemplateChoices();if(el.id==='reportAssignment')renderReports();if(el.dataset.social){const s=settingsDraft.socials[Number(el.dataset.index)];s[el.dataset.social]=el.type==='checkbox'?el.checked:el.value;}if(el.dataset.homevideo&&settingsDraft?.homepageVideos){const v=settingsDraft.homepageVideos[Number(el.dataset.index)];if(v)v[el.dataset.homevideo]=el.type==='checkbox'?el.checked:el.value;}if(el.dataset.section){settingsDraft.sections=settingsDraft.sections.filter(k=>k!==el.dataset.section);if(el.checked)settingsDraft.sections.push(el.dataset.section);}if(el.id==='logoFile')run(async()=>{const file=el.files[0];if(!file)return;if(!['image/png','image/jpeg','image/webp'].includes(file.type))throw new Error('ارفع PNG أو JPG أو WebP.');$('settingLogo').value=await M.compressImageFile(file,300,.8);});});
+
+document.addEventListener('input',e=>{
+ const el=e.target;
+ if(el.dataset.social&&settingsDraft){const s=settingsDraft.socials[Number(el.dataset.index)];if(s)s[el.dataset.social]=el.type==='checkbox'?el.checked:el.value;}
+ if(el.dataset.homevideo&&settingsDraft?.homepageVideos){const v=settingsDraft.homepageVideos[Number(el.dataset.index)];if(v)v[el.dataset.homevideo]=el.type==='checkbox'?el.checked:el.value;}
+ if(el.dataset.navitem&&settingsDraft?.navItems){const n=settingsDraft.navItems[Number(el.dataset.index)];if(n)n[el.dataset.navitem]=el.type==='checkbox'?el.checked:el.value;}
+});
+
+document.addEventListener('change',e=>{
+ const el=e.target;
+ if(el.id==='questionType')refreshTemplateChoices();
+ if(el.id==='reportAssignment')renderReports();
+ if(el.id==='settingThemePreset'&&settingsDraft){
+  const preset=THEME_PRESETS[el.value];
+  if(preset){
+   if($('settingPrimary'))$('settingPrimary').value=preset.primary;
+   if($('settingBackground'))$('settingBackground').value=preset.background;
+   if($('settingAccent'))$('settingAccent').value=preset.accent;
+  }
+  updateStudioPreview(readSettings());
+ }
+ if(el.dataset.social){const s=settingsDraft.socials[Number(el.dataset.index)];if(s)s[el.dataset.social]=el.type==='checkbox'?el.checked:el.value;}
+ if(el.dataset.homevideo&&settingsDraft?.homepageVideos){const v=settingsDraft.homepageVideos[Number(el.dataset.index)];if(v)v[el.dataset.homevideo]=el.type==='checkbox'?el.checked:el.value;}
+ if(el.dataset.navitem&&settingsDraft?.navItems){const n=settingsDraft.navItems[Number(el.dataset.index)];if(n)n[el.dataset.navitem]=el.type==='checkbox'?el.checked:el.value;}
+ if(el.dataset.section){settingsDraft.sections=settingsDraft.sections.filter(k=>k!==el.dataset.section);if(el.checked)settingsDraft.sections.push(el.dataset.section);}
+ if(el.id==='logoFile')run(async()=>{const file=el.files[0];if(!file)return;if(!['image/png','image/jpeg','image/webp','image/svg+xml'].includes(file.type))throw new Error('ارفع PNG أو JPG أو WebP أو SVG.');$('settingLogo').value=await M.compressImageFile(file,320,.85,true);updateStudioPreview(readSettings());});
+ if(el.id==='ministryLogoFile')run(async()=>{const file=el.files[0];if(!file)return;if(!['image/png','image/jpeg','image/webp','image/svg+xml'].includes(file.type))throw new Error('ارفع PNG أو JPG أو WebP أو SVG.');$('settingMinistryLogo').value=await M.compressImageFile(file,420,.88,true);updateStudioPreview(readSettings());});
+ if(el.id==='schoolImageFile')run(async()=>{const file=el.files[0];if(!file)return;if(!['image/png','image/jpeg','image/webp'].includes(file.type))throw new Error('ارفع PNG أو JPG أو WebP.');$('settingSchoolImage').value=await M.compressImageFile(file,1280,.82,false);updateStudioPreview(readSettings());});
+});
+
 $('closeModal').onclick=close;$('dashboardLink').onclick=()=>run(dashboard);$('loginLink').onclick=()=>M.isAuthenticated()?M.authSignOut():auth();
 function renderSport(){play.sportToken=crypto.randomUUID();play.sportOutcome=false;const sport=play.template;show(`${gameHUD()}<section class="football-host"><iframe id="${sport}Game" title="${esc(games[sport][1])}" src="games/${sport}/index.html" style="width:100%;height:85svh;min-height:440px;border:0;border-radius:18px" allow="fullscreen;autoplay" allowfullscreen></iframe></section>`);}
 window.addEventListener('message',e=>{if(!play||!['football','basketball','bowling','volleyball','fishing'].includes(play.template))return;const sport=play.template,frame=$(sport+'Game'),prefix='school-'+sport+'-';if(!frame||e.origin!==location.origin||e.source!==frame.contentWindow)return;const b=e.data;if(!b||typeof b!=='object')return;if(b.type===prefix+'ready'){frame.contentWindow.postMessage({type:prefix+'config',title:assignment.title,count:play.questions.length,images:play.questions.map(q=>q.image||''),token:play.sportToken},location.origin);return;}if(b.token!==play.sportToken||b.index!==play.index)return;if(b.type===prefix+'question'&&!play.answered&&!play.answerPending)renderQuestion();if(b.type===prefix+'outcome'&&play.answered)play.sportOutcome=true;if(b.type===prefix+'fullscreen'){run(async()=>{if(document.fullscreenElement)await document.exitFullscreen();else await document.documentElement.requestFullscreen();});}if(b.type===prefix+'next'&&play.answered&&play.sportOutcome){play.sportOutcome=false;run(async()=>{if(play.index===play.questions.length-1){try{await finish();}catch(e){play.sportOutcome=true;frame.contentWindow.postMessage({type:prefix+'retry',token:play.sportToken,index:play.index},location.origin);throw e;}}else{const oldIndex=play.index;play.index++;play.answered=false;play.order=null;play.tiles=null;play.tile=undefined;frame.contentWindow.postMessage({type:prefix+'advance',token:play.sportToken,index:oldIndex},location.origin);}});}});
@@ -262,5 +773,5 @@ function renderRace(){show(`${gameHUD()}<section><div class="row" style="justify
 window.addEventListener('message',e=>{if(e.origin!==location.origin)return;const race=$('originalRace'),puzzle=$('originalPuzzle');if(race&&e.source===race.contentWindow){if(e.data?.type==='school-race-ready')race.contentWindow.postMessage({type:'school-race-config',school:config.name,title:assignment.title,count:play.questions.length,teacher:assignment.teacher||'',subject:assignment.subject||''},location.origin);if(e.data?.type==='school-race-fullscreen')run(async()=>{if(document.fullscreenElement)await document.exitFullscreen();else await document.documentElement.requestFullscreen();});if(e.data?.type==='school-race-question'){play.index=e.data.index;play.answered=false;play.order=null;play.tiles=null;play.raceQuestion=true;renderQuestion();}if(e.data?.type==='school-race-finished')run(finish);}
 if(puzzle&&e.source===puzzle.contentWindow){const q=play.questions[play.index];if(e.data?.type==='school-puzzle-ready')puzzle.contentWindow.postMessage({type:'school-puzzle-config',image:q.image,title:assignment.title,school:config.name,pieces:Number(q.puzzle_grid)===3?9:Number(q.puzzle_grid)===4?16:6},location.origin);if(e.data?.type==='school-puzzle-complete')run(()=>answer(Array.from({length:(Number(q.puzzle_grid)||3)**2},(_,i)=>i)));}});
 window.School={api,home,dashboard,openAssignment,arena,gradeUI:questionUI,setHubData:d=>{hubData=d||hubData;}};
-(async()=>{if(!adminPanel)navigation();const params=new URLSearchParams(location.search);const isHome=!params.has('task')&&!params.has('dashboard')&&!adminPanel&&!params.has('login')&&!params.has('demo');try{const [cfg,hub]=await Promise.all([api('settings'),isHome?api('homeHub').catch(()=>null):Promise.resolve(null)]);if(cfg&&cfg.name)config=cfg;if(hub&&typeof hub==='object'&&(Array.isArray(hub.videos)||hub.weekly))hubData=hub;}catch(e){notice('تعذر تحميل الإعدادات: '+e.message);}applyBrand(config);if(params.has('task'))await run(()=>openAssignment(params.get('task')));else if(params.has('dashboard')||adminPanel)await run(dashboard);else if(params.has('login'))auth();else if(params.has('demo'))startDemo(params.get('demo'));else home();})();
+(async()=>{if(!adminPanel)navigation();const params=new URLSearchParams(location.search);const isHome=!params.has('task')&&!params.has('dashboard')&&!adminPanel&&!params.has('login')&&!params.has('demo');try{const [cfg,hub]=await Promise.all([api('settings'),isHome?api('homeHub').catch(()=>null):Promise.resolve(null)]);if(cfg&&cfg.name)config={...defaultConfig(),...cfg};if(hub&&typeof hub==='object'&&(Array.isArray(hub.videos)||hub.weekly))hubData=hub;}catch(e){notice('تعذر تحميل الإعدادات: '+e.message);}applyBrand(config);if(params.has('task'))await run(()=>openAssignment(params.get('task')));else if(params.has('dashboard')||adminPanel)await run(dashboard);else if(params.has('login'))auth();else if(params.has('demo'))startDemo(params.get('demo'));else home();})();
 })();
