@@ -91,6 +91,7 @@ window.PremierFootball.attach=function(args){
  // Keep the game active while the two local assets are being downloaded.
  Promise.all([load(SRC_MOTION),load(SRC_SCULPT)]).then(([motion,sculpt])=>{
    if(wasDisabled)return;
+   try {
    try{sculptInto(motion,sculpt);}catch(error){console.warn('Sculpt upgrade skipped:',error);}
    const body=motion.scene;
    const bounds=new T.Box3().setFromObject(body);
@@ -108,7 +109,7 @@ window.PremierFootball.attach=function(args){
      const node=skeletonCloner.clone(body);
      tuneClothing(node,item.role);
      const holder=new T.Group();
-     holder.name='PhotorealFootballer-'+item.kind;
+     holder.name='SkeletalFootballer-'+item.kind;
      const fitted=new T.Group();
      fitted.position.y=-bounds.min.y*scale;
      fitted.scale.setScalar(scale);
