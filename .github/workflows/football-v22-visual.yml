@@ -1,0 +1,36 @@
+name: Football V22 iPhone Visual Proof
+on:
+  push:
+    branches:
+      - feat/football-real-players-v22
+    paths:
+      - .github/workflows/football-v22-visual.yml
+      - games/football/realistic-players.js
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  iphone-football:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Build V22 static game
+        run: npm run build
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Play V22 and capture iPhone view
+        run: node tests/football-v22-browser.cjs
+      - name: Upload visual proof
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: football-v22-iphone-proof
+          path: artifacts/*.png
+          if-no-files-found: warn

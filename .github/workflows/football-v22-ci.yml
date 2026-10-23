@@ -1,0 +1,33 @@
+name: Football V22 Safety and Browser Gate
+on:
+  push:
+    branches:
+      - feat/football-real-players-v22
+    paths:
+      - .github/workflows/football-v22-ci.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  football-v22-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Build static site including vendor models
+        run: npm run build
+      - name: Validate player loader and motion
+        run: |
+          node --check games/football/realistic-players.js
+          node --check games/football/vendor/GLTFLoader.r128.js
+          node --check games/football/vendor/SkeletonUtils.r128.js
+          node --check scripts/fetch-football-real-assets.cjs
+          npm run test:football
+          npm run test:sports
+          npm run check

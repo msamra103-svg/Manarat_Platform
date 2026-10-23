@@ -1,0 +1,39 @@
+name: Bundle Licensed Football V22 Models
+on:
+  push:
+    branches:
+      - feat/football-real-players-v22
+    paths:
+      - .github/workflows/football-v22-vendor.yml
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  vendor-football-models:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - name: Download CC0 soccer player models
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p games/football/assets public/games/football/assets
+          curl -fLsS --retry 4 --retry-delay 3 --connect-timeout 20 --max-time 160 -o games/football/assets/real-football-motion.glb https://raw.githubusercontent.com/andrewRowlinson/soccerviewer/main/match/assets/clips.glb
+          curl -fLsS --retry 4 --retry-delay 3 --connect-timeout 20 --max-time 160 -o games/football/assets/real-football-sculpt.glb https://raw.githubusercontent.com/andrewRowlinson/soccerviewer/main/match/assets/tpose_sculpted.glb
+          node -e "const fs=require('fs');for(const [n,s] of [['motion',2121256],['sculpt',1320336]]){let b=fs.readFileSync('games/football/assets/real-football-'+n+'.glb');if(b.length!==s||b.toString('ascii',0,4)!=='glTF')throw Error('GLB corrupted: '+n);console.log('valid '+n, b.length)}"
+          cp games/football/assets/real-football-*.glb public/games/football/assets/
+      - name: Push models to preview branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add games/football/assets/real-football-*.glb public/games/football/assets/real-football-*.glb
+          if git diff --cached --quiet; then
+            echo "Models already committed"
+          else
+            git commit -m "chore(football): vendor licensed human animation GLBs for offline game"
+            git push origin HEAD:feat/football-real-players-v22
+          fi
