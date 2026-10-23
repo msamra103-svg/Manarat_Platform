@@ -19,13 +19,6 @@ jobs:
         with:
           node-version: '24'
           cache: npm
-      - name: Refresh lockfile for cross-platform optional dependencies
-        run: |
-          npm install --package-lock-only --ignore-scripts --no-audit --no-fund
-          python3 - <<'PY'
-          import base64
-          print('LOCK_START:' + base64.b64encode(open('package-lock.json','rb').read()).decode('ascii') + ':LOCK_END')
-          PY
       - name: Install dependencies
         run: npm ci
       - name: Build and extract local 3D race assets
