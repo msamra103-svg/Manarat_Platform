@@ -26,6 +26,8 @@ jobs:
         run: npm run build
       - name: Validate football and basketball motion contracts
         run: npm run test:sports
+      - name: Install Chromium for the football browser tests
+        run: npx playwright install --with-deps chromium
       - name: Validate football assignment integration
         run: npm run test:football
       - name: Verify static platform integrity
