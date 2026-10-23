@@ -48,5 +48,6 @@
       "destination": "/auth.html"
     }
   ],
-  "outputDirectory": "public"
+  "outputDirectory": "public",
+  "buildCommand": "npm run build"
 }
