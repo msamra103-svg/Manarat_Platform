@@ -1,25 +1,38 @@
 <!doctype html>
 <html lang="ar" dir="rtl">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#10171d"><title>ليلة كروية في قطر | تحدي التسديد</title><link rel="stylesheet" href="football.css?v=19.3"></head>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#10171d"><title>ليلة كروية في قطر | تحدي التسديد</title><link rel="stylesheet" href="football.css?v=19.3"><link rel="stylesheet" href="premier-ui.css?v=21.0"></head>
 <body data-sport="football">
 <main id="stadium">
   <canvas id="pitch" aria-label="ملعب كرة القدم؛ استخدم زر سدّد لتبدأ المحاولة"></canvas>
   <div class="vignette" aria-hidden="true"></div>
+  <div class="match-banner" aria-label="النتيجة المباشرة"><span class="match-meta">LIVE · QATAR</span><span>ABU UBAIDA</span><span class="match-points" id="broadcastScore">0</span><span>—</span><span class="match-points">0</span><span>التحدي</span></div><span class="camera-caption" id="cameraLabel" aria-live="off">بث تلفزيوني</span>
   <header class="hud">
-    <div class="identity"><span class="live-dot"></span><div><b>ليلة كروية في قطر</b><small>ملعب ثلاثي الأبعاد مستوحى من أجواء قطر</small></div></div>
+    <div class="identity"><span class="live-dot"></span><div><b>ليلة كروية في قطر</b><small>ملعب سينمائي ثلاثي الأبعاد • تحدي رياضي تعليمي</small></div></div>
     <div class="scoreboard" aria-label="لوحة النتيجة"><span>الأهداف</span><b id="score">0</b><i></i><span>التسديدة</span><b id="round">1 / 3</b></div>
     <div class="tools"><button id="sound" aria-pressed="true" title="تشغيل أو كتم الأصوات">الصوت: مفعّل</button><button id="fullscreen" title="ملء الشاشة" aria-label="ملء الشاشة"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5"/></svg></button></div>
   </header>
   <div id="feedback" class="moment" role="status" aria-live="polite" hidden><small id="momentLabel"></small><h1 id="momentTitle"></h1><p id="momentText"></p></div>
   <section id="welcome" class="welcome panel">
-    <span class="eyebrow">فريقان على أرض الملعب · هجمة جماعية · تسديدة حاسمة</span><h1>الملعب ينتظر<br><em>تسديدتك.</em></h1>
+    <span class="eyebrow">مباراة تعليمية مباشرة · كاميرات متعددة · جمهور وتشجيع</span><h1>الملعب ينتظر<br><em>تسديدتك.</em></h1>
     <p>تبدأ الهجمة بتمريرات متقنة بين لاعبي فريقك أمام الدفاع. سدّد الكرة، ثم أجب في منتصف الطريق لتهزّ الشباك!</p>
     <button id="start" class="primary" disabled>جارٍ تجهيز الملعب…</button><small id="modeLabel">تجربة تدريبية · لا تُسجّل في تقارير الطلاب</small>
   </section>
   <section id="question" class="question panel" hidden aria-labelledby="questionText"><span class="eyebrow">الكرة في منتصف الطريق</span><h2 id="questionText"></h2><div id="choices"></div><p id="questionHelp">اختر إجابتك لتستكمل التسديدة.</p></section>
-  <footer id="controls" hidden><div><span id="instruction">اختر زاوية التسديد</span><div class="aim" role="group" aria-label="زاوية التسديد"><button data-aim="left">يسار المرمى</button><button data-aim="center" class="selected">المنتصف</button><button data-aim="right">يمين المرمى</button></div></div><button id="shoot" class="primary">سدّد الكرة ←</button><button id="reopen" hidden>عرض السؤال</button><button id="next" class="primary" hidden>التسديدة التالية ←</button></footer>
+  <footer id="controls" hidden>
+    <div class="control-deck">
+      <div><span id="instruction">اختر زاوية التسديد</span><span id="targetNotice" hidden></span>
+        <div class="aim" role="group" aria-label="زاوية التسديد">
+          <button data-aim="left">يسار المرمى</button><button data-aim="center" class="selected">المنتصف</button><button data-aim="right">يمين المرمى</button>
+        </div>
+      </div>
+      <label class="power-control" for="shotPower">قوة التسديدة <input id="shotPower" type="range" min="35" max="100" value="72" step="1"><output id="powerOutput" for="shotPower">72٪</output></label>
+      <div class="shot-style" role="group" aria-label="نوع التسديدة"><button type="button" class="active" data-shot-style="balanced" aria-pressed="true">دقيقة</button><button type="button" data-shot-style="power" aria-pressed="false">قوية</button><button type="button" data-shot-style="curl" aria-pressed="false">مقوسة</button></div>
+      <button type="button" id="viewCamera" class="camera-toggle" aria-label="تبديل زاوية كاميرا الملعب">الكاميرا: بث تلفزيوني</button>
+    </div>
+    <button id="shoot" class="primary">سدّد الكرة ←</button><button id="reopen" hidden>عرض السؤال</button><button id="next" class="primary" hidden>التسديدة التالية ←</button>
+  </footer>
   <div id="loadingError" class="panel error" hidden><h2>تعذر تجهيز الملعب</h2><p>تحقق من اتصالك ثم أعد تحميل اللعبة.</p><button onclick="location.reload()">إعادة المحاولة</button></div>
   <span class="credit">مدرسة أبو عبيدة الإعدادية للبنين · كرة القدم</span>
 </main>
-<script src="../vendor/three.min.js"></script><script src="../sports/athlete.js?v=19.3"></script><script src="../sports/scene.js?v=19.3"></script><script src="../sports/game.js?v=19.3"></script>
+<script src="../vendor/three.min.js"></script><script src="../sports/athlete.js?v=19.3"></script><script src="../sports/scene.js?v=19.3"></script><script src="premier-visuals.js?v=21.0"></script><script src="../sports/game.js?v=19.3"></script><script src="premier-ui.js?v=21.0"></script>
 <script src="../../js/platform-nav.js?v=20.1"></script></body></html>

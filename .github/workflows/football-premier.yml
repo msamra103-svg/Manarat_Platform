@@ -1,0 +1,34 @@
+name: Premier Football 3D V21
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  football-quality:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - name: Validate premium football scene and secure school bridge
+        run: node tests/football-premier.cjs
+      - name: Build and synchronize public assets
+        run: npm run build
+      - name: Validate football and basketball motion contracts
+        run: npm run test:sports
+      - name: Install Chromium for the football browser tests
+        run: npx playwright install --with-deps chromium
+      - name: Validate football assignment integration
+        run: npm run test:football
+      - name: Verify static platform integrity
+        run: npm run check
