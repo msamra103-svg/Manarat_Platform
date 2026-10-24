@@ -100,7 +100,7 @@ function StudentProgressionDashboard({ sessions = [], assignments = [], games = 
   const [chartType, setChartType] = useState('progression'); // 'progression' | 'students' | 'games'
   const [studentFilter, setStudentFilter] = useState('');
   const [taskFilter, setTaskFilter] = useState(initialTaskFilter || '');
-  const [forceDemo, setForceDemo] = useState(null);
+  const forceDemo = false;
   const [chartRef, chartWidth] = useContainerWidth(820);
 
   useEffect(() => {
@@ -133,7 +133,7 @@ function StudentProgressionDashboard({ sessions = [], assignments = [], games = 
         padding: '22px',
         borderRadius: '18px',
         border: '1px solid rgba(138, 21, 56, 0.16)',
-        background: 'linear-gradient(180deg, rgba(138, 21, 56, 0.035), rgba(255, 255, 255, 0.96))',
+        background: 'var(--surface, #fff)',
         direction: 'rtl'
       }}
     >
@@ -167,7 +167,7 @@ function StudentProgressionDashboard({ sessions = [], assignments = [], games = 
               : `✅ بيانات فعلية مباشرة (${summary.totalCompleted} محاولة مكتملة)`}
           </span>
           <h2 style={{ margin: '4px 0 6px', fontSize: '22px' }}>
-            تحليلات تطور مستوى الطلاب في الألعاب التعليمية (Recharts)
+            تطور مستوى الطلاب في الألعاب التعليمية
           </h2>
           <p className="muted" style={{ margin: 0, fontSize: '14px' }}>
             تتبّع منحنى التعلّم عبر المحاولات المتتالية، وقارن بين أول محاولة وأحدث محاولة لكل طالب.
@@ -175,20 +175,11 @@ function StudentProgressionDashboard({ sessions = [], assignments = [], games = 
         </div>
 
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center' }}>
-          {realCount > 0 && (
-            <button
-              type="button"
-              className="button quiet"
-              data-testid="toggle-demo-analytics"
-              onClick={() => setForceDemo(prev => (prev === true ? false : true))}
-              style={{ fontSize: '13px', padding: '7px 12px' }}
-            >
-              {isDemo ? 'عرض بيانات طلابي الفعلية' : 'معاينة بيانات تدريبية'}
-            </button>
-          )}
+
         </div>
       </div>
 
+      {!realCount && <p className="empty">لا توجد محاولات فردية مكتملة بعد. ستظهر المؤشرات من نتائج الطلاب الفعلية.</p>}
       {/* KPI Summary Strip */}
       <div
         className="analytics-kpi-grid"
