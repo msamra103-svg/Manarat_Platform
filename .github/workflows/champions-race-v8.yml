@@ -25,6 +25,8 @@ jobs:
         run: npm run build
       - name: Validate race integration and integrity
         run: npm run test:race-v8
+      - name: Validate basketball motion and assessment boundaries
+        run: node tests/basketball-motion-v22.cjs && node tests/basketball-scene-v22.cjs && npm run test:sports
       - name: Validate whole site assets and links
         run: npm run check
       - name: Install Chromium for browser regression tests

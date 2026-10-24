@@ -1,0 +1,8 @@
+body[data-sport=basketball]{--gold:#d6b36a;--maroon:#8a1538;background:#20191b}
+body[data-sport=basketball] .panel{border:1px solid #ffffff35;background:linear-gradient(135deg,#35121dec,#151518ed);box-shadow:0 20px 80px #0005;backdrop-filter:blur(14px)}
+body[data-sport=basketball] .primary{background:linear-gradient(120deg,#8a1538,#6d1230);border:1px solid #b45570;color:white}
+body[data-sport=basketball] .welcome{max-width:430px}
+body[data-sport=basketball] .welcome h1{font-size:clamp(32px,4vw,58px)}
+body[data-sport=basketball] .hud{background:linear-gradient(#160e18d9,transparent)}
+body[data-sport=basketball] #controls{background:#22151ce8;border-top:1px solid #ffffff25}
+@media(max-width:600px){body[data-sport=basketball] .identity small{font-size:10px}body[data-sport=basketball] .welcome{max-width:calc(100vw - 28px)}}
