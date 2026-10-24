@@ -1,3 +1,7 @@
+import '../_shared/design-schema.js';
+const DESIGN=(globalThis as any).ManaratDesign;
+// This deployment is an isolated review endpoint. Production school-api is unchanged.
+const DESIGN_PREVIEW=false;
 const base=Deno.env.get('SUPABASE_URL')!, key=Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 const headers={'Content-Type':'application/json','apikey':key,'Authorization':'Bearer '+key};
 const cors={'Access-Control-Allow-Origin':'*','Access-Control-Allow-Headers':'authorization,apikey,content-type','Access-Control-Allow-Methods':'POST,OPTIONS'};
@@ -21,7 +25,7 @@ function grade(q:any,value:any){const max=Math.max(1,Math.min(100,Number(q.point
  return {value,points:correct?max:0,max,pending,correct,feedback:pending?'أُرسلت الإجابة للمعلم للمراجعة.':correct?'أحسنت! إجابة صحيحة.':'راجع الفكرة وحاول في تجربة جديدة.',explanation:pending?'':String(q.explanation||'')};}
 async function requireUser(req:Request){const token=req.headers.get('Authorization')||'';if(!token.startsWith('Bearer '))throw new Error('سجّل الدخول أولًا.');const r=await fetch(base+'/auth/v1/user',{headers:{apikey:key,Authorization:token}});if(!r.ok)throw new Error('انتهت الجلسة. سجّل الدخول من جديد.');const u=await r.json();const p=(await db('profiles','id=eq.'+enc(u.id)))[0];if(!p||p.status==='موقوف')throw new Error('الحساب غير متاح. تواصل مع الإدارة.');return {...p,username:u.user_metadata?.username||'',admin:p.role==='admin'};}
 async function owned(table:string,id:string,p:any){const row=(await db(table,'id=eq.'+enc(id)))[0];if(!row||(!p.admin&&row.teacher_id!==p.id))throw new Error('لا تملك صلاحية الوصول إلى هذا المحتوى.');return row;}
-const allowedSections=['schoolIdentity','games','champions','topGames','activeTeachers','videos','about'];
+const allowedSections=['schoolIdentity','games','champions','topGames','activeTeachers','analytics','videos','about'];
 const qatarOffsetMs=3*3600*1000;
 const gameTitles:Record<string,[string,string,string]>={
  football:['كرة القدم','ملعب ثلاثي الأبعاد','assets/game-covers/football.svg'],
@@ -71,8 +75,8 @@ function formatStudentDisplay(rawName:any,sKey:any,settings:any){
  if(cleaned.length<2||!nName||['طالب','طالبه','تجربه','تجريبي','معلم','ادمن','الاداره','اختبار','demo','test','student','admin','teacher','user','guest'].includes(nName)||/^(test|demo|admin|طالب\s*\d*|تجرب|\d+$)/.test(nName))return null;
  if(cfg.studentPrivacyMode==='approved_only')return null;
  const parts=cleaned.split(' ').filter(Boolean);
- if(cfg.studentPrivacyMode==='full'||parts.length===1)return parts.slice(0,3).join(' ');
- return parts.length===2?`${parts[0]} ${parts[1].charAt(0)}.`:`${parts[0]} ${parts[1].charAt(0)}. ${parts[parts.length-1]}`;
+ if(cfg.studentPrivacyMode==='full'&&cfg.design?.namesApproved)return parts.slice(0,3).join(' ');if(parts.length===1)return parts[0];
+ return parts[0]+' '+parts.slice(1,3).map((p:string)=>p.charAt(0)+'.').join(' ');
 }
 function extractYtId(input:any){
  const raw=String(input||'').trim();if(!raw)return '';if(/^[\w-]{11}$/.test(raw))return raw;
@@ -105,10 +109,10 @@ function mergeHomepageVideos(settings:any,platform:any,schoolVideos:any[]){
  };
  for(const v of (settings?.homepageVideos||[]))add(v,'إدارة المدرسة');
  if(platform?.showYoutubeSection!==false)for(const v of (platform?.youtubeVideos||[]))add(v,'القناة التعليمية');
- for(const v of (schoolVideos||[])){if(v&&(v.show_on_homepage===true||(v.show_on_homepage!==false&&!v.game_id)))add(v,v.subject||'شروحات المواد');}
+ for(const v of (schoolVideos||[])){if(v&&(v.show_on_homepage===true&&v.published===true))add(v,v.subject||'شروحات المواد');}
  const list=[...map.values()];
  list.sort((a,b)=>Number(b.featured)-Number(a.featured));
- return list.slice(0,12);
+ return list.slice(0,24);
 }
 function computeServerWeeklyHub(sessions:any[],assignments:any[],games:any[],teachers:any[],videos:any[],settings:any,nowInput?:any){
  const week=getQatarWeek(nowInput);
@@ -154,13 +158,13 @@ function computeServerWeeklyHub(sessions:any[],assignments:any[],games:any[],tea
  });
  const gCounts=new Map<string,any>();
  for(const s of weekSessions){
-  const tpl=String(s.template||'');if(!gameTitles[tpl]||(s.mode!=='group'&&!s.finished_at))continue;
+  const tpl=String(s.template||'');if(!gameTitles[tpl]||!s.finished_at||s.pending)continue;
   if(!gCounts.has(tpl))gCounts.set(tpl,{key:tpl,name:gameTitles[tpl][0],badge:gameTitles[tpl][1],cover:gameTitles[tpl][2],sessionsCount:0,students:new Set()});
   const gc=gCounts.get(tpl);gc.sessionsCount++;if(s.student_key||s.student_name)gc.students.add(String(s.student_key||normGradeText(s.student_name)));
  }
- const sGames=[...gCounts.values()].filter(g=>g.sessionsCount>0).sort((a,b)=>b.sessionsCount-a.sessionsCount||b.students.size-a.students.size).slice(0,5);
+ const sGames=[...gCounts.values()].filter(g=>g.sessionsCount>0).sort((a,b)=>b.sessionsCount-a.sessionsCount||b.students.size-a.students.size).slice(0,7);
  const maxG=sGames[0]?.sessionsCount||1;
- const topGames=sGames.map((g,i)=>({rank:i+1,key:g.key,name:g.name,badge:g.badge,cover:g.cover,sessionsCount:g.sessionsCount,uniqueStudents:g.students.size,sharePercent:Math.max(12,Math.round(g.sessionsCount*100/maxG))}));
+ const topGames=sGames.map((g,i)=>({rank:i+1,key:g.key,name:g.name,badge:g.badge,cover:g.cover,sessionsCount:g.sessionsCount,uniqueStudents:g.students.size,sharePercent:Math.round(g.sessionsCount*100/maxG)}));
  const tStats=new Map<string,any>();
  const ensureT=(tid:any,fb:any)=>{
   const id=String(tid||'').trim();if(!id)return null;const pr:any=tMap.get(id);if(pr&&pr.status==='موقوف')return null;
@@ -189,25 +193,26 @@ function isValidImageRef(v:any){
  return /^https:\/\//.test(s)||/^(?:\.\.\/)?assets\/[\w./-]+\.(?:png|jpe?g|webp|svg)$/i.test(s)||/^data:image\/(?:png|jpeg|webp|svg\+xml);base64,/.test(s);
 }
 function validateConfig(x:any){if(!x||typeof x.name!=='string'||!x.name.trim())throw new Error('اكتب اسم المدرسة.');for(const c of ['primary','background'])if(!/^#[0-9a-f]{6}$/i.test(x[c]))throw new Error('لون غير صالح.');for(const imgKey of ['logo','ministryLogo','platformLogo','schoolImage'])if(x[imgKey]&&!isValidImageRef(x[imgKey]))throw new Error('ارفع شعارًا أو صورة بصيغة صالحة.');if(JSON.stringify(x).length>500000)throw new Error('الإعدادات كبيرة جدًا.');x.socials=(x.socials||[]).slice(0,20).map((s:any)=>{if(!/^https:\/\//.test(s.url))throw new Error('روابط التواصل يجب أن تبدأ بـ https://');return {label:String(s.label).slice(0,60),url:s.url,visible:s.visible!==false};});x.sections=(x.sections||[]).filter((s:string)=>allowedSections.includes(s));if(Array.isArray(x.homepageVideos)){x.homepageVideos=x.homepageVideos.slice(0,20).filter((v:any)=>v&&((extractYtId(v.url)||extractYtId(v.id))||/^https:\/\/.+\.(mp4|webm)(\?.*)?$/i.test(String(v.url||'')))).map((v:any)=>({id:String(v.id||extractYtId(v.url)||'').slice(0,64),title:String(v.title||'فيديو تعليمي').slice(0,160),subject:String(v.subject||'مكتبة المدرسة').slice(0,80),url:String(v.url||'').slice(0,500),featured:!!v.featured,visible:v.visible!==false}));}return x;}
+async function designRow(){return (await db(DESIGN_PREVIEW?'school_design_studio':'school_settings','id=eq.true'))[0];}
+function publicDesign(raw:any){const c=DESIGN.normalize(raw||{});for(const k of ['studentGradeMap','studentDisplayNames','studentOptOut','customThemes'])delete c[k];c.design.assets=[];return c;}
+function aggregateActivity(sessions:any[]){const week=getQatarWeek(),eligible=sessions.filter(s=>s.finished_at&&!s.pending&&s.mode!=='group'&&s.mode!=='demo'&&new Date(s.finished_at).getTime()>=week.startMs&&new Date(s.finished_at).getTime()<=week.endMs&&Number.isFinite(Number(s.score)));const unique=new Set(eligible.map(s=>String(s.student_key||normGradeText(s.student_name))).filter(Boolean));const days=Array.from({length:7},(_,i)=>({label:['الأحد','الإثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'][i],count:eligible.filter(s=>Math.floor((new Date(s.finished_at).getTime()-week.startMs)/86400000)===i).length}));return {rounds:eligible.length,participants:unique.size,average:eligible.length?Math.round(eligible.reduce((n,s)=>n+Number(s.score),0)/eligible.length):0,days};}
+async function saveDesign(data:any,revision:any){const row=await designRow();if(!row)throw new Error('يلزم تحديث قاعدة بيانات الاستوديو.');const c=DESIGN.normalize(data);validateConfig(c);const expected=DESIGN_PREVIEW?Number(revision):String(revision);if((DESIGN_PREVIEW?row.revision:row.updated_at)!==expected)throw new Error('حفظ مسؤول آخر تصميمًا أحدث. أعد فتح الاستوديو قبل حفظ التغييرات.');const now=new Date().toISOString(),change:any={data:c,history:[{at:now,data:row.data},...(row.history||[])].slice(0,8),updated_at:now};if(DESIGN_PREVIEW)change.revision=row.revision+1;const changed=await db(DESIGN_PREVIEW?'school_design_studio':'school_settings','id=eq.true&'+(DESIGN_PREVIEW?'revision=eq.'+row.revision:'updated_at=eq.'+enc(row.updated_at)),'PATCH',change);if(!changed?.length)throw new Error('تغير التصميم أثناء الحفظ. أعد التحميل للمراجعة.');return {data:c,revision:DESIGN_PREVIEW?change.revision:now,preview:DESIGN_PREVIEW};}
+async function uploadDesignAsset(b:any,p:any){if(!p.admin)throw new Error('للإدارة فقط.');const mime=String(b.mime||''),ext:Record<string,string>={'image/png':'png','image/jpeg':'jpg','image/webp':'webp'};if(!ext[mime]||typeof b.base64!=='string'||b.base64.length>5600000||!/^[a-zA-Z0-9+/]*={0,2}$/.test(b.base64))throw new Error('صيغة الصورة أو حجمها غير صالح.');let bin;try{bin=Uint8Array.from(atob(b.base64),(v:string)=>v.charCodeAt(0));}catch{throw new Error('بيانات الصورة غير صالحة.');}if(bin.length<12||bin.length>4*1024*1024)throw new Error('الحد الأقصى للصورة 4 MB.');const png=[137,80,78,71,13,10,26,10].every((v,i)=>bin[i]===v),jpg=bin[0]===255&&bin[1]===216&&bin[2]===255,webp=String.fromCharCode(...bin.slice(0,4))==='RIFF'&&String.fromCharCode(...bin.slice(8,12))==='WEBP';if(!(mime==='image/png'&&png||mime==='image/jpeg'&&jpg||mime==='image/webp'&&webp))throw new Error('محتوى الملف لا يطابق نوع الصورة.');const id=crypto.randomUUID(),path=p.id+'/'+id+'.'+ext[mime];const response=await fetch(base+'/storage/v1/object/manarat-brand-assets/'+path,{method:'POST',headers:{apikey:key,Authorization:'Bearer '+key,'Content-Type':mime,'x-upsert':'false'},body:bin});if(!response.ok)throw new Error('تعذر رفع الصورة. بقيت الصورة السابقة محفوظة.');return {id,name:String(b.name||'صورة').slice(0,100),url:base+'/storage/v1/object/public/manarat-brand-assets/'+path};}
 export async function handle(req:Request){if(req.method==='OPTIONS')return new Response('ok',{headers:cors});try{
- if(req.method!=='POST')throw new Error('طلب غير صالح.');const raw=await req.text();if(raw.length>600000)throw new Error('الطلب كبير جدًا.');const b=JSON.parse(raw),a=b.action;let out:any;
- if(a==='settings')out=(await db('school_settings'))[0].data;
+ if(req.method!=='POST')throw new Error('طلب غير صالح.');const raw=await req.text();if(raw.length>5700000)throw new Error('الطلب كبير جدًا.');const b=JSON.parse(raw),a=b.action;let out:any;
+ if(a==='settings')out=publicDesign((await designRow())?.data||(await db('school_settings'))[0]?.data);
  else if(a==='homeHub'){
-  const [settingsRows,platformRows,schoolVideos,assignments,games,teachers,sessions]=await Promise.all([
-   db('school_settings').catch(()=>[]),
-   db('platform_state','id=eq.public').catch(()=>[]),
-   db('school_videos','order=created_at.desc&limit=50').catch(()=>[]),
-   db('school_assignments','order=created_at.desc&limit=300').catch(()=>[]),
-   db('manarat_games','select=id,teacher_id,title,data&limit=300').catch(()=>[]),
-   db('profiles','select=id,name,status,role&limit=200').catch(()=>[]),
-   db('school_sessions','select=id,assignment_id,teacher_id,student_name,student_key,mode,template,score,pending,finished_at,created_at&order=created_at.desc&limit=1500').catch(()=>[])
+  const week=getQatarWeek();
+  const [row,platformRows,assignments,games,teachers,sessions]=await Promise.all([
+   designRow(),db('platform_state','id=eq.public'),dbAll('school_assignments','select=id,teacher_id,game_id,class_name,settings,created_at'),dbAll('manarat_games','select=id,teacher_id,title,grade,subject'),dbAll('profiles','select=id,name,status,role'),dbAll('school_sessions','select=id,assignment_id,teacher_id,student_name,student_key,mode,template,score,pending,finished_at,created_at&or=(finished_at.gte.'+enc(week.startIso)+',created_at.gte.'+enc(week.startIso)+')')
   ]);
-  const settingsData=settingsRows?.[0]?.data||{};
-  const platformData=platformRows?.[0]?.data?.platform||{};
-  const videos=mergeHomepageVideos(settingsData,platformData,schoolVideos||[]);
-  const weekly=computeServerWeeklyHub(sessions||[],assignments||[],games||[],teachers||[],schoolVideos||[],settingsData,b.now);
-  const puzzleAvailable=(games||[]).some((g:any)=>(g?.data?.questions||[]).some((q:any)=>q?.type==='puzzle_image'));
-  out={videos,weekly,puzzleAvailable,updatedAt:new Date().toISOString()};
+  const settingsData=DESIGN.normalize(row?.data||{}),platformData=platformRows?.[0]?.data?.platform||{};
+  const videos=mergeHomepageVideos(settingsData,platformData,[]).filter((v:any)=>!settingsData.design.videoHidden.includes(v.key));
+  const weekly=computeServerWeeklyHub(sessions,assignments,games,teachers,[],settingsData);
+  if(!settingsData.design.sections.activeTeachers.visible)weekly.activeTeachers=[];
+  if(!settingsData.design.sections.champions.visible)weekly.champions=weekly.champions.map((c:any)=>({...c,hasWinner:false,studentName:null}));
+  weekly.activeTeachers=weekly.activeTeachers.map(({id,...t}:any)=>t);
+  out={videos,weekly,puzzleAvailable:false,analytics:aggregateActivity(sessions),updatedAt:new Date().toISOString()};
  }
  else if(a==='register'){
  const ip=await hash(req.headers.get('x-forwarded-for')?.split(',')[0]||'unknown');if(!await db('rpc/school_rate_limit','','POST',{k:'register:'+ip,maximum:120,seconds:3600}))throw new Error('محاولات كثيرة. حاول لاحقًا.');
@@ -221,7 +226,7 @@ export async function handle(req:Request){if(req.method==='OPTIONS')return new R
  const as=(await db('school_assignments','code=eq.'+enc(b.code)+'&active=eq.true'))[0];if(!as)throw new Error('المهمة غير متاحة.');if(as.settings.deadline&&new Date(as.settings.deadline)<new Date())throw new Error('انتهى موعد المهمة.');
  const mode=b.mode||'home';if(!['home','individual','group'].includes(mode))throw new Error('نمط غير صالح.');if(mode!=='home'){const p=await requireUser(req);if(p.id!==as.teacher_id&&!p.admin)throw new Error('التشغيل الصفي متاح لصاحب المهمة.');}
  if(mode!=='group'&&!String(b.name||'').trim())throw new Error('اكتب اسم الطالب.');if(!(as.settings.templates||templates).includes(b.template)||!templates.includes(b.template))throw new Error('اختر لعبة متاحة.');
- const g=(await db('manarat_games','id=eq.'+enc(as.game_id)))[0];let qs=g.data.questions||[];const allowed=as.settings.types||types;qs=qs.filter((q:any)=>allowed.includes(q.type)&&(!b.type||q.type===b.type));if(!qs.length)throw new Error('لا توجد أسئلة من النوع المحدد.');qs=qs.slice(0,100).map((q:any)=>({...q,_classItems:(q.categories||[]).flatMap((c:any,category:number)=>(c.items||[]).map((it:any)=>({...it,id:crypto.randomUUID(),category}))).sort(()=>Math.random()-.5)}));const sk=String(b.student_key||crypto.randomUUID()).slice(0,100);
+ const g=(await db('manarat_games','id=eq.'+enc(as.game_id)))[0];let qs=g.data.questions||[];const allowed=as.settings.types||types;qs=qs.filter((q:any)=>allowed.includes(q.type)&&(!b.type||q.type===b.type)&&(b.template!=='puzzle'||q.type==='puzzle_image'));if(!qs.length)throw new Error('لا توجد أسئلة من النوع المحدد.');qs=qs.slice(0,100).map((q:any)=>({...q,_classItems:(q.categories||[]).flatMap((c:any,category:number)=>(c.items||[]).map((it:any)=>({...it,id:crypto.randomUUID(),category}))).sort(()=>Math.random()-.5)}));const sk=String(b.student_key||crypto.randomUUID()).slice(0,100);
  const ip=await hash(req.headers.get('x-forwarded-for')?.split(',')[0]||'unknown');if(!await db('rpc/school_rate_limit','','POST',{k:'start:'+ip,maximum:300,seconds:3600}))throw new Error('محاولات كثيرة. حاول لاحقًا.');
  const s=(await db('school_sessions','','POST',{assignment_id:as.id,teacher_id:as.teacher_id,student_name:mode==='group'?'':String(b.name).trim().slice(0,100),student_key:mode==='group'?'':sk,mode,template:b.template,questions:qs}))[0];
  out={id:s.id,secret:s.secret,questions:qs.map(cleanQuestion),student_key:sk,threshold:as.settings.passing_score||70};
@@ -246,8 +251,11 @@ export async function handle(req:Request){if(req.method==='OPTIONS')return new R
  else if(a==='review'){out=await owned('school_sessions',b.id,p);delete out.secret;}
  else if(a==='grade'){const s=await owned('school_sessions',b.id,p);const ans=s.answers[b.question];if(!ans||!ans.pending)throw new Error('الإجابة ليست قيد التصحيح.');const pts=Number(b.points);if(!Number.isFinite(pts)||pts<0||pts>ans.max)throw new Error('درجة خارج النطاق.');const answers={...s.answers,[b.question]:{...ans,points:pts,pending:false,feedback:String(b.feedback||'تمت مراجعة المعلم.').slice(0,500)}};const ar=Object.values(answers) as any[];out=await db('school_sessions','id=eq.'+s.id,'PATCH',{answers,pending:ar.some(x=>x.pending),score:Math.round(100*ar.reduce((n,x)=>n+x.points,0)/ar.reduce((n,x)=>n+x.max,0))});}
  else if(a==='renameStudent'){const s=await owned('school_sessions',b.id,p);if(s.mode==='group'||!String(b.name||'').trim())throw new Error('اسم غير صالح.');out=await db('school_sessions','id=eq.'+s.id,'PATCH',{student_name:String(b.name).trim().slice(0,100),student_key:String(b.student_key||s.student_key).slice(0,100)});}
- else if(a==='saveSettings'||a==='restoreSettings'){if(!p.admin)throw new Error('للإدارة فقط.');const s=(await db('school_settings'))[0];const next=a==='restoreSettings'?s.history[Number(b.index)]?.data:b.data;validateConfig(next);out=await db('school_settings','id=eq.true','PATCH',{data:next,history:[{at:new Date().toISOString(),data:s.data},...s.history].slice(0,10),updated_at:new Date().toISOString()});}
- else if(a==='settingsHistory'){if(!p.admin)throw new Error('للإدارة فقط.');out=(await db('school_settings'))[0].history;}
+ else if(a==='designState'){if(!p.admin)throw new Error('للإدارة فقط.');const r=await designRow();out={data:DESIGN.normalize(r.data),revision:DESIGN_PREVIEW?r.revision:r.updated_at,preview:DESIGN_PREVIEW,publicVideos:mergeHomepageVideos(r.data,(await db('platform_state','id=eq.public'))[0]?.data?.platform||{},[])};}
+ else if(a==='saveDesign'){if(!p.admin)throw new Error('للإدارة فقط.');out=await saveDesign(b.data,b.revision);}
+ else if(a==='uploadDesignAsset'){out=await uploadDesignAsset(b,p);}
+ else if(a==='saveSettings'||a==='restoreSettings'){if(!p.admin)throw new Error('للإدارة فقط.');const s=await designRow();out=await saveDesign(a==='restoreSettings'?s.history[Number(b.index)]?.data:b.data,DESIGN_PREVIEW?s.revision:s.updated_at);}
+ else if(a==='settingsHistory'){if(!p.admin)throw new Error('للإدارة فقط.');out=(await designRow()).history;}
  else if(a==='resetPassword'){if(!p.admin||p.id===b.id)throw new Error('هذه الأداة لحسابات المعلمين فقط.');const target=(await db('profiles','id=eq.'+enc(b.id)))[0];if(!target||target.role!=='teacher'||String(b.password||'').length<8)throw new Error('اختر معلمًا وكلمة مرور من 8 أحرف على الأقل.');const r=await fetch(base+'/auth/v1/admin/users/'+enc(b.id),{method:'PUT',headers,body:JSON.stringify({password:b.password})});if(!r.ok)throw new Error('تعذر إعادة التعيين.');out={ok:true};}
  else if(a==='teacherStatus'||a==='setRole'){if(!p.admin||p.id===b.id)throw new Error('لا يمكن تعديل صلاحية حسابك الحالي.');const target=(await db('profiles','id=eq.'+enc(b.id)))[0];if(!target||String(target.email).toLowerCase()==='m.samra103@gmail.com')throw new Error('الحساب غير موجود أو محمي.');if(a==='setRole'&&!['teacher','admin'].includes(b.role))throw new Error('صلاحية غير صالحة.');out=await db('profiles','id=eq.'+enc(b.id),'PATCH',a==='setRole'?{role:b.role}:{status:b.active?'نشط':'موقوف'});} 
  else throw new Error('طلب غير معروف.');

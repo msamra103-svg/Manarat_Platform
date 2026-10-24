@@ -7,20 +7,6 @@
 })(typeof globalThis !== 'undefined' ? globalThis : this, function () {
   'use strict';
 
-  const DEMO_SESSIONS = [
-    { id: 'd1', student_key: 'st-rashid', student_name: 'راشد الكواري', assignment_id: 'demo-foot', game_title: 'كرة القدم 3D — العلوم', mode: 'individual', score: 58, finished_at: '2026-10-15T08:10:00Z', created_at: '2026-10-15T08:00:00Z' },
-    { id: 'd2', student_key: 'st-tamim', student_name: 'تميم الهاجري', assignment_id: 'demo-foot', game_title: 'كرة القدم 3D — العلوم', mode: 'individual', score: 65, finished_at: '2026-10-15T09:15:00Z', created_at: '2026-10-15T09:00:00Z' },
-    { id: 'd3', student_key: 'st-jassim', student_name: 'جاسم المري', assignment_id: 'demo-race', game_title: 'سباق السيارات — الرياضيات', mode: 'home', score: 62, finished_at: '2026-10-16T14:20:00Z', created_at: '2026-10-16T14:05:00Z' },
-    { id: 'd4', student_key: 'st-rashid', student_name: 'راشد الكواري', assignment_id: 'demo-race', game_title: 'سباق السيارات — الرياضيات', mode: 'home', score: 74, finished_at: '2026-10-17T15:00:00Z', created_at: '2026-10-17T14:45:00Z' },
-    { id: 'd5', student_key: 'st-khalid', student_name: 'خالد الدوسري', assignment_id: 'demo-volley', game_title: 'الكرة الطائرة — اللغة العربية', mode: 'individual', score: 70, finished_at: '2026-10-18T08:30:00Z', created_at: '2026-10-18T08:15:00Z' },
-    { id: 'd6', student_key: 'st-tamim', student_name: 'تميم الهاجري', assignment_id: 'demo-volley', game_title: 'الكرة الطائرة — اللغة العربية', mode: 'individual', score: 82, finished_at: '2026-10-18T10:00:00Z', created_at: '2026-10-18T09:45:00Z' },
-    { id: 'd7', student_key: 'st-jassim', student_name: 'جاسم المري', assignment_id: 'demo-bowl', game_title: 'البولينج 3D — الفيزياء', mode: 'home', score: 79, finished_at: '2026-10-19T16:10:00Z', created_at: '2026-10-19T15:55:00Z' },
-    { id: 'd8', student_key: 'st-rashid', student_name: 'راشد الكواري', assignment_id: 'demo-bowl', game_title: 'البولينج 3D — الفيزياء', mode: 'individual', score: 88, finished_at: '2026-10-20T08:40:00Z', created_at: '2026-10-20T08:25:00Z' },
-    { id: 'd9', student_key: 'st-khalid', student_name: 'خالد الدوسري', assignment_id: 'demo-foot', game_title: 'كرة القدم 3D — العلوم', mode: 'home', score: 86, finished_at: '2026-10-21T17:00:00Z', created_at: '2026-10-21T16:45:00Z' },
-    { id: 'd10', student_key: 'st-tamim', student_name: 'تميم الهاجري', assignment_id: 'demo-bowl', game_title: 'البولينج 3D — الفيزياء', mode: 'individual', score: 94, finished_at: '2026-10-22T08:20:00Z', created_at: '2026-10-22T08:05:00Z' },
-    { id: 'd11', student_key: 'st-jassim', student_name: 'جاسم المري', assignment_id: 'demo-foot', game_title: 'كرة القدم 3D — العلوم', mode: 'individual', score: 91, finished_at: '2026-10-22T09:30:00Z', created_at: '2026-10-22T09:15:00Z' },
-    { id: 'd12', student_key: 'st-rashid', student_name: 'راشد الكواري', assignment_id: 'demo-volley', game_title: 'الكرة الطائرة — اللغة العربية', mode: 'individual', score: 96, finished_at: '2026-10-22T10:15:00Z', created_at: '2026-10-22T10:00:00Z' }
-  ];
 
   function clampScore(val) {
     const n = Number(val);
@@ -88,8 +74,8 @@
     const assignments = Array.isArray(input.assignments) ? input.assignments : [];
     const games = Array.isArray(input.games) ? input.games : [];
     const realRecords = normalizeRecords(input.sessions || input.attempts || [], assignments, games);
-    const useDemo = input.forceDemo === true || (input.forceDemo !== false && realRecords.length === 0);
-    const baseRecords = useDemo ? normalizeRecords(DEMO_SESSIONS, [], []) : realRecords;
+    const useDemo = false;
+    const baseRecords = realRecords;
 
     const studentsMap = new Map();
     const tasksMap = new Map();
@@ -217,7 +203,6 @@
   }
 
   return {
-    DEMO_SESSIONS,
     clampScore,
     normalizeRecords,
     buildStudentAnalytics

@@ -296,7 +296,7 @@
   function getHeroSlides(options) {
     const opts = options || {};
     const settings = opts.settings || {};
-    const puzzleAvailable = !!opts.puzzleAvailable || !!settings.enablePuzzleInHero;
+    const puzzleAvailable = !!opts.puzzleAvailable;
     const defaultOrder = ['football', 'volleyball', 'basketball', 'race', 'bowling', 'fishing', 'classic', 'puzzle'];
     const configuredOrder = Array.isArray(settings.heroGames) && settings.heroGames.length
       ? settings.heroGames.filter(k => GAME_CATALOG[k])
@@ -421,7 +421,7 @@
       for (const v of opts.schoolVideos) {
         if (!v) continue;
         // Include if explicitly marked show_on_homepage === true, OR if not tied to a specific private game and not explicitly hidden
-        const eligibleForHome = v.show_on_homepage === true || (v.show_on_homepage !== false && !v.game_id);
+        const eligibleForHome = v.show_on_homepage === true && v.published !== false;
         if (!eligibleForHome) continue;
         addCandidate(v, v.subject || 'شروحات المواد');
       }

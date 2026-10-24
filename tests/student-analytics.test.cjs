@@ -31,17 +31,10 @@ test('buildStudentAnalytics computes chronological progression timeline and roll
   assert.equal(out.summary.masteryRate, 67);
 });
 
-test('buildStudentAnalytics filters by student and task and falls back to demo when empty', () => {
-  const emptyOut = AnalyticsLogic.buildStudentAnalytics({ sessions: [] });
-  assert.equal(emptyOut.isDemo, true);
-  assert.ok(emptyOut.progressionTimeline.length >= 10);
-  assert.ok(emptyOut.studentComparison.length >= 4);
-
-  const filteredStudent = AnalyticsLogic.buildStudentAnalytics({
-    sessions: [],
-    studentFilter: 'st-rashid'
-  });
-  assert.equal(filteredStudent.studentComparison.length, 1);
-  assert.equal(filteredStudent.studentComparison[0].studentName, 'راشد الكواري');
-  assert.ok(filteredStudent.studentComparison[0].improvement > 0);
+test('empty analytics never substitutes fictional students or results', () => {
+  for(const forceDemo of [undefined,true,false]){
+    const out=AnalyticsLogic.buildStudentAnalytics({sessions:[],forceDemo});
+    assert.equal(out.isDemo,false);assert.equal(out.progressionTimeline.length,0);
+    assert.equal(out.studentComparison.length,0);assert.equal(out.summary.totalCompleted,0);
+  }
 });
