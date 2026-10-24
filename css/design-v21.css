@@ -19,3 +19,26 @@ body.v21-skin:not(.playing-game)>#platformHeader{max-width:none;padding:18px max
 .v21-skin:not(.playing-game)>#platform-navigation{display:none!important}.v21-footer-nav{display:flex;gap:18px;flex-wrap:wrap;font-size:12px}.v21-skin .footer-brand-row{display:flex;flex-wrap:wrap;gap:10px}.v21-skin[data-preset=dark] .teacher-workspace :is(.stat,.tabs,.empty){background:var(--surface);border-color:var(--line);color:var(--ink)}
 
 .v21-trend-line{display:block;width:100%;height:auto;max-height:290px}.ds-history{max-width:520px;background:var(--surface);color:var(--ink)}.ds-history button{display:block;width:100%;margin:10px 0}
+
+/* Homepage review: compact rankings, balanced media and readable branding. */
+.v21-skin .platform-home .hero .hero-school-name{display:inline-flex;max-width:100%;font-size:clamp(14px,1.3vw,18px)!important;line-height:1.8;font-weight:750;letter-spacing:0;color:#551025!important;background:#fff!important;padding:9px 16px;border:1px solid #ffffff80;border-radius:12px;text-wrap:balance}
+.v21-skin #brandMark{width:max(112px,var(--v-logo-w));height:max(64px,var(--v-logo-h));border-radius:10px;box-shadow:none;padding:6px;display:flex;align-items:center;justify-content:center;background:#fff!important}
+.v21-skin #brandMark img{display:block;max-width:100%;max-height:100%;object-fit:contain!important;border-radius:0!important}
+.v21-skin .top-games-board{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;padding:0;background:transparent;border:0;box-shadow:none}
+.v21-skin .top-game-row{display:grid;grid-template-columns:24px 72px minmax(0,1fr);gap:10px;padding:14px;border:1px solid var(--line)!important;border-radius:16px;background:var(--surface);align-items:center;min-width:0}
+.v21-skin .top-game-thumb{width:72px;height:44px;object-fit:cover}
+.v21-skin .top-game-info{grid-column:1/-1;grid-row:2}
+.v21-skin .top-game-title-row{display:flex;flex-direction:column;align-items:flex-start;gap:5px;margin-bottom:9px}
+.v21-skin .top-game-title-row h3{font-size:15px}.v21-skin .top-game-stats{font-size:11px;color:var(--muted);line-height:1.7}
+.v21-skin .top-game-try{grid-column:3;grid-row:1;justify-self:end;white-space:nowrap}
+.v21-skin .video-gallery-board{align-items:start;grid-template-columns:minmax(0,1.65fr) minmax(260px,1fr);gap:20px}
+.v21-skin .home-video-player-frame{height:auto!important;min-height:0!important;aspect-ratio:16/9;position:relative;overflow:hidden}
+.v21-skin .home-video-player-frame :is(iframe,video){position:absolute;inset:0;display:block;object-fit:contain}
+.v21-skin .video-playlist{display:grid;grid-template-columns:minmax(0,1fr);align-content:start;gap:12px;max-height:440px;overflow-y:auto;min-width:0;padding:2px}
+.v21-skin .video-thumb-btn{display:grid;grid-template-columns:120px minmax(0,1fr);align-items:center;gap:12px;text-align:start;min-width:0;padding:10px;background:var(--surface)!important;color:var(--ink)!important;border-color:var(--line)!important;box-shadow:none}
+.v21-skin .video-thumb-btn.active{background:var(--v-selected)!important;border-color:var(--primary)!important;box-shadow:inset -3px 0 var(--primary)}
+.v21-skin .video-thumb-preview{width:100%;height:auto;aspect-ratio:16/9;min-width:0;flex-shrink:0}.v21-skin .video-thumb-preview img{width:100%;height:100%;object-fit:contain;background:#21191c}
+.v21-skin .video-thumb-caption{min-width:0}.v21-skin .video-thumb-caption strong{font-size:14px;line-height:1.7;overflow-wrap:anywhere}.v21-skin .home-video-meta{padding:14px 18px}.v21-skin .home-video-meta h3{font-size:17px;line-height:1.7}
+.v21-skin .layout-grid .video-playlist,.v21-skin .layout-compact .video-playlist{max-height:none}.v21-skin .layout-carousel .video-playlist{flex-direction:row;max-height:none}.v21-skin .layout-compact .video-thumb-btn{grid-template-columns:112px minmax(0,1fr)}
+@media(max-width:1050px){.v21-skin .top-games-board{grid-template-columns:repeat(2,minmax(0,1fr))}.v21-skin .video-gallery-board{grid-template-columns:1fr}.v21-skin .video-playlist{grid-template-columns:repeat(2,minmax(0,1fr));max-height:none}}
+@media(max-width:640px){.v21-skin #brandMark{width:96px;height:max(48px,var(--v-mobile-logo));padding:4px}.v21-skin .brand b{font-size:13px!important;line-height:1.7}.v21-skin .platform-home .hero .hero-school-name{font-size:14px!important;padding:8px 12px}.v21-skin .top-games-board{grid-template-columns:1fr;gap:10px}.v21-skin .top-game-row{padding:12px;grid-template-columns:24px 72px minmax(0,1fr)}.v21-skin .video-playlist{grid-template-columns:1fr}.v21-skin .video-thumb-btn{grid-template-columns:104px minmax(0,1fr)}.v21-skin .video-thumb-caption strong{font-size:13px}}

@@ -262,7 +262,7 @@ function home(){
   ${showTopSchoolBanner?renderSchoolBuildingShowcase():''}
   <section class="hero" id="heroShowcaseSection">
    <div class="hero-copy-column">
-    <span class="eyebrow">مدرسة أبو عبيدة الإعدادية للبنين · تعلّم تفاعلي · إنجاز يومي</span>
+    <span class="eyebrow hero-school-name">${esc(config.name)}</span>
     <h1>${esc(config.hero)}</h1>
     <p>${esc(config.description)}</p>
     <div class="hero-metrics"><div class="hero-metric"><b>${Object.entries(config.design.games).filter(([k,g])=>k!=='puzzle'&&g.visible).length}</b><span>تجارب تعليمية</span></div><div class="hero-metric"><b>٧ · ٨ · ٩</b><span>صفوف المرحلة الإعدادية</span></div></div>
