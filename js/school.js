@@ -1,7 +1,7 @@
 /* School V21: Complete Cinematic Educational Gaming Platform + Full Admin Experience Studio */
 (()=>{'use strict';
 const M=window.Manarat,$=id=>document.getElementById(id),esc=M.esc;
-const endpoint='https://yltlzogrhwvnmxcnaesu.supabase.co/functions/v1/school-api-v21-preview';
+const endpoint='https://yltlzogrhwvnmxcnaesu.supabase.co/functions/v1/school-api';
 const adminPanel=new URLSearchParams(location.search).get('adminPanel');
 if(adminPanel)document.body.classList.add('admin-embedded');
 const KEY='sb_publishable_W-XxH2FTvSZq66b-eHt-TQ_a8ZuqGRD';

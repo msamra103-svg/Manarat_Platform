@@ -1,7 +1,7 @@
 import '../_shared/design-schema.js';
 const DESIGN=(globalThis as any).ManaratDesign;
 // This deployment is an isolated review endpoint. Production school-api is unchanged.
-const DESIGN_PREVIEW=true;
+const DESIGN_PREVIEW=false;
 const base=Deno.env.get('SUPABASE_URL')!, key=Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 const headers={'Content-Type':'application/json','apikey':key,'Authorization':'Bearer '+key};
 const cors={'Access-Control-Allow-Origin':'*','Access-Control-Allow-Headers':'authorization,apikey,content-type','Access-Control-Allow-Methods':'POST,OPTIONS'};

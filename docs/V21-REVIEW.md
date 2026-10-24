@@ -20,3 +20,6 @@ Browser visual inspection and an authenticated administrator upload/save/reload 
 
 ## Before production promotion
 Review desktop/mobile rendering and an administrator session. Confirm official branding assets. Explicitly decide whether to keep the separate V21 settings store or migrate approved settings to school_settings; do not merely flip DESIGN_PREVIEW or overwrite live settings. Deploy matching frontend and backend together after that decision. Do not replace the existing Supabase project or AI Studio/GitHub integration.
+
+## Production release — 2026-10-24
+User authorized publication. Frontend now targets school-api with DESIGN_PREVIEW=false. Existing school_settings is retained as the authoritative configuration; no draft data replaces it. Preview function and private draft table remain available for rollback/review.
