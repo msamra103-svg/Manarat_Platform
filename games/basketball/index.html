@@ -1,25 +1,122 @@
 <!doctype html>
 <html lang="ar" dir="rtl">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#10171d"><title>ليلة السلة | تحدي التصويب</title><link rel="stylesheet" href="../sports/legacy-sport.css?v=19.3"></head>
-<body data-sport="basketball">
-<main id="stadium">
-  <canvas id="pitch" aria-label="ملعب كرة السلة؛ استخدم زر صوّب لتبدأ المحاولة"></canvas>
-  <div class="vignette" aria-hidden="true"></div>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#5b0e27">
+<title>كرة السلة — منصة التعلّم التفاعلي</title>
+<link rel="preload" href="assets/fonts/Tajawal-Bold.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="basketball.css?v=23.1">
+</head>
+<body data-sport="basketball" data-phase="loading">
+<main id="stadium" aria-label="لعبة كرة السلة التعليمية">
+  <canvas id="pitch" tabindex="0" aria-label="صالة كرة السلة: اللاعب يتهيأ للتصويب. استخدم زر «صوّب» أو مفتاح المسافة."></canvas>
+  <div class="shade" aria-hidden="true"></div>
+
   <header class="hud">
-    <div class="identity"><span class="live-dot"></span><div><b>ليلة السلة في قطر</b><small>أرضية خشبية · حركة متصلة · أجواء الجماهير</small></div></div>
-    <div class="scoreboard" aria-label="لوحة النتيجة"><span>النقاط</span><b id="score">0</b><i></i><span>التسديدة</span><b id="round">1 / 3</b></div>
-    <div class="tools"><button id="sound" aria-pressed="true" title="تشغيل أو كتم الأصوات">الصوت: مفعّل</button><button id="fullscreen" title="ملء الشاشة" aria-label="ملء الشاشة"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5"/></svg></button></div>
+    <div class="identity">
+      <span class="crest" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3v18M5.6 5.6c3.4 3 3.4 9.8 0 12.8M18.4 5.6c-3.4 3-3.4 9.8 0 12.8"/></svg></span>
+      <div class="titles">
+        <small>مدرسة أبو عبيدة الإعدادية للبنين</small>
+        <b id="assignmentTitle">كرة السلة</b>
+        <span id="assignmentMeta" hidden></span>
+      </div>
+    </div>
+    <div class="board" role="group" aria-label="لوحة النتيجة">
+      <div class="cell hot"><span>نقاط السلة</span><b id="bbPoints">٠</b></div>
+      <div class="cell"><span>المحاولة</span><b id="attempt">١ / ٣</b></div>
+      <div class="cell"><span>إجابات صحيحة</span><b id="eduCorrect">٠</b></div>
+      <div class="cell" id="eduPending" hidden><span>قيد المراجعة</span><b id="eduPendingN">٠</b></div>
+      <div class="cell" id="eduPointsWrap" hidden><span>النقاط التعليمية</span><b id="eduPoints">٠</b></div>
+    </div>
+    <div class="tools">
+      <div class="sound">
+        <button id="sound" type="button" class="icon" aria-pressed="true" aria-label="كتم الصوت">
+          <svg class="on" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          <svg class="off" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M16.5 9.5l5 5m0-5l-5 5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </button>
+        <input id="volume" type="range" min="0" max="100" step="5" value="80" aria-label="مستوى الصوت">
+      </div>
+      <button id="fullscreen" type="button" class="icon" aria-pressed="false" aria-label="ملء الشاشة"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5"/></svg></button>
+    </div>
   </header>
-  <div id="feedback" class="moment" role="status" aria-live="polite" hidden><small id="momentLabel"></small><h1 id="momentTitle"></h1><p id="momentText"></p></div>
-  <section id="welcome" class="welcome panel">
-    <span class="eyebrow">تنطيطة. قفزة. سلة.</span><h1>الملعب ينتظر<br><em>تصويبتك.</em></h1>
-    <p>صوّب الكرة، ثم أجب عن السؤال أثناء طيرانها.<br>إجابتك الصحيحة تُدخل الكرة في السلّة!</p>
-    <button id="start" class="primary" disabled>جارٍ تجهيز الملعب…</button><small id="modeLabel">تجربة تدريبية · لا تُسجّل في تقارير الطلاب</small>
+
+  <section id="loading" class="loading" aria-live="polite">
+    <div class="ball-spin" aria-hidden="true"></div>
+    <p>جارٍ تجهيز الصالة واللاعبين…</p>
+    <div id="loadMeter" class="meter" role="progressbar" aria-label="تقدّم التحميل" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i id="loadBar"></i></div>
+    <small id="loadPct">٠٪</small>
+    <small id="loadSlow" class="slow" hidden>الاتصال بطيء… يستمر التحميل، يمكنك الانتظار قليلًا.</small>
   </section>
-  <section id="question" class="question panel" hidden aria-labelledby="questionText"><span class="eyebrow">الكرة في منتصف الطريق</span><h2 id="questionText"></h2><div id="choices"></div><p id="questionHelp">اختر إجابتك لتستكمل التسديدة.</p></section>
-  <footer id="controls" hidden><div><span id="instruction">اختر زاوية التسديد</span><div class="aim" role="group" aria-label="زاوية التسديد"><button data-aim="left">يسار المرمى</button><button data-aim="center" class="selected">المنتصف</button><button data-aim="right">يمين المرمى</button></div></div><button id="shoot" class="primary">صوّب نحو السلّة ←</button><button id="reopen" hidden>عرض السؤال</button><button id="next" class="primary" hidden>التسديدة التالية ←</button></footer>
-  <div id="loadingError" class="panel error" hidden><h2>تعذر تجهيز الملعب</h2><p>تحقق من اتصالك ثم أعد تحميل اللعبة.</p><button onclick="location.reload()">إعادة المحاولة</button></div>
-  <span class="credit">مدرسة أبو عبيدة الإعدادية للبنين · كرة السلة</span>
+
+  <section id="welcome" class="panel welcome" hidden aria-labelledby="welcomeTitle">
+    <span class="eyebrow">منصة التعلّم التفاعلي والألعاب التعليمية</span>
+    <h1 id="welcomeTitle">تحدّي التصويب</h1>
+    <ol>
+      <li>اضغط <b>صوّب</b> ليقفز اللاعب ويطلق الكرة.</li>
+      <li>في منتصف الطريق تتوقف الكرة ويظهر السؤال.</li>
+      <li>الإجابة الصحيحة تُدخل الكرة في السلة.</li>
+    </ol>
+    <button id="start" type="button" class="primary big" disabled>جارٍ تجهيز الملعب…</button>
+    <small id="modeLabel"></small>
+  </section>
+
+  <section id="question" class="panel question" hidden aria-labelledby="questionText" role="dialog">
+    <span class="eyebrow" id="qEyebrow"></span>
+    <h2 id="questionText"></h2>
+    <div id="choices" class="choices"></div>
+    <p class="hint">اختر إجابتك لتكمل التسديدة · يمكنك استخدام الأرقام ١-٤</p>
+  </section>
+
+  <div id="feedback" class="moment" role="status" aria-live="polite" hidden>
+    <small id="momentLabel"></small>
+    <h2 id="momentTitle"></h2>
+    <p id="momentText"></p>
+  </div>
+
+  <footer id="controls" hidden>
+    <p id="instruction" aria-live="polite"></p>
+    <div class="actions">
+      <button id="shoot" type="button" class="primary big">صوّب <kbd>مسافة</kbd></button>
+      <button id="reopen" type="button" class="ghost" hidden>عرض السؤال</button>
+      <button id="next" type="button" class="primary big" hidden>التسديدة التالية</button>
+    </div>
+  </footer>
+
+  <section id="summary" class="panel summary" hidden tabindex="-1" aria-labelledby="sumTitle" role="dialog">
+    <span class="eyebrow" id="sumEyebrow">نهاية التحدّي</span>
+    <h2 id="sumTitle"></h2>
+    <div class="stats">
+      <div><span>نقاط السلة</span><b id="sumBall">٠</b></div>
+      <div><span>الإجابات الصحيحة</span><b id="sumCorrect">٠</b></div>
+      <div id="sumPendingRow" hidden><span>قيد مراجعة المعلّم</span><b id="sumPending">٠</b></div>
+    </div>
+    <p id="sumNote"></p>
+    <button id="again" type="button" class="primary big">العب مرة أخرى</button>
+  </section>
+
+  <section id="loadingError" class="panel error" hidden role="alert">
+    <h2>تعذّر تجهيز الملعب</h2>
+    <p id="errorText">تحقّق من اتصالك ثم أعد المحاولة.</p>
+    <small id="errorDetail" dir="ltr"></small>
+    <button id="retryLoad" type="button" class="primary">إعادة المحاولة</button>
+  </section>
+
+  <noscript><p class="noscript">تحتاج هذه اللعبة إلى تفعيل JavaScript.</p></noscript>
 </main>
-<script src="../vendor/three.min.js"></script><script src="../sports/athlete.js?v=19.3"></script><script src="../sports/scene.js?v=19.3"></script><script src="../sports/game.js?v=19.3"></script>
-<script src="../../js/platform-nav.js?v=20.1"></script></body></html>
+
+<script src="../vendor/three.min.js"></script>
+<script src="vendor/GLTFLoader.js?v=23.1"></script>
+<script src="vendor/meshopt_decoder.js?v=23.1"></script>
+<script src="vendor/SkeletonUtils.js?v=23.1"></script>
+<script src="vendor/RoomEnvironment.js?v=23.1"></script>
+<script src="motion.js?v=23.1"></script>
+<script src="athletes.js?v=23.1"></script>
+<script src="crowd.js?v=23.1"></script>
+<script src="arena.js?v=23.1"></script>
+<script src="audio.js?v=23.1"></script>
+<script src="scene.js?v=23.1"></script>
+<script src="game.js?v=23.1"></script>
+<script src="../../js/platform-nav.js?v=20.1"></script>
+</body>
+</html>
