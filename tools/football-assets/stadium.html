@@ -1,0 +1,18 @@
+<!doctype html><meta charset="utf-8"><title>stadium viewer</title>
+<body style="margin:0;background:#000"><canvas id="c" width="1200" height="700"></canvas>
+<script src="../../games/vendor/three.min.js"></script>
+<script src="../../games/football/engine/fb-core.js"></script>
+<script src="../../games/football/engine/fb-net.js"></script>
+<script src="../../games/football/engine/fb-stadium.js"></script>
+<script src="../../games/football/engine/fb-crowd.js"></script>
+<script>
+const q=new URLSearchParams(location.search);
+const renderer=new THREE.WebGLRenderer({canvas:c,antialias:true,preserveDrawingBuffer:true});renderer.setSize(1200,700,false);
+renderer.outputEncoding=THREE.sRGBEncoding;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.05;renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+const scene=new THREE.Scene();const st=FB.Stadium.build(scene,{level:+(q.get('q')||2),shadow:1024});
+const crowd=FB.Crowd.build(scene,st,{count:+(q.get('n')||6000)});if(q.get('x'))crowd.excite=crowd.target=+q.get('x');
+const cam=new THREE.PerspectiveCamera(+(q.get('fov')||40),1200/700,.1,1500);
+const p=(q.get('cam')||'0,6,-4').split(',').map(Number),l=(q.get('look')||'0,1.5,-20').split(',').map(Number);
+cam.position.set(...p);cam.lookAt(...l);
+window.shot=()=>{st.update(0.016,+(q.get('t')||0));crowd.update(0.016,+(q.get('t')||0));renderer.render(scene,cam);return true};window.ready=true;shot();
+</script>

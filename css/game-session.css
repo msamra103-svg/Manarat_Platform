@@ -4,3 +4,33 @@
 
 /* Questions float over the scene without blurring or darkening the match. */
 .playing-game dialog.scene-question{padding:15px 18px;width:min(450px,92vw);max-height:55svh;margin:auto auto 4svh;border:1px solid #d9dfe0;box-shadow:0 12px 45px #081a2933;background:#fffffff5}.playing-game dialog.scene-question::backdrop{background:transparent;backdrop-filter:none}.scene-question .game-session-hud{display:none}.scene-question .game-top{font-size:11px;margin-bottom:5px}.scene-question .card{padding:10px;border:0;background:transparent}.scene-question .question{font-size:19px;line-height:1.6;margin:8px 0}.scene-question .progress{height:3px}.scene-question .tag{font-size:10px}.scene-question .close{font-size:21px}.scene-question .options{gap:6px}.scene-question button{padding:8px 13px}.scene-question .game-layout{margin:0}@media(max-height:520px) and (orientation:landscape){.playing-game dialog.scene-question{width:36vw;max-height:78svh;margin:auto 2vw 2vh auto;padding:10px}.scene-question .question{font-size:16px}}
+
+/* Football only: the question is part of the televised match. A broadcast lower-third sits over the frozen, softly defocused live pitch.
+   Scrolling happens inside the panel only; the page behind never scrolls. */
+dialog.football-question{--fq-ink:#f4f1ea;--fq-mute:#c4cbd6;--fq-gold:#e5c36b;--fq-bg:#0b1220;position:fixed;inset:auto 0 max(14px,env(safe-area-inset-bottom)) 0;margin:0 auto;width:min(760px,calc(100vw - 24px));max-height:min(64svh,620px);padding:0;border:1px solid #ffffff22;border-top:3px solid var(--primary,#8a1538);border-radius:16px;background:linear-gradient(180deg,#101a30f4,#0b1220fa);color:var(--fq-ink);box-shadow:0 18px 60px #000a;overflow:hidden;display:flex;flex-direction:column}
+dialog.football-question:not([open]){display:none}
+dialog.football-question::backdrop{background:radial-gradient(ellipse at 50% 40%,#0b122022,#05080fa6);backdrop-filter:blur(3px) saturate(.85);-webkit-backdrop-filter:blur(3px) saturate(.85)}
+dialog.football-question #modalContent{overflow-y:auto;overscroll-behavior:contain;padding:14px 18px 18px;scrollbar-color:#ffffff55 transparent;-webkit-overflow-scrolling:touch}
+dialog.football-question .game-session-hud{display:none}
+dialog.football-question .game-layout{margin:0;padding:0;background:none;border:0}
+dialog.football-question .game-top{display:flex;justify-content:space-between;gap:12px;font-size:12px;color:var(--fq-gold);letter-spacing:.2px;margin:0 50px 6px 0;overflow-wrap:anywhere}
+dialog.football-question .progress{height:3px;background:#ffffff22;border-radius:3px;overflow:hidden}dialog.football-question .progress span{background:var(--fq-gold)}
+dialog.football-question .card{padding:8px 0 0;border:0;background:transparent;box-shadow:none;color:inherit}
+dialog.football-question .tag{background:#ffffff14;color:var(--fq-gold);border:1px solid #ffffff22;font-size:11px}
+dialog.football-question .question{font-size:clamp(18px,3.4vw,25px);line-height:1.7;margin:10px 0 12px;color:#fff;overflow-wrap:anywhere;word-break:normal}
+dialog.football-question .answers{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:9px}
+dialog.football-question .answers button,dialog.football-question #answerArea>button{min-height:48px;padding:11px 16px;border-radius:12px;border:1px solid #ffffff33;background:#ffffff12;color:#fff;font-size:16px;line-height:1.55;text-align:start;overflow-wrap:anywhere;white-space:normal;transition:background .15s,border-color .15s,transform .1s}
+dialog.football-question .answers button:hover,dialog.football-question #answerArea>button:hover{background:#ffffff22;border-color:var(--fq-gold)}
+dialog.football-question .answers button:active{transform:scale(.985)}
+dialog.football-question .answers button:focus-visible,dialog.football-question #answerArea>button:focus-visible,dialog.football-question textarea:focus-visible,dialog.football-question select:focus-visible,dialog.football-question .close:focus-visible{outline:3px solid var(--fq-gold);outline-offset:2px}
+dialog.football-question #answerArea>button{background:var(--primary,#8a1538);border-color:#ffffff44;margin-top:10px;text-align:center}
+dialog.football-question label{color:var(--fq-mute);font-size:14px}
+dialog.football-question textarea,dialog.football-question select{width:100%;min-height:48px;background:#050a14;color:#fff;border:1px solid #ffffff44;border-radius:10px;padding:10px 12px;font:inherit;font-size:16px}
+dialog.football-question textarea{min-height:110px;resize:vertical}
+dialog.football-question .help,dialog.football-question .row.card{color:var(--fq-mute)}dialog.football-question .row.card{background:#ffffff0d;border:1px solid #ffffff22}
+dialog.football-question .close{position:absolute;inset:6px 6px auto auto;z-index:2;width:44px;height:44px;border-radius:50%;background:#ffffff14;color:#fff;font-size:22px;line-height:1}
+@media(max-width:560px){dialog.football-question{width:calc(100vw - 16px);max-height:70svh;border-radius:14px}dialog.football-question #modalContent{padding:12px 12px 14px}dialog.football-question .answers{grid-template-columns:1fr}}
+@media(max-height:520px) and (orientation:landscape){dialog.football-question{inset:max(8px,env(safe-area-inset-top)) max(10px,env(safe-area-inset-right)) auto auto;margin:0;width:min(52vw,520px);max-height:calc(100svh - 16px - env(safe-area-inset-top) - env(safe-area-inset-bottom))}dialog.football-question .question{font-size:17px;margin:6px 0 8px}dialog.football-question .answers{grid-template-columns:1fr;gap:6px}dialog.football-question .answers button{min-height:44px;padding:8px 12px;font-size:15px}}
+@media(prefers-reduced-motion:reduce){dialog.football-question *{transition:none!important}}
+body:has(dialog.football-question[open]){overflow:hidden}
+dialog.football-question [data-game-nav-slot]{display:none!important}
