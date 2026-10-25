@@ -10,7 +10,7 @@ permissions:
 jobs:
   quality:
     runs-on: ubuntu-latest
-    timeout-minutes: 12
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
         with:
@@ -31,3 +31,8 @@ jobs:
         run: npx playwright install --with-deps chromium
       - name: Validate school API and grading
         run: npm run test:school
+
+      - name: Validate football engine, browser and platform bridge
+        run: npm run test:football
+      - name: Validate shared sports regression
+        run: npm run test:sports
