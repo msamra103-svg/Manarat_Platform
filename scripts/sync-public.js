@@ -19,7 +19,7 @@ function copyRecursive(src, dest) {
   }
 }
 
-for (const file of ['index.html', 'auth.html']) {
+for (const file of ['index.html', 'auth.html', 'live.html']) {
   const src = path.join(root, file);
   if (fs.existsSync(src)) copyRecursive(src, path.join(pub, file));
 }
