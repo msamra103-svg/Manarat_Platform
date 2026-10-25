@@ -1,0 +1,37 @@
+const {chromium}=require('playwright'),fs=require('fs'),http=require('http'),path=require('path'),assert=require('node:assert/strict');
+const root=path.resolve(__dirname,'..');const server=http.createServer((req,res)=>{let file=path.join(root,new URL(req.url,'http://x').pathname);if(file.endsWith('/'))file+='index.html';fs.readFile(file,(e,d)=>{if(e){res.writeHead(404);return res.end('not found')}res.setHeader('Content-Type',({'.html':'text/html','.js':'text/javascript','.css':'text/css','.svg':'image/svg+xml'})[path.extname(file)]||'application/octet-stream');res.end(d);});});
+const teacher='22222222-2222-4222-8222-222222222222',questions=[{id:'q1',type:'multiple_choice',text:'ما العنصر الذي يحتاجه النبات؟',options:['الماء','البلاستيك'],points:10},{id:'q2',type:'open_text',text:'اشرح أهمية الماء.',points:10}];
+const config={name:'مدرسة أبو عبيدة الإعدادية للبنين',subtitle:'منصة التعلّم التفاعلي',primary:'#8a1538',background:'#f8f6f4',hero:'تعلّم بطريقتك. وتقدّم كل يوم.',description:'ألعاب تعليمية ومهمات صفية وواجبات منزلية، في مساحة واحدة تجمع معلمي المدرسة وطلابها.',socials:[],sections:['games','videos','about']};
+const assignment={id:'as',code:'code',teacher_id:teacher,title:'لعبة النباتات المائية',game_id:'g',class_name:'سابع 1',active:true,settings:{templates:['race','football','basketball','volleyball','bowling','fishing','puzzle','classic'],types:['multiple_choice','open_text']},types:['multiple_choice','open_text'],videos:[]};
+(async()=>{await new Promise(r=>server.listen(0,'127.0.0.1',r));const base='http://127.0.0.1:'+server.address().port;const browser=await chromium.launch({executablePath:process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH,headless:true,args:['--no-sandbox','--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']});const page=await browser.newPage({viewport:{width:1440,height:1000}}),errors=[];page.on('pageerror',e=>errors.push(e.message));let answers=0;
+await page.addInitScript(()=>{if(location.pathname.includes('/games/basketball/'))history.replaceState(null,'',location.pathname+'?capture=1&manual=1&quality=low');window.addEventListener('message',e=>{if(e.origin===location.origin&&e.source===parent&&e.data?.type==='school-basketball-config')window.__basketballTestConfig=e.data;});});await page.route('**/*',async r=>{const u=new URL(r.request().url());if(u.hostname==='127.0.0.1')return r.continue();if(u.pathname.endsWith('/school-api')){const b=r.request().postDataJSON();let j={};switch(b.action){case'settings':j=config;break;case'dashboard':j={profile:{id:teacher,name:'معلم الاختبار',admin:true},games:[{id:'g',title:'لعبة النباتات المائية',teacher_id:teacher,data:{questions}}],assignments:[assignment],videos:[],sessions:[],teachers:[]};break;case'open':j=assignment;break;case'start':j={id:'s',secret:'secret',questions,threshold:70};break;case'answer':answers++;j={correct:b.question==='q1',pending:b.question==='q2',feedback:'تم تسجيل إجابتك',explanation:''};break;case'finish':j={score:50,pending:true,group:false};break;case'settingsHistory':case'leaderboard':case'saveSettings':j=[];break;case'assignment':j=assignment;break;}return r.fulfill({json:j});}return r.fulfill({json:[]});});
+const shots=process.env.BASKETBALL_SHOTS||'';const snap=async(p,n)=>{if(shots)try{await p.screenshot({path:path.join(shots,n+'.png'),timeout:90000})}catch(e){console.log('screenshot skipped',n)}};
+const until=async(fr,cond,max=40)=>{for(let t=0;t<=max;t+=.5){if(await fr.evaluate(c=>{const f=new Function('return ('+c+')');if(!f())__qaStep(.5,1/30,false);return f()},cond))return true;}return false;};
+const toQuestion=async fr=>{assert(await until(fr,'Basketball.phase==="ready"',40));await fr.locator('#shoot').click();assert(await until(fr,'Basketball.phase==="question"',30));};
+const open=async(label)=>{await page.goto('about:blank');await page.goto(base+'/?task=code');await page.locator('#studentName').fill('طالب كرة السلة');await page.locator('[data-action=selectTemplate][data-id=basketball]').click();await page.locator('#startForm button').last().click();await page.locator('#basketballGame').waitFor();let F=null;for(let i=0;i<200&&!F;i++){F=page.frames().find(f=>f.url().includes('/games/basketball/'));if(!F)await page.waitForTimeout(100);}const fl=page.frameLocator('#basketballGame');const fr=Object.assign(F,{locator:s=>fl.locator(s)});await fr.waitForFunction(()=>window.Basketball&&Basketball.phase==='welcome',null,{timeout:300000});return fr;};
+let fr=await open();
+await snap(page,'int_welcome');
+await fr.locator('#start').click();
+await toQuestion(fr);
+
+await page.locator('#modal [data-action=answer]').first().waitFor({timeout:60000});await snap(page,'int_question');
+/* protocol hardening: a result with a wrong token, or a message of another sport, must not move the game */
+await page.evaluate(()=>{const w=document.getElementById('basketballGame').contentWindow;w.postMessage({type:'school-basketball-result',token:'not-the-session-token',index:0,correct:true,pending:false,feedback:'x'},location.origin);w.postMessage({type:'school-football-result',token:'x',index:0,correct:true},location.origin);});
+await page.waitForTimeout(300);assert.equal(await fr.evaluate(()=>Basketball.phase),'question','forged result is ignored');assert.equal(await fr.evaluate(()=>Basketball.goals),0);console.log('PASS forged result (wrong token / other sport) ignored');
+await fr.evaluate(()=>{const c=window.__basketballTestConfig;if(!c)throw Error('missing test config');const data={type:'school-basketball-result',token:c.token,index:0,correct:true,pending:false};for(const overrides of [{origin:'https://untrusted.invalid'},{source:window},{data:{...data,index:99}}])window.dispatchEvent(new MessageEvent('message',{data,origin:location.origin,source:parent,...overrides}));});
+assert.equal(await fr.evaluate(()=>Basketball.phase),'question');assert.equal(await fr.evaluate(()=>Basketball.goals),0);console.log('PASS invalid origin, source and question index ignored');
+await fr.evaluate(()=>__qaStep(.5,1/30,false));
+await page.locator('#modal [data-action=answer]').first().click();
+await page.locator('#modal').waitFor({state:'hidden'});
+assert(await until(fr,'Basketball.phase==="outcome"',30));
+await fr.locator('#momentTitle').filter({hasText:'سلّة'}).waitFor();assert.equal(answers,1);assert.equal(await fr.evaluate(()=>Basketball.goals),1);console.log('PASS embedded correct answer → server grading → goal');
+await fr.locator('#next').click();await toQuestion(fr);
+await page.locator('#answerText').fill('الماء ضروري للنمو');await page.locator('[data-action=textAnswer]').click();
+assert(await until(fr,'Basketball.phase==="outcome"',30));
+await fr.locator('#momentTitle').filter({hasText:'وصلت إجابتك'}).waitFor();
+assert.equal(await fr.evaluate(()=>Basketball.goals),1);assert.equal(await fr.evaluate(()=>Basketball.outcome),'pending');
+assert.equal(await fr.evaluate(()=>document.getElementById('feedback').classList.contains('miss')),false);console.log('PASS pending essay stays neutral (no goal, no miss styling)');
+await snap(page,'int_pending');
+await fr.locator('#next').click();await page.locator('.result-score').waitFor({timeout:120000});assert.equal(answers,2);assert((await page.locator('#app').innerText()).includes('الدرجة مبدئية'));console.log('PASS final report');
+
+assert.deepEqual(errors,[]);await browser.close();server.close();console.log('PASS basketball actual platform grading and final report');})().catch(e=>{console.error(e);server.close();process.exit(1)});

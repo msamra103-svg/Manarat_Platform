@@ -1,0 +1,4 @@
+<!doctype html><meta charset="utf-8"><script>
+// cross-origin attacker framed inside the host: tries to answer for the student
+try{const g=parent.frames[0];for(const t of ['school-basketball-result','school-basketball-advance','school-basketball-config'])g.postMessage({type:t,token:'x',index:0,correct:true,title:'hacked',count:1},'*');document.title='sent';}catch(e){document.title='blocked:'+e.message;}
+</script>

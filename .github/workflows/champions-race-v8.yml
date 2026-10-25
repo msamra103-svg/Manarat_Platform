@@ -29,6 +29,16 @@ jobs:
         run: npm run check
       - name: Install Chromium for browser regression tests
         run: npx playwright install --with-deps chromium
+      - name: Validate basketball physics, anatomy and platform grading
+        run: npm run test:basketball && node tests/basketball-integration.cjs
+      - name: Validate basketball browser flows and mobile controls
+        run: |
+          python3 -m http.server 8099 --bind 127.0.0.1 >/tmp/basketball-server.log 2>&1 &
+          SERVER_PID=$!
+          python3 -m http.server 8098 --bind 127.0.0.1 --directory tests/basketball-browser/attacker >/tmp/basketball-attacker.log 2>&1 &
+          ATTACKER_PID=$!
+          trap 'kill "$SERVER_PID" "$ATTACKER_PID"' EXIT
+          node tests/basketball-browser/basketball-e2e.cjs
       - name: Validate school API and grading
         run: npm run test:school
 
