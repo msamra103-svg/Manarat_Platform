@@ -1,8 +1,8 @@
 // Server-authoritative classroom sessions; independent of the existing assignment API.
 const base=Deno.env.get('SUPABASE_URL')!,key=Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 const cors={'Access-Control-Allow-Origin':'*','Access-Control-Allow-Headers':'authorization,apikey,content-type','Access-Control-Allow-Methods':'POST,OPTIONS','Cache-Control':'no-store'};
-const actions=new Set(['create','list','join','state','answer','start','next','reveal','pause','resume','lock','kick','finish','report']);
-const hostActions=new Set(['create','list','start','next','reveal','pause','resume','lock','kick','finish','report']);
+const actions=new Set(['close_awards','replay_awards','create','list','join','state','answer','start','next','reveal','pause','resume','lock','kick','finish','report']);
+const hostActions=new Set(['close_awards','replay_awards','create','list','start','next','reveal','pause','resume','lock','kick','finish','report']);
 async function hash(value:string){return Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(value)))).map(n=>n.toString(16).padStart(2,'0')).join('');}
 async function rpc(name:string,data:unknown){const r=await fetch(base+'/rest/v1/rpc/'+name,{method:'POST',headers:{apikey:key,Authorization:'Bearer '+key,'Content-Type':'application/json'},body:JSON.stringify(data)});const j=await r.json();if(!r.ok){const m=String(j?.message||'');throw new Error(/[\u0600-\u06ff]/.test(m)?m:'تعذر تنفيذ الطلب. تحقق من البيانات وأعد المحاولة.');}return j;}
 Deno.serve(async req=>{
