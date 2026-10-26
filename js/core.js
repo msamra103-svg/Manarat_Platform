@@ -16,7 +16,7 @@ const TEMP_ADMIN_BYPASS=false;
 const CONFIGURED_ADMIN_EMAIL='m.samra103@gmail.com';
 const CONFIGURED_ADMIN_PASSWORD='';
 const CONFIGURED_ADMIN_ID='00000000-0000-4000-8000-000000000103';
-const TEMP_ADMIN_USER={id:CONFIGURED_ADMIN_ID,email:CONFIGURED_ADMIN_EMAIL,user_metadata:{name:'مدير المنصة',school:'منارة التعلم الرقمي',role:'admin'}};
+const TEMP_ADMIN_USER={id:CONFIGURED_ADMIN_ID,email:CONFIGURED_ADMIN_EMAIL,user_metadata:{name:'مدير المنصة',school:'مدرسة أبو عبيدة الإعدادية للبنين',role:'admin'}};
 const qs=(s,root=document)=>root.querySelector(s); const qsa=(s,root=document)=>[...root.querySelectorAll(s)];
 function esc(v=''){return String(v??'').replace(/[&<>'"]/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[ch]))}
 function attr(v=''){return esc(v).replace(/`/g,'&#96;')}
