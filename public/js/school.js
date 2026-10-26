@@ -96,7 +96,7 @@ function applyBrand(c){
  if(outdatedBrand.test(cfg.subtitle||''))cfg.subtitle='منصة التعلّم التفاعلي والألعاب التعليمية';
  if(outdatedBrand.test(cfg.footerText||''))cfg.footerText=cfg.name+' · مساحة للتعلّم التفاعلي والإنجاز الرقمي';
  if(Array.isArray(cfg.socials))cfg.socials=cfg.socials.filter(s=>!oldSocialLink.test(decodeURIComponent(String(s.url||'')))&&!outdatedBrand.test(s.label||''));
- if(/(?:^|\\/)manarat-(?:logo|mark)\.svg(?:[?#].*)?$/i.test(cfg.logo||''))cfg.logo='assets/school-mark.svg';
+ if(String(cfg.logo||'').includes('manarat-logo.svg')||String(cfg.logo||'').includes('manarat-mark.svg'))cfg.logo='assets/school-mark.svg';
 
  const preset=THEME_PRESETS[cfg.themePreset]||THEME_PRESETS.qatar||{};
  const primary=cfg.primary||preset.primary||'#8a1538';
