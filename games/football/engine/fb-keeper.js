@@ -17,14 +17,18 @@
     palmMid(out = new V()) { this.rig.palm('L', _a); this.rig.palm('R', _b); return out.copy(_a).add(_b).multiplyScalar(0.5); }
     /** Plan a dive geometry without moving anything. returns {hipEnd:V3, theta, side, reachable, td} */
     plan(target, tReach) {
-      const td = Math.max(0.22, tReach), dx = target.x - this.pos.x, side = dx >= 0 ? 1 : -1, adx = Math.abs(dx);
-      const cap = 0.45 + 3.0 * td, sh = Math.min(adx, cap), rem = adx - sh, arm = 0.97;
-      let sin = clamp(rem / arm, 0, 0.985); const lowT = target.y < 0.9;
-      if (lowT && adx > 0.6) sin = Math.max(sin, clamp((0.9 - target.y) * 0.9 + 0.35, 0, 0.9));
-      const th = Math.asin(sin), cos = Math.cos(th);
-      const hy = clamp(target.y - cos * arm, 0.2 + 0.74 * cos * 0.0 + 0.0, 1.55);
-      const hipEnd = new V(this.pos.x + side * sh, Math.max(hy, 0.18 + 0.75 * cos * (th > 0.9 ? 0 : 1) * 0.3), target.z - 0.1);
-      const shortBy = Math.max(0, rem - arm * 0.985);
+      // A keeper cannot travel far sideways while upright: beyond a sway/side-step (~0.8 m) the hands get there by diving, so the body
+      // tilt follows from the lateral distance and the ball height (low ball: near-horizontal dive, high ball: more upright leap).
+      const td = Math.max(0.22, tReach), dx = target.x - this.pos.x, side = dx >= 0 ? 1 : -1, adx = Math.abs(dx), arm = 0.97;
+      let th;
+      if (adx < 0.8) th = clamp((adx - 0.25) / 0.55, 0, 1) * 0.45;                       // sway / step save
+      else { const hTilt = target.y < 0.5 ? 1.38 : target.y < 1.0 ? lerp(1.38, 1.15, (target.y - 0.5) / 0.5) : target.y < 1.8 ? lerp(1.15, 0.75, (target.y - 1.0) / 0.8) : lerp(0.75, 0.45, clamp((target.y - 1.8) / 0.6));
+             th = lerp(0.45, hTilt, clamp((adx - 0.8) / 1.0)); }
+      const sin = Math.sin(th), cos = Math.cos(th);
+      const hipX = this.pos.x + side * Math.max(0, adx - arm * sin);
+      const hy = clamp(target.y - cos * arm, this._gc(th), 1.55);
+      const travel = Math.abs(hipX - this.pos.x), cap = 0.3 + 3.6 * Math.max(0, td - 0.12);
+      const shortBy = Math.max(0, travel - cap), hipEnd = new V(this.pos.x + side * Math.min(travel, cap), hy, target.z - 0.1);
       return { hipEnd, theta: th, side, td, reachable: shortBy < 0.02 && target.y <= 1.55 + cos * arm + 0.02, shortBy };
     }
     /** spec: {target:V3, tReach:s, hold:s, ball:V3 ref, kind:'dive'|'jump', miss:0..1} — after tReach the hands stay at the target while the body lands. */
@@ -34,6 +38,9 @@
         rest: spec.rest === undefined ? 0.7 : spec.rest, riseT: 0.95, phase: 'dive', hopGain: spec.hopGain === undefined ? 1 : spec.hopGain, y1: pl.hipEnd.y, slide: 0, vx: 0, reachable: pl.reachable, kind: spec.kind || 'dive',
         launchLean: clamp(Math.abs(spec.target.x - this.pos.x) / 3, 0, 1), done: false, contactTime: null, held: false, handsAt: spec.target.clone() };
       this.dv.vx0 = pl.side * Math.min(3.4, Math.abs(pl.hipEnd.x - this.pos.x) / Math.max(0.2, pl.td) * 1.5);
+      { const dv = this.dv, nearI = pl.side > 0 ? 0 : 1, farI = 1 - nearI, pushT = Math.min(0.16, 0.32 * pl.td);
+        dv.sp = clamp(pushT / pl.td, 0.12, 0.4); dv.farAt = this.feet[farI].p.clone(); dv.nearFrom = this.feet[nearI].p.clone();
+        dv.nearTo = dv.nearFrom.clone().add(new V(pl.side * Math.min(0.4, Math.abs(pl.hipEnd.x - this.pos.x) * 0.3), 0, 0)); }
       this.setMode('dive', 0.08); this.vel.set(0, 0, 0); this.speed = 0; this.events.push({ type: 'dive', side: pl.side, theta: pl.theta });
       return this.dv;
     }
@@ -53,11 +60,15 @@
       if (d.phase === 'dive' && t >= d.td + d.hold) { d.phase = 'down'; d.tDown = t; d.landY = d.curY; d.landX = d.curX; d.landTheta = d.curTheta; d.slideV = d.vxEnd || 0; }
       if (d.phase === 'down' && t >= d.tDown + d.rest) { d.phase = 'rise'; d.tRise = t; }
       if (d.phase === 'dive') {
-        const e = 1 - Math.pow(1 - s, 2.0);                            // fast launch, decelerating lateral travel
-        hx = lerp(d.p0.x, d.hipEnd.x, e); hz = lerp(d.p0.z, d.hipEnd.z, smooth(s));
+        // load + push-off on planted feet (the hips move only as far as the planted far leg allows), then the airborne dive
+        const sp = d.sp, air = clamp((s - sp) / (1 - sp)), eAir = 1 - Math.pow(1 - air, 1.6), ePush = smooth(clamp(s / sp));
+        const pushShift = Math.min(0.3, Math.abs(d.hipEnd.x - d.p0.x)) * d.side;
+        hx = d.p0.x + pushShift * ePush + (d.hipEnd.x - d.p0.x - pushShift) * eAir; hz = lerp(d.p0.z, d.hipEnd.z, smooth(s));
         const hop = (0.12 + 0.35 * clamp((d.target.y - 1.0) / 1.2)) * (d.theta < 0.8 ? 1 : 0.35) * d.hopGain;
-        hy = lerp(d.p0.y - 0.1, d.y1, smooth(s)) + hop * Math.sin(Math.PI * s) * (1 - 0.3 * s);
-        theta = d.theta * smooth(clamp(s * 1.15));
+        hy = s < sp ? d.p0.y - 0.09 * Math.sin(Math.PI * 0.5 * clamp(s / (sp * 0.7))) * (1 - smooth(clamp((s - sp * 0.7) / (sp * 0.3))) * 0.6)
+                    : lerp(d.p0.y - 0.04, d.y1, smooth(air)) + hop * Math.sin(Math.PI * air) * (1 - 0.3 * air);
+        theta = d.theta * smooth(clamp((s - sp * 0.55) / (1 - sp * 0.55) * 1.15));
+        if (s >= sp && !d.launched) { d.launched = true; this.setMode('dive', 0.1); this.events.push({ type: 'pushoff' }); } // blend legs from planted IK to flight
         d.vxEnd = (d.hipEnd.x - d.p0.x) * 2 * (1 - s) / d.td * 0.0 + d.side * Math.max(0, 1.6 - 1.2 * s) * (d.theta > 0.5 ? 1 : 0.3);
         if (t >= d.td && d.contactTime === null) { d.contactTime = t; }
         reachW = smooth(clamp(s * 1.3 - 0.05));
@@ -94,7 +105,13 @@
       // legs: FK, trailing and slightly asymmetric
       const lw = d.phase === 'rise' ? 1 - clamp((t - d.tRise) / d.riseT) : 1;
       const bend = (d.phase === 'down' ? 0.4 : 0.15) + 0.25 * push;
-      r.legFK(d.side > 0 ? 'L' : 'R', -0.1 * lw, 0.12, 0.15 + bend * 0.4, 0.5).legFK(d.side > 0 ? 'R' : 'L', 0.25 * lw, 0.1, 0.35 + bend, 0.5);
+      if (d.phase === 'dive' && !d.launched) {
+        // push-off: far foot stays planted, near foot side-steps toward the ball (no sideways sliding on planted feet)
+        const sNear = d.side > 0 ? 'L' : 'R', sFar = d.side > 0 ? 'R' : 'L', u = smooth(clamp(s / (d.sp * 0.8)));
+        const nf = _a.lerpVectors(d.nearFrom, d.nearTo, u); nf.y = r.ankleHeight + 0.07 * Math.sin(Math.PI * u);
+        r.leg(sNear, nf, { footYaw: 0, footPitch: 0, footRoll: d.side * theta, knee: 0.12 });
+        r.leg(sFar, _b.set(d.farAt.x, r.ankleHeight, d.farAt.z), { footYaw: 0, footPitch: 0.25 * clamp(s / d.sp), footRoll: d.side * theta, knee: 0.12 });
+      } else r.legFK(d.side > 0 ? 'L' : 'R', -0.1 * lw, 0.12, 0.15 + bend * 0.4, 0.5).legFK(d.side > 0 ? 'R' : 'L', 0.25 * lw, 0.1, 0.35 + bend, 0.5);
       // arms: IK to the intercept point (both hands), blending from ready to reach, back to relaxed
       const tgt = d.handsAt, ax = new V(Math.cos(roll) * 1, Math.sin(roll) * 1, 0);
       for (const S of ['L', 'R']) {

@@ -8,7 +8,8 @@
   const UP = new V(0, 1, 0), RIGHT = new V(1, 0, 0), FWD = new V(0, 0, 1);
 
   function worldPos(bone, out) { bone.updateWorldMatrix(true, false); return out.setFromMatrixPosition(bone.matrixWorld); }
-  function worldQuat(bone, out) { bone.updateWorldMatrix(true, false); bone.matrixWorld.decompose(_v4, out, _s); return out; }
+  const _dp = new V(), _dp2 = new V(); // private scratch: decompose() must never write into a vector a caller is using
+  function worldQuat(bone, out) { bone.updateWorldMatrix(true, false); bone.matrixWorld.decompose(_dp, out, _s); return out; }
 
   class Rig {
     constructor(actor) {
@@ -98,11 +99,18 @@
 
     /** Leg IK to a world-space ankle target. footYaw/footPitch are world angles of the foot (pitch: toes down +). */
     leg(S, ankleWorld, opts = {}) {
-      const fwd = opts.pole || _v4.set(0, 0, 1).applyQuaternion(worldQuat(this.b.hips, _q1));
-      const pole = new V().copy(fwd).addScaledVector(new V(S === 'L' ? 1 : -1, 0, 0).applyQuaternion(_q1), opts.knee === undefined ? 0.25 : opts.knee);
+      // NOTE: worldQuat() decomposes into the scratch vector _v4, so the hips orientation must be read *before* building the forward axis.
+      // (V21 built the axis in _v4 first; the decompose then replaced it with the hips' world POSITION, so knees bent toward wherever the
+      // player stood on the pitch — backwards for anyone facing away from that point.)
+      const hq = worldQuat(this.b.hips, _q1);
+      const fwd = opts.pole ? new V().copy(opts.pole) : new V(0, 0, 1).applyQuaternion(hq);
+      const pole = fwd.addScaledVector(new V(S === 'L' ? 1 : -1, 0, 0).applyQuaternion(hq), opts.knee === undefined ? 0.12 : opts.knee);
       const reach = this._ik2('thigh', 'shin', S, ankleWorld, pole, opts.twist || 0);
       const foot = this.b['foot' + S];
+      // footYaw / footPitch / footRoll are given in the BODY frame (root), so the boot follows the character's facing.
+      // (V21 applied them as world angles: a player facing -z had his boots pointing +z, i.e. backwards.)
       const q = _q2.setFromEuler(_e.set(opts.footPitch || 0, opts.footYaw || 0, opts.footRoll || 0, 'YXZ'));
+      this.root.updateWorldMatrix(true, false); this.root.matrixWorld.decompose(_dp2, _q1, _s); q.premultiply(_q1);
       const pq = worldQuat(foot.parent, _q3).invert();
       foot.quaternion.copy(pq).multiply(q); foot.updateMatrixWorld(true);
       const toes = this.b['toes' + S]; toes.quaternion.setFromEuler(_e.set(opts.toes || 0, 0, 0)); toes.updateMatrixWorld(true);

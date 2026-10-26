@@ -113,7 +113,8 @@
           if (tt > 0.04 && tt < 1.02) { const xl = B.x + (-HW - B.x) * tt - m, xr = B.x + (HW - B.x) * tt + m; if (tx > xl && tx < xr) tx = (tx - xl < xr - tx) ? xl : xr; }
         }
         if (this.lane) { [tx, tz] = this.clearLane(tx, tz, this.lane, 1.6); this.laneGuard(p, 1.15); }
-        const sep = this.separation(p, _a); const face = angTo(p.pos, { x: b.x, z: b.z });
+        // face the ball only for short adjustments; relocating defenders turn and run (no long backpedals / crab runs)
+        const sep = this.separation(p, _a), far = Math.hypot(tx - p.pos.x, tz - p.pos.z) > 2.2, face = far ? null : angTo(p.pos, { x: b.x, z: b.z });
         steer(p, tx, tz, p.baseSpeed * (0.8 + 0.1 * diff), face, 1.4, sep);
       }
     }
@@ -124,7 +125,7 @@
       steer(k, x, zOff, 2.4 + 0.5 * this.difficulty, angTo(k.pos, b), 1.0, null);
       k.lookTarget = this.ball.p;
     }
-    aiReferee(dt) { const r = this.P.R, b = this.ball.p; steer(r, b.x + (b.x > 0 ? -11 : 11), b.z + 12, 4.2, angTo(r.pos, b), 4, this.separation(r, _a)); r.lookTarget = this.ball.p; }
+    aiReferee(dt) { const r = this.P.R, b = this.ball.p, tx = b.x + (b.x > 0 ? -11 : 11), tz = b.z + 12, far = Math.hypot(tx - r.pos.x, tz - r.pos.z) > 3; steer(r, tx, tz, 4.2, far ? null : angTo(r.pos, b), 4, this.separation(r, _a)); r.lookTarget = this.ball.p; }
 
     /* ---------------- ball ownership ---------------- */
     carry(dt) { // kinematic dribble: the owner pushes the ball a short way ahead with every stride
@@ -198,7 +199,7 @@
 
     /** result: {outcome:'goal'|'save'|'wide'|'pending', variant?} -> plan the physical resolution of the frozen shot */
     resolve(res) {
-      if (this.state !== 'frozen') return false; this.outcome = res.outcome; this.variant = res.variant || null; this.plan = this.planResolution(res); this.timeScale = 1; this.resumeT = 0; this.setState('resolve');
+      if (this.state !== 'frozen') return false; this.outcome = res.outcome; this.variant = res.variant || null; this.keeper.setIntent(0, 0, this.keeper.yaw); this.plan = this.planResolution(res); this.timeScale = 1; this.resumeT = 0; this.setState('resolve');
       this.emit('resolve', { outcome: res.outcome, variant: this.plan && this.plan.variant }); return true;
     }
   }

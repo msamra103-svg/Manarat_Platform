@@ -48,13 +48,14 @@
     const g = x.createLinearGradient(0, Y(L.jerseyHem, h), 0, Y(L.collarV, h)); g.addColorStop(0, k.jersey2); g.addColorStop(0.5, k.jersey); g.addColorStop(1, k.jersey);
     x.globalAlpha = 0.55; x.fillStyle = g; x.fillRect(0, Y(L.collarV, h), w, Y(L.jerseyHem, h) - Y(L.collarV, h)); x.globalAlpha = 1;
     x.fillStyle = k.jersey2; x.globalAlpha = 0.30; for (const u of [0.25, 0.75]) x.fillRect((u - 0.045) * w, 0, 0.09 * w, h); x.globalAlpha = 1;
-    lattice(x, w, h, k.trim, 0.10, 16);
-    weave(x, w, h, 0.06);
+    lattice(x, w, h, k.trim, 0.045, 14);
+    weave(x, w, h, 0.02);
     // trim sits inside the garment edge (hems are cut by alpha)
-    x.fillStyle = k.trim; x.fillRect(0, Y(L.collarV, h), w, 0.008 * h);
-    x.fillStyle = k.accent; x.fillRect(0, Y(L.collarV - 0.008, h), w, 0.003 * h);
-    x.fillStyle = k.trim; x.fillRect(0, Y(L.jerseyHem + 0.014, h), w, 0.014 * h);
-    x.fillStyle = k.accent; x.fillRect(0, Y(L.jerseyHem + 0.016, h), w, 0.003 * h);
+    // crew-neck rib: a thin band in the darker body colour with a fine accent line (a wide light band read as a ragged ruff on the shoulders)
+    x.fillStyle = k.collar || k.jersey2; x.fillRect(0, Y(L.collarV, h), w, 0.006 * h);
+    x.fillStyle = k.accent; x.globalAlpha = 0.85; x.fillRect(0, Y(L.collarV - 0.006, h), w, 0.0018 * h); x.globalAlpha = 1;
+    x.fillStyle = k.collar || k.jersey2; x.fillRect(0, Y(L.jerseyHem + 0.008, h), w, 0.008 * h);
+    x.fillStyle = k.accent; x.globalAlpha = 0.8; x.fillRect(0, Y(L.jerseyHem + 0.010, h), w, 0.002 * h); x.globalAlpha = 1;
     if (sleeve) { x.fillStyle = k.trim; x.fillRect(0, Y(L.sleeveV + 0.026, h), w, 0.026 * h); x.fillStyle = k.accent; x.fillRect(0, Y(L.sleeveV + 0.028, h), w, 0.004 * h); cut(x, w, h, L.sleeveV, null); }
     else cut(x, w, h, L.jerseyHem, L.collarV);
     return x.canvas;
@@ -62,7 +63,7 @@
   function shortsTexture(k, L) {
     const w = 512, h = 1024, c = canvas(w, h), x = c.getContext('2d');
     x.fillStyle = k.shorts; x.fillRect(0, 0, w, h);
-    weave(x, w, h, 0.07);
+    weave(x, w, h, 0.025);
     x.fillStyle = k.shortsStripe;
     for (const u of [0.25, 0.75]) x.fillRect((u - 0.022) * w, 0, 0.044 * w, h);
     x.fillStyle = k.accent || k.shortsStripe; x.globalAlpha = 0.9; for (const u of [0.25, 0.75]) x.fillRect((u - 0.03) * w, 0, 0.006 * w, h); x.globalAlpha = 1;
@@ -83,6 +84,9 @@
     const w = 64, h = 1024, c = canvas(w, h), x = c.getContext('2d');
     x.fillStyle = k.boots; x.fillRect(0, 0, w, h);
     x.fillStyle = k.accent; x.globalAlpha = 0.7; x.fillRect(0, Y(L.bootTopV, h), w, 0.006 * h); x.globalAlpha = 1;
+    // sole edge and a side flash so the boot reads as a football boot at match distance
+    const soleV = 0.016 / L.H; x.fillStyle = k.sole || '#d8d4cc'; x.fillRect(0, Y(soleV, h), w, h - Y(soleV, h));
+    x.fillStyle = k.accent; x.globalAlpha = 0.9; x.fillRect(0, Y(soleV + 0.022 / L.H, h), w, 0.006 * h); x.globalAlpha = 1;
     cut(x, w, h, null, L.bootTopV);
     return x.canvas;
   }
@@ -92,7 +96,7 @@
   function materials(kitId, landmarks) {
     const key = kitId; if (cache.has(key)) return cache.get(key);
     const k = KITS[kitId], H = landmarks.stature;
-    const L = { collarV: landmarks.collarY / H, sleeveV: landmarks.sleeveEnd / H, jerseyHem: landmarks.jerseyHem / H, waistV: landmarks.waistY / H, shortsHemV: landmarks.shortsHem / H, sockTopV: landmarks.sockTop / H, bootTopV: landmarks.bootTop / H };
+    const L = { H, collarV: landmarks.collarY / H, sleeveV: landmarks.sleeveEnd / H, jerseyHem: landmarks.jerseyHem / H, waistV: landmarks.waistY / H, shortsHemV: landmarks.shortsHem / H, sockTopV: landmarks.sockTop / H, bootTopV: landmarks.bootTop / H };
     const std = (o) => new THREE.MeshStandardMaterial(Object.assign({ roughness: 0.82, metalness: 0, vertexColors: true }, o));
     const cutMat = (canvasEl, o) => std(Object.assign({ map: tex(canvasEl), alphaTest: 0.5, side: THREE.DoubleSide }, o));
     const m = {

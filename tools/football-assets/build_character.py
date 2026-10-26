@@ -36,6 +36,91 @@ def laplacian(vals, nb, mask=None, iters=1, lam=0.5):
     return v
 
 
+def _smooth1d(v, k=2):
+    out = v.copy()
+    for i in range(len(v)):
+        lo, hi = max(0, i - k), min(len(v), i + k + 1); out[i] = v[lo:hi].mean()
+    return out
+
+
+def append_boots(kit_mesh, pos, W, domname, mask, H, stature, cyl_uv):
+    """Generate a football boot for each foot as its own lofted mesh (heel counter, mid-cut collar, rounded toe box, flat sole) fitted to
+    the foot's measured extents, skinned with the foot's own bone weights. Replaces the V21 'boot', which was the bare MakeHuman foot
+    offset by 8 mm and showed every toe."""
+    P_all, N_all, UV_all, W_all, AO_all, F_all = [], [], [], [], [], []
+    base = 0
+    from scipy.spatial import cKDTree
+    for S in ('L', 'R'):
+        ank = np.array(H['foot' + S], float); toe = np.array(H['toes' + S], float)
+        f = toe - ank; f[1] = 0; f /= np.linalg.norm(f); up = np.array([0.0, 1.0, 0.0]); l = np.cross(up, f)
+        sel = mask & np.isin(domname, ('foot' + S, 'toes' + S, 'shin' + S)) & (pos[:, 1] < ank[1] + 0.036)
+        idx = np.where(sel)[0]; Q = pos[idx] - ank; a = Q @ f; b = Q @ l; c = Q[:, 1] + ank[1]
+        sole = pos[idx, 1].min() - 0.004
+        a0, a1 = a.min() - 0.006, a.max() + 0.012
+        bins = np.arange(a0, a1 + 0.01, 0.01); prof = []
+        for k in range(len(bins)):
+            m = np.abs(a - bins[k]) < 0.012
+            if m.sum() < 3: prof.append(None); continue
+            prof.append((b[m].min() - 0.006, b[m].max() + 0.006, c[m].max() + 0.006))
+        # fill gaps and smooth the profiles along the foot (removes toe-by-toe bumps)
+        good = [i for i, p in enumerate(prof) if p is not None]
+        arr = np.array([prof[i] if prof[i] is not None else prof[min(good, key=lambda g: abs(g - i))] for i in range(len(prof))])
+        arr[:, 0] = _smooth1d(arr[:, 0], 2); arr[:, 1] = _smooth1d(arr[:, 1], 2); arr[:, 2] = _smooth1d(arr[:, 2], 2)
+        NS, NA = 30, 22
+        tt = 0.5 - 0.5 * np.cos(np.linspace(0, np.pi, NS))                      # denser sections at heel and toe
+        As = a0 + (a1 - a0) * tt
+        verts, uvw = [], []
+        for k, A in enumerate(As):
+            bl = np.interp(A, bins, arr[:, 0]); br = np.interp(A, bins, arr[:, 1]); top = np.interp(A, bins, arr[:, 2])
+            Rt, Rh = 0.04, 0.03                                                   # toe box / heel rounding radii
+            sc = 1.0
+            if A > a1 - Rt: sc = np.sqrt(max(0.0, 1 - ((A - (a1 - Rt)) / Rt) ** 2))
+            if A < a0 + Rh: sc = min(sc, np.sqrt(max(0.0, 1 - ((a0 + Rh - A) / Rh) ** 2)))
+            sc = max(sc, 0.08)
+            bc, hw = (bl + br) / 2, (br - bl) / 2 * (0.35 + 0.65 * sc)
+            yb = sole; yt = sole + (top - sole) * (0.45 + 0.55 * sc)
+            yc, hh = (yt + yb) / 2, (yt - yb) / 2
+            for j in range(NA):
+                th = 2 * np.pi * j / NA; cs, sn = np.cos(th), np.sin(th)
+                ex = 2 / 2.6; ey = 2 / (2.6 if sn >= 0 else 7.0)                 # flat sole, rounded upper
+                bx = bc + hw * np.sign(cs) * abs(cs) ** ex
+                cy = yc + hh * np.sign(sn) * abs(sn) ** ey
+                verts.append(ank + f * A + l * bx + up * (cy - ank[1]))
+        # end caps
+        Pk = np.array(verts)
+        heel_c = Pk[:NA].mean(0); toe_c = Pk[-NA:].mean(0)
+        Pk = np.vstack([Pk, heel_c, toe_c]); hc, tc = len(Pk) - 2, len(Pk) - 1
+        Fk = []
+        for k in range(NS - 1):
+            for j in range(NA):
+                i0 = k * NA + j; i1 = k * NA + (j + 1) % NA; i2 = (k + 1) * NA + j; i3 = (k + 1) * NA + (j + 1) % NA
+                Fk += [(i0, i2, i1), (i1, i2, i3)]
+        for j in range(NA):
+            Fk.append((hc, j, (j + 1) % NA)); Fk.append((tc, (NS - 1) * NA + (j + 1) % NA, (NS - 1) * NA + j))
+        Fk = np.array(Fk, np.int64)
+        # outward winding check (flip if the average normal points inward)
+        cen = Pk.mean(0); tri = Pk[Fk]; nrm = np.cross(tri[:, 1] - tri[:, 0], tri[:, 2] - tri[:, 0])
+        if np.einsum('ij,ij->', nrm, tri.mean(1) - cen) < 0: Fk = Fk[:, [0, 2, 1]]
+        Nk = vertex_normals(Pk, Fk)
+        # skin weights / uv from the nearest foot vertex of the original body
+        tree = cKDTree(pos[idx]); _, nn = tree.query(Pk); src = idx[nn]
+        u, v = cyl_uv(Pk, domname[src])
+        ao = 0.82 + 0.18 * np.clip((Pk[:, 1] - sole) / 0.03, 0, 1)
+        P_all.append(Pk); N_all.append(Nk); UV_all.append(np.stack([u, v], 1)); W_all.append(W[src]); AO_all.append(ao); F_all.append(Fk + base); base += len(Pk)
+    P = np.vstack(P_all); Nn = np.vstack(N_all); UV = np.vstack(UV_all); Wb = np.vstack(W_all); AO = np.concatenate(AO_all); F = np.vstack(F_all)
+    top = np.argsort(-Wb, axis=1)[:, :4]; sw = np.take_along_axis(Wb, top, 1); sw = sw / np.maximum(sw.sum(1, keepdims=True), 1e-9)
+    off = len(kit_mesh['position']); start = len(kit_mesh['index'])
+    kit_mesh['position'] = np.vstack([kit_mesh['position'], P.astype(np.float32)])
+    kit_mesh['normal'] = np.vstack([kit_mesh['normal'], Nn.astype(np.float32)])
+    kit_mesh['uv'] = np.vstack([kit_mesh['uv'], UV.astype(np.float32)])
+    kit_mesh['skinIndex'] = np.vstack([kit_mesh['skinIndex'], top.astype(np.uint8)])
+    kit_mesh['skinWeight'] = np.vstack([kit_mesh['skinWeight'], np.round(sw * 255).astype(np.uint8)])
+    kit_mesh['color'] = np.concatenate([kit_mesh['color'], AO.astype(np.float32)])
+    total = len(kit_mesh['position'])
+    kit_mesh['index'] = np.concatenate([kit_mesh['index'].astype(np.uint32), (F + off).reshape(-1).astype(np.uint32)]).astype(np.uint16 if total < 65535 else np.uint32)
+    kit_mesh['groups'] = [g for g in kit_mesh['groups'] if g[2] != 4] + [(start, len(F) * 3, 4)]
+
+
 def build_one(name, mh_dir, out_dir):
     B = BB.build(name, mh_dir)
     pos = B['pos']; W = B['weights']; H = B['heads']; vt = B['vt']
@@ -195,9 +280,10 @@ def build_one(name, mh_dir, out_dir):
     plist = [(jersey_body, pos_piece['jersey'], nrm_piece['jersey']), (jersey_sleeve, pos_piece['jersey'], nrm_piece['jersey']),
              (piece_faces(piece_mask['shorts']), pos_piece['shorts'], nrm_piece['shorts']),
              (piece_faces(piece_mask['socks']), pos_piece['socks'], nrm_piece['socks']),
-             (piece_faces(piece_mask['boots']), pos_piece['boots'], nrm_piece['boots'])]
+             (np.zeros(0, np.int64), pos_piece['boots'], nrm_piece['boots'])]
     kv_, ki, rg = to_mesh(plist, 'cyl')
     kit_mesh = pack(kv_, ki, [(rg[i][0], rg[i][1], i) for i in range(5)], plist)
+    append_boots(kit_mesh, pos, W, domname, piece_mask['boots'], H, stature, cyl_uv)
     pos2 = pos_piece['jersey']   # reference positions for decals
 
     # per-face role (for the LOD) from the strict classification

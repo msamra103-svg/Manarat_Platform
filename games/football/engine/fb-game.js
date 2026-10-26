@@ -15,11 +15,13 @@
   /* ------------------------------------------------------------------ settings */
   const SKEY = 'footballSettings';
   const readSettings = () => { try { return JSON.parse(localStorage.getItem(SKEY) || '{}') || {}; } catch (e) { return {}; } };
-  const settings = Object.assign({ mode: 'standard', diff: 1, reduced: null, quality: 'auto' }, readSettings());
+  const settings = Object.assign({ assist: 'full', diff: 1, reduced: null, quality: 'auto' }, readSettings()); delete settings.mode;
   const saveSettings = () => { try { localStorage.setItem(SKEY, JSON.stringify(settings)); } catch (e) { } };
-  if (['light', 'standard', 'pro'].includes(params.get('mode'))) settings.mode = params.get('mode');
+  if (params.get('mode') === 'light') settings.assist = 'simple';                  // old links: 'light' meant one-tap aiming
+  if (['simple', 'full'].includes(params.get('assist'))) settings.assist = params.get('assist');
   if (params.get('diff') !== null && [0, 1, 2].includes(+params.get('diff'))) settings.diff = +params.get('diff');
-  if (!['light', 'standard', 'pro'].includes(settings.mode)) settings.mode = 'standard';
+  if (!['simple', 'full'].includes(settings.assist)) settings.assist = 'full';
+  const simpleAim = () => settings.assist === 'simple';
   if (![0, 1, 2].includes(+settings.diff)) settings.diff = 1;
   const mqReduce = window.matchMedia ? matchMedia('(prefers-reduced-motion: reduce)') : { matches: false };
   const reduced = () => params.get('reduced') === '1' ? true : params.get('reduced') === '0' ? false : (settings.reduced === null ? !!mqReduce.matches : !!settings.reduced);
@@ -45,13 +47,23 @@
     : [{ text: 'كم لاعبًا يبدأ المباراة في كل فريق لكرة القدم؟', options: ['11 لاعبًا', '9 لاعبين', '7 لاعبين', '12 لاعبًا'], correct: 0 }, { text: 'ما ناتج 8 × 7؟', options: ['54', '56', '64', '48'], correct: 1 }, { text: 'ما عاصمة دولة قطر؟', options: ['الوكرة', 'الخور', 'الدوحة', 'دخان'], correct: 2 }];
   const S = {
     phase: 'loading', round: 0, total: params.get('demo') === 'long' ? 1 : 3, goals: 0, results: [], correct: false, pending: false, feedback: '', result: '', variant: '',
-    token: '', configReady: !embedded, assetsReady: false, live: false, replaying: false, lite: false, introDone: false, elapsed: 0, aim: { x: 0, y: 0.5, power: 0.7 }, aimTouched: false, stateT: 0, outcomeT: 0, passOptions: []
+    token: '', configReady: !embedded, gameMode: null, attempt: 0, title: '', assetsReady: false, live: false, replaying: false, lite: false, introDone: false, elapsed: 0, aim: { x: 0, y: 0.5, power: 0.7 }, aimTouched: false, stateT: 0, outcomeT: 0, passOptions: []
   };
   let renderer, scene, camera, stadium, crowd, ballView, fx, match, director, replay, audio;
   const audioInst = new FB.Audio({ base: '../football/assets', onState: st => syncSound(st) });
   audio = audioInst;
   let rafId = 0, prev = 0, acc = 0, manualMode = params.get('manual') === '1' || window.__FOOTBALL_MANUAL === true, timers = [], contextLost = false, disposed = false;
   const actors = [];
+  const keys = new Set(), stick = { x: 0, y: 0, id: null };
+  const KEYMAP = { ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'left', ArrowRight: 'right', w: 'up', W: 'up', s: 'down', S: 'down', a: 'left', A: 'left', d: 'right', D: 'right', KeyW: 'up', KeyS: 'down', KeyA: 'left', KeyD: 'right' };
+  function bindStick() {
+    const el = $('stick'), knob = el.querySelector('.knob'), R = 46;
+    const set = e => { const r = el.getBoundingClientRect(), cx = r.left + r.width / 2, cy = r.top + r.height / 2; let dx = e.clientX - cx, dy = e.clientY - cy; const l = Math.hypot(dx, dy); if (l > R) { dx *= R / l; dy *= R / l; }
+      knob.style.transform = `translate(${dx.toFixed(1)}px,${dy.toFixed(1)}px)`; const m = Math.hypot(dx, dy) / R; stick.x = m < 0.12 ? 0 : dx / R; stick.y = m < 0.12 ? 0 : -dy / R; };
+    const end = e => { if (e.pointerId !== stick.id) return; stick.id = null; stick.x = stick.y = 0; knob.style.transform = ''; el.classList.remove('active'); try { el.releasePointerCapture(e.pointerId); } catch (x) { } };
+    el.addEventListener('pointerdown', e => { if (S.phase !== 'play') return; stick.id = e.pointerId; el.classList.add('active'); try { el.setPointerCapture(e.pointerId); } catch (x) { } set(e); e.preventDefault(); });
+    el.addEventListener('pointermove', e => { if (e.pointerId === stick.id) set(e); }); el.addEventListener('pointerup', end); el.addEventListener('pointercancel', end);
+  }
   const ctx = { ball: new V(), ballV: new V(), focus: new V(), shooterBall: null, shooter: null, reactTo: null, slow: 0, replaySide: 1 };
 
   const later = (sec, fn) => { timers.push({ t: sec, fn }); };
@@ -73,7 +85,7 @@
     b.querySelector('span').textContent = st === 'unsupported' ? 'الصوت غير متاح' : st === 'failed' ? 'تعذر تشغيل الصوت' : on ? 'الصوت: مفعّل' : 'الصوت: مكتوم';
     b.classList.toggle('muted', !on); S.audioReady = !!(audioInst.ready && audioInst.buffers.cheer);
   }
-  function setLoad(p, text) { $('loadBar').firstElementChild.style.width = Math.round(p * 100) + '%'; if (text) $('start').textContent = text; }
+  function setLoad(p, text) { $('loadBar').firstElementChild.style.width = Math.round(p * 100) + '%'; if (text) $('loadStatus').textContent = text; }
 
   /* ------------------------------------------------------------------ boot */
   const nextFrame = () => new Promise(r => requestAnimationFrame(() => r()));
@@ -107,11 +119,13 @@
         const a = FB.Char.create(assets[spec.build], { kit: spec.kit, tone: spec.tone, stubble: spec.stubble, hair: { style: spec.hair, color: FB.Char.HAIR_COLORS[spec.seed % FB.Char.HAIR_COLORS.length] }, number: spec.team === 'ref' ? null : spec.number, keeper: !!spec.keeper, textures: tex[spec.build], seed: spec.seed, name: spec.id });
         scene.add(a.root); actors.push(a); return a;
       };
-      match = new FB.Match({ makeActor, seed, difficulty: +settings.diff, mode: settings.mode, net: stadium.net, onEvent });
+      match = new FB.Match({ makeActor, seed, difficulty: +settings.diff, mode: 'standard', net: stadium.net, onEvent });
       replay = new FB.Replay(match.players, match.ball, stadium.net, 8);
-      match.begin(0, settings.mode, +settings.diff); for (let i = 0; i < 30; i++) match.update(STEP);
+      match.begin(0, 'standard', +settings.diff); for (let i = 0; i < 30; i++) match.update(STEP);
+      buildIndicators();
       applySize(); setLoad(0.9, 'جارٍ تجهيز الإضاءة…'); await nextFrame();
       try { renderer.compile(scene, camera); } catch (e) { }
+      director.update(1 / 60, ctx);                                                   // place the welcome camera before the first frame is drawn
       renderFrame(); setLoad(1);
       S.assetsReady = true; ready();
     } catch (e) { console.error(e); fail('assets'); return; }
@@ -119,18 +133,21 @@
   }
   function ready() {
     if (!(S.assetsReady || S.lite) || !S.configReady) return; if (S.phase !== 'loading') return;
-    $('start').disabled = false; $('start').textContent = S.lite ? 'ابدأ ←' : 'ادخل الملعب ←'; $('loadBar').hidden = true; setPhase('welcome'); updateHud();
-    if (!embedded && !touchDevice) $('start').focus({ preventScroll: true });
+    for (const b of document.querySelectorAll('[data-game-mode]')) b.disabled = S.lite && b.dataset.gameMode === 'match'; $('loadStatus').textContent = S.lite ? 'وضع مبسّط بلا رسوم ثلاثية الأبعاد: ضربات الجزاء متاحة، والمباراة التفاعلية تحتاج جهازًا يدعم WebGL.' : 'اختر طريقة اللعب للبدء'; $('loadBar').hidden = true; setPhase('welcome'); updateHud();
+    if (!embedded && !touchDevice) $('modePenalties').focus({ preventScroll: true });
   }
 
   /* ------------------------------------------------------------------ round flow */
   function showControls(on) { $('controls').hidden = !on; }
   function resetUi() {
-    $('feedback').hidden = true; $('question').hidden = true; $('shoot').hidden = true; $('next').hidden = true; $('next').disabled = false; $('reopen').hidden = true; $('replayBtn').hidden = true; $('aimBlock').hidden = true; $('passButtons').hidden = true; $('passButtons').replaceChildren(); $('markers').replaceChildren(); $('reticle').hidden = true; $('skip').hidden = true; $('ticker').hidden = true;
+    $('feedback').hidden = true; $('question').hidden = true; $('shoot').hidden = true; $('next').hidden = true; $('next').disabled = false; $('reopen').hidden = true; $('replayBtn').hidden = true; $('aimBlock').hidden = true; $('passButtons').hidden = true; $('passButtons').replaceChildren(); $('markers').replaceChildren(); $('reticle').hidden = true; $('skip').hidden = true; $('ticker').hidden = true; $('playPad').hidden = true;
     document.body.classList.remove('replaying'); canvas.style.touchAction = 'auto';
   }
-  async function enter() {
-    if (S.phase !== 'welcome') return; $('welcome').hidden = true; $('settings').hidden = true; $('settingsBtn').setAttribute('aria-expanded', 'false'); S.live = true;
+  async function enter(gm) {
+    if (S.phase !== 'welcome' || (gm !== 'penalties' && gm !== 'match') || (S.lite && gm === 'match')) return;
+    S.gameMode = gm; if (match) match.setGameMode(gm); document.body.dataset.game = gm;            // explicit game mode, separate from quality / difficulty / assist
+    for (const b of document.querySelectorAll('[data-game-mode]')) b.setAttribute('aria-pressed', String(b.dataset.gameMode === gm));
+    $('roundLabel').textContent = gm === 'penalties' ? 'الركلة' : 'الهجمة'; $('welcome').hidden = true; $('settings').hidden = true; $('settingsBtn').setAttribute('aria-expanded', 'false'); S.live = true;
     audioInst.init().then(() => syncSound('ready')); syncSound('ready');
     if (S.lite) { startRound(); return; }
     if (!S.introDone && !reduced()) {
@@ -138,12 +155,62 @@
       director.cut('establish', true, 4.2, () => { $('skip').hidden = true; startRound(); });
     } else { S.introDone = true; startRound(); }
   }
-  function startRound() {
+  function startRound(opts = {}) {
     timers = []; if (replay) { replay.stop(); replay.clear(); } resetUi(); S.correct = false; S.pending = false; S.feedback = ''; S.result = ''; S.variant = ''; S.aimTouched = false; S.aim.x = 0; S.aim.y = 0.5; S.aim.power = 0.7; S.passOptions = [];
     showControls(true); updateHud(); highlightAim();
     if (S.lite) { setPhase('ready'); instruction('اضغط «سدّد» لتبدأ التسديدة'); $('shoot').hidden = false; $('shoot').disabled = false; return; }
-    director.cut('attack', true); crowd.setExcitement(0.18); audioInst.setExcitement(0.18); setPhase('build'); instruction(settings.mode === 'light' ? 'الهجمة تتقدّم… التمريرة ستكون تلقائية' : 'الهجمة تتقدّم… استعد للتمرير');
-    match.begin(S.round, settings.mode, +settings.diff); stage.classList.toggle('light-mode', settings.mode === 'light');
+    const go = () => {
+      match.attempt = S.attempt; crowd.setExcitement(0.18); audioInst.setExcitement(0.18);
+      if (S.gameMode === 'penalties') { setPhase('build'); director.cut('aim', true); match.begin(S.round, 'standard', +settings.diff); if (S.phase === 'build') showAim(); }
+      else { match.begin(S.round, 'standard', +settings.diff); ctx.ctrl = match.ctrl ? match.ctrl.pos : null; director.cut('play', true); showPlay(); }
+    };
+    if (opts.fade) transition(go); else go();
+  }
+  /** brief, clearly presented transition so players are never seen jumping into position */
+  function transition(fn) { const f = $('fade'); f.classList.add('on'); S.fading = true; later(0.34, () => { try { fn(); } finally { later(0.06, () => { f.classList.remove('on'); S.fading = false; }); } }); }
+  /* interactive match controls */
+  function showPlay() {
+    setPhase('play'); $('playPad').hidden = false; $('aimBlock').hidden = true; $('shoot').hidden = true; canvas.style.touchAction = 'none';
+    instruction(touchDevice ? 'حرّك اللاعب بالعصا، ثم مرّر أو سدّد عندما تقترب من المرمى' : 'تحرّك بالأسهم أو W A S D · مرّر بالحرف E · سدّد بمسافة');
+    syncPlayButtons(true);
+  }
+  function inputWorld() { // joystick + keyboard, mapped from screen space to the pitch through the camera's heading
+    const k = keys, jx = clamp((k.has('right') ? 1 : 0) - (k.has('left') ? 1 : 0) + stick.x, -1, 1), jy = clamp((k.has('up') ? 1 : 0) - (k.has('down') ? 1 : 0) + stick.y, -1, 1);
+    const fx = director.look.x - director.pos.x, fz = director.look.z - director.pos.z, fl = Math.hypot(fx, fz) || 1, ux = fx / fl, uz = fz / fl;
+    return { x: jx * -uz + jy * ux, z: jx * ux + jy * uz, mag: Math.min(1, Math.hypot(jx, jy)) };
+  }
+  function doPassPlay() {
+    if (S.phase !== 'play' || !match.canPassPlay()) return; audioInst.init(); const w = inputWorld(), o = match.owner;
+    const dx = w.mag > 0.2 ? w.x : Math.sin(o.yaw), dz = w.mag > 0.2 ? w.z : Math.cos(o.yaw);
+    if (match.passPlay(dx, dz)) ticker('تمريرة!', 1000);
+  }
+  function doShootPlay() {
+    if (S.phase !== 'play') return; audioInst.init();
+    if (!match.canShootPlay()) { ticker(match.owner && match.owner === match.ctrl ? 'اقترب أكثر من المرمى لتسدّد' : 'انتظر حتى تصلك الكرة', 1600); return; }
+    const o = match.owner, w = inputWorld(), d = match.shotDistance();
+    const x = Math.abs(w.x) > 0.35 ? Math.sign(w.x) * 0.72 : (o.pos.x > 0.5 ? -0.62 : o.pos.x < -0.5 ? 0.62 : (match.rng() < 0.5 ? -0.6 : 0.6));
+    const aim = { x, y: simpleAim() ? 0.35 : clamp(0.3 + 0.25 * (w.mag > 0.2 && w.z < -0.5 ? 1 : 0), 0, 1), power: clamp(0.5 + d / 40, 0.55, 1) };
+    if (!match.shootPlay(aim)) return;
+    setPhase('runup'); $('playPad').hidden = true; canvas.style.touchAction = 'auto'; instruction('اقتراب… ارتكاز… تسديدة!');
+  }
+  function syncPlayButtons(force) {
+    const canS = match && match.canShootPlay(), canP = match && match.canPassPlay();
+    if (force || canS !== S._cs) { $('shootBtn').setAttribute('aria-disabled', String(!canS)); S._cs = canS; if (S.phase === 'play' && canS) instruction('أنت في مدى التسديد: سدّد الآن أو مرّر'); }
+    if (force || canP !== S._cp) { $('passBtn').setAttribute('aria-disabled', String(!canP)); S._cp = canP; }
+  }
+  /* 3D indicators: a ring under the controlled player and a softer one under the likely pass receiver */
+  let ctrlRing = null, passRing = null;
+  function buildIndicators() {
+    const mk = (r0, r1, color, op) => { const m = new T.Mesh(new T.RingGeometry(r0, r1, 48), new T.MeshBasicMaterial({ color: FB.color(color), transparent: true, opacity: op, depthWrite: false })); m.rotation.x = -Math.PI / 2; m.renderOrder = 2; m.visible = false; scene.add(m); return m; };
+    ctrlRing = mk(0.46, 0.62, '#f5d481', 0.95); passRing = mk(0.5, 0.58, '#ffffff', 0.65);
+    const arrow = new T.Mesh(new T.ConeGeometry(0.16, 0.34, 3), new T.MeshBasicMaterial({ color: FB.color('#f5d481'), transparent: true, opacity: 0.95, depthWrite: false })); arrow.rotation.x = Math.PI / 2; arrow.position.set(0, 0, 0.82); ctrlRing.add(arrow); ctrlRing.userData.arrow = arrow;
+  }
+  function updateIndicators() {
+    if (!ctrlRing) return; const on = S.gameMode === 'match' && S.phase === 'play' && !!match.ctrl && !S.replaying;
+    ctrlRing.visible = on; passRing.visible = false; if (!on) return;
+    const c = match.ctrl; ctrlRing.position.set(c.pos.x, 0.03, c.pos.z); const w = inputWorld();
+    ctrlRing.rotation.z = -(w.mag > 0.2 ? Math.atan2(w.x, w.z) : c.yaw) + Math.PI; ctrlRing.material.opacity = 0.75 + 0.2 * Math.sin(S.elapsed * 5);
+    if (match.owner === c && match.canPassPlay()) { const t = match.passTarget(w.mag > 0.2 ? w.x : Math.sin(c.yaw), w.mag > 0.2 ? w.z : Math.cos(c.yaw)); if (t) { passRing.visible = true; passRing.position.set(t.pos.x, 0.03, t.pos.z); } }
   }
 
   /* pass UI */
@@ -154,7 +221,7 @@
       const b = document.createElement('button'); b.type = 'button'; b.dataset.pass = o.id; b.innerHTML = `<b>${o.number}</b><span>${ROLE_AR[o.id] || ''}</span>`; b.setAttribute('aria-label', 'مرّر إلى ' + (ROLE_AR[o.id] || 'زميل') + ' رقم ' + o.number); b.onclick = () => doPass(o.id); box.appendChild(b);
       const m = document.createElement('button'); m.type = 'button'; m.className = 'pass-marker'; m.dataset.pass = o.id; m.tabIndex = -1; m.setAttribute('aria-hidden', 'true'); m.innerHTML = `<b>${o.number}</b>`; m.onclick = () => doPass(o.id); $('markers').appendChild(m);
     });
-    if (settings.mode === 'light') { box.hidden = true; $('markers').replaceChildren(); instruction('تمريرة تلقائية…'); } else { box.hidden = false; instruction(match.passN === 0 ? 'اختر زميلًا لتمرّر إليه الكرة' : 'تمريرة ثانية: اختر الزميل التالي'); }
+    if (false) { } else { box.hidden = false; instruction(match.passN === 0 ? 'اختر زميلًا لتمرّر إليه الكرة' : 'تمريرة ثانية: اختر الزميل التالي'); }
   }
   function doPass(id) { if (S.phase !== 'build') return; audioInst.init(); if (match.pass(id)) { hidePass(); } }
   function hidePass() { $('passButtons').hidden = true; $('markers').replaceChildren(); instruction('تمريرة…'); }
@@ -162,9 +229,9 @@
   /* aim UI */
   const AIMX = { left: -0.68, center: 0, right: 0.68 }, AIMY = { low: 0.16, mid: 0.5, high: 0.86 };
   function showAim() {
-    setPhase('ready'); const light = settings.mode === 'light'; $('aimBlock').hidden = false; $('heightGroup').hidden = light; $('powerBox').hidden = light; $('shoot').hidden = false; $('shoot').disabled = false;
+    setPhase('ready'); const light = simpleAim(); $('aimBlock').hidden = false; $('heightGroup').hidden = light; $('powerBox').hidden = light; $('shoot').hidden = false; $('shoot').disabled = false;
     $('reticle').hidden = light; $('power').value = Math.round(S.aim.power * 100); $('powerOut').textContent = Math.round(S.aim.power * 100) + '%'; canvas.style.touchAction = light ? 'auto' : 'none'; highlightAim();
-    instruction(light ? 'اختر الزاوية، ثم سدّد' : (touchDevice ? 'اسحب لتحدّد الهدف، واضبط القوة، ثم سدّد' : 'حرّك المؤشر نحو الهدف أو اختر زاوية، واضبط القوة، ثم سدّد'));
+    instruction(S.gameMode === 'penalties' ? (light ? 'ضربة جزاء: اختر الاتجاه، ثم سدّد' : (touchDevice ? 'ضربة جزاء: اسحب نحو المرمى لتحدّد الهدف، واضبط القوة، ثم سدّد' : 'ضربة جزاء: حرّك المؤشر نحو المرمى أو اختر الاتجاه، واضبط القوة، ثم سدّد')) : light ? 'اختر الزاوية، ثم سدّد' : (touchDevice ? 'اسحب لتحدّد الهدف، واضبط القوة، ثم سدّد' : 'حرّك المؤشر نحو الهدف أو اختر زاوية، واضبط القوة، ثم سدّد'));
   }
   function highlightAim() {
     const near = (obj, v) => Object.entries(obj).reduce((b, [k, x]) => Math.abs(x - v) < Math.abs(obj[b] - v) ? k : b, Object.keys(obj)[0]);
@@ -182,7 +249,7 @@
   function shoot() {
     if (S.phase !== 'ready') return; audioInst.init();
     if (S.lite) { setPhase('runup'); $('shoot').hidden = true; instruction('اقتراب… ارتكاز… تسديدة قوية!'); later(0.9, () => { setPhase('flight'); later(0.5, () => { S.flight = 0.5; ask(); }); }); return; }
-    const a = settings.mode === 'light' ? { x: S.aim.x, y: 0.5, power: 0.7 } : S.aim;
+    const a = simpleAim() ? { x: S.aim.x, y: 0.4, power: 0.75 } : S.aim;
     if (!match.shoot({ x: a.x, y: a.y, power: a.power })) return;
     setPhase('runup'); $('shoot').hidden = true; $('aimBlock').hidden = true; $('reticle').hidden = true; canvas.style.touchAction = 'auto'; instruction('اقتراب… ارتكاز… تسديدة قوية!');
   }
@@ -215,7 +282,7 @@
     if (S.phase === 'outcome') return; setPhase('outcome'); S.flight = 1; S.results[S.round] = S.pending ? 'pending' : S.correct ? 'goal' : 'miss'; if (S.correct) S.goals++; updateHud();
     const [label, title] = momentCopy(); $('feedback').classList.toggle('miss', !S.correct && !S.pending); $('feedback').classList.toggle('neutral', S.pending);
     $('momentLabel').textContent = label; $('momentTitle').textContent = title; $('momentText').textContent = S.feedback; $('feedback').hidden = false;
-    $('next').textContent = S.round + 1 === S.total ? 'عرض النتيجة ←' : 'التسديدة التالية ←'; $('next').hidden = false; $('next').disabled = false;
+    $('next').textContent = S.round + 1 === S.total ? 'عرض النتيجة ←' : S.gameMode === 'match' ? 'الهجمة التالية ←' : S.gameMode === 'penalties' ? 'الركلة التالية ←' : 'التسديدة التالية ←'; $('next').hidden = false; $('next').disabled = false;
     instruction(S.pending ? 'ستُحتسب الدرجة بعد مراجعة المعلم.' : S.correct ? 'أحسنت! أكمل بنفس التركيز.' : 'لا بأس… استعد لفرصة جديدة.');
     if (!S.lite) {
       if (!S.correct && !S.pending) audioInst.groan();
@@ -229,12 +296,12 @@
   function next() {
     if (S.phase !== 'outcome') return; stopReplay();
     if (embedded) { $('next').disabled = true; post('school-football-next'); return; }
-    if (S.round + 1 < S.total) { S.round++; startRound(); } else finishStandalone();
+    if (S.round + 1 < S.total) { S.round++; S.attempt = 0; startRound({ fade: true }); } else finishStandalone();
   }
   function finishStandalone() {
     setPhase('finished'); $('ticker').hidden = true; $('feedback').hidden = false; $('feedback').classList.remove('miss', 'neutral'); $('momentTitle').textContent = 'نهاية التحدّي'; $('momentLabel').textContent = 'صافرة النهاية'; $('momentText').textContent = `سجّلت ${S.goals} من ${S.total} أهداف. جرّب مرة أخرى وحسّن نتيجتك.`;
     $('next').textContent = 'العب مرة أخرى ←'; $('next').hidden = false; $('replayBtn').hidden = true; if (!S.lite) { audioInst.whistle('end'); director.cut('react', false); }
-    $('next').onclick = () => { S.round = 0; S.goals = 0; S.results = []; $('next').onclick = next; startRound(); };
+    $('next').onclick = () => { S.round = 0; S.goals = 0; S.results = []; S.attempt = 0; $('next').onclick = next; startRound({ fade: true }); };
   }
 
   /* replay */
@@ -264,16 +331,22 @@
       case 'glove': case 'parry': case 'catch': crowd.pulse(0.55, 1.6); break;
       case 'dive': fx.puff(match.keeper.pos.x, match.keeper.pos.z, 0.9); break;
       case 'outcomeReady': outcomeShown(e.outcome); break;
+      case 'turnover': { // lost possession: no question is used; the attack is rebuilt
+        const msg = e.why === 'tackle' ? 'قطع المدافع الكرة… نعيد بناء الهجمة' : e.why === 'intercept' ? 'اعتراض! نعيد بناء الهجمة' : 'خرجت الكرة… نعيد بناء الهجمة';
+        ticker(msg + ' — لم يُستخدم السؤال', 2200); crowd.pulse(0.3, 1); syncPlayButtons(true);
+        later(1.5, () => { if (S.phase === 'play' && match.state === 'turnover') { S.attempt++; startRound({ fade: true }); } }); break; }
     }
   }
   function onState(st) {
     if (S.phase !== 'intro') {
-      if ((st === 'build' || st === 'pass' || st === 'prep') && S.phase !== 'build') setPhase('build');
+      if (S.gameMode === 'match') { /* 'play' / 'pass' / 'turnover' all stay in the 'play' phase */ }
+      else if ((st === 'build' || st === 'pass' || st === 'prep') && S.phase !== 'build') setPhase('build');
       else if (st === 'flight') setPhase('flight');
       // aim -> showAim() sets 'ready'; frozen -> ask() sets 'question'; resolve -> resolve() sets 'resolve'; outcome -> outcomeShown()
     }
     switch (st) {
       case 'build': director.cut('attack', false); break;
+      case 'play': if (S.gameMode === 'match') director.cut('play', false); break;
       case 'aim': director.cut('aim', false); break;
       case 'runup': case 'strike': director.cut('runup', false); break;
       case 'flight': director.cut('flight', false); break;
@@ -300,6 +373,8 @@
       if (n >= 5) acc = 0;
       const b = match.ball; ballView.set(b.p, b.q); ctx.ball.copy(b.p); ctx.ballV.copy(b.v);
     }
+    if (S.gameMode === 'match' && match) { if (S.phase === 'play' && !S.fading) { const w = inputWorld(); match.setInput(w.x, w.z, false); } else match.setInput(0, 0, false); ctx.ctrl = match.ctrl ? match.ctrl.pos : (match.owner ? match.owner.pos : match.ball.p); if (S.phase === 'play') syncPlayButtons(false); updateIndicators(); }
+    ctx.penalty = S.gameMode === 'penalties';
     ctx.shooter = match.shooter ? match.shooter : match.owner; ctx.others = match.players.map(q => q.pos); ctx.shooterBall = match.ball.p; ctx.focus.copy(match.owner && match.state === 'build' ? match.ball.p : match.ball.p); ctx.slow = clamp(1 - match.timeScale, 0, 1);
     if (S.phase === 'welcome') { if (director.shot !== 'orbit') director.cut('orbit', true); }
     director.update(dt, ctx); stadium.update(dt, S.elapsed); crowd.update(dt, S.elapsed); fx.update(dt);
@@ -340,7 +415,7 @@
 
   /* ------------------------------------------------------------------ lite (no-WebGL) path */
   function enterLite() {
-    S.lite = true; S.assetsReady = false; document.body.classList.add('lite'); $('loadingError').hidden = true; $('welcome').hidden = false; $('loadBar').hidden = true; $('start').disabled = true;
+    S.lite = true; S.assetsReady = false; document.body.classList.add('lite'); $('loadingError').hidden = true; $('welcome').hidden = false; $('loadBar').hidden = true; for (const b of document.querySelectorAll('[data-game-mode]')) b.disabled = true;
     if (S.phase !== 'loading') setPhase('loading'); ready(); rafId = requestAnimationFrame(liteLoop);
   }
   let litePrev = 0; function liteLoop(now) { const dt = Math.min((now - (litePrev || now)) / 1000, 0.1); litePrev = now; if (!manualMode) { S.elapsed += dt; runTimers(dt); } rafId = requestAnimationFrame(liteLoop); }
@@ -348,7 +423,7 @@
   /* ------------------------------------------------------------------ protocol */
   window.addEventListener('message', e => {
     if (!embedded || e.origin !== location.origin || e.source !== parent) return; const m = e.data; if (!m || typeof m !== 'object') return;
-    if (m.type === 'school-football-config' && !S.configReady) { S.total = Math.max(1, Math.min(100, Number(m.count) || 1)); S.token = String(m.token || ''); S.configReady = true; $('modeLabel').textContent = String(m.title || 'مهمة المعلم'); updateHud(); ready(); }
+    if (m.type === 'school-football-config' && !S.configReady) { S.total = Math.max(1, Math.min(100, Number(m.count) || 1)); S.token = String(m.token || ''); S.configReady = true; S.title = String(m.title || 'مهمة المعلم'); $('modeLabel').textContent = S.title; $('taskTitle').textContent = S.title; updateHud(); ready(); }
     else if (m.token === S.token && m.index === S.round) {
       if (m.type === 'school-football-result') resolve(m);
       if (m.type === 'school-football-retry' && S.phase === 'outcome') $('next').disabled = false;
@@ -358,7 +433,8 @@
 
   /* ------------------------------------------------------------------ wiring */
   function bind() {
-    $('start').onclick = enter; $('shoot').onclick = shoot; $('next').onclick = next; $('replayBtn').onclick = () => { if (S.phase === 'outcome') { if (S.replaying) stopReplay(); startReplay(); } };
+    document.querySelectorAll('[data-game-mode]').forEach(b => b.onclick = () => enter(b.dataset.gameMode)); $('shoot').onclick = shoot;
+    $('passBtn').onclick = doPassPlay; $('shootBtn').onclick = doShootPlay; bindStick(); $('next').onclick = next; $('replayBtn').onclick = () => { if (S.phase === 'outcome') { if (S.replaying) stopReplay(); startReplay(); } };
     $('sound').onclick = () => { audioInst.toggle(); audioInst.init(); syncSound(); };
     $('reopen').onclick = () => { if (S.phase === 'question') post('school-football-question'); };
     $('skip').onclick = () => { if (S.phase === 'intro') director.skip(); else if (S.replaying) stopReplay(); };
@@ -370,28 +446,37 @@
     // settings
     const open = on => { $('settings').hidden = !on; $('settingsBtn').setAttribute('aria-expanded', String(on)); if (on) $('settingsClose').focus({ preventScroll: true }); };
     $('settingsBtn').onclick = () => open($('settings').hidden); $('settingsClose').onclick = () => { open(false); $('settingsBtn').focus({ preventScroll: true }); };
-    const mark = () => { document.querySelectorAll('[data-mode]').forEach(b => b.setAttribute('aria-checked', String(b.dataset.mode === settings.mode))); document.querySelectorAll('[data-diff]').forEach(b => b.setAttribute('aria-checked', String(+b.dataset.diff === +settings.diff))); $('optReduced').checked = reduced(); $('optQuality').value = String(settings.quality); };
-    document.querySelectorAll('[data-mode]').forEach(b => b.onclick = () => { settings.mode = b.dataset.mode; saveSettings(); mark(); });
+    const mark = () => { document.querySelectorAll('[data-assist]').forEach(b => b.setAttribute('aria-checked', String(b.dataset.assist === settings.assist))); document.querySelectorAll('[data-diff]').forEach(b => b.setAttribute('aria-checked', String(+b.dataset.diff === +settings.diff))); $('optReduced').checked = reduced(); $('optQuality').value = String(settings.quality); };
+    document.querySelectorAll('[data-assist]').forEach(b => b.onclick = () => { settings.assist = b.dataset.assist; saveSettings(); mark(); if (S.phase === 'ready') showAim(); });
     document.querySelectorAll('[data-diff]').forEach(b => b.onclick = () => { settings.diff = +b.dataset.diff; saveSettings(); mark(); });
     $('optReduced').onchange = e => { settings.reduced = e.target.checked; saveSettings(); director && director.setReduced(reduced()); crowd && crowd.setReduced(reduced()); fx && fx.setReduced(reduced()); };
     $('optQuality').onchange = e => { settings.quality = e.target.value; saveSettings(); autoQuality = settings.quality === 'auto' && params.get('q') === null; if (!autoQuality && TIERS[+settings.quality]) { tierIdx = +settings.quality; tier = TIERS[tierIdx]; if (renderer) { renderer.shadowMap.enabled = !!tier.shadow && !!stadium.key.shadow.map; applySize(); } } };
     mark(); syncSound();
     // pointer aiming on the pitch
     let dragging = false;
-    canvas.addEventListener('pointerdown', e => { if (S.phase !== 'ready' || settings.mode === 'light') return; dragging = true; try { canvas.setPointerCapture(e.pointerId); } catch (x) { } aimFromPointer(e); e.preventDefault(); });
+    canvas.addEventListener('pointerdown', e => { if (S.phase !== 'ready' || simpleAim()) return; dragging = true; try { canvas.setPointerCapture(e.pointerId); } catch (x) { } aimFromPointer(e); e.preventDefault(); });
     canvas.addEventListener('pointermove', e => { if (dragging) aimFromPointer(e); });
     const up = e => { dragging = false; try { canvas.releasePointerCapture(e.pointerId); } catch (x) { } }; canvas.addEventListener('pointerup', up); canvas.addEventListener('pointercancel', up);
     document.addEventListener('keydown', e => {
       const tag = (e.target && e.target.tagName) || '';
       if (e.key === 'Escape') { if (!$('settings').hidden) { open(false); return; } if (S.phase === 'intro' || S.replaying) { $('skip').click(); return; } }
       if ((e.code === 'Space' || e.code === 'Enter') && e.target === document.body) { if (S.phase === 'ready') { e.preventDefault(); shoot(); } else if (S.phase === 'intro' || S.replaying) { e.preventDefault(); $('skip').click(); } }
-      if (S.phase === 'ready' && settings.mode !== 'light' && tag !== 'INPUT' && tag !== 'SELECT') {
+      // movement keys only while the match is under control; the on-screen pass/shoot buttons must not swallow them after a mouse click
+      const padBtn = tag === 'BUTTON' && e.target.closest && e.target.closest('#playPad');
+      if (S.phase === 'play' && S.gameMode === 'match' && tag !== 'INPUT' && tag !== 'SELECT' && (tag !== 'BUTTON' || padBtn)) {
+        const dir = KEYMAP[e.key] || KEYMAP[e.code]; if (dir) { keys.add(dir); e.preventDefault(); return; }
+        if (e.key === 'e' || e.key === 'E' || e.key === 'ث' || e.code === 'KeyE') { e.preventDefault(); if (!e.repeat) doPassPlay(); return; }
+        if (e.code === 'Space') { e.preventDefault(); if (!e.repeat) doShootPlay(); return; }
+      }
+      if (S.phase === 'ready' && !simpleAim() && tag !== 'INPUT' && tag !== 'SELECT') {
         const st = 0.08; let used = true;
         if (e.key === 'ArrowLeft') S.aim.x = clamp(S.aim.x - st, -1, 1); else if (e.key === 'ArrowRight') S.aim.x = clamp(S.aim.x + st, -1, 1); else if (e.key === 'ArrowUp') S.aim.y = clamp(S.aim.y + st, 0, 1); else if (e.key === 'ArrowDown') S.aim.y = clamp(S.aim.y - st, 0, 1);
         else if (e.key === '+' || e.key === '=') S.aim.power = clamp(S.aim.power + 0.05, 0.2, 1); else if (e.key === '-') S.aim.power = clamp(S.aim.power - 0.05, 0.2, 1); else used = false;
         if (used) { e.preventDefault(); S.aimTouched = true; $('power').value = Math.round(S.aim.power * 100); $('powerOut').textContent = Math.round(S.aim.power * 100) + '%'; highlightAim(); }
       }
     });
+    document.addEventListener('keyup', e => { const dir = KEYMAP[e.key] || KEYMAP[e.code]; if (dir) keys.delete(dir); });
+    window.addEventListener('blur', () => keys.clear());
     document.addEventListener('visibilitychange', () => { if (document.hidden) audioInst.suspend(); else audioInst.resume(); prev = 0; litePrev = 0; });
     window.addEventListener('pagehide', dispose);
     if (window.ResizeObserver) new ResizeObserver(() => applySize()).observe(stage); else window.addEventListener('resize', applySize);
@@ -410,7 +495,8 @@
     get phase() { return S.phase; },
     get flight() { return S.phase === 'question' ? 0.5 : S.phase === 'resolve' ? 0.5 + Math.min(0.5, S.stateT / 2) : S.phase === 'outcome' || S.phase === 'finished' ? 1 : S.phase === 'flight' ? Math.min(0.5, match ? match.progress() : 0) : 0; },
     get goals() { return S.goals; }, get outcome() { return S.result; }, get variant() { return S.variant; }, get audioReady() { return !!S.audioReady; }, get round() { return S.round; },
-    get replaying() { return S.replaying; }, get mode() { return settings.mode; }, get tier() { return tier.name; }, get lite() { return S.lite; }, get state() { return match ? match.state : ''; },
+    get replaying() { return S.replaying; }, get mode() { return S.gameMode; }, get gameMode() { return S.gameMode; }, get assist() { return settings.assist; }, get attempt() { return S.attempt; },
+    get controlled() { return match && match.ctrl ? match.ctrl.id : null; }, get canShoot() { return !!(match && match.canShootPlay && match.canShootPlay()); }, get tier() { return tier.name; }, get lite() { return S.lite; }, get state() { return match ? match.state : ''; },
     get match() { return match; }, get camera() { return director; }, get aim() { return S.aim; },
     snapshot() { return match ? { phase: S.phase, state: match.state, ball: match.ball.p.toArray(), keeper: [match.keeper.pos.x, match.keeper.pos.z], camera: { shot: director.shot, pos: camera.position.toArray() }, tier: tier.name, scale: resScale, fps: fpsShow } : { phase: S.phase }; },
     /** deterministic stepping (tests / screenshots): advance the simulation by `seconds` without waiting for real time, render once at the end */
