@@ -1,0 +1,384 @@
+{
+ "fps": 12,
+ "bones": [
+  "Pelvis",
+  "Spine",
+  "Spine1",
+  "Spine2",
+  "Neck",
+  "Head",
+  "L Clavicle",
+  "L UpperArm",
+  "L Forearm",
+  "L Hand",
+  "R Clavicle",
+  "R UpperArm",
+  "R Forearm",
+  "R Hand",
+  "L Thigh",
+  "L Calf",
+  "L Foot",
+  "R Thigh",
+  "R Calf",
+  "R Foot"
+ ],
+ "groups": {
+  "adult": {
+   "canon": "Adults/Male_Adult_17",
+   "pelvisRest": [
+    0.0,
+    0.8951848149299622,
+    -2.7097638022333115e-10
+   ]
+  },
+  "child": {
+   "canon": "Children/Male_Child_01",
+   "pelvisRest": [
+    0.0,
+    0.7071959376335144,
+    -2.7097638022333115e-10
+   ]
+  }
+ },
+ "clips": {
+  "sit_idle": {
+   "adult": {
+    "row": 0,
+    "count": 96,
+    "loop": true,
+    "pelvis": [
+     0.0,
+     0.591,
+     -0.0
+    ]
+   },
+   "child": {
+    "row": 734,
+    "count": 96,
+    "loop": true,
+    "pelvis": [
+     0.0,
+     0.467,
+     0.0
+    ]
+   }
+  },
+  "sit_look": {
+   "adult": {
+    "row": 96,
+    "count": 105,
+    "loop": true,
+    "pelvis": [
+     0.0,
+     0.592,
+     -0.0
+    ]
+   },
+   "child": {
+    "row": 830,
+    "count": 105,
+    "loop": true,
+    "pelvis": [
+     0.0,
+     0.468,
+     0.0
+    ]
+   }
+  },
+  "sit_lean": {
+   "adult": {
+    "row": 201,
+    "count": 57,
+    "loop": true,
+    "pelvis": [
+     -0.0,
+     0.594,
+     -0.0
+    ]
+   },
+   "child": {
+    "row": 935,
+    "count": 57,
+    "loop": true,
+    "pelvis": [
+     -0.0,
+     0.469,
+     -0.0
+    ]
+   }
+  },
+  "sit_clap": {
+   "adult": {
+    "row": 258,
+    "count": 80,
+    "loop": true,
+    "pelvis": [
+     0.0,
+     0.591,
+     -0.0
+    ]
+   },
+   "child": {
+    "row": 992,
+    "count": 80,
+    "loop": true,
+    "pelvis": [
+     0.0,
+     0.467,
+     0.0
+    ]
+   }
+  },
+  "sit_cheer": {
+   "adult": {
+    "row": 338,
+    "count": 60,
+    "loop": false,
+    "pelvis": [
+     0.0,
+     0.591,
+     -0.0
+    ]
+   },
+   "child": {
+    "row": 1072,
+    "count": 60,
+    "loop": false,
+    "pelvis": [
+     0.0,
+     0.467,
+     0.0
+    ]
+   }
+  },
+  "stand_up": {
+   "adult": {
+    "row": 398,
+    "count": 28,
+    "loop": false,
+    "pelvis": [
+     0.0,
+     0.758,
+     -0.0
+    ]
+   },
+   "child": {
+    "row": 1132,
+    "count": 28,
+    "loop": false,
+    "pelvis": [
+     0.0,
+     0.598,
+     0.0
+    ]
+   }
+  },
+  "stand_cheer": {
+   "adult": {
+    "row": 426,
+    "count": 96,
+    "loop": true,
+    "pelvis": [
+     0.0,
+     0.884,
+     -0.0
+    ]
+   },
+   "child": {
+    "row": 1160,
+    "count": 96,
+    "loop": true,
+    "pelvis": [
+     0.0,
+     0.698,
+     -0.0
+    ]
+   }
+  },
+  "stand_clap": {
+   "adult": {
+    "row": 522,
+    "count": 80,
+    "loop": true,
+    "pelvis": [
+     0.0,
+     0.895,
+     -0.0
+    ]
+   },
+   "child": {
+    "row": 1256,
+    "count": 80,
+    "loop": true,
+    "pelvis": [
+     0.0,
+     0.707,
+     -0.0
+    ]
+   }
+  },
+  "sit_down": {
+   "adult": {
+    "row": 602,
+    "count": 35,
+    "loop": false,
+    "pelvis": [
+     0.0,
+     0.684,
+     -0.0
+    ]
+   },
+   "child": {
+    "row": 1336,
+    "count": 35,
+    "loop": false,
+    "pelvis": [
+     0.0,
+     0.54,
+     0.0
+    ]
+   }
+  },
+  "sit_shrug": {
+   "adult": {
+    "row": 637,
+    "count": 37,
+    "loop": false,
+    "pelvis": [
+     0.0,
+     0.591,
+     -0.0
+    ]
+   },
+   "child": {
+    "row": 1371,
+    "count": 37,
+    "loop": false,
+    "pelvis": [
+     0.0,
+     0.467,
+     0.0
+    ]
+   }
+  },
+  "sit_face": {
+   "adult": {
+    "row": 674,
+    "count": 60,
+    "loop": false,
+    "pelvis": [
+     0.0,
+     0.592,
+     -0.0
+    ]
+   },
+   "child": {
+    "row": 1408,
+    "count": 60,
+    "loop": false,
+    "pelvis": [
+     0.0,
+     0.468,
+     0.0
+    ]
+   }
+  }
+ },
+ "avatars": {
+  "a15": {
+   "group": "adult",
+   "source": "Adults/Male_Adult_15",
+   "vertices": 955,
+   "indices": 3900,
+   "height": 1.819,
+   "index32": false
+  },
+  "a19": {
+   "group": "adult",
+   "source": "Adults/Male_Adult_19",
+   "vertices": 1014,
+   "indices": 3900,
+   "height": 1.809,
+   "index32": false
+  },
+  "a21": {
+   "group": "adult",
+   "source": "Adults/Male_Adult_21",
+   "vertices": 1039,
+   "indices": 3900,
+   "height": 1.816,
+   "index32": false
+  },
+  "a17": {
+   "group": "adult",
+   "source": "Adults/Male_Adult_17",
+   "vertices": 962,
+   "indices": 3897,
+   "height": 1.81,
+   "index32": false
+  },
+  "a20": {
+   "group": "adult",
+   "source": "Adults/Male_Adult_20",
+   "vertices": 939,
+   "indices": 3900,
+   "height": 1.803,
+   "index32": false
+  },
+  "a01": {
+   "group": "adult",
+   "source": "Adults/Male_Adult_01",
+   "vertices": 956,
+   "indices": 3900,
+   "height": 1.817,
+   "index32": false
+  },
+  "a06": {
+   "group": "adult",
+   "source": "Adults/Male_Adult_06",
+   "vertices": 922,
+   "indices": 3900,
+   "height": 1.816,
+   "index32": false
+  },
+  "a10": {
+   "group": "adult",
+   "source": "Adults/Male_Adult_10",
+   "vertices": 916,
+   "indices": 3900,
+   "height": 1.824,
+   "index32": false
+  },
+  "a04": {
+   "group": "adult",
+   "source": "Adults/Male_Adult_04",
+   "vertices": 999,
+   "indices": 3900,
+   "height": 1.845,
+   "index32": false
+  },
+  "c01": {
+   "group": "child",
+   "source": "Children/Male_Child_01",
+   "vertices": 796,
+   "indices": 3300,
+   "height": 1.437,
+   "index32": false
+  },
+  "c02": {
+   "group": "child",
+   "source": "Children/Male_Child_02",
+   "vertices": 880,
+   "indices": 3300,
+   "height": 1.425,
+   "index32": false
+  }
+ },
+ "frames": 1468,
+ "quant": [
+  2,
+  2,
+  2,
+  4
+ ]
+}

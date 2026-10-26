@@ -1,0 +1,59 @@
+<!doctype html><html><head><meta charset="utf-8"><style>html,body{margin:0;background:#888}canvas{display:block}</style></head><body>
+<canvas id="c"></canvas>
+<script src="../../games/vendor/three.min.js"></script>
+<script src="../../games/bowling/vendor/GLTFLoader.js"></script>
+<script src="../../games/bowling/vendor/meshopt_decoder.js"></script>
+<script src="../../games/bowling/vendor/SkeletonUtils.js"></script>
+<script src="../../games/bowling/physics.js"></script>
+<script src="../../games/bowling/motion.js"></script>
+<script src="../../games/bowling/athlete.js"></script>
+<script src="../../games/bowling/bowler.js"></script>
+<script>
+/* QA harness: renders the bowler without the game UI; exposes window.H for Playwright. */
+(async () => {
+  const T = THREE, q = new URLSearchParams(location.search);
+  const W = +q.get('w') || 900, Hh = +q.get('h') || 700;
+  const canvas = document.getElementById('c');
+  const renderer = new T.WebGLRenderer({ canvas, antialias: true, preserveDrawingBuffer: true });
+  renderer.setSize(W, Hh); renderer.outputEncoding = T.sRGBEncoding; renderer.shadowMap.enabled = true;
+  const scene = new T.Scene(); scene.background = new T.Color('#9aa3ad');
+  const cam = new T.PerspectiveCamera(40, W / Hh, 0.05, 80);
+  scene.add(new T.HemisphereLight('#ffffff', '#555', 0.9));
+  const key = new T.DirectionalLight('#fff', 1.1); key.position.set(3, 6, 4); key.castShadow = true; key.shadow.mapSize.set(2048, 2048);
+  Object.assign(key.shadow.camera, { left: -3, right: 3, top: 3, bottom: -3, near: 0.5, far: 20 }); scene.add(key);
+  const floor = new T.Mesh(new T.PlaneGeometry(6, 12), new T.MeshStandardMaterial({ color: '#c8a46e', roughness: 0.6 }));
+  floor.rotation.x = -Math.PI / 2; floor.position.z = 1; floor.receiveShadow = true; scene.add(floor);
+  const foul = new T.Mesh(new T.PlaneGeometry(3, 0.02), new T.MeshBasicMaterial({ color: '#111' })); foul.rotation.x = -Math.PI / 2; foul.position.y = 0.002; scene.add(foul);
+  for (let z = -1; z <= 5; z++) { const m = new T.Mesh(new T.PlaneGeometry(3, 0.004), new T.MeshBasicMaterial({ color: '#555' })); m.rotation.x = -Math.PI / 2; m.position.set(0, 0.001, z); scene.add(m); }
+  const lib = await BowlingAthlete.load('../../games/bowling/assets/', null, { anisotropy: 4, kits: ['kit_home_10.jpg'] }, ['a', 'b']);
+  const hand = q.get('hand') || 'right';
+  let kitTexture = null; if (q.get('kit')) { kitTexture = await new T.TextureLoader().loadAsync(q.get('kit')); kitTexture.flipY = false; kitTexture.encoding = T.sRGBEncoding; }
+  const bw = BowlingBowler.create(lib, { variant: q.get('v') || 'b', hand, kitTexture });
+  scene.add(bw.athlete.root);
+  const ballMesh = new T.Mesh(new T.SphereGeometry(BowlingPhysics.R, 40, 24), new T.MeshStandardMaterial({ color: '#7a1030', roughness: 0.25 }));
+  const hole = new T.Mesh(new T.CylinderGeometry(0.012, 0.012, 0.01, 12), new T.MeshBasicMaterial({ color: '#000' })); hole.rotation.x = Math.PI / 2; hole.position.z = BowlingPhysics.R - 0.003; ballMesh.add(hole);
+  ballMesh.castShadow = true; scene.add(ballMesh);
+  const inputs = { start: +(q.get('start') || 0), angle: +(q.get('angle') || 0), power: +(q.get('power') || 0.65), spin: +(q.get('spin') || 0) };
+  bw.setPlan(inputs);
+  function view(name) {
+    const P = bw.plan, pel = bw.athlete.bones.Pelvis.getWorldPosition(new T.Vector3());
+    if (name === 'side') { cam.position.set(pel.x + 3.4, 0.9, pel.z + 0.2); cam.lookAt(pel.x, 0.65, pel.z); }
+    else if (name === 'side2') { cam.position.set(pel.x - 3.4, 0.9, pel.z + 0.2); cam.lookAt(pel.x, 0.65, pel.z); }
+    else if (name === 'behind') { cam.position.set(pel.x + 0.3, 1.5, pel.z + 3.2); cam.lookAt(pel.x, 0.7, pel.z - 0.5); }
+    else if (name === 'front') { cam.position.set(pel.x + 0.4, 1.2, pel.z - 3.0); cam.lookAt(pel.x, 0.7, pel.z); }
+    else if (name === 'feet') { cam.position.set(pel.x + 1.4, 0.35, pel.z + 0.3); cam.lookAt(pel.x, 0.1, pel.z - 0.1); }
+  }
+  function render(v) { view(v || 'side'); ballMesh.position.copy(bw.ball.pos); ballMesh.quaternion.copy(bw.ball.quat); renderer.render(scene, cam); }
+  window.H = {
+    T, bw, render,
+    at(t) { // pose exactly at approach time t
+      if (t < 0) { bw.startStance(); bw.update(0.016); return; }
+      if (bw.mode === 'stance') bw.startApproach();
+      bw.evaluate(t); bw.update(0); // evaluate sets pose at t (no clip time)
+    },
+    runTo(t, dt = 1 / 60) { bw.startStance(); for (let i = 0; i < 20; i++) bw.update(dt); bw.startApproach(); let k = 0; while (bw.t + dt <= t && k++ < 2000) bw.update(dt); },
+    report() { return { pose: bw.poseReport(), clear: bw.clearance(), mode: bw.mode, t: bw.t, plan: { release: bw.plan.t.release, end: bw.plan.end } }; }
+  };
+  document.title = 'ready';
+})().catch(e => { document.title = 'error'; window.ERR = String(e.stack || e); });
+</script></body></html>
