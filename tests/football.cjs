@@ -47,6 +47,7 @@ await key('keydown','w','KeyW');await page.evaluate(()=>Football.step(1.2,false)
 await snap('match_move');
 assert.equal(await page.locator('#shootBtn').getAttribute('aria-disabled'),'true','shoot unavailable far from goal');
 await key('keydown','e','KeyE');await key('keyup','e','KeyE');assert(await until('Football.state==="play"&&Football.controlled!=="M"',10),'E passes and control follows the ball');
+assert(await until('Football.phase==="play"&&Football.match.canPassPlay()',10),'receiver ready for another pass');
 await page.locator('#passBtn').click();await key('keydown','a','KeyA');await page.evaluate(()=>Football.step(0.3,false));await key('keyup','a','KeyA');   // keys still work after a pad click
 assert(await until('Football.canShoot&&Football.match.shotDistance()<20',20),'reached shooting range');await key('keyup','w','KeyW');
 assert.equal(await page.locator('#shootBtn').getAttribute('aria-disabled'),'false','shoot available in range');await snap('match_range');
