@@ -14,7 +14,7 @@ concurrency:
 
 jobs:
   import-bowling:
-    if: github.event.head_commit.message != 'feat(bowling): integrate tested V20 realistic bowling and public mirror'
+    if: "github.event.head_commit.message != 'feat(bowling): integrate tested V20 realistic bowling and public mirror'"
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
