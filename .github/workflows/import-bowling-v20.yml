@@ -1,0 +1,95 @@
+name: Import reviewed Bowling V20 ZIP
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'Manarat-Bowling-V20-Realism-Upgrade.zip'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: bowling-v20-one-time-import
+  cancel-in-progress: false
+
+jobs:
+  import-bowling:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout current main
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          persist-credentials: true
+
+      - name: Verify exact reviewed archive
+        run: |
+          test -f Manarat-Bowling-V20-Realism-Upgrade.zip
+          echo 'd386a21f9b2054cc2b1c20865b80cc85978f6dc609a232d429e5ef26256631aa  Manarat-Bowling-V20-Realism-Upgrade.zip' | sha256sum -c -
+
+      - name: Safely overlay Bowling V20 only
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import zipfile, pathlib, shutil, json
+          archive=pathlib.Path('Manarat-Bowling-V20-Realism-Upgrade.zip')
+          prefix='Manarat-Bowling-Upgrade/'
+          exact={'tests/bowling-physics.cjs','tests/bowling-motion.cjs','tests/bowling-rig.cjs','tests/bowling-flow.cjs'}
+          selected=[]
+          with zipfile.ZipFile(archive) as z:
+              for info in z.infolist():
+                  name=info.filename
+                  if info.is_dir(): continue
+                  if not name.startswith(prefix): raise SystemExit('Unexpected archive prefix: '+name)
+                  rel=name[len(prefix):]
+                  p=pathlib.PurePosixPath(rel)
+                  if p.is_absolute() or '..' in p.parts or '\\' in rel:
+                      raise SystemExit('Unsafe archive path: '+rel)
+                  if not (rel.startswith('games/bowling/') or rel in exact or rel.startswith('tests/lib/') or rel.startswith('tests/browser/') or rel.startswith('tests/legacy-v19.4/') or rel=='test-host.html'):
+                      continue
+                  if rel in ('', 'games/bowling/'): continue
+                  if (info.external_attr >> 16) & 0o170000 == 0o120000:
+                      raise SystemExit('Symlink not permitted: '+rel)
+                  target=pathlib.Path(rel)
+                  target.parent.mkdir(parents=True,exist_ok=True)
+                  with z.open(info) as src, target.open('wb') as dst: shutil.copyfileobj(src,dst)
+                  selected.append(rel)
+          required={'games/bowling/index.html','games/bowling/game.js','games/bowling/physics.js','games/bowling/scene.js','games/bowling/assets/models/athlete_a.glb','games/bowling/assets/textures/bowler_kit.jpg','tests/bowling-flow.cjs','tests/bowling-rig.cjs'}
+          if not required.issubset(set(selected)):
+              raise SystemExit('Missing required bowling files: '+str(required-set(selected)))
+          # Browser fixture stays in the repository root solely for CI; public/ does not mirror it.
+          manifest=pathlib.Path('package.json')
+          data=json.loads(manifest.read_text())
+          data['scripts']['test:bowling']='node tests/bowling-physics.cjs && node tests/bowling-motion.cjs && node tests/bowling-rig.cjs && node tests/bowling-flow.cjs'
+          manifest.write_text(json.dumps(data,ensure_ascii=False,indent=2)+'\n')
+          old=pathlib.Path('tests/bowling-scene.cjs')
+          if old.exists(): old.unlink()
+          print('Bowling V20 selective import:',len(selected),'files')
+          PY
+
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Validate Bowling V20 logic
+        run: npm run test:bowling
+
+      - name: Build public mirror and validate all platform assets
+        run: |
+          npm run build
+          npm run check
+          npm run test:unit
+
+      - name: Commit tested game and mirrored public version
+        shell: bash
+        run: |
+          rm -f Manarat-Bowling-V20-Realism-Upgrade.zip
+          git rm -f --ignore-unmatch tests/bowling-scene.cjs
+          git rm -f --ignore-unmatch .github/workflows/import-bowling-v20.yml
+          git add -A -- games/bowling/ public/games/bowling/ tests/bowling-physics.cjs tests/bowling-motion.cjs tests/bowling-rig.cjs tests/bowling-flow.cjs tests/lib/ tests/browser/ tests/legacy-v19.4/ test-host.html package.json Manarat-Bowling-V20-Realism-Upgrade.zip .github/workflows/import-bowling-v20.yml
+          git diff --cached --stat
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git diff --cached --quiet && exit 0
+          git commit -m 'feat(bowling): integrate tested V20 realistic bowling and public mirror'
+          git push origin HEAD:main
