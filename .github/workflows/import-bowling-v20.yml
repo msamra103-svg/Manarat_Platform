@@ -14,6 +14,7 @@ concurrency:
 
 jobs:
   import-bowling:
+    if: github.event.head_commit.message != 'feat(bowling): integrate tested V20 realistic bowling and public mirror'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -85,7 +86,6 @@ jobs:
         run: |
           rm -f Manarat-Bowling-V20-Realism-Upgrade.zip
           git rm -f --ignore-unmatch tests/bowling-scene.cjs
-          git rm -f --ignore-unmatch .github/workflows/import-bowling-v20.yml
           git add -A -- games/bowling/ public/games/bowling/ tests/bowling-physics.cjs tests/bowling-motion.cjs tests/bowling-rig.cjs tests/bowling-flow.cjs tests/lib/ tests/browser/ tests/legacy-v19.4/ test-host.html package.json Manarat-Bowling-V20-Realism-Upgrade.zip
           git diff --cached --stat
           git config user.name 'github-actions[bot]'
