@@ -1,0 +1,122 @@
+{
+  "repository": "msamra103-svg/Manarat_Platform",
+  "sourceCommit": "2d9f6513672fe408d183521190f89f924aebf4b7",
+  "sourceDate": "2026-10-26",
+  "game": "الكرة الطائرة",
+  "entry": "games/volleyball/index.html",
+  "files": [
+    {
+      "path": "assets/game-covers/volleyball.svg",
+      "size": 2832,
+      "sha": "3134a64e65b6d181aff5a7c204cd6671bb248d0d"
+    },
+    {
+      "path": "games/experiences/experience.css",
+      "size": 1890,
+      "sha": "a246026da62d264be68a1138b12b597491340808"
+    },
+    {
+      "path": "games/experiences/game.js",
+      "size": 9847,
+      "sha": "dd38e0a65fbc348e18c02327a585ce1d01cbac27"
+    },
+    {
+      "path": "games/experiences/motion.js",
+      "size": 2550,
+      "sha": "2364c5fa55ed38f86985b626d085a29d0d2ba56e"
+    },
+    {
+      "path": "games/experiences/scene.js",
+      "size": 21162,
+      "sha": "810421c1b4885ebe005e1311565073d624f56049"
+    },
+    {
+      "path": "games/sports/CREDITS.md",
+      "size": 571,
+      "sha": "f640ff59d4c8837831ec9b3e83ce2ba0ac51c400"
+    },
+    {
+      "path": "games/sports/athlete.js",
+      "size": 6420,
+      "sha": "f2cbb49036a4e8dde4f8f4002099a269b226a9d2"
+    },
+    {
+      "path": "games/sports/legacy-sport.css",
+      "size": 5251,
+      "sha": "aaa20bd3e68198e9b61fd449840e5fd309e38aed"
+    },
+    {
+      "path": "games/vendor/three.min.js",
+      "size": 603445,
+      "sha": "b14f47c0908bab15e890b468d53bb07db0be3a18"
+    },
+    {
+      "path": "games/volleyball/index.html",
+      "size": 3819,
+      "sha": "56453c11f2f564586ed09c3f07d627a8ee268738"
+    },
+    {
+      "path": "js/platform-nav.js",
+      "size": 4551,
+      "sha": "7f167335fad2892b2f498b5b7144b4a85b4e4862"
+    },
+    {
+      "path": "js/school.js",
+      "size": 88558,
+      "sha": "0d77a7bb8e0214bbe5a0bab50f2e87f45d2afa80"
+    },
+    {
+      "path": "package.json",
+      "size": 2760,
+      "sha": "e67a124e4559b995942608c24a05f323f79c501f"
+    },
+    {
+      "path": "tests/experiences-flow.cjs",
+      "size": 2778,
+      "sha": "6ded7c5f29181ab002f348230b1c861abf15955b"
+    },
+    {
+      "path": "tests/experiences-motion.cjs",
+      "size": 1769,
+      "sha": "dfa91ec43473ef405f48f3a45ad004e303de621c"
+    },
+    {
+      "path": "tests/experiences-scene.cjs",
+      "size": 2004,
+      "sha": "d6e3757af0f966335abddc9c8a8cf26c98726021"
+    },
+    {
+      "path": "tests/game-modes.cjs",
+      "size": 3049,
+      "sha": "c0d10e2a4fd5aed44698d4611a40a6736a9f505f"
+    },
+    {
+      "path": "tests/game-session.cjs",
+      "size": 2217,
+      "sha": "b9b9d08565166b567b331c48bc38a8e3cde8bc61"
+    },
+    {
+      "path": "tests/sports-flow.cjs",
+      "size": 3217,
+      "sha": "f72ca6386bb7a43efe5c9bb1fdc68ef63451a0d5"
+    },
+    {
+      "path": "tests/sports-motion.cjs",
+      "size": 3160,
+      "sha": "4913ecc43dab83ce9f036cdb5d1a2a046dac9d3f"
+    }
+  ],
+  "sharedReadOnly": [
+    "games/experiences/*",
+    "games/sports/*",
+    "games/vendor/three.min.js",
+    "js/platform-nav.js",
+    "js/school.js",
+    "package.json"
+  ],
+  "excluded": [
+    "public/ mirror (generated in platform build)",
+    "football optional crowd audio (licence provenance unverified)"
+  ],
+  "integration": "Create volleyball-only modules inside games/volleyball; preserve school-volleyball-*; run regression suites"
+}
