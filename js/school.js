@@ -90,6 +90,14 @@ function resolveNavItems(c){
 
 function applyBrand(c){
  const cfg=window.ManaratDesign?window.ManaratDesign.normalize({...defaultConfig(),...(c||{})}):{...defaultConfig(),...(c||{})};
+ const outdatedBrand=/(?:منارة\s*(?:التعلم|التعلّم)?|DIGITAL LEARNING BEACON|Manarat(?:\s+Learning)?)/i;
+ const oldSocialLink=/61574253098010|mnrltlmlrqmy|manartaltalm|منارةالتعلمالرقمي/i;
+ if(outdatedBrand.test(cfg.name||''))cfg.name=OFFICIAL_SCHOOL_NAME;
+ if(outdatedBrand.test(cfg.subtitle||''))cfg.subtitle='منصة التعلّم التفاعلي والألعاب التعليمية';
+ if(outdatedBrand.test(cfg.footerText||''))cfg.footerText=cfg.name+' · مساحة للتعلّم التفاعلي والإنجاز الرقمي';
+ if(Array.isArray(cfg.socials))cfg.socials=cfg.socials.filter(s=>!oldSocialLink.test(decodeURIComponent(String(s.url||'')))&&!outdatedBrand.test(s.label||''));
+ if(/(?:^|\\/)manarat-(?:logo|mark)\.svg(?:[?#].*)?$/i.test(cfg.logo||''))cfg.logo='assets/school-mark.svg';
+
  const preset=THEME_PRESETS[cfg.themePreset]||THEME_PRESETS.qatar||{};
  const primary=cfg.primary||preset.primary||'#8a1538';
  const background=cfg.background||preset.background||'#FAF8F7';
@@ -116,7 +124,7 @@ function applyBrand(c){
  $('brandSubtitle').textContent=cfg.subtitle;
  document.title=cfg.name+' | منصة التعلم';
  window.ManaratDesignRuntime?.apply(cfg);
- $('brandMark').innerHTML=cfg.logo?`<img alt="شعار المدرسة" src="${esc(cfg.logo)}" referrerpolicy="no-referrer">`:'أ';
+ $('brandMark').innerHTML=`<img alt="شعار مدرسة أبو عبيدة الإعدادية للبنين" src="${esc(cfg.logo||'assets/school-mark.svg')}" referrerpolicy="no-referrer">`;
  const minSlot=$('ministryBrandSlot'),minImg=$('ministryLogoImg');
  if(minSlot){
   minSlot.hidden=cfg.showMinistryLogo===false;

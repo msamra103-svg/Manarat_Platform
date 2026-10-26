@@ -27,6 +27,8 @@ jobs:
         run: npm run build
       - name: Validate platform files
         run: node scripts/smoke-check.js
+      - name: Verify Abu Ubaida light theme and identity
+        run: node tests/abu-ubaida-theme.cjs
 
       - name: Check school authorization and grading
         run: node tests/school-api.cjs
