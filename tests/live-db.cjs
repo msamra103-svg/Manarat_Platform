@@ -1,6 +1,7 @@
 const {PGlite}=require('@electric-sql/pglite'),fs=require('fs'),assert=require('node:assert/strict');
 (async()=>{const db=new PGlite();await db.exec(`create role anon;create role authenticated;create role service_role bypassrls;create table profiles(id uuid primary key,role text,status text);create table school_assignments(id uuid primary key,teacher_id uuid,game_id text,title text,settings jsonb,active boolean);create table manarat_games(id text primary key,teacher_id uuid,data jsonb);create table platform_state(id text);`);
 await db.exec(fs.readFileSync(process.env.LIVE_SQL||require('path').join('supabase/migrations',fs.readdirSync('supabase/migrations').find(x=>x.endsWith('_live_classroom_sessions.sql'))),'utf8'));
+await db.exec(fs.readFileSync(require('path').join('supabase/migrations',fs.readdirSync('supabase/migrations').find(x=>x.endsWith('_live_avatars.sql'))),'utf8'));
 const teacher='11111111-1111-4111-8111-111111111111',other='22222222-2222-4222-8222-222222222222',as='33333333-3333-4333-8333-333333333333';
 await db.query('insert into profiles values ($1,\'teacher\',\'نشط\'),($2,\'teacher\',\'نشط\')',[teacher,other]);
 await db.query('insert into manarat_games values (\'g\',$1,$2)',[teacher,JSON.stringify({questions:[{text:'اختبار ١',type:'multiple_choice',options:['أ','ب'],correct:0,points:10},{text:'اختبار ٢',type:'true_false',options:['صح','خطأ'],correct:1,points:20},{text:'مقالي',type:'open_text'}]})]);
@@ -8,7 +9,7 @@ await db.query('insert into school_assignments values ($1,$2,\'g\',\'لعبة ا
 const call=async(a,d={},u=null,s='a'.repeat(64))=>(await db.query('select public.live_session($1,$2,$3,$4) result',[a,JSON.stringify(d),u,s])).rows[0].result;
 const made=await call('create',{assignment:as,duration:30},teacher);assert.equal(made.count,2);assert.equal(made.skipped,1);const code=made.code;
 await assert.rejects(()=>call('create',{assignment:as},other));
-let st=await call('join',{code,name:'طالب أول'});const p=st.me;await call('join',{code,name:'طالب ثان'},null,'b'.repeat(64));
+let st=await call('join',{code,name:'طالب أول',avatar:'qatar-08'});const p=st.me;assert.equal(st.players.find(x=>x.id===p).avatar,'qatar-08');const again=await call('join',{code,name:'طالب أول',avatar:'qatar-02'});assert.equal(again.players.find(x=>x.id===p).avatar,'qatar-08');await call('join',{code,name:'طالب ثان',avatar:'javascript:alert(1)'},null,'b'.repeat(64));
 await assert.rejects(()=>call('start',{code,version:0}));await assert.rejects(()=>call('state',{code},other));
 st=await call('start',{code,version:0},teacher);assert.equal(st.phase,'question');assert.equal(st.question.correct,null);assert(!JSON.stringify(st).includes('explanation":"'));
 await assert.rejects(()=>call('answer',{code,index:0,choice:0}));
@@ -20,7 +21,7 @@ st=await call('resume',{code,version:st.version},teacher);assert.equal(st.phase,
 st=await call('reveal',{code,version:st.version},teacher);assert.equal(st.question.correct,0);assert.equal(st.players.find(x=>x.id===p).points,1000);
 let old=st.version;st=await call('next',{code,version:old},teacher);assert.equal(st.index,1);let duplicate=await call('next',{code,version:old},teacher);assert.equal(duplicate.index,1);
 await assert.rejects(()=>call('join',{code,name:'متأخر'},null,'c'.repeat(64)));
-await call('join',{code,name:'طالب أول'}); // reconnect while locked
+await call('join',{code,name:'طالب أول',avatar:'qatar-08'}); // reconnect while locked
 await db.query("update live_rooms set deadline=now()-interval '1 second' where code=$1",[code]);st=await call('state',{code});assert.equal(st.phase,'reveal');
 st=await call('next',{code,version:st.version},teacher);assert.equal(st.phase,'finished');assert.equal(st.title,'لعبة النباتات المائية');assert.equal(st.players.find(x=>x.id===p).grade,33);
 const report=await call('report',{code},teacher);assert.equal(report.report.length,1);await assert.rejects(()=>call('report',{code}));

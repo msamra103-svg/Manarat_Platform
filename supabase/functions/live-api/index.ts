@@ -23,7 +23,7 @@ Deno.serve(async req=>{
   const limitKey=action==='join'?'live-join:'+ip:actor?'live-host:'+actor:'live-player:'+await hash(secret);
   if(!await rpc('school_rate_limit',{k:limitKey,maximum:action==='join'?500:180,seconds:60}))throw new Error('طلبات كثيرة. انتظر قليلًا ثم أعد المحاولة.');
   // Identity, score, timestamps and correctness are NEVER accepted from the request.
-  const data={code:b.code,assignment:b.assignment,duration:b.duration,speed:b.speed===true,auto:b.auto===true,name:String(b.name||'').replace(/[\u0000-\u001f\u202a-\u202e\u2066-\u2069]/g,'').trim(),index:b.index,choice:b.choice,version:b.version,player:b.player};
+  const data={avatar:/^qatar-(0[1-9]|1[0-2])$/.test(String(b.avatar||''))?b.avatar:'qatar-01',code:b.code,assignment:b.assignment,duration:b.duration,speed:b.speed===true,auto:b.auto===true,name:String(b.name||'').replace(/[\u0000-\u001f\u202a-\u202e\u2066-\u2069]/g,'').trim(),index:b.index,choice:b.choice,version:b.version,player:b.player};
   const result=await rpc('live_session',{p_action:action,p_data:data,p_actor:actor,p_secret:actor?'':await hash(secret)});
   return Response.json(result,{headers:cors});
  }catch(e){return Response.json({error:e instanceof Error?e.message:'تعذر الاتصال.'},{status:400,headers:cors});}
