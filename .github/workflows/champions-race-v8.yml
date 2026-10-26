@@ -29,6 +29,14 @@ jobs:
         run: npm run check
       - name: Install Chromium for browser regression tests
         run: npx playwright install --with-deps chromium
+      - name: Validate live classroom database, API and multi-client browser
+        run: node tests/live-db.cjs && node tests/live-api.cjs && node tests/live-browser.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: live-classroom-screens
+          path: qa-live/
+          if-no-files-found: ignore
       - name: Validate basketball physics, anatomy and platform grading
         run: npm run test:basketball && node tests/basketball-integration.cjs
       - name: Validate basketball browser flows and mobile controls
