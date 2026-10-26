@@ -1,0 +1,501 @@
+{
+  "sourceRepository": "msamra103-svg/Manarat_Platform",
+  "baseCommit": "ea399ee2ea0bd24a18b4823c7d84f4b7d41e0026",
+  "gameVersion": "Basketball V23.1",
+  "bundleDate": "2026-10-26",
+  "sourceFiles": [
+    {
+      "path": "assets/game-covers/basketball.svg",
+      "sha": "a68eebe8c36a4703a1b591ec04f251e94875be15",
+      "bytes": 3212
+    },
+    {
+      "path": "docs/basketball-upgrade/ASSETS_AND_LICENSES.md",
+      "sha": "4223a0b6c44f8e676d56395e8c2e829f79592c78",
+      "bytes": 7716
+    },
+    {
+      "path": "docs/basketball-upgrade/CHANGELOG_BASKETBALL.md",
+      "sha": "a3d6d38bb85e492f8490a4dc082ab5c0cddad105",
+      "bytes": 11651
+    },
+    {
+      "path": "docs/basketball-upgrade/INTEGRATION.md",
+      "sha": "9d6d47fb93a6286703dafd6bc9dd855436a2685d",
+      "bytes": 5040
+    },
+    {
+      "path": "docs/basketball-upgrade/QA_RESULTS_BASKETBALL.md",
+      "sha": "075304ac9475ecb6b6dd8d0cf912138807b30d6c",
+      "bytes": 11300
+    },
+    {
+      "path": "games/basketball/DEVELOPMENT.md",
+      "sha": "dad09cd25dd5f8e53148c9fc26e5c621a2bf33d2",
+      "bytes": 2987
+    },
+    {
+      "path": "games/basketball/arena.js",
+      "sha": "ef27bee247e724148b35e461809efdda901a7661",
+      "bytes": 28861
+    },
+    {
+      "path": "games/basketball/assets/LICENSES/Rocketbox-MIT.txt",
+      "sha": "9bcfb3ece5301a55d3a41bbd00a029ab27d61d13",
+      "bytes": 1066
+    },
+    {
+      "path": "games/basketball/assets/LICENSES/Tajawal-OFL.txt",
+      "sha": "76c01b50a1da8b3ae44a6f05c2e0d6ccb1cac5b9",
+      "bytes": 4464
+    },
+    {
+      "path": "games/basketball/assets/LICENSES/meshoptimizer-MIT.txt",
+      "sha": "ef9f5919f276b66eaa15586ccfba96c3924f2416",
+      "bytes": 1079
+    },
+    {
+      "path": "games/basketball/assets/LICENSES/three.js-MIT.txt",
+      "sha": "5303437e406ed22d8cb0b4c12398870792a25878",
+      "bytes": 1081
+    },
+    {
+      "path": "games/basketball/assets/crowd/crowd.json",
+      "sha": "6e48dc22fdfb00a661d19b23863721502c8302ec",
+      "bytes": 5353
+    },
+    {
+      "path": "games/basketball/assets/crowd/crowd_a01.bin",
+      "sha": "977cbbb44e41495c768a3a10b3ad7ec3b3469450",
+      "bytes": 29804
+    },
+    {
+      "path": "games/basketball/assets/crowd/crowd_a01.jpg",
+      "sha": "4458cd374a0ac68d529860d9c2e4db1e48fe1a5f",
+      "bytes": 27920
+    },
+    {
+      "path": "games/basketball/assets/crowd/crowd_a04.bin",
+      "sha": "7d4b6163191904266f160fa6f2f960bf2e868cf6",
+      "bytes": 30796
+    },
+    {
+      "path": "games/basketball/assets/crowd/crowd_a04.jpg",
+      "sha": "2184a950d6573f5c32987b78f05b24101b25106d",
+      "bytes": 23696
+    },
+    {
+      "path": "games/basketball/assets/crowd/crowd_a06.bin",
+      "sha": "6bff51c0c2ba848c81a45b7bbe2d8bb8b9d1aabe",
+      "bytes": 29024
+    },
+    {
+      "path": "games/basketball/assets/crowd/crowd_a06.jpg",
+      "sha": "5a227b059bf78764186888ea00f7aa4c8f0121c7",
+      "bytes": 25246
+    },
+    {
+      "path": "games/basketball/assets/crowd/crowd_a10.bin",
+      "sha": "cdd66990179ec08ffa0f2b60075e4ff6da4fc457",
+      "bytes": 28884
+    },
+    {
+      "path": "games/basketball/assets/crowd/crowd_a10.jpg",
+      "sha": "b70230de7e192d4614b9f37ee5f0f2dd0c30de10",
+      "bytes": 22569
+    },
+    {
+      "path": "games/basketball/assets/crowd/crowd_a15.bin",
+      "sha": "50a31768a633891431d234205812eecf1e1da86b",
+      "bytes": 29784
+    },
+    {
+      "path": "games/basketball/assets/crowd/crowd_a15.jpg",
+      "sha": "bc1bc896968d3bca7a7d30600fd85b792224f34b",
+      "bytes": 24814
+    },
+    {
+      "path": "games/basketball/assets/crowd/crowd_a17.bin",
+      "sha": "ce57edf8cf05ab561f327321917798dffd499198",
+      "bytes": 29938
+    },
+    {
+      "path": "games/basketball/assets/crowd/crowd_a17.jpg",
+      "sha": "2f60dfd7c02b69eed6648417f8186e93ad97e80d",
+      "bytes": 25190
+    },
+    {
+      "path": "games/basketball/assets/crowd/crowd_a19.bin",
+      "sha": "88df25ab6740bdbe87ad363846f517201fb47dbf",
+      "bytes": 31140
+    },
+    {
+      "path": "games/basketball/assets/crowd/crowd_a19.jpg",
+      "sha": "c1ca9f8aee97fc4af93e49bc186d47fa6e361e6e",
+      "bytes": 32668
+    },
+    {
+      "path": "games/basketball/assets/crowd/crowd_a20.bin",
+      "sha": "4379542a0326db97e0b7f1152370955ca946cf22",
+      "bytes": 29416
+    },
+    {
+      "path": "games/basketball/assets/crowd/crowd_a20.jpg",
+      "sha": "cc2ac5c5e435b5ef74cd8df77d2319ff8a212f0b",
+      "bytes": 21986
+    },
+    {
+      "path": "games/basketball/assets/crowd/crowd_a21.bin",
+      "sha": "8578a603b2985af0017eaa0ffed6f8772202b5fa",
+      "bytes": 31716
+    },
+    {
+      "path": "games/basketball/assets/crowd/crowd_a21.jpg",
+      "sha": "a86e8523f3fa16ee721acdf047fa01c333239754",
+      "bytes": 37882
+    },
+    {
+      "path": "games/basketball/assets/crowd/crowd_anim.bin",
+      "sha": "900f3914f6efd45c3c8012d8c8ebba9cf778a621",
+      "bytes": 704656
+    },
+    {
+      "path": "games/basketball/assets/crowd/crowd_c01.bin",
+      "sha": "0f81aa286363b2fede6b27667a345e89c07c0f27",
+      "bytes": 24924
+    },
+    {
+      "path": "games/basketball/assets/crowd/crowd_c01.jpg",
+      "sha": "5c8a05bb1f00bfe90f2e7e7529db6e60d197af9d",
+      "bytes": 24372
+    },
+    {
+      "path": "games/basketball/assets/crowd/crowd_c02.bin",
+      "sha": "f28d1df969f81acb451bbc5d379a3e5775bf00dc",
+      "bytes": 26856
+    },
+    {
+      "path": "games/basketball/assets/crowd/crowd_c02.jpg",
+      "sha": "8f53049231a443b4b97ceb58d60983ab340ab7da",
+      "bytes": 20455
+    },
+    {
+      "path": "games/basketball/assets/fonts/Tajawal-Bold.woff2",
+      "sha": "dd50f0e0d9bd554f970c3294d2330b5ba15e8bf9",
+      "bytes": 17732
+    },
+    {
+      "path": "games/basketball/assets/fonts/Tajawal-ExtraBold.woff2",
+      "sha": "0c63ad8bd8edfdbc4381e207533d16d3ee4e717a",
+      "bytes": 18384
+    },
+    {
+      "path": "games/basketball/assets/fonts/Tajawal-Regular.woff2",
+      "sha": "3dfcf3ca15a03789b7bae9ef7ec6e79bf1199ca9",
+      "bytes": 17632
+    },
+    {
+      "path": "games/basketball/assets/models/athlete_a.glb",
+      "sha": "c1582b565d285e82eb1bc9ab046ced5d905d2078",
+      "bytes": 81348
+    },
+    {
+      "path": "games/basketball/assets/models/athlete_b.glb",
+      "sha": "6dae58814d7f654287c3952f5750967c098a63bc",
+      "bytes": 81616
+    },
+    {
+      "path": "games/basketball/assets/models/athlete_c.glb",
+      "sha": "e83caad8d90de1a2e58de4d2d89aee4a068637e8",
+      "bytes": 97500
+    },
+    {
+      "path": "games/basketball/assets/models/clips.glb",
+      "sha": "a81c4772bb952b1ea1e73f45e873c2036313895e",
+      "bytes": 321188
+    },
+    {
+      "path": "games/basketball/assets/models/clips.json",
+      "sha": "568f3bf970af1f5af6e61ecbc88fcda9525363bc",
+      "bytes": 821
+    },
+    {
+      "path": "games/basketball/assets/textures/body_normal.jpg",
+      "sha": "25a4845c3f0b291c044258a6444d5ff3a0122bd2",
+      "bytes": 146472
+    },
+    {
+      "path": "games/basketball/assets/textures/body_rough.jpg",
+      "sha": "cbd49b2533d4e6218b56450a5ed38d27be44b4bd",
+      "bytes": 38286
+    },
+    {
+      "path": "games/basketball/assets/textures/hair_c.png",
+      "sha": "819924e96e0da33e7be5477d635ab15af982ce6f",
+      "bytes": 198826
+    },
+    {
+      "path": "games/basketball/assets/textures/head_a.jpg",
+      "sha": "47ed465bb5e630d22a5914c24d4fde47e5960e03",
+      "bytes": 150940
+    },
+    {
+      "path": "games/basketball/assets/textures/head_a_normal.jpg",
+      "sha": "dbf8dd14c3f214043e495405078089afa05edfe8",
+      "bytes": 198692
+    },
+    {
+      "path": "games/basketball/assets/textures/head_a_rough.jpg",
+      "sha": "d2a5e6d7c36098a888ea0a911b7398632fff5e0a",
+      "bytes": 50376
+    },
+    {
+      "path": "games/basketball/assets/textures/head_b.jpg",
+      "sha": "bfbf8dc08f4846cdf056d9c61dffdde9b759afcf",
+      "bytes": 144918
+    },
+    {
+      "path": "games/basketball/assets/textures/head_b_normal.jpg",
+      "sha": "77940f86f5833731cdc5c7710227591976978288",
+      "bytes": 130667
+    },
+    {
+      "path": "games/basketball/assets/textures/head_b_rough.jpg",
+      "sha": "eedeb2b00e4bcf5091ccb0ec6043824fe2aa2b58",
+      "bytes": 50009
+    },
+    {
+      "path": "games/basketball/assets/textures/head_c.jpg",
+      "sha": "978b653292a54a17b4b3ae76faa32c6f335585c1",
+      "bytes": 167576
+    },
+    {
+      "path": "games/basketball/assets/textures/head_c_normal.jpg",
+      "sha": "18c8d929d68ec4178e7fad5a82426795dcd0574c",
+      "bytes": 143159
+    },
+    {
+      "path": "games/basketball/assets/textures/head_c_rough.jpg",
+      "sha": "34c95363ce458711249804f39653039ae875be0b",
+      "bytes": 58118
+    },
+    {
+      "path": "games/basketball/assets/textures/kit_away_14.jpg",
+      "sha": "dbe29a375a2cb460fdc80a2b6a94c753ebef7f36",
+      "bytes": 166954
+    },
+    {
+      "path": "games/basketball/assets/textures/kit_away_5.jpg",
+      "sha": "d19d04d97dde3c3954a43f7ba13b0f091218020b",
+      "bytes": 166335
+    },
+    {
+      "path": "games/basketball/assets/textures/kit_away_8.jpg",
+      "sha": "eb9b568e20c6e9744854a376c55605999832afdc",
+      "bytes": 167373
+    },
+    {
+      "path": "games/basketball/assets/textures/kit_home_10.jpg",
+      "sha": "9068b9d2879b5bcfad23769f37ea32d2bf0d837c",
+      "bytes": 152761
+    },
+    {
+      "path": "games/basketball/assets/textures/kit_home_12.jpg",
+      "sha": "85412ad1a3a326d11a14c541c2bac20d85c4ae67",
+      "bytes": 152702
+    },
+    {
+      "path": "games/basketball/assets/textures/kit_home_4.jpg",
+      "sha": "564b711342162c5de491598e951f36ba501fd5e5",
+      "bytes": 148580
+    },
+    {
+      "path": "games/basketball/assets/textures/kit_home_7.jpg",
+      "sha": "cd68eaf619b6ceb2cb3ffb85b9748949d7c8ecac",
+      "bytes": 147848
+    },
+    {
+      "path": "games/basketball/athletes.js",
+      "sha": "cc7f6d8ed5f77f2764b91b30d3f2420705991d2d",
+      "bytes": 18167
+    },
+    {
+      "path": "games/basketball/audio.js",
+      "sha": "c8df6a01a83d1437c9acca4a35e15d7abe7dfab5",
+      "bytes": 14978
+    },
+    {
+      "path": "games/basketball/basketball.css",
+      "sha": "8dad6cba8c4a8099b8af7f4919fd484a00d44949",
+      "bytes": 15667
+    },
+    {
+      "path": "games/basketball/crowd.js",
+      "sha": "ae89a75e034480c4deac9577d5c952b6da176512",
+      "bytes": 11820
+    },
+    {
+      "path": "games/basketball/game.js",
+      "sha": "aeb967028978ae4a58ac39649fe907e5d2de2d7c",
+      "bytes": 19813
+    },
+    {
+      "path": "games/basketball/index.html",
+      "sha": "85fdb93c46b5906e03d7849a30f7179959cf0329",
+      "bytes": 7016
+    },
+    {
+      "path": "games/basketball/motion.js",
+      "sha": "3fa17e334071ed7391e7f10cbe9901d762945bc0",
+      "bytes": 20879
+    },
+    {
+      "path": "games/basketball/scene.js",
+      "sha": "dafc8955ed7756a9647bd74c7b93533c5f08d425",
+      "bytes": 68897
+    },
+    {
+      "path": "games/basketball/vendor/GLTFLoader.js",
+      "sha": "cfa518ede1b0893f1da14347d78fcd19355f3686",
+      "bytes": 96550
+    },
+    {
+      "path": "games/basketball/vendor/RoomEnvironment.js",
+      "sha": "f698528f84338e788ec8f08630a6c3635029b84c",
+      "bytes": 3425
+    },
+    {
+      "path": "games/basketball/vendor/SkeletonUtils.js",
+      "sha": "dc877292a2f11a760c9ec0c6b8cd7bcf86ef08d7",
+      "bytes": 11872
+    },
+    {
+      "path": "games/basketball/vendor/meshopt_decoder.js",
+      "sha": "f8318d979dd01d1d31aeac04771e50769d67c7d5",
+      "bytes": 25234
+    },
+    {
+      "path": "games/vendor/three.min.js",
+      "sha": "b14f47c0908bab15e890b468d53bb07db0be3a18",
+      "bytes": 603445
+    },
+    {
+      "path": "js/platform-nav.js",
+      "sha": "7f167335fad2892b2f498b5b7144b4a85b4e4862",
+      "bytes": 4551
+    },
+    {
+      "path": "package.json",
+      "sha": "e67a124e4559b995942608c24a05f323f79c501f",
+      "bytes": 2760
+    },
+    {
+      "path": "tests/basketball-browser/attacker/attacker.html",
+      "sha": "3c25337e23d83b810b2a592807f9a5e8e26a63d6",
+      "bytes": 417
+    },
+    {
+      "path": "tests/basketball-browser/basketball-e2e.cjs",
+      "sha": "3a735d8431395e843c2cb43a436e2b688d0d477f",
+      "bytes": 13733
+    },
+    {
+      "path": "tests/basketball-browser/capture-video.cjs",
+      "sha": "19a91842632d6e098668877f1a159021da9d9867",
+      "bytes": 2419
+    },
+    {
+      "path": "tests/basketball-browser/final-screens.cjs",
+      "sha": "9932d5eda387a4ad295f515ee2850ae166935368",
+      "bytes": 2506
+    },
+    {
+      "path": "tests/basketball-browser/host.html",
+      "sha": "3d3da3d3074d49967e12b8253ae680c2a4ff3357",
+      "bytes": 5354
+    },
+    {
+      "path": "tests/basketball-browser/perf.cjs",
+      "sha": "82b4cd43dd1c170b3fd2eda401ba2cbae8054147",
+      "bytes": 3413
+    },
+    {
+      "path": "tests/basketball-browser/pose-check.cjs",
+      "sha": "cfc067acd7459674b13cfda3457c06ce59d8ff1d",
+      "bytes": 1750
+    },
+    {
+      "path": "tests/basketball-browser/scene-harness.html",
+      "sha": "128b847cf49a74b507a7c91a2ff18337abbe937a",
+      "bytes": 2716
+    },
+    {
+      "path": "tests/basketball-flow-v23.cjs",
+      "sha": "1b946bf3cec15b3c9a42c8c75e6b88bd9a4c81d0",
+      "bytes": 12320
+    },
+    {
+      "path": "tests/basketball-integration.cjs",
+      "sha": "4aeb8d043985a020f2827d194c6f981aa6d00d62",
+      "bytes": 7813
+    },
+    {
+      "path": "tests/basketball-motion-v23.cjs",
+      "sha": "6628ebdc8f16915f095fc981f8fc2bb9c210bd90",
+      "bytes": 6413
+    },
+    {
+      "path": "tests/basketball-rig-v23.cjs",
+      "sha": "7f968eb80fd4c588cd9988a88a02713ac240dd93",
+      "bytes": 2724
+    },
+    {
+      "path": "tools/basketball-assets/bl_athletes.py",
+      "sha": "c6b73cc5e2aee68a8decb8e9e710f2677f17d59d",
+      "bytes": 6198
+    },
+    {
+      "path": "tools/basketball-assets/bl_clips.py",
+      "sha": "92f8cf7eeb3ea31b14964398b3e5eaf2c39ff045",
+      "bytes": 2928
+    },
+    {
+      "path": "tools/basketball-assets/bl_crowd.py",
+      "sha": "53ecba47163b628a2f0098791bc9a6b7f66feb4e",
+      "bytes": 12997
+    },
+    {
+      "path": "tools/basketball-assets/build.sh",
+      "sha": "f4816be233262251cc3c0da437fd576d3ed85737",
+      "bytes": 1221
+    },
+    {
+      "path": "tools/basketball-assets/kits.py",
+      "sha": "ffaae1b4afea8af3da6d686b01c403859ce5e6b2",
+      "bytes": 5860
+    },
+    {
+      "path": "tools/basketball-assets/prune_anim.py",
+      "sha": "10751f445cd1706e7d44bdc9e12738e61c6960aa",
+      "bytes": 3274
+    },
+    {
+      "path": "tools/basketball-assets/rtlib.py",
+      "sha": "6dca20e73295cb4fd23f8dad34fcf376f94c9730",
+      "bytes": 4158
+    },
+    {
+      "path": "tools/basketball-assets/spec_athlete.json",
+      "sha": "a380003bd6efad1f2575251eaacc01b8841e4ac4",
+      "bytes": 1510
+    }
+  ],
+  "readOnlyReferences": [
+    "games/vendor/three.min.js",
+    "js/platform-nav.js",
+    "package.json"
+  ],
+  "mirror": "public/games/basketball generated via scripts/sync-public.js (not included as duplicate)",
+  "optionalNotBundled": "games/football/assets/crowd-*.mp3 (external optional, provenance unverified)",
+  "instruction": "Return updated games/basketball sources+assets; do not merge this export branch into main"
+}
