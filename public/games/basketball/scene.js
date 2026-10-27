@@ -219,9 +219,15 @@
         pel: V3(), pelT: V3(), tilt: 0, tiltT: 0, bend: 0, bendT: 0, side: 0, sideT: 0, exact: false,
         look: V3(0, 1.6, -12), lookW: 0, lookWT: 0.7, planted: { L: V3(), R: V3() }, clip: '', home: null, react: null
       };
-      a.pose.look = a.ctl.look;
+      a.ctl.lookOut = a.ctl.look.clone();
+      a.ctl.phase = ''; a.ctl.blendT = 1; a.ctl.lastKey = undefined;
+      a.ctl.applied = { hand: { L: snapHand(), R: snapHand() }, foot: { L: V3(), R: V3() }, footW: { L: 0, R: 0 }, pel: V3(), tilt: 0, bend: 0, valid: false };
+      a.ctl.wts = { L: { h: 0, f: 0 }, R: { h: 0, f: 0 } }; a.ctl.pelS = {};
+      a.ctl.blendFrom = { hand: { L: snapHand(), R: snapHand() }, foot: { L: V3(), R: V3() }, footW: { L: 0, R: 0 }, pel: V3(), tilt: 0, bend: 0 };
+      a.pose.look = a.ctl.lookOut;
       return a.ctl;
     }
+    function snapHand() { return { pos: V3(), n: V3(0, 0, 1), f: V3(0, 1, 0), pole: V3(), w: 0, vel: V3(), off: V3(), offV: V3(), t: 9, req: V3(), reqV: V3(), reqPole: V3(), hasReq: false }; }
     function hand(a, s, pos, n, f, pole, curl = 0.35, thumb = 0.3, w = 1) {
       const h = a.pose.hand[s]; h.pos.copy(pos); h.ndir.copy(n); h.fdir.copy(f); h.pole.copy(pole); h.curl = curl; h.thumb = thumb;
       a.ctl.hT[s] = w;
@@ -245,18 +251,65 @@
     const DRIBBLE_ANKLE = 0.102;
     function pelvis(a, right, up, fwd, exact) { a.ctl.pelT.set(-right, up, fwd); a.ctl.exact = !!exact; }
     function shoulder(a, s, out) { return cw(a, s === 'R' ? 0.2 : -0.2, 1.43 + a.ctl.pel.y, -0.02, out); }
+    /** critically damped spring: starts and stops with zero velocity (first-order easing "pops") */
+    function spring(o, k, target, omega, dt) {
+      const vk = k + 'V'; let v = o[vk] || 0, x = o[k];
+      const n = Math.max(1, Math.ceil(dt / (1 / 120))), h = dt / n;
+      for (let i = 0; i < n; i++) { const acc = omega * omega * (target - x) - 2 * omega * v; v += acc * h; x += v * h; }
+      o[vk] = v; return x;
+    }
+    const BLEND = 0.2;
+    // inertialization: keep the offset to the new target AND the hand's current velocity, then decay both
+    function startHandBlend(h, g, ph) {
+      g.pos.copy(h.pos); g.n.copy(h.n); g.f.copy(h.f); g.pole.copy(h.pole); g.w = h.w; g.t = 0;
+      g.off.subVectors(h.pos, ph.pos); g.offV.copy(h.vel).multiplyScalar(BLEND); if (g.offV.length() > 0.25) g.offV.setLength(0.25);
+    } // s: hand/foot/pelvis targets cross-fade whenever a controller changes phase
     function finishRig(a, dt) {
-      const c = a.ctl, p = a.pose;
+      const c = a.ctl, p = a.pose, A = c.applied, F = c.blendFrom;
+      // ---- phase change -> remember what was applied last frame and blend from it (no pops)
+      const key = (c.stateAtStart ?? c.state) + '|' + c.phase;
+      if (A.valid && key !== c.lastKey) {
+        for (const s of ['L', 'R']) { startHandBlend(A.hand[s], F.hand[s], p.hand[s]); F.foot[s].copy(A.foot[s]); F.footW[s] = A.footW[s]; }
+        F.pel.copy(A.pel); F.tilt = A.tilt; F.bend = A.bend; c.blendT = 0;
+      }
+      c.lastKey = key; c.phase = '';
+      const k = c.blendT < BLEND ? smooth(c.blendT / BLEND) : 1; c.blendT += dt;
       for (const s of ['L', 'R']) {
         // never release planted feet while the pelvis is still lowered (prevents legs sinking into the floor)
         if (c.fT[s] === 0 && p.foot[s].w > 0 && c.pel.y < -0.025) c.fT[s] = 1;
-        p.hand[s].w = clamp(damp(p.hand[s].w, c.hT[s], c.rate.h, dt), 0, 1); if (p.hand[s].w < 0.002) p.hand[s].w = 0;
-        p.foot[s].w = clamp(damp(p.foot[s].w, c.fT[s], c.rate.f, dt), 0, 1); if (p.foot[s].w < 0.002) p.foot[s].w = 0;
+        const h = p.hand[s], g = F.hand[s];
+        // safety net: a target that jumps while the hand is still IK-driven is blended, never snapped
+        // (compared with where the target was heading, so fast but continuous motion is never mistaken for a jump)
+        if (g.hasReq && A.hand[s].w > 0.05 && (h.pos.distanceTo(tmp[15].copy(g.req).addScaledVector(g.reqV, dt)) > 0.06 || h.pole.distanceTo(g.reqPole) > 0.08)) startHandBlend(A.hand[s], g, h);
+        if (g.hasReq && dt > 0) g.reqV.subVectors(h.pos, g.req).multiplyScalar(1 / dt);
+        g.req.copy(h.pos); g.reqPole.copy(h.pole); g.hasReq = true;
+        if (g.t < BLEND && g.w > 0.01) {
+          const u = clamp(g.t / BLEND, 0, 1), h00 = 2 * u * u * u - 3 * u * u + 1, h10 = u * u * u - 2 * u * u + u, kk = smooth(u);
+          h.pos.addScaledVector(g.off, h00).addScaledVector(g.offV, h10); h.pole.lerpVectors(g.pole, h.pole, kk);
+          h.ndir.lerpVectors(g.n, h.ndir, kk).normalize(); h.fdir.lerpVectors(g.f, h.fdir, kk).normalize();
+        }
+        g.t += dt;
+        if (k < 1 && F.footW[s] > 0.01) p.foot[s].pos.lerpVectors(F.foot[s], p.foot[s].pos, k);
+        const W = c.wts[s];
+        W.h = clamp(spring(W, 'h', c.hT[s], 11, dt), 0, 1); h.w = W.h < 0.002 ? 0 : W.h;
+        W.f = clamp(spring(W, 'f', c.fT[s], 12, dt), 0, 1); p.foot[s].w = W.f < 0.002 ? 0 : W.f;
         c.hT[s] = 0; c.fT[s] = 0;
+        const ah = A.hand[s]; if (dt > 0) ah.vel.subVectors(h.pos, ah.pos).multiplyScalar(1 / dt); ah.pos.copy(h.pos); ah.n.copy(h.ndir); ah.f.copy(h.fdir); ah.pole.copy(h.pole); ah.w = h.w; A.foot[s].copy(p.foot[s].pos); A.footW[s] = p.foot[s].w;
       }
-      if (c.exact) c.pel.copy(c.pelT); else { c.pel.x = damp(c.pel.x, c.pelT.x, c.rate.p, dt); c.pel.y = damp(c.pel.y, c.pelT.y, c.rate.p, dt); c.pel.z = damp(c.pel.z, c.pelT.z, c.rate.p, dt); }
-      c.tilt = c.exact ? c.tiltT : damp(c.tilt, c.tiltT, 6, dt); c.bend = c.exact ? c.bendT : damp(c.bend, c.bendT, 6, dt); c.side = damp(c.side, c.sideT, 6, dt);
+      if (c.exact) {
+        c.pelS.xV = c.pelS.yV = c.pelS.zV = c.pelS.tV = c.pelS.bV = 0;
+        c.pel.copy(c.pelT); c.tilt = c.tiltT; c.bend = c.bendT;
+        if (k < 1) { c.pel.lerpVectors(F.pel, c.pelT, k); c.tilt = lerp(F.tilt, c.tiltT, k); c.bend = lerp(F.bend, c.bendT, k); }
+      } else {
+        const P = c.pelS; P.x = c.pel.x; P.y = c.pel.y; P.z = c.pel.z; P.t = c.tilt; P.b = c.bend;
+        c.pel.set(spring(P, 'x', c.pelT.x, 9, dt), spring(P, 'y', c.pelT.y, 9, dt), spring(P, 'z', c.pelT.z, 9, dt));
+        c.tilt = spring(P, 't', c.tiltT, 8, dt); c.bend = spring(P, 'b', c.bendT, 8, dt);
+      }
+      c.side = damp(c.side, c.sideT, 6, dt);
       c.lookW = damp(c.lookW, c.lookWT, 4, dt);
+      // gaze follows its target smoothly (a real head does not snap to a bouncing ball)
+      c.lookOut.lerp(c.look, 1 - Math.exp(-6 * dt));
+      A.pel.copy(c.pel); A.tilt = c.tilt; A.bend = c.bend; A.valid = true;
       p.pelvis.copy(c.pel); p.tilt = c.tilt; p.bend = c.bend; p.side = c.side; p.lookW = c.lookW;
       c.pelT.set(0, 0, 0); c.tiltT = 0; c.bendT = 0; c.sideT = 0; c.exact = false;
     }
@@ -288,6 +341,7 @@
       { name: 'rebounder', number: 12, kit: 'home', variant: 'b' }
     ];
     const CART_BALL = V3(4.6, 0.92 + R, -14.9), CART_STAND = V3(4.6, 0, -14.3);
+    const FOCUS = V3(0, 1.4, -9); // where onlookers look: the ball, or the dribbler while he dribbles
 
     // ---------------- ball control ----------------
     const B = {
@@ -302,7 +356,7 @@
     }
 
     // ---------------- shot planning ----------------
-    const REL = { right: 0.12, up: 2.1, fwd: 0.27 };
+    const REL = { right: 0.12, up: 2.04, fwd: 0.27 };
     let shot = null; // {plan, keys, t0}
     let seedCounter = 1;
     function planShot(a) {
@@ -353,7 +407,7 @@
           c.look.copy(B.pos); c.lookWT = 0.9;
           if (left < 0.5) {
             const w = smooth((0.5 - left) / 0.38);
-            const target = left > 0.02 ? B.pos : P.to;
+            const target = tmp[9].copy(P.to).addScaledVector(tmp[10].subVectors(P.from, P.to).normalize(), 0.1 * clamp(left / 0.5, 0, 1));
             grip(a, 'R', target, tmp[0].copy(r).multiplyScalar(0.92).addScaledVector(f, 0.38).normalize(), tmp[1].copy(UP).addScaledVector(f, 0.6), shoulder(a, 'R', tmp[2]).addScaledVector(r, 0.3).addScaledVector(UP, -0.5), w, 0.3);
             grip(a, 'L', target, tmp[3].copy(r).multiplyScalar(-0.92).addScaledVector(f, 0.38).normalize(), tmp[4].copy(UP).addScaledVector(f, 0.6), shoulder(a, 'L', tmp[5]).addScaledVector(r, -0.3).addScaledVector(UP, -0.5), w, 0.3);
             pelvis(a, 0, -0.04 * w, 0);
@@ -403,13 +457,13 @@
       }
       if (c.state === 'shot') {
         const t = state.tau, S = SHOT;
-        pelvis(a, 0, M.pelvisShot(t), 0, true);
+        pelvis(a, 0, M.pelvisShot(t) - 0.07 * (1 - smooth(t / SHOT.gather)), 0, true);
         // torso: lean into the gather/dip, tall through the release
         c.tiltT = t < S.dip ? 0.14 + 0.1 * smooth(t / S.dip) : t < S.takeoff ? 0.24 * (1 - smooth((t - S.dip) / (S.takeoff - S.dip))) : t < S.land ? -0.03 : 0.08 * Math.sin(Math.PI * clamp((t - S.land) / 0.5, 0, 1));
         c.bendT = t < S.takeoff ? 0.06 : 0; c.exact = true;
         // feet: planted, heels rise on the push, toes point while airborne, absorb on landing
         const lift = M.feetLift(t), heel = M.heelRaise(t);
-        stanceFeet(a, 0.14, 0.05, heel * 0.9 + lift, -(heel / S.toe) * 0.55 - (lift > 0 ? 0.15 : 0));
+        stanceFeet(a, 0.14, 0.05, heel * 0.9 + lift, -(heel / S.toe) * 0.55 - 0.15 * smooth(lift / 0.06));
         const ballP = B.pos;
         if (t < S.release) {
           heldShotBall(shot.keys, t, ballP);
@@ -426,19 +480,32 @@
           const poleL = shoulder(a, 'L', tmp[7]).addScaledVector(UP, -0.55).addScaledVector(r, -0.35).addScaledVector(f, -0.05);
           grip(a, 'L', ballP, dL, tmp[8].copy(UP).addScaledVector(f, 0.35), poleL, wL, 0.32);
         } else {
-          // follow-through: wrist snaps down ("gooseneck"), guide hand stays up and off the ball
-          const s = smooth((t - S.release) / 0.13), shR = shoulder(a, 'R', tmp[0]);
-          const ext = tmp[1].copy(f).multiplyScalar(0.5).addScaledVector(UP, 0.86).addScaledVector(r, -0.04).normalize();
-          const wrist = tmp[2].copy(shR).addScaledVector(ext, 0.555);
-          const fdir = tmp[3].copy(UP).lerp(tmp[4].copy(f).multiplyScalar(0.78).addScaledVector(UP, -0.62), s).normalize();
-          const ndir = tmp[5].copy(f).multiplyScalar(0.62).addScaledVector(UP, 0.78).lerp(tmp[6].copy(f).multiplyScalar(-0.62).addScaledVector(UP, -0.78), s).normalize();
+          // follow-through, continuous with the release: the wrist keeps moving the way the hand was moving,
+          // then settles slightly further along the shooting line while the wrist snaps down ("gooseneck");
+          // the guide hand stays up and opens away from the ball. Offsets ride on the shoulders through the jump.
+          const shR = shoulder(a, 'R', tmp[0]), shL = shoulder(a, 'L', tmp[9]), A0 = c.applied.hand;
+          if (c.followShot !== shot) {
+            c.followShot = shot;
+            const wr = A0.R.pos.clone().addScaledVector(A0.R.f, -0.044).addScaledVector(A0.R.n, -0.028);
+            c.fo = { offR: wr.sub(shR), nR: A0.R.n.clone(), fR: A0.R.f.clone(), vR: A0.R.vel.clone(),
+                     offL: A0.L.pos.clone().sub(shL), nL: A0.L.n.clone(), fL: A0.L.f.clone(), vL: A0.L.vel.clone() };
+            for (const v of [c.fo.vR, c.fo.vL]) if (v.length() > 2) v.setLength(2);
+          }
+          const fo = c.fo, D = 0.2, s = clamp((t - S.release) / D, 0, 1), sd = smooth((t - S.release) / 0.14);
+          const endR = tmp[1].copy(fo.offR).addScaledVector(f, 0.05).addScaledVector(UP, 0.03);
+          const offR = tmp[2]; for (const ax of ['x', 'y', 'z']) offR[ax] = M.hermite(fo.offR[ax], fo.vR[ax] * D, endR[ax], 0, s);
+          if (offR.length() > 0.55) offR.setLength(0.55);              // stay inside the arm's reach (no IK clamping)
+          const fdir = tmp[3].copy(fo.fR).lerp(tmp[4].copy(f).multiplyScalar(0.78).addScaledVector(UP, -0.62), sd).normalize();
+          const ndir = tmp[5].copy(fo.nR).lerp(tmp[6].copy(f).multiplyScalar(-0.62).addScaledVector(UP, -0.78), sd);
           ndir.addScaledVector(fdir, -ndir.dot(fdir)).normalize();
-          const palm = tmp[7].copy(wrist).addScaledVector(fdir, 0.045).addScaledVector(ndir, 0.028);
+          const palm = tmp[7].copy(shR).add(offR).addScaledVector(fdir, 0.044).addScaledVector(ndir, 0.028);
           const lower = smooth((t - (S.land + 0.85)) / 0.6);
-          hand(a, 'R', palm, ndir, fdir, tmp[8].copy(shR).addScaledVector(UP, -0.5).addScaledVector(f, 0.4).addScaledVector(r, 0.2), 0.28 + 0.2 * s, 0.2, 1 - lower);
-          const shL = shoulder(a, 'L', tmp[9]);
-          const palmL = tmp[10].copy(shL).addScaledVector(tmp[11].copy(f).multiplyScalar(0.55).addScaledVector(UP, 0.7).addScaledVector(r, -0.22).normalize(), 0.56);
-          hand(a, 'L', palmL, tmp[12].copy(r), tmp[13].copy(UP).addScaledVector(f, 0.3).normalize(), tmp[14].copy(shL).addScaledVector(UP, -0.5).addScaledVector(r, -0.4), 0.2, 0.2, 1 - lower);
+          hand(a, 'R', palm, ndir, fdir, tmp[8].copy(shR).addScaledVector(UP, -0.55).addScaledVector(r, 0.1).addScaledVector(f, 0.25), 0.28 + 0.2 * sd, 0.2, 1 - lower); // same elbow pole as at the set point
+          const endL = tmp[10].copy(fo.offL).addScaledVector(r, -0.08).addScaledVector(f, 0.03);
+          const offL = tmp[11]; for (const ax of ['x', 'y', 'z']) offL[ax] = M.hermite(fo.offL[ax], fo.vL[ax] * D, endL[ax], 0, s);
+          if (offL.length() > 0.6) offL.setLength(0.6);
+          const nL = tmp[12].copy(fo.nL).lerp(r, sd).normalize(), fL = tmp[13].copy(fo.fL).lerp(UP, sd).normalize();
+          hand(a, 'L', tmp[14].copy(shL).add(offL), nL, fL, tmp[15].copy(shL).addScaledVector(UP, -0.55).addScaledVector(r, -0.35).addScaledVector(f, -0.05), 0.2, 0.2, 1 - lower); // same pole as the guide hand on the ball
         }
         return;
       }
@@ -484,7 +551,7 @@
       // active hands: one high, one low and wide (palms toward the ball)
       const hi = opts2.highHand || 'L', lo = hi === 'L' ? 'R' : 'L', sg = hi === 'L' ? -1 : 1;
       const shH = shoulder(a, hi, tmp[2]), shLo = shoulder(a, lo, tmp[3]);
-      hand(a, hi, tmp[4].copy(shH).addScaledVector(UP, 0.42 * low + 0.05).addScaledVector(f, 0.3).addScaledVector(r, sg * 0.12), tmp[5].copy(f), tmp[6].copy(UP).addScaledVector(r, sg * 0.25).normalize(), tmp[7].copy(shH).addScaledVector(UP, -0.4).addScaledVector(r, sg * 0.5), 0.12, 0.3, low);
+      hand(a, hi, tmp[4].copy(shH).addScaledVector(UP, 0.38 * low + 0.04).addScaledVector(f, 0.28).addScaledVector(r, sg * 0.12), tmp[5].copy(f), tmp[6].copy(UP).addScaledVector(r, sg * 0.25).normalize(), tmp[7].copy(shH).addScaledVector(UP, -0.4).addScaledVector(r, sg * 0.5), 0.12, 0.3, low);
       hand(a, lo, tmp[8].copy(shLo).addScaledVector(UP, -0.28).addScaledVector(f, 0.3).addScaledVector(r, -sg * 0.42), tmp[9].copy(f), tmp[10].copy(UP).addScaledVector(r, -sg * 0.6).normalize(), tmp[11].copy(shLo).addScaledVector(UP, -0.3).addScaledVector(r, -sg * 0.6).addScaledVector(f, -0.3), 0.12, 0.3, low);
     }
     function plantHere(a) { const c = a.ctl; cw(a, -0.3, DRIBBLE_ANKLE, 0.04, c.planted.L); cw(a, 0.3, DRIBBLE_ANKLE, -0.06, c.planted.R); }
@@ -492,34 +559,34 @@
     function closeoutUpdate(a, dt) {
       const c = a.ctl, bs = basis(a, { f: V3(), r: V3() }), f = bs.f, r = bs.r;
       c.look.copy(people.shooter.root.position).setY(1.25); c.lookWT = 0.8;
-      if (c.state === 'stance') { stance(a, dt, { slides: false, highHand: 'L' }); c.look.copy(B.pos); return; }
+      if (c.state === 'stance') { stance(a, dt, { slides: false, highHand: 'L' }); c.look.copy(FOCUS); return; }
       if (c.state === 'contest') {
         const t = state.tau - 0.1, k = smooth((state.tau - 0.18) / 0.3);
         const jump = 0.72 * M.pelvisShot(t), lift = 0.72 * M.feetLift(t), heel = 0.72 * M.heelRaise(t);
         pelvis(a, 0, lerp(-0.2, jump, k), lerp(-0.03, 0, k), true);
         c.tiltT = lerp(0.34, 0.04, k); c.bendT = 0.02; c.exact = true;
-        for (const side of ['L', 'R']) foot(a, side, tmp[0].copy(c.planted[side]).setY(DRIBBLE_ANKLE + lift + heel * 0.9), -(heel / SHOT.toe) * 0.4 * 0.72 - (lift > 0 ? 0.12 : 0), 1, 0.2);
+        for (const side of ['L', 'R']) foot(a, side, tmp[0].copy(c.planted[side]).setY(DRIBBLE_ANKLE + lift + heel * 0.9), -(heel / SHOT.toe) * 0.4 * 0.72 - 0.12 * smooth(lift / 0.05), 1, 0.2);
         // contesting hand rises toward the release point without touching the ball
         const sh = shoulder(a, 'L', tmp[1]), toS = tmp[2].subVectors(people.shooter.root.position, a.root.position).setY(0).normalize();
         const up = smooth((state.tau - 0.3) / 0.4), down = smooth((state.tau - (SHOT.land + 0.6)) / 0.6);
-        const reach = tmp[3].copy(sh).addScaledVector(UP, lerp(0.4, 0.66, up)).addScaledVector(toS, lerp(0.3, 0.16, up)).addScaledVector(r, -0.06);
+        const reach = tmp[3].copy(sh).addScaledVector(UP, lerp(0.36, 0.47, up)).addScaledVector(toS, lerp(0.28, 0.14, up)).addScaledVector(r, -0.06);
         hand(a, 'L', reach, tmp[4].copy(toS), tmp[5].copy(UP), tmp[6].copy(sh).addScaledVector(UP, -0.4).addScaledVector(r, -0.5), 0.1, 0.3, 1 - down);
         const shR = shoulder(a, 'R', tmp[7]);
         hand(a, 'R', tmp[8].copy(shR).addScaledVector(UP, lerp(-0.28, -0.42, up)).addScaledVector(f, 0.25).addScaledVector(r, 0.42), tmp[9].copy(f), tmp[10].copy(UP).addScaledVector(r, 0.6).normalize(), tmp[11].copy(shR).addScaledVector(UP, -0.3).addScaledVector(r, 0.6).addScaledVector(f, -0.3), 0.12, 0.3, 1 - down);
-        c.look.copy(B.pos);
+        c.look.copy(FOCUS);
         return;
       }
       // watch: upright, mocap idle, eyes on the ball
-      c.look.copy(B.mode === 'gone' ? RIMV : B.pos);
+      c.look.copy(FOCUS);
     }
     function helpUpdate(a, dt) {
       const c = a.ctl;
-      c.look.copy(B.mode === 'gone' ? people.shooter.root.position.clone().setY(1.2) : B.pos); c.lookWT = 0.75;
+      c.look.copy(FOCUS); c.lookWT = 0.75;
       if (c.state === 'stance') stance(a, dt, { slides: true, highHand: c.highHand, low: 0.85 });
     }
     function mateUpdate(a, dt) {
       const c = a.ctl;
-      c.look.copy(B.mode === 'gone' ? RIMV : B.pos); c.lookWT = 0.72;
+      c.look.copy(FOCUS); c.lookWT = 0.72;
       reactUpdate(a);
     }
     function reactUpdate(a) {
@@ -535,17 +602,25 @@
       const s = smooth(k), dist = path.from.distanceTo(path.to);
       a.root.position.lerpVectors(path.from, path.to, s);
       const speed = dist * 6 * k * (1 - k) / (path.t1 - path.t0);
-      if (speed > 1.75) { const cl = playClip(a, 'run', { fade: 0.25 }); if (cl) cl.timeScale = clamp(speed / 2.41, 0.75, 1.6); }
-      else if (speed > 0.18) { const cl = playClip(a, 'walk', { fade: 0.3 }); if (cl) cl.timeScale = clamp(speed / 1.01, 0.6, 1.8); }
+      const cur = a.current, gait = cur && (c.clip === 'walk' || c.clip === 'run') ? (cur.time / cur.getClip().duration) % 1 : Math.random();
+      // hysteresis between walk and run; the new gait starts at the same step phase (no foot pop)
+      if (speed > (c.clip === 'run' ? 1.55 : 1.85)) { const cl = playClip(a, 'run', { fade: 0.3, offset: gait }); if (cl) cl.timeScale = clamp(speed / 2.41, 0.75, 1.6); }
+      else if (speed > (c.clip === 'walk' ? 0.14 : 0.22)) { const cl = playClip(a, 'walk', { fade: 0.3, offset: gait }); if (cl) cl.timeScale = clamp(speed / 1.01, 0.6, 1.8); }
       else playClip(a, 'idle', { fade: 0.35 });
       const moveYaw = yawTo(path.from, path.to);
       const want = (speed > 0.35 && k < 0.85) ? moveYaw : (path.face ? yawTo(a.root.position, path.face) : a.yaw);
-      const ny = a.yaw + angDiff(a.yaw, want) * (1 - Math.exp(-9 * dt));
-      a.setTransform(a.root.position.x, a.root.position.z, ny);
+      turn(a, want, dt, 7, 5.5);
       if (!c.squeakT || time > c.squeakT) { if (speed > 2.4 && Math.random() < 0.02) { c.squeakT = time + 0.6; emit('squeak', { pos: a.root.position.clone(), intensity: 0.8 }); } }
       return k >= 1;
     }
-    function faceTowards(a, target, dt, rate = 7) { const want = yawTo(a.root.position, target); a.setTransform(a.root.position.x, a.root.position.z, a.yaw + angDiff(a.yaw, want) * (1 - Math.exp(-rate * dt))); }
+    /** yaw follows a critically damped spring with a speed cap: turns start and stop gently */
+    function turn(a, want, dt, omega = 7, maxRate = 5) {
+      const c = a.ctl; let v = c.yawV || 0;
+      const n = Math.max(1, Math.ceil(dt / (1 / 120))), h = dt / n; let y = a.yaw;
+      for (let i = 0; i < n; i++) { v += (omega * omega * angDiff(y, want) - 2 * omega * v) * h; v = clamp(v, -maxRate, maxRate); y += v * h; }
+      c.yawV = v; a.setTransform(a.root.position.x, a.root.position.z, y);
+    }
+    function faceTowards(a, target, dt, rate = 7) { turn(a, yawTo(a.root.position, target), dt, Math.min(9, rate * 1.2), 4.5); }
     function chestPoint(a, out, fwd = 0.34, h = 1.16) { return cw(a, 0, h + a.ctl.pel.y, fwd, out); }
 
     function planCatch(a) {
@@ -572,7 +647,7 @@
       state.passPhase = c.state;
       switch (c.state) {
         case 'home': {
-          c.look.copy(B.mode === 'gone' ? people.shooter.root.position.clone().setY(1.3) : B.pos);
+          c.look.copy(FOCUS);
           faceTowards(a, B.mode === 'shot' ? tmp[0].copy(B.pos).setY(0) : people.shooter.root.position, dt, 3);
           if (state.mode === 'shot' || state.mode === 'frozen' || state.mode === 'resolve') {
             // box-out readiness: knees bent, hands up
@@ -589,9 +664,10 @@
           c.look.copy(B.pos);
           locomote(a, dt, { from: c.from, to: pl.stand, t0: c.t0, t1: c.t0 + pl.dur, face: pl.ball });
           const left = pl.t - B.flight;
-          if (left < 0.42) { // reach for the ball with both hands
-            const w = smooth((0.42 - left) / 0.32);
-            catchHands(a, B.pos, w);
+          const near = a.root.position.distanceTo(pl.stand);
+          if (left < 0.42 && near < 1.1) { // reach for the ball with both hands once he is there
+            const w = smooth((0.42 - left) / 0.32) * (1 - smooth((near - 0.5) / 0.6));
+            catchHands(a, pl.ball, w);
             pelvis(a, 0, -0.06 * w, 0);
           }
           if (B.flight >= pl.t) {
@@ -628,6 +704,7 @@
           pelvis(a, 0, -0.1 * k, 0); c.tiltT = 0.42 * k; c.bendT = 0.12 * k;
           stanceFeet(a, 0.16, 0.02);
           c.look.copy(CART_BALL);
+          c.phase = c.t < 0.42 ? 'reach' : 'lift';
           if (c.t < 0.42) catchHands(a, CART_BALL, smooth(c.t / 0.35));
           else {
             if (B.mode !== 'held' || B.holder !== a) {
@@ -655,9 +732,10 @@
           faceTowards(a, aim, dt, 10);
           c.look.copy(aim).setY(1.4);
           const tWind = 0.26, tRel = 0.44;
+          c.phase = c.t < tRel ? 'push' : 'follow';
           if (c.t < tRel) {
             const k = c.t < tWind ? 0 : (c.t - tWind) / (tRel - tWind);
-            const pull = chestPoint(a, tmp[0], 0.26, 1.15), push = chestPoint(a, tmp[1], 0.62, 1.22);
+            const pull = chestPoint(a, tmp[0], 0.26, 1.15), push = chestPoint(a, tmp[1], 0.47, 1.2);
             if (c.t < tWind) B.pos.lerpVectors(chestPoint(a, tmp[2]), pull, smooth(c.t / tWind));
             else B.pos.lerpVectors(pull, push, k * k);
             holdBoth(a, B.pos, 1, 0.3);
@@ -669,8 +747,8 @@
             const shL = shoulder(a, 'L', tmp[3]), shR = shoulder(a, 'R', tmp[4]), toS = tmp[5].subVectors(aim, a.root.position).setY(0).normalize();
             const w = 1 - smooth((k - 0.5) / 0.5);
             // palms out, thumbs down after the push
-            hand(a, 'L', tmp[6].copy(shL).addScaledVector(toS, 0.58).addScaledVector(UP, -0.08).addScaledVector(r, 0.05), tmp[7].copy(toS).addScaledVector(r, -0.4).normalize(), tmp[8].copy(UP).addScaledVector(r, 0.3).normalize(), tmp[9].copy(shL).addScaledVector(UP, -0.4).addScaledVector(r, -0.5), 0.1, 0.2, w);
-            hand(a, 'R', tmp[10].copy(shR).addScaledVector(toS, 0.58).addScaledVector(UP, -0.08).addScaledVector(r, -0.05), tmp[11].copy(toS).addScaledVector(r, 0.4).normalize(), tmp[12].copy(UP).addScaledVector(r, -0.3).normalize(), tmp[13].copy(shR).addScaledVector(UP, -0.4).addScaledVector(r, 0.5), 0.1, 0.2, w);
+            hand(a, 'L', tmp[6].copy(shL).addScaledVector(toS, 0.48).addScaledVector(UP, -0.08).addScaledVector(r, 0.05), tmp[7].copy(toS).addScaledVector(r, -0.4).normalize(), tmp[8].copy(UP).addScaledVector(r, 0.3).normalize(), tmp[9].copy(shL).addScaledVector(UP, -0.4).addScaledVector(r, -0.5), 0.1, 0.2, w);
+            hand(a, 'R', tmp[10].copy(shR).addScaledVector(toS, 0.48).addScaledVector(UP, -0.08).addScaledVector(r, -0.05), tmp[11].copy(toS).addScaledVector(r, 0.4).normalize(), tmp[12].copy(UP).addScaledVector(r, -0.3).normalize(), tmp[13].copy(shR).addScaledVector(UP, -0.4).addScaledVector(r, 0.5), 0.1, 0.2, w);
             pelvis(a, 0, -0.03 * w, 0.05 * w); c.tiltT = 0.1 * w;
             stanceFeet(a, 0.15, 0.08, 0, 0, w);
             if (k >= 1) { c.state = a.root.position.distanceTo(c.home.p) > 0.6 ? 'gohome' : 'home'; c.t = 0; c.from = a.root.position.clone(); c.t0 = time; c.dur = Math.max(0.9, c.from.distanceTo(c.home.p) / 1.6); }
@@ -683,7 +761,7 @@
           break;
         }
         case 'wait': {
-          c.look.copy(B.pos); faceTowards(a, tmp[0].copy(B.pos).setY(0), dt, 4);
+          c.look.copy(FOCUS); faceTowards(a, tmp[0].copy(B.pos).setY(0), dt, 4);
           break;
         }
       }
@@ -959,7 +1037,10 @@
         }
       }
       // ---- athletes ----
-      for (const a of Object.values(people)) a.ctl.t += dt;
+      for (const a of Object.values(people)) { a.ctl.t += dt; a.ctl.stateAtStart = a.ctl.state; }
+      if (B.mode === 'gone') FOCUS.copy(S.root.position).setY(1.35);
+      else if (B.mode === 'held' && B.holder) cw(B.holder, 0.05, 1.2, 0.3, FOCUS);
+      else FOCUS.copy(B.pos);
       shooterUpdate(S, dt); reactUpdate(S);
       closeoutUpdate(people.closeout, dt); reactUpdate(people.closeout);
       helpUpdate(people.def8, dt); reactUpdate(people.def8);

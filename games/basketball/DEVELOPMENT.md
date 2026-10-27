@@ -21,3 +21,10 @@ Basketball-only code; football keeps `games/sports/*`. Entry: `index.html` → s
 
 ## QA hooks
 `?capture=1&manual=1` lets tests step frames deterministically (`window.__qaStep`). `tests/browser/scene-harness.html` exposes the scene without UI (`step`, `until`, `closeup`, `sc.poseCheck()`).
+
+## Rules that prevent jitter (V23.2)
+- Never reset animated bones to the bind pose before `mixer.update`: three.js' `PropertyMixer` skips writing unchanged values. `Athlete.update` restores the mixer's previous output instead.
+- Rocketbox/Biped hierarchy: clavicles hang from `Neck`, thighs from `Spine`. Head look and spine bend run before limb IK and keep those bones' world orientation (`keepWorld`).
+- Controllers request targets; `finishRig` (scene.js) owns all smoothing: springs for IK weights and the procedural pelvis/torso, velocity-preserving cross-fades for hand targets at phase changes (`c.state` at frame start + optional `c.phase`), automatic blending of sudden target/pole jumps. Do not snap targets in controllers.
+- Keep IK targets inside reach (wrist ≤ ~0.55 m from the shoulder) so the elbow never sits at the straight-arm singularity.
+- Check with `node tests/browser/jitter-check.cjs` (and `… var`) after any animation change.

@@ -302,7 +302,7 @@
   if (manual) window.__qaStep = (sec = 1 / 30, dt = 1 / 30, render = true) => {
     const r = scene.renderer.render; if (!render) scene.renderer.render = () => { };
     try { for (let t = 0; t < sec - 1e-9; t += dt) scene.update(dt); } finally { scene.renderer.render = r; }
-    // Non-rendered QA steps intentionally skip GPU work.
+    if (!render) scene.renderer.render(scene.scene, scene.camera);
     return S.phase;
   };
   else raf = requestAnimationFrame(frame);

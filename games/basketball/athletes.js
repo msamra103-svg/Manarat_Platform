@@ -24,6 +24,13 @@
     bone.quaternion.copy(p.multiply(qWorld));
     bone.updateMatrixWorld(true);
   }
+  const _keep = Array.from({ length: 4 }, () => new T.Quaternion());
+  /** run fn (which rotates ancestors) while the listed bones keep their world orientation */
+  function keepWorld(bones, fn) {
+    bones.forEach((o, i) => { if (o) worldQuat(o, _keep[i]); });
+    fn();
+    bones.forEach((o, i) => { if (o) setWorldQuat(o, _keep[i]); });
+  }
   function rotateWorld(bone, dq) { // pre-multiply a world-space rotation
     const w = worldQuat(bone, _wq2);
     setWorldQuat(bone, _wq3.copy(dq).multiply(w));
@@ -204,10 +211,15 @@
 
     /** advance mocap, then apply the procedural layer */
     update(dt) {
-      // start from the bind pose every frame: bones without animation tracks (constant tracks are
-      // stripped by compression) must not accumulate the procedural layer from previous frames
-      for (const k in this.bones) { const o = this.bones[k], r = this.rest[k]; o.quaternion.copy(r.q); o.position.copy(r.p); }
+      // Restore every bone to the mixer's previous output before mixing. The procedural layer below
+      // must never accumulate across frames, and three.js' PropertyMixer skips writing a value that
+      // has not changed since its last write: resetting to the bind pose here (V23) left such bones
+      // in the A-pose for that frame, which made arms and hands pop/jitter. Bones without tracks keep
+      // their bind pose because their stored "mixer output" is the bind pose.
+      const anim = this.animPose || (this.animPose = Object.fromEntries(Object.entries(this.rest).filter(([k]) => this.bones[k]).map(([k, r]) => [k, { q: r.q.clone(), p: r.p.clone() }])));
+      for (const k in this.bones) { const o = this.bones[k], s = anim[k]; o.quaternion.copy(s.q); o.position.copy(s.p); }
       this.mixer.update(dt);
+      for (const k in this.bones) { const o = this.bones[k], s = anim[k]; s.q.copy(o.quaternion); s.p.copy(o.position); }
       this.root.updateMatrixWorld(true);
       const b = this.bones, p = this.pose, rest = this.rest;
       const yawQ = _q[0].setFromAxisAngle(UP, this.yaw);
@@ -226,11 +238,33 @@
       // spine bend / twist distributed (counter-tilt so torso keeps its own lean)
       const bendTotal = p.bend - p.tilt * 0.85;
       if (bendTotal || p.twist) {
-        for (const [k, s] of [['Spine', .3], ['Spine1', .35], ['Spine2', .35]]) {
-          if (!b[k]) continue;
-          if (bendTotal) rotateWorld(b[k], _q[1].setFromAxisAngle(right, -bendTotal * s));
-          if (p.twist) rotateWorld(b[k], _q[1].setFromAxisAngle(UP, p.twist * s));
-        }
+        // the thighs hang from Bip01 Spine: bending the waist must not swing the legs
+        keepWorld([b.L_Thigh, b.R_Thigh], () => {
+          for (const [k, s] of [['Spine', .3], ['Spine1', .35], ['Spine2', .35]]) {
+            if (!b[k]) continue;
+            if (bendTotal) rotateWorld(b[k], _q[1].setFromAxisAngle(right, -bendTotal * s));
+            if (p.twist) rotateWorld(b[k], _q[1].setFromAxisAngle(UP, p.twist * s));
+          }
+        });
+      }
+      // head look BEFORE the limbs: the clavicles hang from Bip01 Neck, so turning the neck would
+      // otherwise swing both arms (and drag IK-placed hands off the ball). Clavicles keep their world
+      // orientation; the arm IK below then works on the final torso.
+      if (p.look && p.lookW > 0) {
+        keepWorld([b.L_Clavicle, b.R_Clavicle], () => {
+          for (const [k, share] of [['Neck', .35], ['Head', 1]]) {
+            const bone = b[k]; if (!bone) continue;
+            const hp = worldPos(b.Head, _v[2]);
+            const want = _v[3].subVectors(p.look, hp).normalize();
+            const hq = worldQuat(b.Head, _q[2]);
+            const cur = _v[4].copy(this.headFwd).applyQuaternion(hq);
+            const dq = _q[3].setFromUnitVectors(cur, want);
+            const angle = 2 * Math.acos(clamp(dq.w, -1, 1));
+            const lim = 1.1;
+            const scale = (angle > lim ? lim / angle : 1) * share * p.lookW;
+            rotateWorld(bone, _q[4].identity().slerp(dq, scale));
+          }
+        });
       }
       // legs
       for (const s of ['L', 'R']) {
@@ -276,22 +310,6 @@
             bone.quaternion.copy(r.q).multiply(_q[6].setFromAxisAngle(r.bendAxis, amt));
           }
           b[`${s}_Hand`].updateMatrixWorld(true);
-        }
-      }
-      // head look
-      if (p.look && p.lookW > 0) {
-        for (const [k, share] of [['Neck', .35], ['Head', 1]]) {
-          const bone = b[k]; if (!bone) continue;
-          const hp = worldPos(b.Head, _v[2]);
-          const want = _v[3].subVectors(p.look, hp).normalize();
-          const hq = worldQuat(b.Head, _q[2]);
-          const cur = _v[4].copy(this.headFwd).applyQuaternion(hq);
-          const dq = _q[3].setFromUnitVectors(cur, want);
-          // limit
-          const angle = 2 * Math.acos(clamp(dq.w, -1, 1));
-          const lim = 1.1;
-          const scale = (angle > lim ? lim / angle : 1) * share * p.lookW;
-          rotateWorld(bone, _q[4].identity().slerp(dq, scale));
         }
       }
       // blinking (eyelid bones), independent per athlete
