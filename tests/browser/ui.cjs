@@ -156,6 +156,7 @@ const layoutCheck = () => {
     const g = await openGame(browser, base);
     await waitPhase(g.page, 'welcome'); await g.page.click('#start');
     await g.page.waitForFunction(() => Bowling.audio().state !== 'none', null, { timeout: 10000 });
+    await g.page.waitForFunction(() => Bowling.audio().loops === 2, null, { timeout: 60000, polling: 250 });   // loops start once synthesised (sliced, in the background)
     const a = await g.page.evaluate(() => Bowling.audio()); report.audio = a;
     assert.equal(a.loops, 2);
     const an = await g.page.evaluate(() => __bowlingQA.audioAnalyse());

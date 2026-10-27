@@ -169,7 +169,7 @@
       launched: false, acc: 0, settledT: -1, outcomeT: 0, reaction: '', pitT: -1, returned: false, frozenAt: null, footState: {}
     };
     let venue = null, bowler = null, crowd = null, crowdLib = null, athLib = null, ballMesh = null, ballGroup = null, returnBall = null;
-    let pinMeshes = [], pinShadows = [], env = null, guide = null, target = null, ballShadow = null, loaded = false, disposed = false;
+    let hall = null, pinMeshes = [], pinShadows = [], env = null, guide = null, target = null, ballShadow = null, loaded = false, disposed = false;
     const neighbors = [];
     const disposables = [];
 
@@ -206,6 +206,7 @@
       const pinMat = new T.MeshPhysicalMaterial({ vertexColors: true, roughness: 0.28, metalness: 0, clearcoat: 0.6, clearcoatRoughness: 0.22, envMap: env, envMapIntensity: 0.8 });
       disposables.push(pinMat);
       venue = root.BowlingVenue.build(scene, { env, quality: Q, lanes: Q.lanes, font: opts.font, schoolName: opts.schoolName || 'مدرسة أبو عبيدة الإعدادية للبنين', platformName: opts.platformName || 'منصة التعلّم التفاعلي والألعاب التعليمية', pinGeometry: Q.neighbor ? pinGeo : null, pinMaterial: pinMat });
+      if (root.BowlingHall) hall = root.BowlingHall.build(scene, { venue, quality: Q, font: opts.font || 'Tajawal, Tahoma, Arial, sans-serif', schoolName: opts.schoolName || 'مدرسة أبو عبيدة الإعدادية للبنين', platformName: opts.platformName || 'منصة التعلّم التفاعلي والألعاب التعليمية', reduced, hand: S.hand || opts.hand });
       const shadowTex = radialTexture([[0, 'rgba(0,0,0,0.55)'], [0.5, 'rgba(0,0,0,0.25)'], [1, 'rgba(0,0,0,0)']]); disposables.push(shadowTex);
       const shadowGeo = new T.PlaneGeometry(1, 1); disposables.push(shadowGeo);
       for (let i = 0; i < 10; i++) {
@@ -312,7 +313,7 @@
       };
       const deckView = () => { pos.set(0.05, portrait ? 1.25 : 1.0, -P.LENGTH + (portrait ? 5.4 : 4.9)); look.set(0, 0.02, -P.LENGTH - 0.45); };
       const reactView = () => { const bx = bowler.athlete.root.position.x, bz = bowler.athlete.root.position.z; pos.set(bx + 1.55, 1.3, bz - 3.1); look.set(bx + 0.1, 0.95, bz + 1.2); };
-      let rate = 3.2, jump = false;
+      let rate = 3.2, jump = false, force = false;
       if (reduced) {
         if (['ready', 'approach'].includes(S.mode) || (S.mode === 'rolling' && (!b || b.pos[2] > -1.5))) { pos.set(st * 0.4 + 0.42, portrait ? 2.1 : 1.8, 3.4 + (portrait ? 3.4 : 2.7)); look.set(st * 0.3, 0.3, -6); }
         else if (S.mode === 'settled' && S.reaction && S.outcomeT > 1.8 && S.outcomeT < 4.6) reactView();
@@ -324,7 +325,11 @@
           case 'approach': follow(); rate = 4.0; break;
           case 'rolling': case 'frozen': case 'resolve': {
             if (!b || !S.launched) { follow(); break; }
-            const z = b.pos[2];
+            const z = b.pos[2], pelZ = bowler.athlete.root.position.z;
+            // the ball-follow camera must never fly through the bowler: stay behind him while the ball rolls away,
+            // then cut (short fade) to the ball camera ahead of him once the ball is 4.5 m past his body
+            if (z > pelZ - 4.5) { follow(); look.set(lerp(st * 0.35, b.pos[0], 0.5), 0.2, Math.min(z - 6, pelZ - 10)); rate = 3.0; break; }
+            if (!S.passedBowler) { S.passedBowler = true; force = true; jump = true; }
             if (z > -12.4) { pos.set(lerp(st, b.pos[0], 0.6) * 0.8 + 0.12, lerp(1.45, 0.95, smooth(-z / 4)), z + lerp(2.9, 3.3, smooth(-z / 6))); look.set(b.pos[0] * 0.7, 0.18, z - 6.5); rate = z > -1 ? 3.0 : 6.0; }
             else { deckView(); rate = 2.2; }
             break;
@@ -340,11 +345,11 @@
           default: behind();
         }
       }
-      return { rate, jump };
+      return { rate, jump, force };
     }
     function frame(dt, snap = false) {
-      const { rate, jump } = shotPositions(cam.wantPos, cam.wantLook);
-      const far = cam.pos.distanceTo(cam.wantPos) > 6 || cam.look.distanceTo(cam.wantLook) > 10;
+      const { rate, jump, force } = shotPositions(cam.wantPos, cam.wantLook);
+      const far = force || cam.pos.distanceTo(cam.wantPos) > 6 || cam.look.distanceTo(cam.wantLook) > 10;
       if (snap) { cam.pos.copy(cam.wantPos); cam.look.copy(cam.wantLook); }
       else if (jump && far) {
         if (!opts.fadeEl) { cam.pos.copy(cam.wantPos); cam.look.copy(cam.wantLook); }
@@ -367,7 +372,10 @@
       camera.position.copy(cam.pos); camera.lookAt(cam.look);
       // the shadow-casting key light follows what the camera looks at (one shadow map, always sharp where needed)
       const focus = S.mode === 'ready' || S.mode === 'approach' || (S.launched && world.ball && world.ball.pos[2] > -3) ? bowler.athlete.root.position : cam.look;
-      key.target.position.set(focus.x * 0.6, 0, clamp(focus.z, -P.LENGTH - 0.5, 4));
+      // snapped to the shadow-map texel grid, so the moving shadow camera does not make shadows shimmer
+      const texel = (key.shadow.camera.right - key.shadow.camera.left) / key.shadow.mapSize.x * 2;
+      const snapT = v => Math.round(v / texel) * texel;
+      key.target.position.set(snapT(focus.x * 0.6), 0, snapT(clamp(focus.z, -P.LENGTH - 0.5, 4)));
       key.position.set(key.target.position.x + 1.8, 8.5, key.target.position.z + 10);
     }
 
@@ -385,7 +393,7 @@
       const rel = bowler.evaluate(tRel - 1e-6);                    // exact rig pose at the release instant
       const st = P.releaseState(Object.assign({}, S.input, { pos: rel.pos.toArray() }));
       world.launch({ pos: st.pos, vel: st.vel, omega: st.omega, q: [rel.quat.x, rel.quat.y, rel.quat.z, rel.quat.w] });
-      S.launched = true; S.acc = 0;
+      S.launched = true; S.acc = 0; S.passedBowler = false;
       S.release = { pos: rel.pos.toArray(), handVel: bowler.ball.vel.toArray(), vel: st.vel, quat: rel.quat.toArray() };
       emit('release', { pos: rel.pos.toArray(), speed: st.speed });
     }
@@ -427,6 +435,7 @@
       if (S.mode === 'resetting') resetStep(dt); else applyPins();
       applyBall();
       crowd && crowd.update(dt);
+      hall && hall.update(dt);
       for (const n of neighbors) n.update(dt);
       updateGuide();
       frame(dt);
@@ -515,7 +524,7 @@
     function resume() { if (S.mode !== 'frozen') return false; S.mode = 'resolve'; return true; }
     function react(kind) {
       S.reaction = kind;
-      if (bowler) bowler.startRecover({ strike: 'cheer_pump', good: 'cheer_small', fair: 'clap', miss: 'shrug', wrong: 'shrug', pending: 'look' }[kind] || 'idle');
+      if (bowler) bowler.startRecover({ strike: 'cheer_big', good: 'cheer_small', fair: 'clap', miss: 'shrug', wrong: 'shrug', pending: 'look' }[kind] || 'idle');
       if (crowd) crowd.react(kind === 'strike' ? 'strike' : kind === 'good' || kind === 'fair' ? 'good' : kind === 'miss' || kind === 'wrong' ? 'miss' : 'calm', reduced);
     }
 
@@ -559,6 +568,7 @@
 
     function dispose() {
       disposed = true;
+      try { hall && hall.dispose(); } catch (e) { }
       try { venue && venue.dispose(); } catch (e) { }
       try { crowd && crowd.dispose(); if (crowdLib) { crowdLib.animTex.dispose(); Object.values(crowdLib.avatars).forEach(v => { v.texture.dispose(); v.geometry.dispose(); }); } } catch (e) { }
       try { bowler && bowler.dispose(); neighbors.forEach(n => n.dispose()); athLib && athLib.dispose(); } catch (e) { }
@@ -572,7 +582,9 @@
     return {
       load, update, resize, setShift, setPixelRatio, thinCrowd, dispose, setAim, throw: throwBall, resume, react, nextRack, hardReset, aimAt, snapshot, poseCheck,
       setMonitor: d => venue && venue.setMonitor(d),
-      setReducedMotion(v) { reduced = !!v; },
+      setInfo: d => hall && hall.setInfo(d),
+      setReducedMotion(v) { reduced = !!v; hall && hall.setReduced(reduced); },
+      get hall() { return hall; },
       setHand(h) { if (S.mode !== 'ready' || !bowler) return false; S.hand = h === 'left' ? 'left' : 'right'; bowler.setHand(S.hand); bowler.setPlan(S.input); return true; },
       setShadows(on) { renderer.shadowMap.enabled = !!on; scene.traverse(o => { if (o.material) { const ms = Array.isArray(o.material) ? o.material : [o.material]; ms.forEach(m => { m.needsUpdate = true; }); } }); },
       get state() { return { mode: S.mode, outcomeT: S.outcomeT, launched: S.launched }; }, world, camera, renderer, scene, quality: Q,

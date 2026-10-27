@@ -23,6 +23,12 @@ async function throwToQuestion(h) {
 const result = (h, extra) => h.send(Object.assign({ type: PRE + 'result', token: TOKEN, index: h.G().round, correct: true, pending: false, feedback: 'ok' }, extra));
 
 (async () => {
+  await ok('every script loaded by games/bowling/index.html exists and parses', async () => {
+    const fs = require('fs'), path = require('path'), vm = require('vm'), dir = path.join(__dirname, '../games/bowling');
+    const html = fs.readFileSync(path.join(dir, 'index.html'), 'utf8'), srcs = [...html.matchAll(/<script src="([^"?]+)/g)].map(m => m[1]);
+    assert.ok(srcs.includes('hall.js') && srcs.includes('audio.js') && srcs.length >= 14, srcs.join(','));
+    for (const s of srcs) { const f = path.join(dir, s); assert.ok(fs.existsSync(f), 'missing ' + s); new vm.Script(fs.readFileSync(f, 'utf8'), { filename: s }); }
+  });
   await ok('ready is posted first, with location.origin as target (never "*")', async () => {
     const h = load({ embedded: true }); await h.flush();
     assert.equal(h.posted[0].m.type, PRE + 'ready'); assert.ok(h.posted.every(p => p.target === h.origin));

@@ -72,7 +72,7 @@
       hs, angle: a, power, k, O, d, r, yaw: Math.PI - a, releaseSpeed,
       slide: hs > 0 ? 'L' : 'R', trail: hs > 0 ? 'R' : 'L', throwHand: hs > 0 ? 'R' : 'L', otherHand: hs > 0 ? 'L' : 'R',
       t: {
-        step1: [T(0.10), T(0.48)], step2: [T(0.52), T(0.92)], step3: [T(0.96), T(1.32)], step4: [T(1.36), T(1.62)],
+        step1: [T(0.10), T(0.48)], step2: [T(0.52), T(0.92)], step3: [T(0.96), T(1.32)], step4: [T(1.36), T(1.66)],
         slideEnd: T(2.02), trailPush: T(1.44), trailOff: T(1.70), trailSet: T(2.08),
         pushaway: [T(0.08), T(0.52)], downswing: [T(0.52), T(0.92)], backswing: [T(0.92), T(1.32)], forward: [T(1.32), T(1.96)],
         release: T(1.96), follow: T(2.42), finish: T(2.62)
@@ -83,12 +83,12 @@
     // ball-of-foot (toe joint) ground points, local (s, l)
     const lc = BODY_L;
     P.foot = {
-      slide: { stance: [-3.10, lc - FOOT_HALF], p2: [-2.04, lc - FOOT_HALF + 0.01], contact: [-0.59, lc - 0.02], end: [-0.09, lc + 0.03] },
-      trail: { stance: [-3.14, lc + FOOT_HALF], p1: [-2.66, lc + FOOT_HALF], p3: [-1.34, lc + FOOT_HALF - 0.01], finish: [-0.87, lc - 0.21] }
+      slide: { stance: [-3.10, lc - FOOT_HALF], p2: [-1.96, lc - FOOT_HALF + 0.01], contact: [-0.80, lc - 0.02], end: [-0.09, lc + 0.03] },
+      trail: { stance: [-3.14, lc + FOOT_HALF], p1: [-2.60, lc + FOOT_HALF], p3: [-1.34, lc + FOOT_HALF - 0.01], finish: [-0.87, lc - 0.21] }
     };
     // pelvis keys [t, value, slope]
-    P.pelvisS = [[0, -3.25, 0], [T(0.48), -2.99, 1.0 / k], [T(0.92), -2.43, 1.55 / k], [T(1.32), -1.72, 1.9 / k], [T(1.62), -1.10, 2.0 / k], [T(1.96), -0.47, 0.7 / k], [T(2.30), -0.37, 0.08 / k], [T(2.62), -0.36, 0]];
-    P.pelvisY = [[0, 0.865, 0], [T(0.25), 0.858, 0], [T(0.48), 0.84, 0], [T(0.71), 0.85, 0], [T(0.92), 0.815, 0], [T(1.12), 0.83, 0], [T(1.32), 0.785, -0.2], [T(1.47), 0.76, -0.3], [T(1.62), 0.69, -0.45], [T(1.82), 0.575, -0.28], [T(1.96), 0.52, -0.08], [T(2.30), 0.525, 0], [T(2.62), 0.54, 0]];
+    P.pelvisS = [[0, -3.25, 0], [T(0.48), -2.99, 1.0 / k], [T(0.92), -2.37, 1.6 / k], [T(1.32), -1.72, 1.9 / k], [T(1.62), -1.10, 2.0 / k], [T(1.96), -0.47, 0.7 / k], [T(2.30), -0.37, 0.08 / k], [T(2.62), -0.36, 0]];
+    P.pelvisY = [[0, 0.865, 0], [T(0.25), 0.85, 0], [T(0.48), 0.822, 0], [T(0.71), 0.83, 0], [T(0.92), 0.80, 0], [T(1.12), 0.795, 0], [T(1.32), 0.785, -0.2], [T(1.47), 0.76, -0.3], [T(1.62), 0.69, -0.45], [T(1.82), 0.575, -0.28], [T(1.96), 0.52, -0.08], [T(2.30), 0.525, 0], [T(2.62), 0.54, 0]];
     P.pelvisL = [[0, lc, 0], [T(0.48), lc + 0.012, 0], [T(0.92), lc - 0.012, 0], [T(1.32), lc + 0.01, 0], [T(1.62), lc - 0.01, 0], [T(1.96), lc + 0.01, 0], [T(2.62), lc + 0.01, 0]];
     // torso: forward lean of the pelvis (tilt) and of the spine (bend), side bend and twist
     P.tilt = [[0, 0.06, 0], [T(0.5), 0.08, 0], [T(1.32), 0.14, 0], [T(1.62), 0.2, 0], [T(1.96), 0.30, 0], [T(2.62), 0.28, 0]];
@@ -128,20 +128,21 @@
   /** Foot state: toe-joint ground point (world), heel raise, lift, heading offset, contact. */
   function footState(P, which, t) {
     const F = P.foot[which], T = P.t;
-    let s, l, lift = 0, heel = 0, turn = 0.1, contact = 'planted';
-    const swing = (a, b, t0, t1, peak = 0.075) => {
+    let s, l, lift = 0, heel = 0, turn = 0.1, contact = 'planted', flat = 1;   // flat: toes kept flat on the floor (1) or following the foot (0)
+    const swing = (a, b, t0, t1, peak = 0.075, h0 = 0.55) => {   // h0 = heel raise reached before toe-off
       const u = clamp((t - t0) / (t1 - t0), 0, 1), e = smoother(u);
       s = lerp(a[0], b[0], e); l = lerp(a[1], b[1], e);
-      lift = peak * Math.sin(Math.PI * clamp(u * 1.06, 0, 1));
-      heel = u < 0.5 ? lerp(0.55, 0.05, u / 0.5) : lerp(0.05, -0.12, (u - 0.5) / 0.4);
-      if (u > 0.9) heel = lerp(-0.12, 0, (u - 0.9) / 0.1);
+      // velocity-continuous profiles: the foot leaves and meets the floor without a kink at the knee
+      lift = peak * Math.pow(Math.sin(Math.PI * u), 2) * (1 + 0.15 * Math.sin(Math.PI * u));
+      heel = u < 0.5 ? lerp(h0, 0.05, smooth(u / 0.5)) : u < 0.78 ? lerp(0.05, -0.1, smooth((u - 0.5) / 0.28)) : lerp(-0.1, 0, smooth((u - 0.78) / 0.22));
+      flat = u < 0.3 ? 1 - smooth(u / 0.3) : smooth((u - 0.8) / 0.2);   // continuous: no knee snap at toe-off / landing
       contact = 'swing';
     };
     const preLift = (pt, tl, amount = 0.55, dur = 0.2 * P.k) => { s = pt[0]; l = pt[1]; heel = amount * smooth((t - (tl - dur)) / dur); };
     if (which === 'trail') {
       const [a1, b1] = T.step1, [a3, b3] = T.step3;
       if (t < a1) preLift(F.stance, a1, 0.35, 0.12 * P.k);
-      else if (t < b1) swing(F.stance, F.p1, a1, b1);
+      else if (t < b1) swing(F.stance, F.p1, a1, b1, 0.075, 0.35);
       else if (t < a3) preLift(F.p1, a3);
       else if (t < b3) swing(F.p1, F.p3, a3, b3);
       else if (t < T.trailOff) { s = F.p3[0]; l = F.p3[1]; heel = 0.95 * smooth((t - T.trailPush) / (T.trailOff - T.trailPush)); }
@@ -149,20 +150,28 @@
         const u = (t - T.trailOff) / (T.trailSet - T.trailOff), e = smooth(u);
         s = lerp(F.p3[0], F.finish[0], e); l = lerp(F.p3[1], F.finish[1], smoother(u));
         lift = 0.06 * Math.sin(Math.PI * clamp(u * 1.15, 0, 1));
-        heel = lerp(0.95, 1.08, e); turn = lerp(0.1, -0.55, e); contact = u > 0.85 ? 'toe' : 'swing';
+        heel = lerp(0.95, 1.08, e); turn = lerp(0.1, -0.55, e); contact = u > 0.85 ? 'toe' : 'swing'; flat = 1;
       } else { s = F.finish[0]; l = F.finish[1]; heel = 1.08; turn = -0.55; contact = 'toe'; }
     } else {
       const [a2, b2] = T.step2, [a4, b4] = T.step4;
       if (t < a2) { s = F.stance[0]; l = F.stance[1]; heel = 0; preLift(F.stance, a2); }
       else if (t < b2) swing(F.stance, F.p2, a2, b2);
       else if (t < a4) preLift(F.p2, a4, 0.5);
-      else if (t < b4) { swing(F.p2, F.contact, a4, b4, 0.06); if ((t - a4) / (b4 - a4) > 0.75) heel = lerp(-0.06, 0, ((t - a4) / (b4 - a4) - 0.75) / 0.25); }
+      else if (t < b4) {
+        swing(F.p2, F.contact, a4, b4, 0.06, 0.5);
+        // the slide foot lands already moving forward at the slide's initial speed (no stop-and-go kink)
+        const u = clamp((t - a4) / (b4 - a4), 0, 1), ds = F.contact[0] - F.p2[0];
+        const vEnd = 2 * (F.end[0] - F.contact[0]) / (T.slideEnd - b4), m1 = vEnd * (b4 - a4) / ds;
+        const H = (-2 * u * u * u + 3 * u * u) + (u * u * u - u * u) * m1;
+        s = F.p2[0] + ds * H;
+        turn = lerp(0.1, 0.04, smooth(u));                 // heading eases into the slide heading
+      }
       else if (t < T.slideEnd) { const u = (t - b4) / (T.slideEnd - b4), e = 1 - (1 - u) * (1 - u); s = lerp(F.contact[0], F.end[0], e); l = lerp(F.contact[1], F.end[1], e); contact = 'slide'; turn = 0.04; }
       else { s = F.end[0]; l = F.end[1]; contact = 'planted'; turn = 0.04; }
       if (t >= b4) turn = 0.04;
     }
     const an = ankleFromToe(heel);
-    return { toe: world(P, s, l, 0), s, l, lift, heel, turn: turn, contact, ankleLocal: an };
+    return { toe: world(P, s, l, 0), s, l, lift, heel, turn: turn, contact, flat, ankleLocal: an };
   }
 
   /** Recovery after the finish: the trailing foot steps up beside the slide foot and the bowler stands. */
@@ -173,7 +182,7 @@
     const st = clamp((tr - 0.15) / 0.55, 0, 1), e = smoother(st);
     const trail = {
       toe: world(P, lerp(trailFrom[0], trailTo[0], e), lerp(trailFrom[1], trailTo[1], e), 0),
-      lift: 0.05 * Math.sin(Math.PI * st), heel: st < 1 ? lerp(1.08, 0, smooth(st * 1.3)) : 0, turn: lerp(-0.55, 0.1, e), contact: st > 0 && st < 1 ? 'swing' : 'planted'
+      lift: 0.05 * Math.sin(Math.PI * st), heel: st < 1 ? lerp(1.08, 0, smooth(st * 1.3)) : 0, turn: lerp(-0.55, 0.1, e), contact: st > 0 && st < 1 ? 'swing' : 'planted', flat: 1
     };
     trail.ankleLocal = ankleFromToe(trail.heel);
     const slide = { toe: world(P, slideToe[0], slideToe[1], 0), lift: 0, heel: 0, turn: lerp(0.04, -0.1, rise), contact: 'planted' };
@@ -191,12 +200,14 @@
     const ps = hermite(P.pelvisS, tc), py = hermite(P.pelvisY, tc), pl = hermite(P.pelvisL, tc);
     const breathe = t < 0 ? 0.006 * Math.sin(t * 2.4) : 0;
     const feet = { [P.slide]: footState(P, 'slide', tc), [P.trail]: footState(P, 'trail', tc) };
-    const theta = swingTheta(P, tc);
+    const thetaRaw = swingTheta(P, tc);
     // the ball is held against the body until the end of the pushaway; then it hangs from the throwing arm
     const pa = P.t.pushaway, u = clamp((tc - pa[0]) / (pa[1] - pa[0]), 0, 1), e = smooth(u);
-    const held = { forward: lerp(0.29, 0.34, e), down: lerp(0.21, 0.25, e), lateral: lerp(0.09, 0.11, e) }; // in the chest frame
+    const held = { forward: lerp(0.28, 0.31, e), down: lerp(0.21, 0.24, e), lateral: lerp(0.09, 0.09, e) }; // in the chest frame
     const pend = clamp((tc - (pa[1] - 0.10 * P.k)) / (0.16 * P.k), 0, 1);   // blend held -> pendulum
-    const supportOff = smooth((tc - (P.t.downswing[0] - 0.08 * P.k)) / (0.2 * P.k)); // non-throwing hand leaves the ball
+    // the pendulum angle exists slightly before the end of the pushaway so the held -> swing blend is continuous
+    const theta = thetaRaw !== null ? thetaRaw : (pend > 0 ? P.theta[0][1] : null);
+    const supportOff = smooth((tc - (pa[1] - 0.17 * P.k)) / (0.17 * P.k));   // non-throwing hand lets go as the ball moves out into the swing
     const released = t >= P.t.release;
     const vel = hermiteSlope(P.pelvisS, tc);
     let phase = 'stance';

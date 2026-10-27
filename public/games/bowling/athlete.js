@@ -131,6 +131,9 @@
       this.clipMap = {}; clips.forEach(c => { this.clipMap[c.name] = c; });
       this.actions = {}; this.current = null; this.currentName = '';
       this.captureRest();
+      this.clipPose = {}; for (const k in this.bones) this.clipPose[k] = { q: this.rest[k].q.clone(), p: this.rest[k].p.clone() };
+      this.filtPose = {}; for (const k in this.bones) this.filtPose[k] = { q: this.rest[k].q.clone(), p: this.rest[k].p.clone() };
+      this.clipSmoothing = opts.clipSmoothing ?? 8;
       this.pose = {
         pelvisPos: new T.Vector3(), pelvisW: 0, tilt: 0, roll: 0, turn: 0,
         bend: 0, side: 0, twist: 0, look: null, lookW: 0,
@@ -175,8 +178,11 @@
       this.headFwd = new T.Vector3(0, 0, 1).applyQuaternion(rest.Head.wq.clone().invert());
     }
 
+    restoreClipPose() { for (const k in this.bones) { const o = this.bones[k], c = this.clipPose[k]; o.quaternion.copy(c.q); o.position.copy(c.p); } }
+    saveClipPose() { for (const k in this.bones) { const o = this.bones[k], c = this.clipPose[k]; c.q.copy(o.quaternion); c.p.copy(o.position); } }
     play(name, { fade = 0.35, loop = true, speed = 1, offset = 0, weight = 1 } = {}) {
       const clip = this.clipMap[name]; if (!clip) return null;
+      this.restoreClipPose();   // a new binding saves the current pose as its 'original state': give it the clean clip pose
       let a = this.actions[name];
       if (!a) { a = this.mixer.clipAction(clip); this.actions[name] = a; }
       if (this.current === a) return a;
@@ -195,8 +201,29 @@
     setTransform(x, z, yaw) { this.root.position.set(x, 0, z); this.yaw = yaw; this.root.rotation.set(0, yaw, 0); }
 
     update(dt) {
-      for (const k in this.bones) { const o = this.bones[k], r = this.rest[k]; o.quaternion.copy(r.q); o.position.copy(r.p); }
+      // Base pose = the clip pose of the previous frame, then the mixer. Three's PropertyMixer only writes a
+      // property when its value changed since the last apply; with compressed clips many values repeat between
+      // frames, so starting from the bind pose (as the basketball fork did) made those bones snap to rest on
+      // alternate frames -> visible shaking. Restoring the last clip pose keeps unchanged values correct.
+      this.restoreClipPose();
       this.mixer.update(dt);
+      const active = Object.values(this.actions).some(a => a.isRunning() && a.getEffectiveWeight() > 1e-4);
+      if (!active) for (const k in this.bones) { const o = this.bones[k], r = this.rest[k]; o.quaternion.copy(r.q); o.position.copy(r.p); }
+      this.saveClipPose();
+      // light temporal filter on clip output: some reaction clips (cheer, clap) carry motion-capture noise in the
+      // hands; a ~120 ms low-pass removes the frame-to-frame tremble without visibly delaying the gesture
+      // The filter also runs while a clip fades out to the bind pose, and snaps exactly onto it once converged
+      // (so the procedural delivery starts from the exact bind pose: the release stays frame-rate independent).
+      this.inactiveTime = active ? 0 : (this.inactiveTime || 0) + dt;
+      if (this.clipSmoothing > 0) {
+        const a = dt > 0 ? 1 - Math.exp(-dt * this.clipSmoothing) : 0, settled = this.inactiveTime > 1.0;
+        for (const k in this.bones) {
+          const o = this.bones[k], f = this.filtPose[k];
+          if (a > 0) { f.q.slerp(o.quaternion, a); f.p.lerp(o.position, a); }
+          if (settled) { f.q.copy(o.quaternion); f.p.copy(o.position); }   // 1 s after the last clip: exactly the bind pose
+          o.quaternion.copy(f.q); o.position.copy(f.p);
+        }
+      }
       this.root.updateMatrixWorld(true);
       const b = this.bones, p = this.pose, rest = this.rest;
       const yawQ = _q[0].setFromAxisAngle(UP, this.yaw);
@@ -236,7 +263,7 @@
         // sole constraint: neither the heel nor the toe tip may go below the floor. Toes stay flat while the
         // heel rises (up to the toes' bending limit); in the swing they follow the foot. If a point would
         // sink, the whole foot is lifted by that amount (it then pivots on that point, as a real foot does).
-        const keepPitch = f.toeFlat >= 0.5 ? Math.max(0, f.heel - 0.8) : f.heel;
+        const keepPitch = f.heel > 0 ? f.heel - f.toeFlat * Math.min(f.heel, 0.8) : f.heel;   // continuous in toeFlat
         const qToe = _q[5].setFromAxisAngle(pitchAxis, keepPitch).multiply(qYaw);
         const toeJointY = f.toe.y + f.lift;
         const tipY = toeJointY + _v[8].copy(rest[`${s}_tipVec`]).applyQuaternion(qToe).y;
@@ -251,11 +278,10 @@
         setWorldQuat(b[`${s}_Foot`], cur.slerp(desired, f.w));
         // toes stay flat on the floor while the heel rises (limited dorsiflexion)
         const toe = b[`${s}_Toe0`];
-        if (toe && f.toeFlat > 0 && f.heel > 0) {
-          const keep = Math.max(0, f.heel - 0.8);
-          const qT = _q[7].setFromAxisAngle(pitchAxis, keep).multiply(qYaw).multiply(rest[`${s}_Toe0`].wq);
+        if (toe && f.heel > 0) {
+          const qT = _q[7].setFromAxisAngle(pitchAxis, keepPitch).multiply(qYaw).multiply(rest[`${s}_Toe0`].wq);
           const curT = worldQuat(toe, _q[8]);
-          setWorldQuat(toe, curT.slerp(qT, f.toeFlat * f.w));
+          setWorldQuat(toe, curT.slerp(qT, f.w));
         }
       }
       // clavicles: move the shoulder joint toward a direction (e.g. drop the throwing shoulder)

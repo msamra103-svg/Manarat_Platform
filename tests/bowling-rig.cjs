@@ -109,5 +109,41 @@ const ok = async (name, fn) => { await fn(); passed++; console.log('PASS', name)
     }
     assert.ok(stanceBalls.every(p => p.distanceTo(stanceBalls[0]) < 0.02), 'stance pose drifts between rounds');
   });
+  await ok('no shaking: smooth stance (with the idle clip), no frame-to-frame zig-zag, no ball pop, debounced side-step', async () => {
+    const R = await makeBowler({ hand: 'right' }), bw = R.bowler, T = R.T;
+    const bones = ['Pelvis', 'Spine2', 'Head', 'R_Hand', 'L_Hand', 'R_Forearm', 'L_Forearm', 'L_Calf', 'R_Calf', 'L_Foot', 'R_Foot'];
+    const W = n => bw.athlete.worldOf(n, new T.Vector3());
+    let hist = [];
+    const stats = {};
+    const rec = label => {
+      const p = bones.map(W).concat([bw.ball.pos.clone()]); hist.push(p); if (hist.length > 4) hist.shift(); if (hist.length < 4) return;
+      const st = stats[label] = stats[label] || { acc: 0, n: 0, bigZig: 0, maxJump: 0 };
+      p.forEach((_, i) => {
+        const d1 = hist[2][i].clone().sub(hist[1][i]).sub(hist[1][i].clone().sub(hist[0][i]));
+        const d2 = hist[3][i].clone().sub(hist[2][i]).sub(hist[2][i].clone().sub(hist[1][i]));
+        st.acc += d2.length() * 3600; st.n++;
+        if (d1.dot(d2) < 0 && d1.length() > 0.008 && d2.length() > 0.008) st.bigZig++;       // 8 mm alternating kinks
+        st.maxJump = Math.max(st.maxJump, d2.length());
+      });
+    };
+    bw.setPlan({ start: 0, angle: 0, power: 0.65, spin: 0 }); bw.startStance();
+    for (let i = 0; i < 150; i++) { bw.update(1 / 60); rec('stance'); }
+    // dragging the aim every frame must not make the feet slide or step repeatedly
+    const toeL0 = W('L_Toe0');
+    for (let i = 0; i < 40; i++) { bw.setPlan({ start: 0.004 * i, angle: 0.06 * i, power: 0.65, spin: 0 }); bw.update(1 / 60); rec('drag'); }
+    assert.ok(W('L_Toe0').distanceTo(toeL0) < 0.002, 'feet moved while the aim was being dragged');
+    for (let i = 0; i < 90; i++) { bw.update(1 / 60); }
+    assert.ok(bw.stanceSettled, 'one clean side-step after the aim settles');
+    hist = []; bw.startApproach();
+    while (bw.t < bw.plan.t.release - 0.05) { bw.update(1 / 60); rec('approach'); }   // the ball leaves the hand at release
+    hist = []; while (bw.t < bw.plan.end + 1) bw.update(1 / 60);
+    bw.startRecover('cheer_small'); for (let i = 0; i < 300; i++) { bw.update(1 / 60); rec('react'); }
+    const S = k => stats[k];
+    assert.ok(S('stance').acc / S('stance').n < 1, 'stance acceleration noise ' + (S('stance').acc / S('stance').n).toFixed(2) + ' m/s2');
+    assert.equal(S('stance').bigZig, 0); assert.equal(S('drag').bigZig, 0);
+    assert.equal(S('approach').bigZig, 0, 'approach zig-zags');
+    assert.ok(S('approach').maxJump < 0.04, 'largest per-frame velocity change during the approach ' + S('approach').maxJump.toFixed(3) + ' m');
+    assert.ok(S('react').bigZig <= 2, 'reaction clip tremble ' + S('react').bigZig);
+  });
   console.log(`\n${passed} rig tests passed`);
 })().catch(e => { console.error(e); process.exit(1); });

@@ -30,11 +30,12 @@
     const lookTarget = V();
     const S = { held: V(), pend: V(), nT: V(), fT: V(), a: V(), n: V(), chestUp: V(), chestFwd: V(), right: V(), side: V() };
     const athPose = ath.pose;
-    const supportState = { value: 1, reach: 0 };
+    const supportState = { value: 1, vel: 0, reach: 0 };
+    let curDt = 0, handFade = 1;   // hand constraints fade out while a reaction clip takes over the arms
 
     function setFoot(side, f, w = 1) {
       const F = athPose.foot[side];
-      F.w = w; fromArr(f.toe, F.toe); F.lift = f.lift || 0; F.heel = f.heel || 0; F.turn = f.turn ?? 0.1; F.toeFlat = f.contact === 'swing' ? 0.25 : 1;
+      F.w = w; fromArr(f.toe, F.toe); F.lift = f.lift || 0; F.heel = f.heel || 0; F.turn = f.turn ?? 0.1; F.toeFlat = f.flat ?? (f.contact === 'swing' ? 0 : 1);
       F.kneeDir.set(0, 0, 0);
     }
 
@@ -82,11 +83,13 @@
       fT.sub(V().copy(nT).multiplyScalar(fT.dot(nT))).normalize();
       // floor safety (never needed with the planned poses, guarded anyway)
       if (ballPos.y < R + 0.012) ballPos.y = R + 0.012;
-      poleT = V().copy(sh).addScaledVector(nT, -0.45).addScaledVector(side, 0.18).addScaledVector(UP, -0.1 * (1 - pend));
-      if (pend < 0.5) poleT.addScaledVector(UP, -0.35).addScaledVector(fwd, -0.15);
+      // elbow pole blends continuously from 'held' (down and back) to 'swing' (behind the arm): no elbow flip
+      const heldW = 1 - smooth(pend);
+      poleT = V().copy(sh).addScaledVector(nT, -0.45).addScaledVector(side, 0.18).addScaledVector(UP, -0.1 * (1 - pend))
+        .addScaledVector(UP, -0.35 * heldW).addScaledVector(fwd, -0.15 * heldW);
       const released = !!r.released;
       const hT = athPose.hand[throwS];
-      hT.w = 1; hT.pos.copy(palmPos);
+      hT.w = handFade; hT.pos.copy(palmPos);
       hT.ndir.copy(nT); hT.fdir.copy(fT); hT.pole.copy(poleT);
       hT.curl = released ? 0.18 : 0.62; hT.thumb = released ? 0.1 : 0.45;
       // support hand: under the inner side of the ball, then away to a balance position
@@ -100,9 +103,16 @@
       const balPos = down.lerp(out, bal);
       // the support hand only stays on the ball while it can reach it comfortably (never floats beside it)
       const reachO = supPos.distanceTo(shO) / (a.armLength + 0.06);
-      const sup = Math.min(r.support, smooth((1.02 - reachO) / 0.05));
-      supportState.value = sup; supportState.reach = reachO;
-      hO.w = 1;
+      const supTarget = Math.min(r.support, smooth((1.03 - reachO) / 0.1));
+      // eased over time so the hand leaves the ball in a natural motion, never in one frame
+      // critically damped (2nd order) easing: the hand leaves the ball with continuous velocity, never in one frame
+      if (curDt > 0) {
+        const w = 12, x = supportState.value - supTarget, v = supportState.vel;
+        const e = Math.exp(-w * curDt), nx = (x + (v + w * x) * curDt) * e, nv = (v - w * (v + w * x) * curDt) * e;
+        supportState.value = Math.min(1, Math.max(0, supTarget + nx)); supportState.vel = nv;
+      } else { supportState.value = supTarget; supportState.vel = 0; }
+      const sup = supportState.value; supportState.reach = reachO;
+      hO.w = handFade;
       hO.pos.copy(balPos).lerp(supPos, sup);
       hO.ndir.copy(UP).negate().lerp(supN, sup).normalize();
       hO.fdir.copy(side).negate().lerp(supF, sup).normalize();
@@ -116,7 +126,7 @@
       }
     };
 
-    function applyRequest(r, w = 1) {
+    function applyRequest(r, w = 1) {  // (third argument, the stance plan, only matters for the look target)
       req = r;
       athPose.pelvisW = w; fromArr(r.pelvis, athPose.pelvisPos);
       athPose.tilt = r.tilt; athPose.bend = r.bend; athPose.side = r.side * P.hs; athPose.twist = r.twist * P.hs; athPose.roll = 0; athPose.turn = 0;
@@ -128,58 +138,77 @@
       athPose.clavicle[P.otherHand] = null;
     }
 
+    // Stance placement. The planted feet belong to `Ps` (the plan the bowler is standing on); aiming changes the
+    // target plan `P`. The bowler never slides: once the aim has been still for a moment (or a throw is requested)
+    // he side-steps from Ps to P, one foot after the other, and only then Ps = P. While the player drags a slider
+    // nothing restarts, so there is no repeated half-step.
+    let Ps = P, pendingT = 0, approachQueued = false;
+    const differs = (a, b) => Math.abs(a.O[0] - b.O[0]) > 0.004 || Math.abs(a.angle - b.angle) > 2e-3;
     function setPlan(inputs) {
       lastInputs = Object.assign({}, inputs);
-      const next = M.plan({ start: inputs.start, angle: inputs.angle, power: inputs.power, hand });
+      P = M.plan({ start: inputs.start, angle: inputs.angle, power: inputs.power, hand });
       opts.spin = inputs.spin || 0;
-      if (mode === 'stance' && (Math.abs(next.O[0] - P.O[0]) > 0.005 || Math.abs(next.angle - P.angle) > 1e-3)) {
-        const from = M.sample(P, -0.5), to = M.sample(next, -0.5);
-        shuffle = { from: shuffle ? currentStance() : from, to, u: 0, dir: Math.sign(to.pelvis[0] - from.pelvis[0]) || 1 };
-      }
-      P = next;
-      ath.setTransform(0, 0, P.yaw);
+      pendingT = 0;                                        // debounce: wait until the aim stops changing
+      if (mode !== 'stance') { Ps = P; ath.setTransform(0, 0, P.yaw); }
     }
-    function currentStance() { return shuffle && shuffle.cur ? shuffle.cur : M.sample(P, -0.5); }
 
-    /** Side-step when the stance position changes: each foot steps (lifts) to its new spot, no sliding. */
+    /** Side-step from Ps to P: each foot lifts and steps to its new spot (no sliding). */
     function shuffleSample(dt) {
-      const sh = shuffle; sh.u = Math.min(1, sh.u + dt / 0.6);
+      const sh = shuffle; sh.u = Math.min(1, sh.u + dt / 0.7);
       const first = sh.dir > 0 ? 'R' : 'L', second = first === 'R' ? 'L' : 'R';
       const r = JSON.parse(JSON.stringify(sh.to));
       const step = (side, a, b) => {
         const u = clamp((sh.u - a) / (b - a), 0, 1), e = M.smoother(u);
         const f0 = sh.from.feet[side], f1 = sh.to.feet[side];
-        r.feet[side] = Object.assign({}, f1, { toe: [lerp(f0.toe[0], f1.toe[0], e), 0, lerp(f0.toe[2], f1.toe[2], e)], lift: 0.05 * Math.sin(Math.PI * u), contact: u > 0 && u < 1 ? 'swing' : 'planted', heel: 0.12 * Math.sin(Math.PI * u) });
+        r.feet[side] = Object.assign({}, f1, { toe: [lerp(f0.toe[0], f1.toe[0], e), 0, lerp(f0.toe[2], f1.toe[2], e)], lift: 0.045 * Math.sin(Math.PI * u), contact: u > 0 && u < 1 ? 'swing' : 'planted', heel: 0.1 * Math.sin(Math.PI * u), flat: 1 - Math.sin(Math.PI * u) });
       };
-      step(first, 0, 0.55); step(second, 0.4, 1);
+      step(first, 0, 0.55); step(second, 0.42, 1);
       const e = smooth(sh.u);
-      r.pelvis = [lerp(sh.from.pelvis[0], sh.to.pelvis[0], e), sh.to.pelvis[1] - 0.012 * Math.sin(Math.PI * sh.u), lerp(sh.from.pelvis[2], sh.to.pelvis[2], e)];
-      sh.cur = r;
-      if (sh.u >= 1) shuffle = null;
+      r.pelvis = [lerp(sh.from.pelvis[0], sh.to.pelvis[0], e), sh.to.pelvis[1] - 0.01 * Math.sin(Math.PI * sh.u), lerp(sh.from.pelvis[2], sh.to.pelvis[2], e)];
+      ath.setTransform(0, 0, lerp(sh.fromYaw, sh.toPlan.yaw, e));
+      if (sh.u >= 1) { Ps = sh.toPlan; shuffle = null; ath.setTransform(0, 0, Ps.yaw); }
       return r;
+    }
+    function maybeShuffle(dt, force) {
+      if (shuffle || !differs(Ps, P)) return;
+      pendingT += dt;
+      if (!force && pendingT < 0.35) return;
+      const from = M.sample(Ps, -0.5), to = M.sample(P, -0.5);
+      shuffle = { from, to, toPlan: P, fromYaw: Ps.yaw, u: 0, dir: Math.sign((to.pelvis[0] - from.pelvis[0]) * P.r[0] + (to.pelvis[2] - from.pelvis[2]) * P.r[2]) || 1 };
     }
 
     function startStance() {
-      mode = 'stance'; t = -1; modeTime = 0; react = null; recover = null; shuffle = null; ball.attached = true;
+      mode = 'stance'; t = -1; modeTime = 0; react = null; recover = null; shuffle = null; ball.attached = true; approachQueued = false;
+      Ps = P; pendingT = 0; supportState.value = 1; supportState.vel = 0;
       ath.setTransform(0, 0, P.yaw);
       ath.play('idle', { fade: 0.3, speed: 0.85 });
     }
-    function startApproach() { if (mode !== 'stance') return false; shuffle = null; mode = 'approach'; t = 0; ath.stopClips(0.22); return true; }
+    function beginApproach() { approachQueued = false; shuffle = null; Ps = P; ath.setTransform(0, 0, P.yaw); mode = 'approach'; t = 0; ath.stopClips(0.22); }
+    /** Starts the delivery; if the bowler still has to side-step to the new stance, he does that first. */
+    function startApproach() {
+      if (mode !== 'stance' || approachQueued) return false;
+      if (shuffle || differs(Ps, P)) { approachQueued = true; return true; }
+      beginApproach(); return true;
+    }
 
     /** Pose at approach time tt, without advancing clips (used to read the exact release state). */
     function evaluate(tt) {
+      curDt = 0;
       applyRequest(M.sample(P, tt));
       ath.update(0);
       return { pos: ball.pos.clone(), quat: ball.quat.clone() };
     }
 
     function update(dt) {
+      curDt = dt; if (mode !== 'react') handFade = 1;
       modeTime += dt;
       prevBall.copy(ball.pos);
       if (mode === 'stance') {
-        const r = shuffle ? shuffleSample(dt) : M.sample(P, -0.5 + 0 * modeTime);
+        maybeShuffle(dt, approachQueued);
+        const r = shuffle ? shuffleSample(dt) : M.sample(Ps, -0.5);
         r.bend += 0.012 * Math.sin(modeTime * 1.7); r.pelvis[1] += 0.004 * Math.sin(modeTime * 1.7);
-        applyRequest(r);
+        applyRequest(r, 1, Ps);
+        if (approachQueued && !shuffle) beginApproach();
       } else if (mode === 'approach' || mode === 'finish') {
         t += dt;
         const r = M.sample(P, t);
@@ -205,7 +234,7 @@
         const w = smooth(modeTime / 0.45);
         athPose.pelvisW = 1 - w; athPose.tilt *= (1 - w); athPose.bend *= (1 - w); athPose.side *= (1 - w); athPose.twist *= (1 - w);
         for (const s of ['L', 'R']) setFoot(s, recover.feet[s]);
-        athPose.hand.L.w = athPose.hand.R.w = 1 - w;
+        handFade = 1 - w; athPose.hand.L.w = athPose.hand.R.w = handFade;
         athPose.clavicle.L = athPose.clavicle.R = null;
         req = w < 1 ? req : null;
         if (ath.current && !ath.current.loop && ath.current.time >= ath.current.getClip().duration - 0.05 && modeTime > 2) ath.play('idle', { fade: 0.6 });
@@ -268,6 +297,7 @@
     return {
       athlete: ath, ball, get plan() { return P; }, get mode() { return mode; }, get t() { return t; }, get request() { return req; },
       setHand(h) { hand = h === 'left' ? 'left' : 'right'; shuffle = null; P = M.plan(Object.assign({}, lastInputs, { hand })); startStance(); }, get hand() { return hand; },
+      get stanceSettled() { return !shuffle && !differs(Ps, P); },
       setPlan, startStance, startApproach, startRecover, evaluate, update, poseReport, clearance,
       dispose() { ath.dispose(); }
     };

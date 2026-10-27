@@ -51,6 +51,11 @@
   // ------------------------------------------------------------------ audio
   const prefs = store.get('manarat-bowling-audio', { muted: false, volume: 0.8 });
   const audio = BowlingAudio.create({ muted: prefs.muted, volume: prefs.volume });
+  // QA only: log every audio call against the game clock so a throw can be re-rendered offline (record-throw.cjs)
+  let qaClock = 0; const audioLog = [];
+  if (QA) for (const m of ['event', 'rolling', 'crowd', 'setListener', 'stopAll']) {
+    const f = audio[m]; audio[m] = (...a) => { if (audioLog.length < 200000) audioLog.push({ t: qaClock, m, a: JSON.parse(JSON.stringify(a)) }); return f.apply(audio, a); };
+  }
   function savePrefs() { store.set('manarat-bowling-audio', { muted: audio.muted, volume: audio.volume }); }
   function unlockAudio() { audio.unlock().then(ok => { if (!ok && !audio.muted) setStatus('الصوت غير متاح في هذا المتصفح حاليًا؛ اللعبة تعمل بدونه.', true); }).catch(() => { }); }
   addEventListener('pointerdown', unlockAudio, { capture: true });
@@ -86,6 +91,7 @@
     $('assignmentTitle').textContent = S.title || 'البولينج';
     $('assignmentMeta').textContent = S.meta; show('assignmentMeta', !!S.meta);
     document.title = (S.title ? S.title + ' | ' : '') + 'البولينج | ' + SCHOOL;
+    scene && scene.setInfo && scene.setInfo({ title: S.title, round: S.round, total: S.total, points: S.points, lastPins: S.lastPins, correct: S.correctN });
     scene && scene.setMonitor({ round: S.total ? 'الرمية ' + digits(S.round + 1) + '/' + digits(S.total) : '', big: S.lastPins, caption: 'القوارير الساقطة في الرمية', footer: S.title || SCHOOL });
   }
   function controlsUI() {
@@ -400,6 +406,7 @@
   }
   function frame(dt, raw = dt) {
     frames++;
+    qaClock += dt;
     scene.update(dt);
     const c = scene.camera; audio.setListener(c.position.toArray(), [c.matrixWorld.elements[0], c.matrixWorld.elements[1], c.matrixWorld.elements[2]]);
     if (raw > 0) governor(Math.min(raw, 1));             // the governor judges real frame time, not the clamped step
@@ -450,6 +457,6 @@
     step(dt = 1 / 60, n = 1) { for (let k = 0; k < n; k++) frame(dt); return S.phase; },
     until(pred, dt = 1 / 60, max = 3000) { for (let k = 0; k < max; k++) { if (pred(S.phase)) return true; frame(dt); } return false; },
     state: () => ({ phase: S.phase, round: S.round, total: S.total, resultUsed: S.resultUsed, nextSent: S.nextSent, outcomeSent: S.outcomeSent, configured: S.configured }),
-    shoot, enterHall, next, answer: i => { const b = $('choices').querySelectorAll('button')[i]; b && b.click(); }, audioAnalyse: () => audio.analyse(), scene
+    shoot, enterHall, next, answer: i => { const b = $('choices').querySelectorAll('button')[i]; b && b.click(); }, audioAnalyse: () => audio.analyse(), audioLog: () => audioLog, get clock() { return qaClock; }, scene
   };
 })();
