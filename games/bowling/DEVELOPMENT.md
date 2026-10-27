@@ -1,6 +1,6 @@
 # Bowling V20 — developer notes
 
-Bowling-only code. Entry: `index.html` → `../vendor/three.min.js` (shared r128) → `vendor/*` (r128 add-ons) → `physics.js` → `motion.js` → `athlete.js` → `bowler.js` → `crowd.js` → `venue.js` → `audio.js` → `scene.js` → `game.js` → `../../js/platform-nav.js`.
+Bowling-only code. Entry: `index.html` → `../vendor/three.min.js` (shared r128) → `vendor/*` (r128 add-ons) → `physics.js` → `motion.js` → `athlete.js` → `bowler.js` → `crowd.js` → `venue.js` → `hall.js` → `audio.js` → `scene.js` → `game.js` → `../../js/platform-nav.js`.
 
 | File | Role |
 |---|---|
@@ -10,7 +10,8 @@ Bowling-only code. Entry: `index.html` → `../vendor/three.min.js` (shared r128
 | `bowler.js` | Applies the plan to the rig; derives the ball from the shoulder/chest every frame; hand targets on the ball surface; exact release evaluation; stance side-steps; recovery + reaction clips; pose/clearance reports for tests. |
 | `venue.js` | Procedural hall (lanes, markings, gutters, deck, pit, masking signage, monitors, sweep + spotting table, ball return, seats, walls, lights). |
 | `crowd.js` | Instanced GPU-skinned spectators (fork of basketball `crowd.js`) with bowling-sized reactions. |
-| `audio.js` | Synthesised spatial audio with voice limits and lifecycle. |
+| `hall.js` | Hall interior over the venue shell: slat wainscot, acoustic panels, columns, ceiling, exit door, LED wall (ball-path diagram, educational slides, live progress via `scene.setInfo`), side-wall slide screens, promotion lightboxes, scrolling tickers. Canvas screens redraw at a capped rate; static parts merged per material. |
+| `audio.js` | Synthesised spatial audio (modal resonators, seamless loops, ambience, distant lanes), time-sliced background synthesis, voice limits and lifecycle; accepts an `OfflineAudioContext` (`create({ context })`, `.at(t)`) for QA renders. |
 | `scene.js` | Renderer, quality tiers, lighting, pins/ball meshes, camera director, aim guide, physics stepping (fixed sub-steps, halfway stop), release hand-off, next-rack sequence. |
 | `game.js` | UI, input, educational flow, platform contract, `ManaratGameControls`, quality governor, QA hooks. |
 

@@ -138,8 +138,7 @@
     const curtainMat = M({ color: '#0a0a0c', roughness: 1 });
     const metalMat = M({ color: '#8b9097', roughness: 0.32, metalness: 0.75, envMap: env, envMapIntensity: 0.8 });
     const wallMat = M({ color: '#2c2a30', roughness: 0.85 });
-    const wallMaroon = M({ color: '#5d1027', roughness: 0.8 });
-    const ceilMat = M({ color: '#1d1e22', roughness: 0.9 });
+        const ceilMat = M({ color: '#1d1e22', roughness: 0.9 });
     const carpetMat = M({ map: carpetTexture(), roughness: 0.95 });
     const seatMat = M({ color: '#7a1633', roughness: 0.7 }); seatMat.userData.cast = true;
     const seatFrame = M({ color: '#3a3d44', roughness: 0.5, metalness: 0.5 });
@@ -249,13 +248,8 @@
     add(box(0.3, 6, 36), wallMat, -halfHall - 0.15, 3, -6);
     add(box(0.3, 6, 36), wallMat, halfHall + 0.15, 3, -6);
     add(box(halfHall * 2 + 0.6, 6, 0.3), wallMat, 0, 3, 12.6);
-    add(box(halfHall * 2 + 0.6, 1.2, 0.05), wallMaroon, 0, 2.4, 12.44);
-    add(box(halfHall * 2 + 0.6, 0.2, 40), ceilMat, 0, 5.1, -6);
-    // side-wall maroon wainscot with a gold rail
-    for (const sd of [-1, 1]) {
-      add(box(0.04, 1.1, 34), wallMaroon, sd * (halfHall - 0.02), 0.55, -6);
-      add(box(0.05, 0.03, 34), goldMat, sd * (halfHall - 0.03), 1.12, -6);
-    }
+        add(box(halfHall * 2 + 0.6, 0.2, 40), ceilMat, 0, 5.1, -6);
+    // wall finishes, screens, tickers and lightboxes are added by hall.js (BowlingHall) in front of this shell
     // light panels (emissive) in the ceiling over the approach and the lanes
     for (let z = 10; z > -16; z -= 3.2) for (const cx of laneXs.filter((_, i) => i % 2 === 0)) add(box(1.1, 0.03, 0.5), lightPanel, cx + PITCH / 2, 4.98, z);
     // deck light fascia under the masking
@@ -380,7 +374,7 @@
       disposables.forEach(d => d.dispose && d.dispose());
       scene.remove(group);
     }
-    return { group, seats, setMonitor, reset, update, get resetting() { return !!anim; }, sweep, table, neighborPins, laneXs, PITCH, returnX, halfHall, maskY, maskZ, dispose };
+    return { group, seats, setMonitor, reset, update, get resetting() { return !!anim; }, sweep, table, neighborPins, laneXs, PITCH, returnX, halfHall, maskY, maskZ, maskW, maskH, dispose };
   }
 
   root.BowlingVenue = { build, PITCH, BOARD, mergeInto };
