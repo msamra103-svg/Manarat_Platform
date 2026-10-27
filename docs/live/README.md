@@ -31,3 +31,13 @@ Frontend: run `npm run build` to regenerate public assets, including live.html. 
 `node tests/live-browser.cjs` exercises the real frontend with a teacher and two independent student contexts, backed by the SQL RPC in PGlite. It uses test API transport; production authentication is not mocked in the deployed code. Screenshots and CSV are produced in CI. Physical phones and a real 80-student classroom load test are not claimed.
 
 Third-party QR renderer: qrcode-generator 1.4.4 by Kazuhiko Arase (MIT), bundled locally in js/vendor. No participant information is sent to a QR image service.
+
+## Automatic question-winner celebrations
+
+When a question ends (timeout or the teacher's close action), its question and choices disappear. An eight-second stage shows the name and selected avatar of the fastest correct respondent, with local fanfare, lights and confetti. The server uses that question's recorded `elapsed_ms`, regardless of the cumulative ranking or whether speed-bonus scoring is enabled. Exact ties share the stage; a round without correct answers shows encouragement and the correct answer without naming a winner. Answer keys and winner data remain hidden until reveal.
+
+New sessions have automatic advancement enabled by default. The teacher can turn it off when creating a session; existing sessions keep their saved setting. In automatic mode the server advances to the next question after the celebration, or to the final podium after the last question. The teacher's “تجاوز الاحتفال” button advances immediately; stale/repeated controls cannot skip an extra question. Students see the same winners and cannot skip. Reconnection does not restart the server deadline or replay the fanfare.
+
+The final 3–2–1 podium still stays open until the teacher closes it. Sound preferences, question countdown cues, scoring, CSV reports and the original game name remain unchanged.
+
+Apply the `live_round_celebration` migration before publishing the frontend. It replaces the existing security-invoker RPC, keeps table access private and includes explicit service-role grants. No Edge Function change is required. `npm run test:live` runs the SQL, API-boundary and browser regressions, including automatic transition, skip, winner correctness, tied/empty rounds, phone/desktop/fullscreen layouts and the persistent final podium.

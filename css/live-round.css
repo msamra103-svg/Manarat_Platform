@@ -1,0 +1,36 @@
+/* Server-timed celebration between questions; final awards remain separate. */
+body.session-screen #liveApp[data-phase="reveal"]{grid-template-columns:1fr;grid-template-rows:auto minmax(0,1fr) auto}
+body.session-screen #liveApp[data-phase="reveal"] .session-actions{grid-row:3}
+.round-stage{grid-column:1/-1;grid-row:2;position:relative;isolation:isolate;overflow:hidden;min-height:0;border:1px solid #d6b36a;border-radius:24px;text-align:center;color:#fff;background:radial-gradient(ellipse at 50% 60%,#8a1538 0,#50132b 45%,#210c18 100%);box-shadow:0 12px 32px #55102525}
+.round-content{position:relative;z-index:2;height:100%;min-height:0;display:flex;flex-direction:column;align-items:center;gap:clamp(4px,1vh,10px);padding:clamp(12px,2vh,22px)}
+.round-eyebrow{color:#ffe0a0;font-size:13px;letter-spacing:1px}
+.round-stage h2{color:#fff;margin:0;font-size:clamp(22px,3.2vw,40px);line-height:1.3}
+.round-subtitle{margin:0;color:#f8dce6;font-size:clamp(12px,1.6vw,18px)}
+.round-winners{display:flex;align-items:center;justify-content:center;align-content:center;flex-wrap:wrap;gap:16px;flex:1;min-height:0;width:100%;overflow:hidden}
+.round-person{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;flex:0 1 290px;min-width:100px;max-width:95%;animation:award-enter .6s ease both}
+.round-avatar-wrap{position:relative;flex-shrink:0;padding-top:16px}
+.round-stage .round-avatar{width:clamp(70px,15vh,150px);height:clamp(70px,15vh,150px);margin:0;border-radius:28%;border:4px solid #f6cf7d;background:#fff9ed;box-shadow:0 0 0 8px #f6cf7d16,0 0 48px #e8a74750}
+.round-crown{position:absolute;top:-10px;left:50%;transform:translateX(-50%);font-size:clamp(28px,5vh,46px);line-height:1;filter:drop-shadow(0 3px 4px #210c1870)}
+.round-person strong{font-size:clamp(22px,3vw,36px);line-height:1.3;overflow-wrap:anywhere;max-width:100%;color:#fff}
+.round-speed{border:1px solid #f6cf7d50;border-radius:24px;padding:5px 14px;background:#210c184d;color:#ffe4b5;font-size:14px}
+.round-answer{max-width:min(940px,96%);min-height:0;flex:0 1 auto;padding:9px 18px;border:1px solid #ffffff30;border-radius:16px;background:#ffffff12;overflow:auto;max-height:23%}
+.round-answer>span{display:block;font-size:11px;color:#f8dce6;margin-bottom:3px}
+.round-answer>strong{font-size:clamp(14px,1.8vw,21px);line-height:1.4;overflow-wrap:anywhere;color:#fff}
+.round-answer p{font-size:12px;margin:5px 0 0;color:#ffe4b5}
+.round-controls{display:flex;align-items:center;justify-content:center;gap:15px;flex-wrap:wrap;flex-shrink:0}
+.round-controls p{font-size:13px;margin:0;color:#f8dce6}
+.round-controls button{background:linear-gradient(135deg,#fff0bf,#e5bd73);color:#4c1025;border:1px solid #fff0bf;border-radius:12px;font-size:13px;min-height:38px;padding:7px 16px;font-weight:bold;box-shadow:0 3px 16px #10000830}
+.round-controls button:hover{background:#fff4d9;transform:translateY(-1px)}
+.round-controls button:focus-visible{outline:3px solid white;outline-offset:3px}
+.round-progress{height:4px;width:min(400px,70%);background:#ffffff25;border-radius:8px;overflow:hidden;flex-shrink:0;margin-top:3px}
+.round-progress span{height:100%;width:100%;display:block;background:#f6cf7d;transition:width .2s linear}
+.round-confetti{position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:3}
+.round-confetti i{position:absolute;left:var(--x);top:-20px;width:9px;height:16px;animation:award-confetti 3.4s var(--delay) ease-in both}
+.round-encouragement{font-size:clamp(50px,12vh,110px)}
+.round-winners .page-controls{margin:0;gap:8px;color:white}
+.round-winners .page-controls button{background:#fff5df;color:#551025;min-height:27px;padding:2px 9px}
+@media(max-width:650px){.round-content{padding:13px 10px;gap:6px}.round-stage h2{font-size:24px}.round-person{flex-basis:145px;gap:7px}.round-person:only-child{flex-basis:290px}.round-person strong{font-size:24px}.round-stage .round-avatar{width:100px;height:100px}.round-speed{padding:5px 7px;font-size:11px}.round-controls{gap:8px;flex-direction:column}.round-controls button{min-height:36px}.round-answer{max-height:25%;padding:8px 12px}}
+@media(max-height:500px){.round-content{padding:6px 14px;gap:3px}.round-eyebrow{display:none}.round-stage h2{font-size:20px}.round-subtitle{font-size:11px}.round-winners{gap:8px}.round-person{flex-direction:row;flex-wrap:wrap;gap:5px;flex-basis:320px}.round-avatar-wrap{padding-top:4px}.round-crown{font-size:22px;top:-7px}.round-stage .round-avatar{width:52px;height:52px;border-width:2px}.round-person strong{font-size:20px;max-width:65%}.round-speed{padding:2px 8px;font-size:10px}.round-answer{padding:3px 14px;max-height:25%}.round-answer>span{display:inline;font-size:10px;margin-inline-end:8px}.round-answer>strong{font-size:13px}.round-answer p{font-size:10px;margin:1px 0 0}.round-controls{flex-direction:row;gap:12px}.round-controls p{font-size:11px}.round-controls button{min-height:28px;padding:3px 10px;font-size:11px}.round-progress{height:3px;margin:0}.round-winners .page-controls{font-size:10px;flex-basis:auto}.round-winners .page-controls button{min-height:22px;font-size:10px}}
+@media(prefers-reduced-motion:reduce){.round-person,.round-confetti i{animation:none!important}.round-confetti{display:none}.round-progress span,.round-controls button{transition:none}}
+
+.round-crown svg,.round-encouragement svg{display:block;width:1em;height:1em}
