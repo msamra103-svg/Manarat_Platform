@@ -1,25 +1,133 @@
 <!doctype html>
 <html lang="ar" dir="rtl">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#10171d"><title>الكرة الطائرة</title><link rel="stylesheet" href="../sports/legacy-sport.css?v=20.0"><link rel="stylesheet" href="../experiences/experience.css?v=20.0"></head>
-<body data-sport="volleyball">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#1a0710">
+<title>الكرة الطائرة</title>
+<link rel="stylesheet" href="volleyball.css?v=24.0">
+</head>
+<body data-sport="volleyball" data-phase="loading">
 <main id="stadium">
-  <canvas id="pitch" aria-label="الكرة الطائرة؛ استخدم زر بدء الجولة"></canvas>
+  <canvas id="pitch" aria-label="ملعب الكرة الطائرة ثلاثي الأبعاد" role="img"></canvas>
   <div class="vignette" aria-hidden="true"></div>
+
   <header class="hud">
-    <div class="identity"><span class="live-dot"></span><div><b>الكرة الطائرة</b><small>تجربة ثلاثية الأبعاد · تعلّم تفاعلي</small></div></div>
-    <div class="scoreboard" aria-label="لوحة النتيجة"><span>فريقك</span><b id="score">0</b><span class="score-separator">:</span><b id="opponentScore" class="score-opponent">0</b><span>المنافس</span><i></i><span>الجولة</span><b id="round">1 / 3</b></div>
-    <div class="tools"><button id="sound" aria-pressed="true" title="تشغيل أو كتم الأصوات">الصوت: مفعّل</button><button id="fullscreen" title="ملء الشاشة" aria-label="ملء الشاشة"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5"/></svg></button></div>
+    <div class="brand">
+      <svg class="crest" viewBox="0 0 48 48" aria-hidden="true"><path d="M24 3l17 6v13c0 11-7.5 19-17 23C14.5 41 7 33 7 22V9z" fill="#8a1538" stroke="#fff" stroke-width="2"/><circle cx="24" cy="22" r="8.5" fill="none" stroke="#fff" stroke-width="2"/><path d="M24 13.5c-3 4-3 13 0 17M15.7 20c4.5 1.5 12 1.5 16.6 0M17.5 27.5c4-2.5 9-2.5 13 0" fill="none" stroke="#fff" stroke-width="1.6"/></svg>
+      <div><b>الكرة الطائرة</b><small>مدرسة أبو عبيدة الإعدادية للبنين</small></div>
+    </div>
+    <div class="board" aria-label="لوحة النتيجة">
+      <div class="team home"><span class="serve-dot" id="serveHome" title="فريقك يرسل"></span><span class="tname">أبو عبيدة<i>فريقك</i></span><b id="score">0</b></div>
+      <div class="mid"><span>الجولة</span><b id="round">1 / 3</b></div>
+      <div class="team away"><b id="opponentScore">0</b><span class="tname">المنافس<i>&nbsp;</i></span><span class="serve-dot" id="serveAway" title="المنافس يرسل"></span></div>
+    </div>
+    <div class="tools">
+      <button id="sound" aria-pressed="true" aria-haspopup="dialog" aria-controls="audioPanel" title="الصوت"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9zM16 8.5a5 5 0 010 7M18.5 6a8.5 8.5 0 010 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg><span class="sr">الصوت</span></button>
+      <button id="settings" aria-haspopup="dialog" aria-controls="settingsPanel" title="الإعدادات"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3.2" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg><span class="sr">الإعدادات</span></button>
+      <button id="fullscreen" title="ملء الشاشة" aria-label="ملء الشاشة"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5"/></svg></button>
+    </div>
   </header>
-  <div id="feedback" class="moment" role="status" aria-live="polite" hidden><small id="momentLabel"></small><h1 id="momentTitle"></h1><p id="momentText"></p></div>
-  <section id="welcome" class="welcome panel">
-    <span class="eyebrow">حركة متصلة · تحدٍ جديد</span><h1>الكرة الطائرة</h1>
-    <p>فريقان، ستة لاعبين لكل فريق. تبدأ الكرة بتبادل وتمرير وإعداد للهجوم. أجب عند الشبكة: إجابتك الصحيحة تحسم النقطة، والخاطئة تتيح للمنافس ردّ الكرة.</p>
-    <button id="start" class="primary" disabled>جارٍ تجهيز الملعب…</button><small id="modeLabel">تجربة تدريبية · لا تُسجّل في تقارير الطلاب</small>
+  <div class="subbar">
+    <span class="chip" id="modeChip">مباراة كاملة</span>
+    <span class="chip demo" id="demoBadge" hidden>وضع تجريبي · لا تُسجَّل النتائج</span>
+    <div class="progress" role="progressbar" aria-label="التقدّم في الأسئلة" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span id="progressFill"></span></div>
+  </div>
+
+  <section id="welcome" class="panel welcome" aria-labelledby="welcomeTitle">
+    <span class="eyebrow">ملعب داخلي · ستة لاعبين لكل فريق</span>
+    <h1 id="welcomeTitle">الكرة الطائرة</h1>
+    <p>تبادل حقيقي: إرسال، استقبال، إعداد، ثم الضربة الساحقة عند الشبكة. عند اللحظة الحاسمة تتوقف الكرة: إجابتك الصحيحة تحسم النقطة لفريقك، والخاطئة تمنح المنافس النقطة.</p>
+    <fieldset class="modes" aria-label="نوع التحدّي">
+      <legend>نوع التحدّي</legend>
+      <label><input type="radio" name="mode" value="match" checked><span>مباراة كاملة</span></label>
+      <label><input type="radio" name="mode" value="serve"><span>تدريب الإرسال</span></label>
+      <label><input type="radio" name="mode" value="receive"><span>تدريب الاستقبال</span></label>
+      <label><input type="radio" name="mode" value="attack"><span>تدريب الهجوم</span></label>
+      <label><input type="radio" name="mode" value="block"><span>تدريب حائط الصد</span></label>
+    </fieldset>
+    <button id="start" class="primary" disabled>جارٍ تجهيز الملعب…</button>
+    <small id="modeLabel">تجربة تدريبية · لا تُسجّل في تقارير الطلاب</small>
+    <small class="keys">المسافة: بدء/ضرب · الأسهم: منطقة التصويب · M: الصوت · F: ملء الشاشة</small>
   </section>
-  <section id="question" class="question panel" hidden aria-labelledby="questionText"><span class="eyebrow">حان وقت السؤال</span><h2 id="questionText"></h2><div id="choices"></div><p id="questionHelp">اختر إجابتك لتستكمل الجولة.</p></section>
-  <footer id="controls" hidden><div><span id="instruction">اختر زاوية التسديد</span><div class="aim" role="group" aria-label="زاوية التسديد"><button data-aim="left">اليسار</button><button data-aim="center" class="selected">المنتصف</button><button data-aim="right">اليمين</button></div></div><button id="shoot" class="primary">إرسال جديد</button><button id="reopen" hidden>عرض السؤال</button><button id="next" class="primary" hidden>الجولة التالية ←</button></footer>
-  <div id="loadingError" class="panel error" hidden><h2>تعذر تجهيز الملعب</h2><p>تحقق من اتصالك ثم أعد تحميل اللعبة.</p><button onclick="location.reload()">إعادة المحاولة</button></div>
+
+  <section id="question" class="panel question" hidden aria-labelledby="questionText" role="dialog">
+    <div class="qhead"><span class="eyebrow">حان وقت السؤال · الكرة متوقفة عند الشبكة</span><div class="timer" id="timer" aria-hidden="true"><svg viewBox="0 0 36 36"><circle cx="18" cy="18" r="15.5"/><circle id="timerArc" cx="18" cy="18" r="15.5"/></svg><b id="timerText">30</b></div></div>
+    <h2 id="questionText"></h2>
+    <div id="choices"></div>
+    <p id="questionHelp">اختر إجابتك لتستكمل التبادل.</p>
+  </section>
+
+  <div id="waitHost" class="toast" hidden role="status">السؤال معروض في نافذة المنصة · أجب هناك وستُستكمل الكرة</div>
+
+  <div id="feedback" class="moment" role="status" aria-live="polite" hidden>
+    <small id="momentLabel"></small><h1 id="momentTitle"></h1><em id="momentReason"></em><p id="momentText"></p>
+  </div>
+  <div id="replayBadge" class="replay" hidden><span>إعادة بطيئة</span><button id="skipReplay" aria-label="تخطّي الإعادة">تخطّي</button></div>
+  <div id="timing" class="timing" hidden aria-live="polite"></div>
+
+  <footer id="controls" hidden>
+    <div class="group" id="aimGroup">
+      <span id="instruction">اختر منطقة التصويب ثم ابدأ التبادل</span>
+      <div class="aim" role="radiogroup" aria-label="منطقة التصويب">
+        <button data-aim="right" role="radio" aria-checked="false">يمين</button>
+        <button data-aim="center" role="radio" aria-checked="true" class="selected">وسط</button>
+        <button data-aim="left" role="radio" aria-checked="false">يسار</button>
+      </div>
+      <div class="shot" role="radiogroup" aria-label="نوع الضربة" id="shotGroup">
+        <button data-shot="spike" role="radio" aria-checked="true" class="selected">ساحقة</button>
+        <button data-shot="tip" role="radio" aria-checked="false">خادعة</button>
+      </div>
+    </div>
+    <button id="shoot" class="primary">ابدأ التبادل ←</button>
+    <button id="hit" class="primary hit" hidden>اضرب!</button>
+    <button id="reopen" hidden>عرض السؤال</button>
+    <button id="next" class="primary" hidden>الجولة التالية ←</button>
+  </footer>
+
+  <section id="summary" class="panel summary" hidden aria-labelledby="summaryTitle">
+    <span class="eyebrow">الكرة الطائرة · ملخص الأداء</span>
+    <h1 id="summaryTitle">اكتملت التجربة</h1>
+    <div class="stats"><div><b id="sumCorrect">0</b><span>إجابات صحيحة</span></div><div><b id="sumAccuracy">0%</b><span>نسبة الصواب</span></div><div><b id="sumScore">0 : 0</b><span>النتيجة النهائية</span></div><div><b id="sumPending">0</b><span>قيد المراجعة</span></div></div>
+    <p id="sumNote">وضع تجريبي: هذه نتيجتك الشخصية في هذه الجلسة فقط، ولا تُرسل إلى أي تقرير.</p>
+    <button id="again" class="primary">العب مرة أخرى</button>
+  </section>
+
+  <section id="audioPanel" class="panel pop" hidden role="dialog" aria-label="إعدادات الصوت">
+    <h3>الصوت</h3>
+    <label><input type="checkbox" id="audioOn" checked> تشغيل الصوت</label>
+    <label>المؤثرات <input type="range" id="volSfx" min="0" max="1" step="0.05" value="0.9"></label>
+    <label>الجمهور <input type="range" id="volCrowd" min="0" max="1" step="0.05" value="0.6"></label>
+    <label>الموسيقى <input type="range" id="volMusic" min="0" max="1" step="0.05" value="0.35"></label>
+    <label><input type="checkbox" id="announcer" checked> المعلّق (إن توفّر صوت عربي في الجهاز)</label>
+    <label><input type="checkbox" id="ticking" checked> مؤقّت السؤال ودقّاته</label>
+    <button class="close" data-close="audioPanel">إغلاق</button>
+  </section>
+  <section id="settingsPanel" class="panel pop" hidden role="dialog" aria-label="الإعدادات">
+    <h3>الإعدادات</h3>
+    <label>جودة الرسوم
+      <select id="quality"><option value="auto">تلقائي</option><option value="low">منخفضة (أجهزة الفصل)</option><option value="medium">متوسطة</option><option value="high">عالية</option></select>
+    </label>
+    <label><input type="checkbox" id="replays" checked> الإعادة البطيئة بعد النقطة</label>
+    <label><input type="checkbox" id="calmMotion"> تقليل الحركة (كاميرا ثابتة)</label>
+    <p class="hint" id="qualityInfo"></p>
+    <button class="close" data-close="settingsPanel">إغلاق</button>
+  </section>
+
+  <div id="loading" class="overlay" role="status"><div class="spinner" aria-hidden="true"></div><p id="loadingText">جارٍ بناء الملعب واللاعبين…</p></div>
+  <div id="glLost" class="overlay" hidden role="status"><div class="spinner" aria-hidden="true"></div><p>جارٍ استعادة الرسوميات…</p></div>
+  <div id="loadingError" class="panel error" hidden><h2>تعذّر تجهيز الملعب</h2><p id="errorText">أعد تحميل اللعبة للمحاولة مرة أخرى.</p><button onclick="location.reload()">إعادة المحاولة</button></div>
   <span class="credit">مدرسة أبو عبيدة الإعدادية للبنين · الكرة الطائرة</span>
 </main>
-<script src="../vendor/three.min.js"></script><script src="../sports/athlete.js?v=20.0"></script><script src="../experiences/motion.js?v=20.0"></script><script src="../experiences/scene.js?v=20.0"></script><script src="../experiences/game.js?v=20.0"></script>
-<script src="../../js/platform-nav.js?v=20.1"></script></body></html>
+<script src="../vendor/three.min.js"></script>
+<script src="rally.js?v=24.0"></script>
+<script src="assets/athlete-data.js?v=24.1.1"></script>
+<script src="body.js?v=24.1.1"></script>
+<script src="athletes.js?v=24.1"></script>
+<script src="arena.js?v=24.0"></script>
+<script src="scene.js?v=24.0"></script>
+<script src="audio.js?v=24.0"></script>
+<script src="game.js?v=24.0"></script>
+<script src="../../js/platform-nav.js?v=20.1"></script>
+</body>
+</html>
