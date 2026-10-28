@@ -157,7 +157,21 @@
     mode.aimTargets = function () { return this.targets.filter(t => t.alive).map(t => ({ pos: t.pos, vel: t.vel, acc: t.acc, r: t.r, predict: t.predict })); };
     mode.roundComplete = function () { return !schedule.length && !this.targets.some(t => t.alive); };
     mode.remaining = function () { return schedule.length + this.targets.filter(t => t.alive).length; };
-    mode.startRound = function (round) { this.calm = false; this.time = 0; this.lastLaunch = 0; readyFor = 0; spawnRound(round); };
+    mode.startRound = function (round) { this.calm = false; this.time = 0; this.lastLaunch = 0; readyFor = 0; this.guided = false; this.guidedTarget = null; spawnRound(round); };
+    mode.prepareGuidedTarget = function () {
+      // Show an actual launched spinning clay disc in the field, with no waiting for the trap timer.
+      schedule = [];
+      launch({ house: 'front', v: new T.Vector3(0, 6.5, -12.5 * speedK) });
+      const t = this.targets[this.targets.length - 1];
+      t.pos.set(0.3, 5.0, -15.0);
+      t.prev.copy(t.pos);
+      t.vel.set(0, 0, -12.5 * speedK);
+      this.guidedTarget = t;
+      t.mesh.position.copy(t.pos);
+    };
+    mode.guidedVisualStep = function (h) {
+      if (this.guidedTarget && this.guidedTarget.alive) this.guidedTarget.spin += this.guidedTarget.spinRate * h;
+    };
     mode.hint = 'اشدد القوس — يُطلق الطبق عندما تكون جاهزًا';
     mode.calmDown = function () { this.calm = true; schedule = []; };
     mode.onHit = function (hit) {

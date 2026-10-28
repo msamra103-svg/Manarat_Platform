@@ -8,7 +8,7 @@ const PH = require('../games/target-shooting/physics/projectile.js');
 const source = fs.readFileSync(path.join(__dirname, '../games/target-shooting/game.js'), 'utf8');
 const html = fs.readFileSync(path.join(__dirname, '../games/target-shooting/index.html'), 'utf8');
 const school = fs.readFileSync(path.join(__dirname, '../js/school.js'), 'utf8');
-assert.match(source, /const guided = embedded \|\| \(!preset && location\.protocol !== 'file:'/);
+assert.match(source, /const guided = embedded \|\| \(QA && params\.has\('guided'\)\) \|\| \(!preset && location\.protocol !== 'file:'/);
 assert.match(source, /S\.drawing = false; phase\('flight'\); archer\.loose\(\)/);
 assert.match(source, /f\.flight\.t >= f\.pauseAt/);
 assert.match(source, /phase\('midflight'\)/);
@@ -19,7 +19,7 @@ assert.match(source, /const sol = PH\.solveLaunch\(f\.flight\.p, dest, PH\.SPEED
 assert.match(source, /clearArrows\(\); S\.midFlightPaused = false; archer\.standDown\(\)/);
 assert.match(school, /play\.template==='target-shooting'/);
 assert.match(school, /play\.template\+'-result'/);
-assert.match(html, /game\.js\?v=3-midflight/);
+assert.match(html, /game\.js\?v=4-four-modes/);
 
 const face = { x: 0, y: 1.55, z: -12 };
 const collider = { kind: 'disc', c0: face, c1: face, n: { x: 0, y: 0, z: 1 }, r: 0.61 };

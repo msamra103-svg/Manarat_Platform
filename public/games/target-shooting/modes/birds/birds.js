@@ -198,7 +198,25 @@
     mode.defaultRange = 32; mode.defaultPitch = 0.18; mode.pitchMax = 0.9; mode.yawLimit = 1.0;
     mode.roundComplete = function () { return !queue.length && !this.targets.some(t => t.alive); };
     mode.remaining = function () { return queue.length + this.targets.filter(t => t.alive).length; };
-    mode.startRound = function (round) { this.calm = false; this.time = 0; spawnWave(round); };
+    mode.startRound = function (round) { this.calm = false; this.time = 0; this.guided = false; this.guidedTarget = null; spawnWave(round); };
+    // One visible *real* 3D bird per educational question; no lengthy off-screen wave delay.
+    mode.prepareGuidedTarget = function () {
+      const next = queue.shift();
+      if (!next) return;
+      launch(next);
+      queue = [];
+      const t = this.targets[this.targets.length - 1];
+      // Start near the middle of the original curved flight path, where the bird is clearly visible.
+      t.s = t.len * 0.50;
+      sample(t, 0, true);
+      t.prev.copy(t.pos);
+      this.guidedTarget = t;
+      pose(t);
+    };
+    mode.guidedVisualStep = function (h) {
+      // Wings keep flapping gently, while the collider stays fixed for the graded arrow.
+      if (this.guidedTarget && this.guidedTarget.alive) this.guidedTarget.phase += h * 9;
+    };
     mode.calmDown = function () { this.calm = true; queue = []; for (const t of this.targets) if (t.alive) { t.alive = false; t.state = 'exit'; t.exitDir = t.fwd.clone().setY(0).normalize().add(new T.Vector3(0, 0.9, 0)).normalize(); } };
     mode.onHit = function (hit) {
       const c = hit.collider;

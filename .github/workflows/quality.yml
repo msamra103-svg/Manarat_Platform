@@ -35,3 +35,6 @@ jobs:
 
       - name: Verify mid-flight question and graded arrow trajectory
         run: node tests/target-shooting-guided-trajectory.cjs
+
+      - name: Verify four selectable 3D shooting modes with mid-flight questions
+        run: node tests/target-shooting-four-modes.cjs

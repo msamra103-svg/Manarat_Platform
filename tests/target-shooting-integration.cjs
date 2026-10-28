@@ -53,17 +53,19 @@ const assignment = { id: 'as', code: 'code', teacher_id: teacher, title: 'لعب
   assert.deepEqual(cfgMsg.shooting, shooting); assert.equal(cfgMsg.school, config.name); assert.equal(cfgMsg.student, 'طالب الرماية');
   const st0 = await F.evaluate(() => __tsQA.state);
   assert.equal(st0.mode, 'archery'); assert.equal(st0.difficulty, 'beginner'); assert.equal(st0.total, 2); assert.equal(st0.guided, true);
-  assert.equal(await F.evaluate(() => document.getElementById('modeCards').hidden && document.getElementById('diffGroup').hidden), true, 'advanced controls hidden');
-  console.log('PASS config handshake: existing tasks become simple auto-archery, settings hidden');
+  assert.equal(await F.evaluate(() => !document.getElementById('modeCards').hidden && document.getElementById('diffGroup').hidden), true, 'all four modes visible; advanced controls hidden');
+  assert.equal(await F.locator('#modeCards .card').count(), 4, 'four selectable modes');
+  console.log('PASS config handshake: four playable modes, automatic arrow and school grading');
   await snap(page, 'int_menu');
   await F.evaluate(() => __tsQA.start());
   await F.waitForFunction(() => document.body.dataset.phase === 'intro', null, { timeout: 60000 });
   await page.waitForTimeout(900);
-  await F.evaluate(() => { const Q = __tsQA; for (let i = 0; i < 360 && Q.state.phase !== 'question'; i++) Q.step(1, 1 / 60, false); });
+  await F.evaluate(() => { const Q = __tsQA; for (let i = 0; i < 360 && Q.state.phase !== 'midflight'; i++) Q.step(1, 1 / 60, false); });
+  await F.waitForFunction(() => document.body.dataset.phase === 'midflight', null, { timeout: 60000 });
   await F.waitForFunction(() => document.body.dataset.phase === 'question', null, { timeout: 60000 });
-  assert.equal(await F.evaluate(() => __tsQA.state.shots), 0, 'question comes before release');
-  assert.equal(await F.evaluate(() => __tsQA.state.archer), 'AIM_HOLD', 'bow is visibly drawn');
-  console.log('PASS archer auto draws -> centered school question, no shooting controls');
+  assert.equal(await F.evaluate(() => __tsQA.state.shots), 1, 'the arrow leaves bow before the question');
+  assert.equal(await F.evaluate(() => __tsQA.state.flights), 1, 'the same arrow is frozen mid-flight');
+  console.log('PASS archer draws then fires -> frozen arrow -> centered school question');
   await page.locator('#modal [data-action=answer]').first().waitFor({ timeout: 60000 }); await snap(page, 'int_question');
   // protocol hardening
   await page.evaluate(() => { const w = document.getElementById('target-shootingGame').contentWindow; w.postMessage({ type: 'school-target-shooting-result', token: 'not-the-session-token', index: 0, correct: true, pending: false }, location.origin); w.postMessage({ type: 'school-bowling-result', token: 'x', index: 0, correct: true }, location.origin); });
@@ -84,7 +86,8 @@ const assignment = { id: 'as', code: 'code', teacher_id: teacher, title: 'لعب
   await F.waitForFunction(() => __tsQA.state.round === 1 && ['intro', 'preparing'].includes(document.body.dataset.phase), null, { timeout: 60000 });
   console.log('PASS next → advance → round 2');
   await page.waitForTimeout(900);
-  await F.evaluate(() => { const Q = __tsQA; for (let i = 0; i < 360 && Q.state.phase !== 'question'; i++) Q.step(1, 1 / 60, false); });
+  await F.evaluate(() => { const Q = __tsQA; for (let i = 0; i < 360 && Q.state.phase !== 'midflight'; i++) Q.step(1, 1 / 60, false); });
+  await F.waitForFunction(() => document.body.dataset.phase === 'midflight', null, { timeout: 60000 });
   await F.waitForFunction(() => document.body.dataset.phase === 'question', null, { timeout: 60000 });
   await page.locator('#answerText').fill('الماء ضروري لحياة النبات'); await page.locator('[data-action=textAnswer]').click();
   await F.waitForFunction(() => document.body.dataset.phase === 'feedback', null, { timeout: 60000 });
