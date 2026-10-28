@@ -898,7 +898,7 @@ body.admin-open{overflow:hidden!important;}
 <body class="student-mode">
 
   <!-- إعدادات اللعبة القابلة للتخصيص والتصدير -->
-  <script id="gameConfigScript">window.GAME_CONFIG = {"isStudentExport": true, "schoolName": "مدرسة أبو عبيدة الإعدادية للبنين", "departmentName": "منصة التعلّم التفاعلي", "gameTitle": "بازل المهمة", "defaultPieces": 6, "bgOpacity": 0.08, "bgBlur": 4, "allowReferenceBtn": true, "targetGender": "male", "startBtnText": "ابدأ التحدي", "levelPromptText": "اختر المستوى المناسب", "playAgainBtnText": "العب مرة أخرى", "halfwayText": "أحسنت، أكملت نصف الصورة", "victoryMainText": "أحسنت! اكتملت الصورة", "victorySubText": "إنجاز رائع", "encouragementPhrases": ["أحسنت", "واصل التقدم", "تركيب صحيح"], "customImageDataUrl": "data:image/svg+xml,<svg%20xmlns=\"http://www.w3.org/2000/svg\"%20width=\"600\"%20height=\"400\"><rect%20width=\"600\"%20height=\"400\"%20fill=\"#8a1538\"/></svg>", "allowTouchSelect": true, "snapTolerance": 1, "showTimer": true, "showProgress": true, "showCounter": true, "showSoundBtn": true, "allowPauseBtn": true, "showRestartBtn": true, "showLevelSelector": true, "showInstructions": true, "showSchoolBadges": true, "showIntroPreview": true, "playPickupSound": true, "soundEnabled": false, "soundVolume": 85, "celebrationEnabled": true, "showConfetti": true, "showFireworks": true, "showBalloons": true, "showApplause": true, "showFanfare": true, "theme": "default", "allowedPieces": [6, 9, 12, 16], "levelLabel6": "سهل جداً — 6 قطع", "levelLabel9": "سهل — 9 قطع", "levelLabel12": "متوسط — 12 قطعة", "levelLabel16": "متقدم — 16 قطعة", "instructionsText": "🧩 اسحب القطع أو اختر قطعة ثم اضغط مكانها الصحيح", "persistId": "school-puzzle"};</script>
+  <script id="gameConfigScript">window.GAME_CONFIG = {"isStudentExport": true, "schoolName": "مدرسة أبو عبيدة الإعدادية للبنين", "departmentName": "منصة التعلّم التفاعلي", "gameTitle": "بازل المهمة", "defaultPieces": 6, "bgOpacity": 0.08, "bgBlur": 4, "allowReferenceBtn": true, "targetGender": "male", "startBtnText": "ابدأ التحدي", "levelPromptText": "اختر المستوى المناسب", "playAgainBtnText": "العب مرة أخرى", "halfwayText": "أحسنت، أكملت نصف الصورة", "victoryMainText": "أحسنت! اكتملت الصورة", "victorySubText": "إنجاز رائع", "encouragementPhrases": ["أحسنت", "واصل التقدم", "تركيب صحيح"], "customImageDataUrl": "data:image/svg+xml,<svg%20xmlns=\"http://www.w3.org/2000/svg\"%20width=\"600\"%20height=\"400\"><rect%20width=\"600\"%20height=\"400\"%20fill=\"#8a1538\"/></svg>", "allowTouchSelect": true, "snapTolerance": 1, "showTimer": true, "showProgress": true, "showCounter": true, "showSoundBtn": true, "allowPauseBtn": true, "showRestartBtn": true, "showLevelSelector": true, "showInstructions": true, "showSchoolBadges": true, "showIntroPreview": true, "playPickupSound": true, "soundEnabled": true, "soundVolume": 85, "celebrationEnabled": true, "showConfetti": true, "showFireworks": true, "showBalloons": true, "showApplause": true, "showFanfare": true, "theme": "default", "allowedPieces": [6, 9, 12, 16], "levelLabel6": "سهل جداً — 6 قطع", "levelLabel9": "سهل — 9 قطع", "levelLabel12": "متوسط — 12 قطعة", "levelLabel16": "متقدم — 16 قطعة", "instructionsText": "🧩 اسحب القطع أو اختر قطعة ثم اضغط مكانها الصحيح", "persistId": "school-puzzle"};</script>
 
   <!-- خلفية النجوم العائمة -->
   <div class="bg-decorations" id="bgStars"></div>
@@ -977,7 +977,7 @@ body.admin-open{overflow:hidden!important;}
         <button class="btn btn-primary" id="restartBtn">🔄 إعادة اللعب</button>
         
         
-        <button class="btn" id="fullscreenBtn" title="ملء الشاشة" aria-label="توسيع مساحة اللعب">⛶</button>
+        <button class="btn" id="fullscreenBtn" title="ملء الشاشة" aria-label="توسيع مساحة اللعب">⛶ ملء الشاشة</button>
         
       </div>
     </header>
@@ -1132,6 +1132,20 @@ body.admin-open{overflow:hidden!important;}
         gain.connect(this.masterGain || this.ctx.destination);
         osc.start(now);
         osc.stop(now + 0.07);
+      }
+
+      playWrongPlacement() {
+        if (this.muted) return;
+        this.init();
+        if (!this.ctx) return;
+        const now=this.ctx.currentTime, osc=this.ctx.createOscillator(), gain=this.ctx.createGain();
+        osc.type='sine';
+        osc.frequency.setValueAtTime(310,now);
+        osc.frequency.exponentialRampToValueAtTime(185,now+0.16);
+        gain.gain.setValueAtTime(0.11,now);
+        gain.gain.exponentialRampToValueAtTime(0.001,now+0.19);
+        osc.connect(gain);gain.connect(this.masterGain||this.ctx.destination);
+        osc.start(now);osc.stop(now+0.2);
       }
 
       playGameStart() {
@@ -2239,7 +2253,7 @@ body.admin-open{overflow:hidden!important;}
           if(Math.abs(pos.x-centerX)<=this.pieceW*.52*(window.GAME_CONFIG.snapTolerance||1) && Math.abs(pos.y-centerY)<=this.pieceH*.52*(window.GAME_CONFIG.snapTolerance||1)){
             this.snapAndLockPiece(p);
           } else {
-            this.showInlineNotice(window.GAME_CONFIG.targetGender==='male'?'جرّب مكانًا آخر للقطعة ✨':'جرّبي مكانًا آخر للقطعة ✨',1200);
+            sound.playWrongPlacement();this.showInlineNotice(window.GAME_CONFIG.targetGender==='male'?'جرّب مكانًا آخر للقطعة ✨':'جرّبي مكانًا آخر للقطعة ✨',1200);
           }
         }
       }
@@ -2276,6 +2290,7 @@ body.admin-open{overflow:hidden!important;}
             this.snapAndLockPiece(p,e.pointerId);return;
           }
           this.restoreTrayPiece(p);
+          sound.playWrongPlacement();
         }else{
           this.selectedPiece=p;
         }
@@ -2354,7 +2369,12 @@ body.admin-open{overflow:hidden!important;}
        * 5. الاحتفال الكرنفالي المتزامن (0 - 9 ثوانٍ)
        **************************************************************/
       triggerCarnivalVictory() {
-        if(window.GAME_CONFIG.assignmentToken&&parent!==window)parent.postMessage({type:'school-puzzle-complete',token:window.GAME_CONFIG.assignmentToken},location.origin);
+        const winningSession=this.sessionId,winningToken=window.GAME_CONFIG.assignmentToken;
+        // Give the fanfare, fireworks and applause their full celebration before the host records completion.
+        if(winningToken&&parent!==window)setTimeout(()=>{
+          if(this.isCompleted&&this.sessionId===winningSession&&window.GAME_CONFIG.assignmentToken===winningToken)
+            parent.postMessage({type:'school-puzzle-complete',token:winningToken},location.origin);
+        },8500);
         this.isCompleted = true;
         this.victoryTriggered = true;
         this.completionTimeMs = performance.now();
@@ -2810,6 +2830,8 @@ body.admin-open{overflow:hidden!important;}
     const soundToggleBtn = document.getElementById('soundToggleBtn');
     soundToggleBtn.addEventListener('click', () => {
       const isMuted = sound.toggleMute();
+      window.GAME_CONFIG.soundEnabled=!isMuted;
+      if(!isMuted){sound.init();sound.playPickup();}
       soundToggleBtn.textContent = isMuted ? '🔇 تشغيل الصوت' : '🔊 كتم الصوت';
     });
 
@@ -2819,19 +2841,19 @@ body.admin-open{overflow:hidden!important;}
       const root=document.documentElement;
       if(document.fullscreenElement) {
         try {await document.exitFullscreen();} catch (_) {}
-        fullscreenBtn.textContent='⛶';
+        fullscreenBtn.textContent='⛶ ملء الشاشة';
         return;
       }
       if(root.classList.contains('focus-mode')) {
         root.classList.remove('focus-mode');
-        fullscreenBtn.textContent='⛶';
+        fullscreenBtn.textContent='⛶ ملء الشاشة';
       } else if(typeof root.requestFullscreen==='function') {
-        try { await root.requestFullscreen(); fullscreenBtn.textContent='↙'; }
-        catch (_) { root.classList.add('focus-mode'); fullscreenBtn.textContent='↙'; }
+        try { await root.requestFullscreen(); fullscreenBtn.textContent='↙ خروج'; }
+        catch (_) { root.classList.add('focus-mode'); fullscreenBtn.textContent='↙ خروج'; }
       } else {
         // iPhone Safari does not expose fullscreen for arbitrary webpage elements.
         root.classList.add('focus-mode');
-        fullscreenBtn.textContent='↙';
+        fullscreenBtn.textContent='↙ خروج';
       }
       setTimeout(()=>game.resizeCanvas(),60);
     });
@@ -2844,7 +2866,7 @@ body.admin-open{overflow:hidden!important;}
 <script>
 window.addEventListener('message',e=>{if(parent===window||e.origin!==location.origin||e.source!==parent||e.data?.type!=='school-puzzle-config'||typeof e.data.image!=='string'||!e.data.image)return;
 const pieces=[4,6,9,12,16,25].includes(Number(e.data.pieces))?Number(e.data.pieces):9;
-Object.assign(window.GAME_CONFIG,{customImageDataUrl:e.data.image,schoolName:e.data.school||'مدرسة أبو عبيدة الإعدادية للبنين',gameTitle:e.data.title||'بازل الصور',defaultPieces:pieces,allowedPieces:[pieces],targetGender:e.data.gender==='female'?'female':'male',showLevelSelector:false,allowReferenceBtn:e.data.showReference!==false,assignmentToken:e.data.token||null});
-selectedDifficulty=pieces;game.applyConfigToUI();game.loadInitialImage();});
+Object.assign(window.GAME_CONFIG,{customImageDataUrl:e.data.image,schoolName:e.data.school||'مدرسة أبو عبيدة الإعدادية للبنين',gameTitle:e.data.title||'بازل الصور',defaultPieces:pieces,allowedPieces:[pieces],targetGender:e.data.gender==='female'?'female':'male',soundEnabled:true,showLevelSelector:false,allowReferenceBtn:e.data.showReference!==false,assignmentToken:e.data.token||null});
+selectedDifficulty=pieces;sound.muted=false;game.applyConfigToUI();game.loadInitialImage();});
 if(parent!==window)parent.postMessage({type:'school-puzzle-ready'},location.origin);
 </script><script src="../js/platform-nav.js?v=20.1"></script></body></html>
