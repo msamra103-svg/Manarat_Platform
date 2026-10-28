@@ -1542,10 +1542,12 @@ body.admin-open{overflow:hidden!important;}
      * 4. محرك البازل الهندسي (من 6 قطع إلى 16 قطعة كحد أقصى)
      **************************************************************/
     const DIFFICULTY_CONFIG = {
+      4:  { cols: 2, rows: 2 },
       6:  { cols: 3, rows: 2 },
       9:  { cols: 3, rows: 3 },
       12: { cols: 4, rows: 3 },
-      16: { cols: 4, rows: 4 }
+      16: { cols: 4, rows: 4 },
+      25: { cols: 5, rows: 5 }
     };
 
     class JigsawGame {
@@ -2352,7 +2354,7 @@ body.admin-open{overflow:hidden!important;}
        * 5. الاحتفال الكرنفالي المتزامن (0 - 9 ثوانٍ)
        **************************************************************/
       triggerCarnivalVictory() {
-        parent.postMessage({type:"school-puzzle-complete"},location.origin);
+        if(window.GAME_CONFIG.assignmentToken&&parent!==window)parent.postMessage({type:'school-puzzle-complete',token:window.GAME_CONFIG.assignmentToken},location.origin);
         this.isCompleted = true;
         this.victoryTriggered = true;
         this.completionTimeMs = performance.now();
@@ -2840,7 +2842,9 @@ body.admin-open{overflow:hidden!important;}
 
 <!-- ADMIN_SCRIPT_END -->
 <script>
-window.addEventListener('message',e=>{if(e.origin!==location.origin||e.source!==parent||e.data?.type!=='school-puzzle-config')return;
-Object.assign(window.GAME_CONFIG,{customImageDataUrl:e.data.image,schoolName:e.data.school,gameTitle:e.data.title,defaultPieces:e.data.pieces||6,allowedPieces:[e.data.pieces||6],targetGender:'male'});selectedDifficulty=e.data.pieces||6;game.applyConfigToUI();game.loadInitialImage();});
-parent.postMessage({type:'school-puzzle-ready'},location.origin);
+window.addEventListener('message',e=>{if(parent===window||e.origin!==location.origin||e.source!==parent||e.data?.type!=='school-puzzle-config'||typeof e.data.image!=='string'||!e.data.image)return;
+const pieces=[4,6,9,12,16,25].includes(Number(e.data.pieces))?Number(e.data.pieces):9;
+Object.assign(window.GAME_CONFIG,{customImageDataUrl:e.data.image,schoolName:e.data.school||'مدرسة أبو عبيدة الإعدادية للبنين',gameTitle:e.data.title||'بازل الصور',defaultPieces:pieces,allowedPieces:[pieces],targetGender:e.data.gender==='female'?'female':'male',showLevelSelector:false,allowReferenceBtn:e.data.showReference!==false,assignmentToken:e.data.token||null});
+selectedDifficulty=pieces;game.applyConfigToUI();game.loadInitialImage();});
+if(parent!==window)parent.postMessage({type:'school-puzzle-ready'},location.origin);
 </script><script src="../js/platform-nav.js?v=20.1"></script></body></html>
