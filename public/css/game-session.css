@@ -34,3 +34,28 @@ dialog.football-question .close{position:absolute;inset:6px 6px auto auto;z-inde
 @media(prefers-reduced-motion:reduce){dialog.football-question *{transition:none!important}}
 body:has(dialog.football-question[open]){overflow:hidden}
 dialog.football-question [data-game-nav-slot]{display:none!important}
+
+
+/* Target shooting (school assignment only): the question stays centered and is the sole control. */
+.playing-game dialog.target-shooting-question{
+  position:fixed;inset:0;margin:auto;width:min(620px,calc(100vw - 26px));
+  max-height:min(83svh,740px);overflow-y:auto;padding:24px 26px;border-radius:22px;
+  color:#fff;background:linear-gradient(150deg,rgba(36,12,28,.98),rgba(93,18,50,.98));
+  border:2px solid rgba(244,211,151,.65);box-shadow:0 18px 65px rgba(0,0,0,.42);
+}
+.playing-game dialog.target-shooting-question::backdrop{background:rgba(14,9,18,.34);backdrop-filter:blur(1.5px)}
+.target-shooting-question .game-session-hud{display:none}
+.target-shooting-question .game-layout{margin:0;max-width:none}
+.target-shooting-question .game-top{margin:0 32px 8px 0;color:#f7d6a4;font-weight:700}
+.target-shooting-question .card{border:0;background:transparent;color:#fff;padding:10px 0 0;box-shadow:none}
+.target-shooting-question .question{font-size:clamp(21px,3.2vw,28px);color:#fff;line-height:1.65;margin:12px 0;text-align:center}
+.target-shooting-question .progress{height:4px;background:#ffffff38}
+.target-shooting-question .answers{display:grid;grid-template-columns:1fr;gap:9px;margin:14px auto}
+.target-shooting-question .answers button{width:100%;background:#ffffff;color:#35212b;border:2px solid #e9cfda;min-height:51px;text-align:start;font-size:18px;justify-content:start}
+.target-shooting-question .answers button:hover{background:#fff4d9;border-color:#eac06f}
+.target-shooting-question #answerArea>button{margin:12px auto 0}
+.target-shooting-question .tag{background:#ffffff28;color:#fff}
+.target-shooting-question label{color:#fff}
+.target-shooting-question textarea,.target-shooting-question select{color:#30212b;background:#fff}
+.target-shooting-question .close{position:absolute;top:8px;left:8px;background:#ffffff28;color:#fff;border-radius:50%;width:42px;height:42px;padding:3px}
+@media(max-height:520px) and (orientation:landscape){.playing-game dialog.target-shooting-question{max-height:94svh;padding:12px 18px}.target-shooting-question .question{font-size:18px}.target-shooting-question .answers button{min-height:40px;padding:7px 12px}}

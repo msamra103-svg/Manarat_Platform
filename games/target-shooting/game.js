@@ -1,10 +1,10 @@
 /* Target Shooting 3D (التصويب على الهدف) — game controller: UI, input, rounds, educational flow and the
  * platform contract.
  *
- * Educational rule: each round the student shoots `arrowsPerQuestion` arrows at the mode's targets; then the
- * question opens. A correct answer banks the round's shooting points (plus a bonus); a wrong answer banks
- * nothing; a pending (teacher review) answer is neutral. The official school grade is computed by the
- * platform from the answers, never from game points. Shooting never changes the answer and vice versa.
+ * Platform mode: the archer draws automatically, a centered school question opens, and the server's
+ * answer result determines ONE arrow flight. Correct = target hit, wrong = visible miss; an essay awaiting
+ * teacher review is neutral and no arrow is shot. The independent/offline edition retains its original
+ * four shooting challenges, manual controls and scoring. No answer key is transmitted to this iframe.
  *
  * Contract (same-origin iframe, prefix school-target-shooting-, outgoing parent.postMessage(payload, location.origin)):
  *   game -> host: ready, question{token,index}, outcome{token,index,outcome,earned,hits}, next{token,index}, fullscreen{token,index}
@@ -22,6 +22,7 @@
   const $ = id => document.getElementById(id);
   const PREFIX = 'school-' + C.KEY + '-';
   const embedded = window.parent !== window;
+  const guided = embedded; // only the school platform iframe uses the one-question/one-arrow flow
   const params = new URLSearchParams(location.search);
   const QA = params.has('qa'), MANUAL = QA && params.has('manual');
   let preset = null; try { preset = JSON.parse(($('ts-preset') || {}).textContent || 'null'); } catch (e) { preset = null; }
@@ -34,9 +35,9 @@
 
   const S = {
     phase: 'loading', round: 0, total: 0, token: '', configured: !embedded, title: '', student: prefs.name || '',
-    mode: cfg.mode === 'choice' ? 'archery' : cfg.mode, difficulty: cfg.difficulty, points: 0, roundPoints: 0, correct: 0, pending: 0,
+    mode: guided ? 'archery' : cfg.mode === 'choice' ? 'archery' : cfg.mode, difficulty: guided ? 'beginner' : cfg.difficulty, points: 0, roundPoints: 0, correct: 0, pending: 0,
     shots: 0, hits: 0, roundShots: 0, roundHits: 0, arrowsLeft: 0, questions: [], result: null, resultUsed: false, nextSent: false,
-    loaded: false, paused: false, roundTimer: 0, endTimer: -1, simple: !!prefs.simple || cfg.controls === 'simple', drawing: false
+    loaded: false, paused: false, roundTimer: 0, endTimer: -1, simple: !!prefs.simple || cfg.controls === 'simple', drawing: false, guidedDecision: null
   };
   const timers = U.timerSet();
 
@@ -106,11 +107,17 @@
   function orientArrow(mesh, p, v) { mesh.position.set(p.x, p.y, p.z); v1.set(v.x, v.y, v.z).normalize(); mesh.quaternion.setFromUnitVectors(Z, v1); }
 
   function onRelease(pose) {
-    if (S.phase !== 'shooting' || S.arrowsLeft <= 0) return;
+    if (!(S.phase === 'shooting' || (guided && S.phase === 'flight')) || S.arrowsLeft <= 0) return;
     const draw = Math.max(0.55, pose.draw);
     const speed = PH.SPEED * (0.6 + 0.4 * draw);
     const o = PH.v3(pose.nock.x, pose.nock.y, pose.nock.z);
-    const sol = PH.solveLaunch(o, aim.point, speed);
+    // In school mode only the server-graded answer selects a deterministic trajectory.
+    // The target is stationary, centred, and the wrong trajectory passes well outside its rings.
+    const target = guided ? mode.targets[0] : null;
+    const point = guided && target && S.guidedDecision
+      ? new T.Vector3(target.pos.x + (S.guidedDecision === 'miss' ? 2.8 : 0), target.pos.y, target.pos.z)
+      : aim.point;
+    const sol = PH.solveLaunch(o, point, speed);
     const vel = sol ? sol.v : PH.v3(aim.launch.x * speed, aim.launch.y * speed, aim.launch.z * speed);
     const flight = new PH.Flight(o, vel, 'a' + S.shots);
     const mesh = arrowMesh(); orientArrow(mesh, flight.p, flight.v);
@@ -202,7 +209,7 @@
   };
   function buildMenu() {
     const box = $('modeCards'); box.innerHTML = '';
-    C.MODE_KEYS.forEach((k, i) => {
+    (guided ? ['archery'] : C.MODE_KEYS).forEach((k, i) => {
       const m = C.MODES[k], b = document.createElement('button');
       b.className = 'card'; b.type = 'button'; b.dataset.mode = k; b.setAttribute('role', 'radio');
       b.innerHTML = '<span class="num">' + D(i + 1) + '</span><div class="art">' + CARD_ART[k] + '</div><h3>' + m.title + '</h3><p>' + m.sub + '</p>';
@@ -212,6 +219,8 @@
       b.onmouseenter = b.onfocus = () => { if (!locked) previewSoon(k); };
       box.appendChild(b);
     });
+    $('modeCards').hidden = guided;
+    $('diffGroup').hidden = guided;
     const dg = $('diffGroup'); dg.classList.toggle('locked', embedded && cfg.lockDifficulty !== false && !!cfg.fromPlatform);
     dg.querySelectorAll('button').forEach(b => { b.onclick = () => { if (dg.classList.contains('locked')) return; S.difficulty = b.dataset.diff; menuUI(); previewSoon(S.mode, true); }; });
     menuUI();
@@ -226,13 +235,13 @@
     $('modeCards').querySelectorAll('.card').forEach(c => c.setAttribute('aria-checked', String(c.dataset.mode === S.mode)));
     $('diffGroup').querySelectorAll('button').forEach(b => b.setAttribute('aria-checked', String(b.dataset.diff === S.difficulty)));
     $('menuSchool').textContent = cfg.school + (cfg.department ? ' · ' + cfg.department : '');
-    $('menuLesson').textContent = S.title || cfg.lesson || 'لعبة تعليمية ثلاثية الأبعاد · أربعة تحديات رماية';
+    $('menuLesson').textContent = guided ? (S.title || 'اسحب القوس · أجب عن السؤال · شاهد السهم يصيب أو يخطئ') : S.title || cfg.lesson || 'لعبة تعليمية ثلاثية الأبعاد · أربعة تحديات رماية';
     const qn = S.total;
-    $('menuNote').textContent = embedded ? (S.configured ? 'مهمة المعلم: ' + D(qn) + ' أسئلة · ' + D(cfg.arrowsPerQuestion) + ' أسهم في كل جولة' : 'بانتظار بيانات المهمة من المنصة…')
+    $('menuNote').textContent = guided ? (S.configured ? D(qn) + ' أسئلة · سهم واحد لكل سؤال · التصويب تلقائي' : 'بانتظار بيانات المهمة من المنصة…')
       : (cfg.questions ? D(qn) + ' أسئلة من إعداد المعلم' : 'تدريب بأسئلة تجريبية · لا يُسجّل في تقارير المنصة') + ' · ' + D(cfg.arrowsPerQuestion) + ' أسهم في كل جولة';
     const ready = S.loaded && S.configured;
     $('btnStart').disabled = !ready;
-    $('btnStart').textContent = ready ? 'ابدأ التحدي: ' + C.MODES[S.mode].title : S.loaded ? 'بانتظار المهمة…' : 'جارٍ التجهيز…';
+    $('btnStart').textContent = ready ? (guided ? 'ابدأ الرماية التعليمية' : 'ابدأ التحدي: ' + C.MODES[S.mode].title) : S.loaded ? 'بانتظار المهمة…' : 'جارٍ التجهيز…';
     $('btnTeacher').hidden = role !== 'teacher';
     soundUI();
   }
@@ -273,7 +282,8 @@
   }
   function startRound() {
     timers.clear(); clearArrows();
-    S.roundPoints = 0; S.roundShots = 0; S.roundHits = 0; S.arrowsLeft = cfg.arrowsPerQuestion; S.endTimer = -1;
+    S.roundPoints = 0; S.roundShots = 0; S.roundHits = 0; S.arrowsLeft = guided ? 1 : cfg.arrowsPerQuestion; S.endTimer = -1;
+    S.guidedDecision = null; S.drawing = false;
     S.result = null; S.resultUsed = false; S.nextSent = false; S.outcomeSent = false;
     S.roundTimer = cfg.timeLimit;
     mode.rng = U.rng(101 + S.round * 7);
@@ -284,9 +294,22 @@
     const m = C.MODES[S.mode];
     $('introSmall').textContent = 'السؤال ' + D(S.round + 1) + ' من ' + D(S.total);
     $('introTitle').textContent = m.title;
-    $('introText').textContent = D(cfg.arrowsPerQuestion) + ' أسهم في هذه الجولة' + (cfg.timeLimit ? ' · ' + D(cfg.timeLimit) + ' ثانية' : '');
+    $('introText').textContent = guided ? 'سهم واحد وسؤال واحد — الإجابة الصحيحة تُصيب الهدف' : D(cfg.arrowsPerQuestion) + ' أسهم في هذه الجولة' + (cfg.timeLimit ? ' · ' + D(cfg.timeLimit) + ' ثانية' : '');
     show('intro', true); phase('intro'); hud();
-    timers.later(() => { show('intro', false); phase('shooting'); show('hint', true); hint(mode.hint ? mode.hint : S.simple ? 'المس الهدف لتصوّب وتطلق تلقائيًا' : 'حرّك المؤشر للتصويب · اضغط مطولًا لشد القوس · اترك للإطلاق'); hud(); }, 1500);
+    timers.later(() => {
+      show('intro', false); show('hint', true);
+      if (guided) {
+        phase('preparing');
+        const t = mode.targets[0];
+        if (t) { aim.lookAtPoint(t.pos); aim.snap(); }
+        hint('الرامي يشد القوس… ثم أجب عن السؤال');
+        S.drawing = true; archer.draw(); audio.play('draw');
+      } else {
+        phase('shooting');
+        hint(mode.hint ? mode.hint : S.simple ? 'المس الهدف لتصوّب وتطلق تلقائيًا' : 'حرّك المؤشر للتصويب · اضغط مطولًا لشد القوس · اترك للإطلاق');
+      }
+      hud();
+    }, guided ? 700 : 1500);
   }
   function scheduleRoundEnd(delay) { if (S.phase !== 'shooting' || S.endTimer >= 0) return; S.endTimer = delay; }
   function endRound() {
@@ -309,7 +332,26 @@
       .then(r => { if (S.phase !== 'question') return; show('question', false); resolve({ correct: r.correct, pending: r.pending, feedback: '', retried: r.attempts > 1, explanation: q.explanation }); });
   }
   function resolve(r) {
-    if (S.resultUsed) return; S.resultUsed = true; S.result = r;
+    if (S.resultUsed || S.phase !== 'question') return;
+    S.resultUsed = true; S.result = r;
+    if (guided) {
+      // The host is authoritative: do not release a shot until its server result arrives.
+      show('waiting', false); show('hint', false); show('drawMeter', false);
+      S.drawing = false; phase('flight');
+      if (r.pending) {
+        // Awaiting the teacher's grade is neither a hit nor a miss.
+        archer.standDown();
+        timers.later(() => finalizeResult(r), 850);
+      } else {
+        S.guidedDecision = r.correct === true ? 'hit' : 'miss';
+        archer.loose();
+        timers.later(() => finalizeResult(r), 1450);
+      }
+      return;
+    }
+    finalizeResult(r);
+  }
+  function finalizeResult(r) {
     show('waiting', false);
     let earned = 0, outcome = 'wrong';
     if (r.pending) { outcome = 'pending'; S.pending++; }
@@ -321,9 +363,9 @@
     $('fbSmall').textContent = 'السؤال ' + D(S.round + 1) + ' من ' + D(S.total);
     $('fbTitle').textContent = outcome === 'correct' ? 'إجابة صحيحة — أحسنت!' : outcome === 'pending' ? 'أُرسلت إجابتك للمعلم' : 'إجابة غير صحيحة';
     const fbText = typeof r.feedback === 'string' && r.feedback.trim() ? r.feedback.trim().slice(0, 300) : '';
-    $('fbText').textContent = outcome === 'correct' ? 'ثبّتنا نقاط الجولة وأضفنا مكافأة الإجابة. ' + (cfg.feedback === 'explain' && r.explanation ? r.explanation : fbText)
+    $('fbText').textContent = outcome === 'correct' ? (guided ? 'أصاب السهم الهدف! ' : 'ثبّتنا نقاط الجولة وأضفنا مكافأة الإجابة. ') + (cfg.feedback === 'explain' && r.explanation ? r.explanation : fbText)
       : outcome === 'pending' ? 'سيراجع المعلم إجابتك المكتوبة، ولا تُحتسب كخطأ. تابع التحدي.'
-      : 'لا بأس، راجع الفكرة جيدًا. لم تُثبَّت نقاط هذه الجولة. ' + (cfg.feedback === 'explain' && r.explanation ? r.explanation : fbText);
+      : (guided ? 'ابتعد السهم عن الهدف. ' : 'لا بأس، راجع الفكرة جيدًا. لم تُثبَّت نقاط هذه الجولة. ') + (cfg.feedback === 'explain' && r.explanation ? r.explanation : fbText);
     $('fbRound').textContent = D(earned); $('fbTotal').textContent = D(S.points);
     $('fbSave').textContent = '';
     const last = S.round + 1 >= S.total;
@@ -393,9 +435,10 @@
       const next = C.fromPlatform(Object.assign({}, sh, { school: typeof b.school === 'string' ? b.school : sh.school }));
       next.fromPlatform = true; next.lockDifficulty = !!sh.difficulty;
       cfg = Object.assign(next, { questions: null });
+      if (guided) Object.assign(cfg, { mode: 'archery', difficulty: 'beginner', arrowsPerQuestion: 1, targetsPerQuestion: 1, speed: 1, size: 1, timeLimit: 0 });
       applyAccent();
       if (cfg.mode !== 'choice') S.mode = cfg.mode;
-      S.difficulty = cfg.difficulty; S.simple = S.simple || cfg.controls === 'simple';
+      S.difficulty = cfg.difficulty; S.simple = guided || S.simple || cfg.controls === 'simple';
       if (aim) aim.assist = C.assistStrength(cfg);           // config may arrive before the 3D assets finish loading
       if (S.phase === 'menu') { buildMenu(); setMode(S.mode); }
       if (S.loaded) { hud(); menuUI(); }
@@ -587,6 +630,10 @@
     if (live > 0) aim.update(live, mode && S.phase === 'shooting' ? mode.aimTargets() : null);
     archer.setAim(aim.launch, aim.point);
     archer.update(live);
+    if (guided && S.phase === 'preparing' && archer.state === 'AIM_HOLD') {
+      // The bow stays fully drawn while the school shows its centered question.
+      phase('question'); show('hint', false); show('waiting', true); post('question');
+    }
     // round end bookkeeping
     if (S.phase === 'shooting' && live > 0) {
       if (cfg.timeLimit > 0 && S.endTimer < 0) { S.roundTimer -= live; $('hudTimer').textContent = D(Math.max(0, Math.ceil(S.roundTimer))); if (S.roundTimer <= 0) { toast('انتهى وقت الجولة'); scheduleRoundEnd(0.4); } }
@@ -623,7 +670,7 @@
   // ------------------------------------------------------------------ QA hooks (no answers, no secrets)
   function qaApi() {
     return {
-      get state() { return { phase: S.phase, round: S.round, total: S.total, points: S.points, roundPoints: S.roundPoints, arrowsLeft: S.arrowsLeft, shots: S.shots, hits: S.hits, mode: S.mode, difficulty: S.difficulty, archer: archer.state, flights: arrows.flights.length, stuck: arrows.stuck.length, targets: mode ? mode.remaining() : 0, correct: S.correct, pending: S.pending }; },
+      get state() { return { phase: S.phase, round: S.round, total: S.total, points: S.points, roundPoints: S.roundPoints, arrowsLeft: S.arrowsLeft, shots: S.shots, hits: S.hits, mode: S.mode, difficulty: S.difficulty, archer: archer.state, flights: arrows.flights.length, stuck: arrows.stuck.length, targets: mode ? mode.remaining() : 0, correct: S.correct, pending: S.pending, guided }; },
       start(m, d) { if (m) S.mode = m; if (d) S.difficulty = d; return startGame(); },
       setMode: (m) => { S.mode = m; return setMode(m, { fade: false }); },
       // snap = true jumps the smoothed aim (test convenience); snap = false moves it like real input (springs)
