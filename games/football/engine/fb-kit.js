@@ -1,16 +1,32 @@
-/* Procedural football kits (fictional teams, school colours). Textures are drawn on canvases using the character's cylindrical UV layout:
+/* Procedural football kits (Qatar-inspired home kit and fictional visitors). Textures are drawn on canvases using the character's cylindrical UV layout:
  * u = angle around the limb/torso (0.5 = front), v = height / stature. */
 (function (root) {
   'use strict';
   const FB = root.FB = root.FB || {};
 
   const KITS = {
-    home: { id: 'home', name: 'أبو عبيدة', jersey: '#8a1538', jersey2: '#6e102d', trim: '#f7f2e8', accent: '#cfa95a', shorts: '#f4efe4', shortsStripe: '#8a1538', socks: '#8a1538', sockBand: '#f7f2e8', boots: '#15181b', numberColor: '#f7f2e8', numberOutline: '#cfa95a', crestA: '#8a1538' },
+    home: { id: 'home', name: 'قطر', crest: 'qfa', jersey: '#8a1538', jersey2: '#6e102d', trim: '#ffffff', accent: '#ffffff', shorts: '#8a1538', shortsStripe: '#ffffff', socks: '#8a1538', sockBand: '#f7f2e8', boots: '#15181b', numberColor: '#ffffff', numberOutline: '#6e102d', crestA: '#8a1538' },
     away: { id: 'away', name: 'الضيوف', jersey: '#ece6d6', jersey2: '#d9d1bd', trim: '#16505b', accent: '#c9a24f', shorts: '#16505b', shortsStripe: '#ece6d6', socks: '#ece6d6', sockBand: '#16505b', boots: '#1b1f22', numberColor: '#16505b', numberOutline: '#c9a24f', crestA: '#16505b' },
     ref: { id: 'ref', name: 'حكم', jersey: '#f2c230', jersey2: '#d9a91c', trim: '#161616', accent: '#161616', shorts: '#161616', shortsStripe: '#2a2a2a', socks: '#161616', sockBand: '#f2c230', boots: '#101010', numberColor: '#161616', numberOutline: 'rgba(0,0,0,0)' },
-    keeperHome: { id: 'keeperHome', name: 'حارس', jersey: '#2cb862', jersey2: '#1f8f4a', trim: '#0f1a14', accent: '#e8ff7a', shorts: '#101a14', shortsStripe: '#2cb862', socks: '#101a14', sockBand: '#2cb862', boots: '#101010', numberColor: '#0f1a14', numberOutline: '#e8ff7a', glove: '#e8ff4d' },
+    keeperHome: { id: 'keeperHome', name: 'حارس', crest: 'qfa', jersey: '#2cb862', jersey2: '#1f8f4a', trim: '#0f1a14', accent: '#e8ff7a', shorts: '#101a14', shortsStripe: '#2cb862', socks: '#101a14', sockBand: '#2cb862', boots: '#101010', numberColor: '#0f1a14', numberOutline: '#e8ff7a', glove: '#e8ff4d' },
     keeperAway: { id: 'keeperAway', name: 'حارس', jersey: '#f08a24', jersey2: '#c96a10', trim: '#1b1b1b', accent: '#fff1c4', shorts: '#1b1b1b', shortsStripe: '#f08a24', socks: '#1b1b1b', sockBand: '#f08a24', boots: '#101010', numberColor: '#1b1b1b', numberOutline: '#fff1c4', glove: '#ffe14a' }
   };
+
+  // Local official QFA badge; one decoded image shared by all home players.
+  const crestURL = typeof document !== 'undefined' && document.currentScript
+    ? new URL('../assets/branding/qfa-crest.svg', document.currentScript.src).href
+    : 'assets/branding/qfa-crest.svg';
+  let crestPromise;
+  function loadCrest() {
+    if (!crestPromise) crestPromise = new Promise(resolve => {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      // A badge failure must not prevent the match from loading.
+      img.onerror = () => { crestPromise = null; resolve(null); };
+      img.src = crestURL;
+    });
+    return crestPromise;
+  }
 
   function canvas(w, h) { const c = document.createElement('canvas'); c.width = w; c.height = h; return c; }
   function tex(c, repeatU = true) {
@@ -120,6 +136,10 @@
       x.strokeText(String(number), 128, 140); x.fillText(String(number), 128, 140);
     } else if (mode === 'name') {
       x.font = 'bold 54px Arial, "DejaVu Sans", sans-serif'; x.fillStyle = k.numberColor; x.fillText(String(number).toUpperCase(), 128, 128);
+    } else if (mode === 'crest' && k.crest === 'qfa') {
+      const t = new THREE.CanvasTexture(c); t.encoding = THREE.sRGBEncoding; t.anisotropy = 4;
+      loadCrest().then(img => { if (img) { x.drawImage(img, 12, 12, 232, 232); t.needsUpdate = true; } });
+      return t;
     } else if (mode === 'crest') {
       // school crest: crescent-and-star in a shield, original geometric design
       x.fillStyle = k.accent; x.beginPath(); x.moveTo(40, 30); x.lineTo(216, 30); x.lineTo(216, 130); x.quadraticCurveTo(216, 220, 128, 236); x.quadraticCurveTo(40, 220, 40, 130); x.closePath(); x.fill();
