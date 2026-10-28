@@ -1,0 +1,56 @@
+{
+  "date": "2026-10-28T06:46:17.892Z",
+  "checks": 215,
+  "notes": [
+    [
+      "model sources",
+      {
+        "tackle": "glb 241KB",
+        "shaari": "glb 596KB",
+        "hamour": "glb 547KB",
+        "safi": "glb 570KB",
+        "boat": "glb 1348KB",
+        "fisherman": "glb 2593KB"
+      }
+    ],
+    [
+      "audio source after user gesture",
+      "wav"
+    ],
+    [
+      "host log",
+      "game→host:ready#0 host→game:config game→host:question#0 host→game:result#0 game→host:outcome#0 game→host:next#0 host→game:advance#0 game→host:question#1 host→game:result#1 game→host:outcome#1 game→host:next#1 host→game:advance#1 game→host:question#2 host→game:result#2 game→host:outcome#2 game→host:next#2 host:finish"
+    ],
+    [
+      "software-WebGL frame sample (medium, 1280x720)",
+      {
+        "medianFrameMs": 800,
+        "p90FrameMs": 1517,
+        "calls": 137,
+        "triangles": 257811,
+        "geometries": 193,
+        "textures": 33,
+        "fps": 12,
+        "quality": "medium",
+        "pixelRatio": 0.75,
+        "jsHeapMB": 43
+      }
+    ],
+    [
+      "WebGL context loss",
+      "recovered"
+    ],
+    [
+      "file:// offline model source",
+      "embedded-glb"
+    ],
+    [
+      "file:// audio source",
+      "dsp"
+    ],
+    [
+      "external requests blocked",
+      0
+    ]
+  ]
+}

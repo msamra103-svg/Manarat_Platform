@@ -1,0 +1,118 @@
+{
+  "sourceRepository": "msamra103-svg/Manarat_Platform",
+  "sourceCommit": "7828f379927dd857d8c33a40a072859a75d2b3aa",
+  "game": "صيد الأسماك",
+  "sourceVersion": "Current deployed source snapshot",
+  "entry": "games/fishing/index.html",
+  "files": [
+    {
+      "path": "assets/game-covers/fishing.svg",
+      "sha": "85a6b887a2a39482a24ce941bba418fe0ed79ff8",
+      "size": 1751
+    },
+    {
+      "path": "games/experiences/experience.css",
+      "sha": "a246026da62d264be68a1138b12b597491340808",
+      "size": 1890
+    },
+    {
+      "path": "games/experiences/game.js",
+      "sha": "dd38e0a65fbc348e18c02327a585ce1d01cbac27",
+      "size": 9847
+    },
+    {
+      "path": "games/experiences/motion.js",
+      "sha": "2364c5fa55ed38f86985b626d085a29d0d2ba56e",
+      "size": 2550
+    },
+    {
+      "path": "games/experiences/scene.js",
+      "sha": "810421c1b4885ebe005e1311565073d624f56049",
+      "size": 21162
+    },
+    {
+      "path": "games/fishing/index.html",
+      "sha": "3d38d790b0216c6aceb7b13c02ef6aa0fe8708c0",
+      "size": 3659
+    },
+    {
+      "path": "games/sports/CREDITS.md",
+      "sha": "f640ff59d4c8837831ec9b3e83ce2ba0ac51c400",
+      "size": 571
+    },
+    {
+      "path": "games/sports/athlete.js",
+      "sha": "f2cbb49036a4e8dde4f8f4002099a269b226a9d2",
+      "size": 6420
+    },
+    {
+      "path": "games/sports/legacy-sport.css",
+      "sha": "aaa20bd3e68198e9b61fd449840e5fd309e38aed",
+      "size": 5251
+    },
+    {
+      "path": "games/vendor/three.min.js",
+      "sha": "b14f47c0908bab15e890b468d53bb07db0be3a18",
+      "size": 603445
+    },
+    {
+      "path": "js/platform-nav.js",
+      "sha": "d186c428220c36c6acdb51a9a8d89a9ffa117268",
+      "size": 4600
+    },
+    {
+      "path": "js/school.js",
+      "sha": "3528e21f16847f19796315a237d15f4e3219911b",
+      "size": 89490
+    },
+    {
+      "path": "package.json",
+      "sha": "7df1828f81033b0b41699073c3eb5aac3722f111",
+      "size": 2854
+    },
+    {
+      "path": "scripts/sync-public.js",
+      "sha": "7bbe1a65cd76ad49e6dd280af9d08265b773c713",
+      "size": 1013
+    },
+    {
+      "path": "tests/experiences-flow.cjs",
+      "sha": "6ded7c5f29181ab002f348230b1c861abf15955b",
+      "size": 2778
+    },
+    {
+      "path": "tests/experiences-motion.cjs",
+      "sha": "dfa91ec43473ef405f48f3a45ad004e303de621c",
+      "size": 1769
+    },
+    {
+      "path": "tests/experiences-scene.cjs",
+      "sha": "d6e3757af0f966335abddc9c8a8cf26c98726021",
+      "size": 2004
+    },
+    {
+      "path": "tests/game-modes.cjs",
+      "sha": "c0d10e2a4fd5aed44698d4611a40a6736a9f505f",
+      "size": 3049
+    },
+    {
+      "path": "tests/game-session.cjs",
+      "sha": "b9b9d08565166b567b331c48bc38a8e3cde8bc61",
+      "size": 2217
+    }
+  ],
+  "readOnlyReferences": [
+    "games/experiences/*",
+    "games/sports/*",
+    "games/vendor/three.min.js",
+    "js/platform-nav.js",
+    "js/school.js",
+    "package.json",
+    "scripts/sync-public.js"
+  ],
+  "excluded": [
+    "public/ duplicate mirror; regenerate on integration",
+    "games/football optional crowd assets are not required for fishing"
+  ],
+  "instruction": "Implement standalone fishing files and preserve school-fishing-* message contract"
+}

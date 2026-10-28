@@ -1,0 +1,40 @@
+{
+  "name": "manarat-learning-platform",
+  "version": "20.3.0",
+  "private": true,
+  "scripts": {
+    "dev": "node scripts/serve.js",
+    "start": "node scripts/serve.js",
+    "sync": "node scripts/sync-public.js",
+    "build:analytics": "./node_modules/.bin/esbuild src/student-analytics.jsx --bundle --format=iife --target=es2020 --minify --define:process.env.NODE_ENV='\"production\"' --outfile=js/student-analytics.js",
+    "build": "npm run build:analytics && node scripts/sync-public.js && node scripts/smoke-check.js",
+    "lint": "npm run check:js && node scripts/smoke-check.js",
+    "check:js": "node --check js/core.js && node --check js/home.js && node --check js/admin.js && node --check js/dashboard.js && node --check js/create-game.js && node --check js/player.js && node --check js/school.js && node --check js/student-analytics-logic.js && node --check js/student-analytics.js && node --check js/homepage-hub-logic.js",
+    "smoke": "node scripts/smoke-check.js",
+    "check": "node scripts/smoke-check.js",
+    "test:unit": "node --test tests/student-analytics.test.cjs tests/homepage-hub.test.cjs",
+    "test:db": "node tests/database.cjs && node tests/upgrade.cjs",
+    "test:browser": "node tests/school-browser.cjs",
+    "test": "npm run build && npm run test:unit && npm run check && npm run test:db && npm run test:school && npm run test:edge && npm run test:race-v8",
+    "test:edge": "node tests/edge.cjs",
+    "test:school": "node tests/school-api.cjs && node tests/school-browser.cjs",
+    "test:football": "node tests/football-engine.cjs && node tests/football.cjs && node tests/football-integration.cjs",
+    "test:sports": "node tests/sports-motion.cjs && node tests/sports-flow.cjs",
+    "test:bowling": "node tests/bowling-physics.cjs && node tests/bowling-motion.cjs && node tests/bowling-rig.cjs && node tests/bowling-flow.cjs && node tests/bowling-hall.cjs && node tests/bowling-audio.cjs",
+    "test:experiences": "node tests/experiences-motion.cjs && node tests/experiences-flow.cjs && node tests/experiences-scene.cjs",
+    "test:design": "node --test tests/design-studio.test.cjs && node tests/admin-contract.cjs && node tests/admin-requests.cjs && node tests/game-session.cjs && node tests/game-modes.cjs && node tests/school-api.cjs",
+    "test:race-v8": "node tests/champions-race-bridge.test.cjs && node tests/champions-race-package.test.cjs",
+    "test:basketball": "node tests/basketball-motion-v23.cjs && node tests/basketball-flow-v23.cjs && node tests/basketball-rig-v23.cjs"
+  },
+  "dependencies": {
+    "esbuild": "^0.28.2",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "recharts": "^3.10.1"
+  },
+  "description": "Abu Ubaida Preparatory School for Boys Interactive Learning & 3D Gaming Platform",
+  "devDependencies": {
+    "@electric-sql/pglite": "0.5.8",
+    "playwright": "1.61.1"
+  }
+}

@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Fishing V24 · host harness (QA only)</title>
+<style>body{margin:0;font:13px Tahoma,sans-serif;background:#eef2f3}iframe#fishingGame{width:100%;height:82vh;border:0;display:block}#log{height:16vh;overflow:auto;direction:ltr;padding:6px;background:#fff;border-top:1px solid #ccc;white-space:pre}</style></head>
+<body>
+<!-- QA harness that mirrors js/school.js message handling for the fishing iframe (token, index, origin, source checks).
+     It is NOT the school platform: questions are answered by a script (?answers=correct,wrong,pending). -->
+<iframe id="fishingGame" title="صيد الأسماك" allow="fullscreen;autoplay" allowfullscreen></iframe>
+<iframe id="evil" style="display:none" srcdoc="<p>sibling</p>"></iframe>
+<div id="log"></div>
+<script>
+const q=new URLSearchParams(location.search),answers=(q.get('answers')||'correct,wrong,pending').split(','),delay=Number(q.get('delay')||300),frame=document.getElementById('fishingGame');
+const play={token:'harness-'+Math.random().toString(36).slice(2),index:0,answered:false,answerPending:false,sportOutcome:false,finished:false,count:answers.length};
+window.hostLog=[];const log=(dir,m)=>{hostLog.push({dir,...m});document.getElementById('log').textContent+=dir+' '+JSON.stringify(m)+'\n';};
+frame.src='../index.html?qa=1&quality='+(q.get('quality')||'low');
+window.addEventListener('message',e=>{if(e.origin!==location.origin||e.source!==frame.contentWindow)return;const b=e.data,prefix='school-fishing-';if(!b||typeof b!=='object')return;log('game→host',b);
+ if(b.type===prefix+'ready'){send({type:prefix+'config',title:'مهمة تجريبية للاختبار',count:play.count,images:answers.map(()=>''),token:play.token});return;}
+ if(b.token!==play.token||b.index!==play.index)return;
+ if(b.type===prefix+'question'&&!play.answered&&!play.answerPending){play.answerPending=true;setTimeout(()=>{const k=answers[play.index];play.answered=true;play.answerPending=false;send({type:prefix+'result',token:play.token,index:play.index,correct:k==='correct',pending:k==='pending',feedback:k==='pending'?'إجابة مقالية بانتظار المعلم':k==='correct'?'أحسنت':'الإجابة الصحيحة: ب'});},delay);}
+ if(b.type===prefix+'outcome'&&play.answered)play.sportOutcome=true;
+ if(b.type===prefix+'next'&&play.answered&&play.sportOutcome){play.sportOutcome=false;if(play.index===play.count-1){play.finished=true;log('host',{type:'school-fishing-finish'});}else{const old=play.index;play.index++;play.answered=false;send({type:prefix+'advance',token:play.token,index:old});}}
+});
+function send(m){log('host→game',m);frame.contentWindow.postMessage(m,location.origin);}
+window.forge=(m)=>{document.getElementById('evil').contentWindow.eval('parent.frames[0].postMessage('+JSON.stringify(m)+',"*")');};
+window.harness=play;
+</script></body></html>

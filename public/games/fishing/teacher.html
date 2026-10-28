@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>صيد الأسماك · إعداد تدريب محلي للمعلم</title>
+<style>
+:root{--maroon:#8A1538;--ink:#18242a;--muted:#5b6b70;--line:#d9e1e3;--bg:#f4f7f7}
+*{box-sizing:border-box}body{margin:0;font-family:"Noto Kufi Arabic","Segoe UI",Tahoma,sans-serif;background:var(--bg);color:var(--ink)}
+header{background:#0b2733;color:#fff;padding:18px 24px}header h1{margin:0;font-size:22px}header p{margin:4px 0 0;color:#cfe0e3;font-size:14px}
+main{max-width:860px;margin:0 auto;padding:20px 16px 60px}.note{background:#fff7e6;border:1px solid #f0d49a;border-radius:12px;padding:12px 14px;font-size:14px;line-height:1.7}
+.q{background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px;margin:12px 0;display:grid;gap:8px}.q input,.q select{width:100%;padding:9px;border:1px solid var(--line);border-radius:9px;font:inherit}
+.opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:8px}.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+button{font:inherit;padding:10px 16px;border-radius:10px;border:1px solid var(--line);background:#fff;cursor:pointer}.primary{background:var(--maroon);color:#fff;border-color:var(--maroon)}
+label{font-size:13px;color:var(--muted)}
+</style>
+</head>
+<body>
+<header><h1>صيد الأسماك — تدريب محلي للمعلم</h1><p>مدرسة أبو عبيدة الإعدادية للبنين</p></header>
+<main>
+<p class="note">هذه الصفحة تعمل دون إنترنت لإعداد أسئلة تدريبية تُعرض على السبورة. <b>لا تُرسل أي درجة إلى المنصة ولا تُسجّل في تقارير الطلاب</b>؛ التصحيح هنا محلي لأغراض التدريب فقط. المهام الرسمية والتقارير متاحة من خلال منصة المدرسة فقط.</p>
+<div id="list"></div>
+<div class="row"><button type="button" id="add">+ سؤال اختيار من متعدد</button><button type="button" id="addEssay">+ سؤال مقالي (يُعرض كـ«قيد المراجعة»)</button></div>
+<p class="row" style="margin-top:20px"><button type="button" class="primary" id="play">تشغيل اللعبة بهذه الأسئلة ←</button><button type="button" id="demo">تشغيل الأسئلة التجريبية</button></p>
+<p><label>رابط قابل للحفظ (يحتوي الأسئلة نفسها):</label><br><input id="link" readonly style="width:100%;padding:8px;border:1px solid var(--line);border-radius:8px;direction:ltr"></p>
+</main>
+<script>
+const list=document.getElementById('list');let qs=[{text:'ما عاصمة دولة قطر؟',options:['الدوحة','الوكرة','الخور'],correct:0},{text:'كم يساوي ٨ × ٧؟',options:['٥٤','٥٦','٦٤'],correct:1}];
+try{const s=JSON.parse(localStorage.getItem('abu-ubaida-fishing-teacher')||'null');if(Array.isArray(s)&&s.length)qs=s;}catch(e){}
+function save(){try{localStorage.setItem('abu-ubaida-fishing-teacher',JSON.stringify(qs));}catch(e){}document.getElementById('link').value=url();}
+function url(){const b=btoa(unescape(encodeURIComponent(JSON.stringify(qs.filter(q=>q.text)))));return new URL('index.html#q='+encodeURIComponent(b),location.href).href;}
+function render(){list.replaceChildren(...qs.map((q,i)=>{const d=document.createElement('div');d.className='q';
+ d.innerHTML=`<label>السؤال ${i+1}${q.essay?' (مقالي)':''}</label><input data-k="text" value="">`+(q.essay?'':`<div class="opts">${[0,1,2,3].map(k=>`<input data-o="${k}" placeholder="خيار ${k+1}${k>1?' (اختياري)':''}">`).join('')}</div><label>الإجابة الصحيحة <select data-k="correct">${[0,1,2,3].map(k=>`<option value="${k}">الخيار ${k+1}</option>`).join('')}</select></label>`)+`<div class="row"><button type="button" data-del>حذف</button></div>`;
+ d.querySelector('[data-k=text]').value=q.text||'';d.querySelector('[data-k=text]').oninput=e=>{q.text=e.target.value;save();};
+ if(!q.essay){d.querySelectorAll('[data-o]').forEach(inp=>{const k=+inp.dataset.o;inp.value=(q.options||[])[k]||'';inp.oninput=()=>{q.options=q.options||[];q.options[k]=inp.value;q.options=q.options.map(x=>x||'');while(q.options.length&&!q.options[q.options.length-1])q.options.pop();save();};});const sel=d.querySelector('[data-k=correct]');sel.value=q.correct||0;sel.onchange=()=>{q.correct=+sel.value;save();};}
+ d.querySelector('[data-del]').onclick=()=>{qs.splice(i,1);render();save();};return d;}));save();}
+document.getElementById('add').onclick=()=>{qs.push({text:'',options:['',''],correct:0});render();};
+document.getElementById('addEssay').onclick=()=>{qs.push({text:'',essay:true});render();};
+document.getElementById('play').onclick=()=>{if(!qs.some(q=>q.text)){alert('أضف سؤالًا واحدًا على الأقل.');return;}location.href=url();};
+document.getElementById('demo').onclick=()=>{location.href='index.html';};
+render();
+</script>
+</body></html>

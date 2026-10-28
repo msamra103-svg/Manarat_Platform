@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>Fishing V24 · model viewer (dev)</title>
+<style>html,body{margin:0;height:100%;background:#9fb7c4;overflow:hidden}canvas{display:block;width:100%;height:100%}#info{position:fixed;top:8px;left:8px;font:12px monospace;background:#fffc;padding:6px;direction:ltr}</style></head>
+<body><div id="info">dev viewer: ?view=boat|man|fish|tackle|all</div>
+<script src="../../vendor/three.min.js"></script>
+<script src="../js/fishing-physics.js"></script><script src="../js/fishing-fish.js"></script>
+<script src="../js/models/boat-model.js"></script><script src="../js/models/tackle-model.js"></script><script src="../js/models/fish-model.js"></script><script src="../js/models/fisherman-model.js"></script>
+<script>
+const T=THREE,q=new URLSearchParams(location.search),view=q.get('view')||'all';
+const r=new T.WebGLRenderer({antialias:true});r.setSize(innerWidth,innerHeight);r.outputEncoding=T.sRGBEncoding;r.toneMapping=T.ACESFilmicToneMapping;r.shadowMap.enabled=true;document.body.appendChild(r.domElement);
+const s=new T.Scene();s.background=new T.Color('#9fb7c4');s.add(new T.HemisphereLight('#dfefff','#6b5a44',0.9));const sun=new T.DirectionalLight('#ffe2bb',2.2);sun.position.set(-4,6,3);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);Object.assign(sun.shadow.camera,{left:-4,right:4,top:4,bottom:-4});s.add(sun);
+const cam=new T.PerspectiveCamera(35,innerWidth/innerHeight,0.01,100);
+const grid=new T.GridHelper(10,20,'#567','#789');s.add(grid);
+let target=new T.Vector3();
+if(view==='boat'||view==='all'){const b=FishingBoatModel.build();s.add(b);cam.position.set(3.2,2.6,4.2);target.set(0,0.3,0);
+ if(view==='all'){const m=FishingFishermanModel.build();m.position.set(0.36,0.02,0.22);m.rotation.y=Math.PI;b.add(m);}}
+if(view==='man'){const m=FishingFishermanModel.build();s.add(m);m.rotation.y=Number(q.get('ry')||0.5);cam.position.set(0,1.45,Number(q.get('d')||2.6));target.set(0,Number(q.get('ty')||1.1),0);if(q.get('face')){cam.position.set(0,1.68,0.55);target.set(0,1.66,0);}}
+if(view==='fish'){FishingFish.ORDER.forEach((id,i)=>{const f=FishingFishModel.build(id);f.scale.setScalar(1);f.position.set(0,0.6-i*0.45,0);f.rotation.y=Math.PI/2;s.add(f);});cam.position.set(0,0.15,1.9);target.set(0,0.15,0);grid.visible=false;}
+if(view==='tackle'){const t=FishingTackleModel.build();t.children.forEach((c,i)=>{c.position.set(-0.3+i*0.1,0.1,0);c.scale.setScalar(c.name==='landing-net'?0.2:c.name==='rod-grip'?0.3:c.name==='rod-guide'?0.01:1.5);});s.add(t);cam.position.set(0,0.2,0.6);target.set(0,0.1,0);}
+cam.lookAt(target);r.render(s,cam);window.done=true;
+</script></body></html>

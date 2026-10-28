@@ -1,0 +1,92 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Fishing V24 GLB exporter (build tool)</title></head><body>
+<!-- Build-time page used by tools/build-assets.cjs (headless Chromium). Not loaded by the game.
+     Inputs: procedural builders (boat, tackle), the MakeHuman-derived angler build data (tools/makehuman/build/),
+     and the CC0 Barramundi fish mesh (tools/source-assets/BarramundiFish.glb, Khronos glTF sample, Microsoft 2017). -->
+<script src="../../vendor/three.min.js"></script><script src="GLTFExporter.js"></script><script src="../vendor/GLTFLoader.js"></script>
+<script src="../js/fishing-physics.js"></script><script src="../js/fishing-fish.js"></script>
+<script src="../js/models/boat-model.js"></script><script src="../js/models/tackle-model.js"></script><script src="../js/models/fish-model.js"></script><script src="../js/models/fisherman-model.js"></script><script src="../js/models/fisherman-skinned.js"></script>
+<script>
+const T=THREE;
+function toB64(buf){const u=new Uint8Array(buf);let s='';for(let i=0;i<u.length;i+=0x8000)s+=String.fromCharCode.apply(null,u.subarray(i,i+0x8000));return btoa(s);}
+function exportOne(obj){return new Promise((res)=>{new T.GLTFExporter().parse(obj,r=>res(toB64(r)),{binary:true,onlyVisible:false,maxTextureSize:2048});});}
+const loadImg=src=>new Promise((res,rej)=>{const i=new Image();i.onload=()=>res(i);i.onerror=rej;i.src=src;});
+
+/* ---------- realistic angler (MakeHuman CC0 data → skinned mesh) ---------- */
+async function buildAngler(){
+  const data=await (await fetch('makehuman/build/fisherman.json')).json(),imgs={};
+  for(const n of ['skin','shirt','trousers','vest','eyes'])imgs[n]=await loadImg('makehuman/build/'+n+'.png');
+  const man=FishingSkinnedAngler.build(data,imgs);
+  man.traverse(o=>{if(o.isMesh&&o.material.map&&!o.material.alphaTest)o.material.map.format=T.RGBFormat;});
+  return man;
+}
+
+/* ---------- Gulf species from the CC0 Barramundi mesh: body proportions + species skin painted from 3-D position ---------- */
+const SPEC={
+  hamour:{depth:1.0,width:1.12,headY:1.04,dorsal:[56,50,36],side:[98,86,62],belly:[186,174,144],spots:{c:[178,88,40],r:0.0105,n:900,where:'all'},bars:{c:[42,36,26],n:5,a:0.45},fin:[74,62,44],metal:0.1},
+  shaari:{depth:1.13,width:0.95,headY:1.0,dorsal:[120,108,70],side:[178,158,104],belly:[236,228,196],spots:{c:[70,140,196],r:0.0058,n:1500,where:'body'},cheek:[64,150,210],fin:[196,160,92],metal:0.4},
+  safi:{depth:1.24,width:0.82,headY:0.96,dorsal:[78,86,60],side:[118,124,92],belly:[206,210,196],spots:{c:[236,240,228],r:0.0078,n:1100,where:'all'},fin:[112,114,84],metal:0.22}
+};
+async function barramundiBase(){
+  const buf=await (await fetch('source-assets/BarramundiFish.glb')).arrayBuffer();
+  const g=await new Promise((res,rej)=>new T.GLTFLoader().parse(buf,'',res,rej));let mesh=null;g.scene.traverse(o=>{if(o.isMesh)mesh=o;});
+  g.scene.updateMatrixWorld(true);const geo=mesh.geometry.clone();geo.applyMatrix4(mesh.matrixWorld);geo.computeBoundingBox();
+  const bb=geo.boundingBox,len=bb.max.z-bb.min.z,p=geo.attributes.position;
+  // which end is the head? the tail fin is tall but paper-thin, the head is thick: compare lateral (X) width near each end
+  const cx0=(bb.max.x+bb.min.x)/2;let wPos=0,wNeg=0;for(let i=0;i<p.count;i++){const z=(p.getZ(i)-bb.min.z)/len,w=Math.abs(p.getX(i)-cx0);if(z>0.85&&z<0.97)wPos=Math.max(wPos,w);if(z<0.15&&z>0.03)wNeg=Math.max(wNeg,w);}
+  const flip=wNeg>wPos?-1:1;console.log('barramundi ends width +z',wPos.toFixed(4),'-z',wNeg.toFixed(4),'flip',flip);const cy=(bb.max.y+bb.min.y)/2,cx=(bb.max.x+bb.min.x)/2,cz=(bb.max.z+bb.min.z)/2;
+  for(let i=0;i<p.count;i++)p.setXYZ(i,flip*(p.getX(i)-cx)/len,(p.getY(i)-cy)/len,flip*(p.getZ(i)-cz)/len);
+  geo.computeVertexNormals();return {geo,mat:mesh.material};
+}
+function paintSpecies(base,geo,sp,size=1024){
+  const c=document.createElement('canvas');c.width=c.height=size;const x=c.getContext('2d');x.drawImage(base.map.image,0,0,size,size);
+  const src=x.getImageData(0,0,size,size),dst=x.createImageData(size,size),sd=src.data,dd=dst.data;
+  const pos=geo.attributes.position,uv=geo.attributes.uv,idx=geo.index?geo.index.array:[...Array(pos.count).keys()];
+  geo.computeBoundingBox();const yb=geo.boundingBox;
+  let seed=7;const rnd=()=>{seed=(seed*16807)%2147483647;return seed/2147483647;};
+  const spots=[];for(let k=0;k<sp.spots.n;k++){const i=Math.floor(rnd()*pos.count);spots.push([pos.getX(i),pos.getY(i),pos.getZ(i)]);}
+  const lerp=(a,b,t)=>a.map((v,k)=>v+(b[k]-v)*t),ss=(a,b,v)=>{const t=Math.max(0,Math.min(1,(v-a)/(b-a)));return t*t*(3-2*t);};
+  const grid=new Map(),cell=0.03;for(const s of spots){const k=[Math.floor(s[0]/cell),Math.floor(s[1]/cell),Math.floor(s[2]/cell)].join();if(!grid.has(k))grid.set(k,[]);grid.get(k).push(s);}
+  const near=(px,py,pz)=>{let best=9;const cx=Math.floor(px/cell),cy=Math.floor(py/cell),cz=Math.floor(pz/cell);for(let a=-1;a<=1;a++)for(let b=-1;b<=1;b++)for(let d=-1;d<=1;d++){const l=grid.get([cx+a,cy+b,cz+d].join());if(l)for(const s of l){const q=Math.hypot(s[0]-px,s[1]-py,s[2]-pz);if(q<best)best=q;}}return best;};
+  for(let t=0;t<idx.length;t+=3){
+    const ia=idx[t],ib=idx[t+1],ic=idx[t+2];const A=[uv.getX(ia)*size,uv.getY(ia)*size],B=[uv.getX(ib)*size,uv.getY(ib)*size],C=[uv.getX(ic)*size,uv.getY(ic)*size];
+    const x0=Math.max(0,Math.floor(Math.min(A[0],B[0],C[0]))),x1=Math.min(size-1,Math.ceil(Math.max(A[0],B[0],C[0]))),y0=Math.max(0,Math.floor(Math.min(A[1],B[1],C[1]))),y1=Math.min(size-1,Math.ceil(Math.max(A[1],B[1],C[1])));
+    const d=(B[1]-C[1])*(A[0]-C[0])+(C[0]-B[0])*(A[1]-C[1]);if(Math.abs(d)<1e-9)continue;
+    for(let yy=y0;yy<=y1;yy++)for(let xx=x0;xx<=x1;xx++){const px=xx+0.5,py=yy+0.5;const l1=((B[1]-C[1])*(px-C[0])+(C[0]-B[0])*(py-C[1]))/d,l2=((C[1]-A[1])*(px-C[0])+(A[0]-C[0])*(py-C[1]))/d,l3=1-l1-l2;if(l1<-0.02||l2<-0.02||l3<-0.02)continue;
+      const X=l1*pos.getX(ia)+l2*pos.getX(ib)+l3*pos.getX(ic),Y=l1*pos.getY(ia)+l2*pos.getY(ib)+l3*pos.getY(ic),Z=l1*pos.getZ(ia)+l2*pos.getZ(ib)+l3*pos.getZ(ic);
+      const o=(yy*size+xx)*4,lum=(0.3*sd[o]+0.59*sd[o+1]+0.11*sd[o+2])/255;
+      const h=(Y-yb.min.y)/(yb.max.y-yb.min.y);let col=h>0.55?lerp(sp.side,sp.dorsal,ss(0.55,0.95,h)):lerp(sp.belly,sp.side,ss(0.2,0.55,h));
+      const body=Math.abs(X)<0.06*sp.width&&Z<0.36&&Z>-0.36;const fin=!body||Z<-0.36;
+      if(fin)col=lerp(col,sp.fin,0.6);
+      if(sp.bars&&body){const bz=(Z+0.32)/0.62*sp.bars.n;const band=Math.pow(Math.max(0,Math.cos(bz*Math.PI)),6)*ss(0.3,0.6,h);col=lerp(col,sp.bars.c,band*sp.bars.a);}
+      if(sp.spots&&(sp.spots.where==='all'||body)&&Z<(sp.spots.where==='body'?0.3:0.5)){const q=near(X,Y,Z);if(q<sp.spots.r)col=lerp(col,sp.spots.c,ss(sp.spots.r,sp.spots.r*0.55,q)*0.9);}
+      if(sp.cheek&&Z>0.3&&Z<0.45&&h>0.3&&h<0.65){const line=Math.abs(Math.sin((Y*120+Z*40)));if(line<0.18)col=lerp(col,sp.cheek,0.7);}
+      const detail=0.55+0.9*lum;const eye=lum<0.12||lum>0.9?0.65:0;
+      for(let k=0;k<3;k++)dd[o+k]=Math.max(0,Math.min(255,(col[k]*detail)*(1-eye)+sd[o+k]*eye));dd[o+3]=255;}
+  }
+  // fill UV gutters with the original pixels (tinted) so mip-maps don't bleed
+  for(let o=0;o<dd.length;o+=4)if(dd[o+3]===0){const l=(0.3*sd[o]+0.59*sd[o+1]+0.11*sd[o+2]);dd[o]=sp.side[0]*l/180;dd[o+1]=sp.side[1]*l/180;dd[o+2]=sp.side[2]*l/180;dd[o+3]=255;}
+  x.putImageData(dst,0,0);const tex=new T.CanvasTexture(c);tex.encoding=T.sRGBEncoding;tex.flipY=false;tex.format=T.RGBFormat;return tex;
+}
+function volumeOf(geo){const p=geo.attributes.position,idx=geo.index.array;let v=0;for(let t=0;t<idx.length;t+=3){const a=new T.Vector3().fromBufferAttribute(p,idx[t]),b=new T.Vector3().fromBufferAttribute(p,idx[t+1]),c=new T.Vector3().fromBufferAttribute(p,idx[t+2]);v+=a.dot(b.cross(c))/6;}return Math.abs(v);}
+async function buildSpecies(){
+  const base=await barramundiBase(),out={};
+  const shrink=(img,s)=>{const c=document.createElement('canvas');c.width=c.height=s;c.getContext('2d').drawImage(img,0,0,s,s);return c;};
+  const normal=new T.CanvasTexture(shrink(base.mat.normalMap.image,1024));normal.flipY=false;normal.format=T.RGBFormat;
+  const orm=new T.CanvasTexture(shrink(base.mat.roughnessMap.image,512));orm.flipY=false;orm.format=T.RGBFormat;
+  for(const [id,sp] of Object.entries(SPEC)){
+    const geo=base.geo.clone(),p=geo.attributes.position;
+    for(let i=0;i<p.count;i++){const z=p.getZ(i),head=Math.max(0,(z-0.25)/0.25);p.setXYZ(i,p.getX(i)*sp.width,p.getY(i)*(sp.depth*(1-head)+sp.headY*head),z);}
+    geo.computeVertexNormals();geo.computeBoundingSphere();
+    const mat=new T.MeshStandardMaterial({map:paintSpecies(base.mat,geo,sp),normalMap:normal,roughnessMap:orm,metalnessMap:orm,metalness:sp.metal,roughness:0.75,side:T.DoubleSide,name:'fish-'+id});
+    const g=new T.Group();g.name='fish-'+id;const m=new T.Mesh(geo,mat);m.name='body';g.add(m);g.userData={species:id,length:1,volumeL3:volumeOf(geo),source:'Khronos glTF sample BarramundiFish (CC0) reshaped + repainted'};
+    out[id]=g;
+  }
+  return out;
+}
+window.exportAll=async()=>{const out={};const fish=await buildSpecies();const angler=await buildAngler();
+  const jobs={boat:()=>FishingBoatModel.build(),fisherman:()=>angler,tackle:()=>FishingTackleModel.build(),hamour:()=>fish.hamour,shaari:()=>fish.shaari,safi:()=>fish.safi};
+  for(const [k,f] of Object.entries(jobs)){const o=f();o.updateMatrixWorld(true);let tris=0,meshes=0;o.traverse(m=>{if(m.isMesh){meshes++;const g=m.geometry;tris+=(g.index?g.index.count:g.attributes.position.count)/3;}});out[k]={b64:await exportOne(o),tris:Math.round(tris),meshes,extra:o.userData};}
+  return out;};
+window.ready=true;
+</script></body></html>

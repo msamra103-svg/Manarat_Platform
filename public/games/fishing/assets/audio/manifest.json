@@ -1,0 +1,122 @@
+{
+  "splash": {
+    "file": "assets/audio/splash.wav",
+    "seconds": 1.3,
+    "sampleRate": 32000,
+    "origin": "procedurally synthesised by js/audio-dsp.js (original, project-owned)"
+  },
+  "plop": {
+    "file": "assets/audio/plop.wav",
+    "seconds": 0.35,
+    "sampleRate": 32000,
+    "origin": "procedurally synthesised by js/audio-dsp.js (original, project-owned)"
+  },
+  "bubbles": {
+    "file": "assets/audio/bubbles.wav",
+    "seconds": 1,
+    "sampleRate": 32000,
+    "origin": "procedurally synthesised by js/audio-dsp.js (original, project-owned)"
+  },
+  "lap": {
+    "file": "assets/audio/lap.wav",
+    "seconds": 0.9,
+    "sampleRate": 32000,
+    "origin": "procedurally synthesised by js/audio-dsp.js (original, project-owned)"
+  },
+  "whoosh": {
+    "file": "assets/audio/whoosh.wav",
+    "seconds": 0.5,
+    "sampleRate": 32000,
+    "origin": "procedurally synthesised by js/audio-dsp.js (original, project-owned)"
+  },
+  "click": {
+    "file": "assets/audio/click.wav",
+    "seconds": 0.03,
+    "sampleRate": 32000,
+    "origin": "procedurally synthesised by js/audio-dsp.js (original, project-owned)"
+  },
+  "bail": {
+    "file": "assets/audio/bail.wav",
+    "seconds": 0.12,
+    "sampleRate": 32000,
+    "origin": "procedurally synthesised by js/audio-dsp.js (original, project-owned)"
+  },
+  "twang": {
+    "file": "assets/audio/twang.wav",
+    "seconds": 0.5,
+    "sampleRate": 32000,
+    "origin": "procedurally synthesised by js/audio-dsp.js (original, project-owned)"
+  },
+  "creak": {
+    "file": "assets/audio/creak.wav",
+    "seconds": 0.55,
+    "sampleRate": 32000,
+    "origin": "procedurally synthesised by js/audio-dsp.js (original, project-owned)"
+  },
+  "flop": {
+    "file": "assets/audio/flop.wav",
+    "seconds": 0.9,
+    "sampleRate": 32000,
+    "origin": "procedurally synthesised by js/audio-dsp.js (original, project-owned)"
+  },
+  "bell": {
+    "file": "assets/audio/bell.wav",
+    "seconds": 1.8,
+    "sampleRate": 32000,
+    "origin": "procedurally synthesised by js/audio-dsp.js (original, project-owned)"
+  },
+  "chime": {
+    "file": "assets/audio/chime.wav",
+    "seconds": 1.4,
+    "sampleRate": 32000,
+    "origin": "procedurally synthesised by js/audio-dsp.js (original, project-owned)"
+  },
+  "tension": {
+    "file": "assets/audio/tension.wav",
+    "seconds": 1.6,
+    "sampleRate": 32000,
+    "origin": "procedurally synthesised by js/audio-dsp.js (original, project-owned)"
+  },
+  "success": {
+    "file": "assets/audio/success.wav",
+    "seconds": 2,
+    "sampleRate": 32000,
+    "origin": "procedurally synthesised by js/audio-dsp.js (original, project-owned)"
+  },
+  "fail": {
+    "file": "assets/audio/fail.wav",
+    "seconds": 1.4,
+    "sampleRate": 32000,
+    "origin": "procedurally synthesised by js/audio-dsp.js (original, project-owned)"
+  },
+  "neutral": {
+    "file": "assets/audio/neutral.wav",
+    "seconds": 1.8,
+    "sampleRate": 32000,
+    "origin": "procedurally synthesised by js/audio-dsp.js (original, project-owned)"
+  },
+  "victory": {
+    "file": "assets/audio/victory.wav",
+    "seconds": 8.8,
+    "sampleRate": 32000,
+    "origin": "procedurally synthesised by js/audio-dsp.js (original, project-owned)"
+  },
+  "sea": {
+    "file": "assets/audio/sea.wav",
+    "seconds": 7.75,
+    "sampleRate": 32000,
+    "origin": "procedurally synthesised by js/audio-dsp.js (original, project-owned)"
+  },
+  "wind": {
+    "file": "assets/audio/wind.wav",
+    "seconds": 7.75,
+    "sampleRate": 32000,
+    "origin": "procedurally synthesised by js/audio-dsp.js (original, project-owned)"
+  },
+  "underwater": {
+    "file": "assets/audio/underwater.wav",
+    "seconds": 7.75,
+    "sampleRate": 32000,
+    "origin": "procedurally synthesised by js/audio-dsp.js (original, project-owned)"
+  }
+}

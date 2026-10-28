@@ -1,0 +1,11 @@
+<!doctype html><html><head><meta charset="utf-8"><title>angler viewer (dev)</title><style>html,body{margin:0;height:100%;background:#8fa9b6;overflow:hidden}</style></head><body>
+<script src="../../../vendor/three.min.js"></script><script src="../../js/models/fisherman-skinned.js"></script>
+<script>
+(async()=>{const T=THREE,q=new URLSearchParams(location.search);const data=await (await fetch('build/fisherman.json')).json();const imgs={};
+await Promise.all(['skin','shirt','trousers','vest','shoes','eyes'].map(n=>new Promise(r=>{const i=new Image();i.onload=()=>{imgs[n]=i;r()};i.src='build/'+n+'.png';})));
+const man=FishingSkinnedAngler.build(data,imgs);const r=new T.WebGLRenderer({antialias:true});r.setSize(innerWidth,innerHeight);r.outputEncoding=T.sRGBEncoding;r.toneMapping=T.ACESFilmicToneMapping;r.shadowMap.enabled=true;document.body.appendChild(r.domElement);
+const s=new T.Scene();s.add(man);s.add(new T.HemisphereLight('#dceeff','#6a5a46',0.8));const sun=new T.DirectionalLight('#ffe0b8',2.4);sun.position.set(-2,4,3);s.add(sun);
+man.rotation.y=+(q.get('ry')||0.4);const cam=new T.PerspectiveCamera(30,innerWidth/innerHeight,0.01,50);
+if(q.get('face')){cam.position.set(0,1.66,0.75);cam.lookAt(0,1.62,0);}else{cam.position.set(0,1.1,4.2);cam.lookAt(0,0.95,0);}
+r.render(s,cam);window.done=true;})().catch(e=>{document.title='ERR '+e.message;window.done=true;console.error(e)});
+</script></body></html>

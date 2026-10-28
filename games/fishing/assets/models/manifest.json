@@ -1,0 +1,74 @@
+{
+  "boat": {
+    "file": "assets/models/boat.glb",
+    "bytes": 1380684,
+    "triangles": 13102,
+    "meshes": 91,
+    "origin": "original procedural model, js/models/*.js",
+    "licence": "project-owned",
+    "extra": {}
+  },
+  "fisherman": {
+    "file": "assets/models/fisherman.glb",
+    "bytes": 2655324,
+    "triangles": 32172,
+    "meshes": 16,
+    "origin": "MakeHuman CC0 assets (base mesh, targets, skeleton, weights, eyes) processed by tools/makehuman/build_fisherman.py + js/models/fisherman-skinned.js",
+    "licence": "CC0 1.0 source data; derived model project-owned",
+    "extra": {
+      "rig": "makehuman-default-reduced",
+      "height": 1.76
+    }
+  },
+  "tackle": {
+    "file": "assets/models/tackle.glb",
+    "bytes": 246996,
+    "triangles": 4907,
+    "meshes": 46,
+    "origin": "original procedural model, js/models/*.js",
+    "licence": "project-owned",
+    "extra": {}
+  },
+  "hamour": {
+    "file": "assets/models/fish-hamour.glb",
+    "bytes": 560072,
+    "triangles": 3864,
+    "meshes": 1,
+    "origin": "Khronos glTF sample BarramundiFish (CC0, Microsoft 2017) reshaped and repainted by tools/export.html",
+    "licence": "CC0 1.0 source data; derived model project-owned",
+    "extra": {
+      "species": "hamour",
+      "length": 1,
+      "volumeL3": 0.020074572829300846,
+      "source": "Khronos glTF sample BarramundiFish (CC0) reshaped + repainted"
+    }
+  },
+  "shaari": {
+    "file": "assets/models/fish-shaari.glb",
+    "bytes": 610640,
+    "triangles": 3864,
+    "meshes": 1,
+    "origin": "Khronos glTF sample BarramundiFish (CC0, Microsoft 2017) reshaped and repainted by tools/export.html",
+    "licence": "CC0 1.0 source data; derived model project-owned",
+    "extra": {
+      "species": "shaari",
+      "length": 1,
+      "volumeL3": 0.019036185784390938,
+      "source": "Khronos glTF sample BarramundiFish (CC0) reshaped + repainted"
+    }
+  },
+  "safi": {
+    "file": "assets/models/fish-safi.glb",
+    "bytes": 583684,
+    "triangles": 3864,
+    "meshes": 1,
+    "origin": "Khronos glTF sample BarramundiFish (CC0, Microsoft 2017) reshaped and repainted by tools/export.html",
+    "licence": "CC0 1.0 source data; derived model project-owned",
+    "extra": {
+      "species": "safi",
+      "length": 1,
+      "volumeL3": 0.017892064491460462,
+      "source": "Khronos glTF sample BarramundiFish (CC0) reshaped + repainted"
+    }
+  }
+}

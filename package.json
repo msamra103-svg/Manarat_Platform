@@ -25,7 +25,10 @@
     "test:experiences": "node tests/experiences-motion.cjs && node tests/experiences-flow.cjs && node tests/experiences-scene.cjs",
     "test:design": "node --test tests/design-studio.test.cjs && node tests/admin-contract.cjs && node tests/admin-requests.cjs && node tests/game-session.cjs && node tests/game-modes.cjs && node tests/school-api.cjs",
     "test:race-v8": "node tests/champions-race-bridge.test.cjs && node tests/champions-race-package.test.cjs",
-    "test:basketball": "node tests/basketball-motion-v23.cjs && node tests/basketball-flow-v23.cjs && node tests/basketball-rig-v23.cjs"
+    "test:basketball": "node tests/basketball-motion-v23.cjs && node tests/basketball-flow-v23.cjs && node tests/basketball-rig-v23.cjs",
+    "test:fishing": "node tests/fishing-physics.cjs && node tests/fishing-flow.cjs && node tests/fishing-assets.cjs && node tests/experiences-motion.cjs && node tests/experiences-flow.cjs && node tests/experiences-scene.cjs",
+    "test:fishing:browser": "node games/fishing/tools/build-offline.cjs dist && node tests/fishing-browser.cjs --dist=dist && node tests/fishing-school-browser.cjs",
+    "build:fishing-assets": "node games/fishing/tools/build-assets.cjs && node games/fishing/tools/build-audio.cjs"
   },
   "dependencies": {
     "esbuild": "^0.28.2",

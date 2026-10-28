@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Fishing · GLB viewer (dev)</title>
+<style>html,body{margin:0;height:100%;background:#8fb0c2;overflow:hidden}canvas{display:block;width:100%;height:100%}</style></head>
+<body>
+<script src="../../vendor/three.min.js"></script><script src="../vendor/GLTFLoader.js"></script>
+<script>
+// dev only: shows the built GLB assets under daylight. ?m=fish|fisherman|boat|tackle  &ry=<radians>
+const T=THREE,q=new URLSearchParams(location.search),m=q.get('m')||'fish',ry=+(q.get('ry')||0);
+const r=new T.WebGLRenderer({antialias:true});r.setSize(innerWidth,innerHeight);r.outputEncoding=T.sRGBEncoding;r.toneMapping=T.ACESFilmicToneMapping;document.body.appendChild(r.domElement);
+const s=new T.Scene();s.background=new T.Color('#8fb0c2');s.add(new T.HemisphereLight('#dfefff','#6b5a44',0.8));const sun=new T.DirectionalLight('#ffe2bb',2.4);sun.position.set(-3,6,4);s.add(sun);
+const cam=new T.PerspectiveCamera(30,innerWidth/innerHeight,0.01,100);
+const files={fish:['fish-hamour','fish-shaari','fish-safi'],fisherman:['fisherman'],boat:['boat'],tackle:['tackle']}[m];
+const L=new T.GLTFLoader();
+Promise.all(files.map(f=>new Promise((res,rej)=>L.load('../assets/models/'+f+'.glb',g=>res(g.scene),undefined,rej)))).then(list=>{
+  list.forEach((o,i)=>{o.rotation.y=ry;if(m==='fish'){o.scale.setScalar(0.5);o.position.set(0,0.3-i*0.22,0);}s.add(o);});
+  const box=new T.Box3().setFromObject(s),c=box.getCenter(new T.Vector3()),sz=box.getSize(new T.Vector3()).length();
+  const zf=+(q.get('zoom')||1);cam.position.set(c.x+sz*0.15/zf,c.y+sz*0.1/zf,c.z+sz*1.6/zf);cam.lookAt(c);r.render(s,cam);window.done=true;}).catch(e=>{document.body.textContent=e;window.done=true;});
+</script></body></html>
