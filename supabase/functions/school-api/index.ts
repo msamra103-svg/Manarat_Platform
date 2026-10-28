@@ -5,7 +5,7 @@ const DESIGN_PREVIEW=false;
 const base=Deno.env.get('SUPABASE_URL')!, key=Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 const headers={'Content-Type':'application/json','apikey':key,'Authorization':'Bearer '+key};
 const cors={'Access-Control-Allow-Origin':'*','Access-Control-Allow-Headers':'authorization,apikey,content-type','Access-Control-Allow-Methods':'POST,OPTIONS'};
-const templates=['race','football','basketball','volleyball','bowling','fishing','puzzle','classic'];
+const templates=['race','football','basketball','volleyball','bowling','fishing','target-shooting','puzzle','classic'];
 const types=['multiple_choice','true_false','open_text','matching','connecting','ordering','classification','puzzle_image'];
 const enc=encodeURIComponent;
 async function db(table:string,query='',method='GET',data?:unknown){const r=await fetch(`${base}/rest/v1/${table}${query?'?'+query:''}`,{method,headers:{...headers,Prefer:'return=representation'},body:data===undefined?undefined:JSON.stringify(data)});const j=await r.json().catch(()=>null);if(!r.ok)throw new Error('تعذر حفظ البيانات. أعد المحاولة.');return j;}
@@ -14,6 +14,8 @@ async function hash(s:string){return Array.from(new Uint8Array(await crypto.subt
 async function alias(username:string){const name=String(username||'').normalize('NFKC').trim().toLowerCase();if(!/^[\p{L}\p{N}_.-]{3,40}$/u.test(name))throw new Error('اسم المستخدم من 3 إلى 40 حرفًا أو رقمًا دون مسافات.');return (await hash(name))+'@teachers.abuobaid.invalid';}
 const norm=(s:any)=>String(s??'').trim().normalize('NFKC').replace(/[ًٌٍَُِّْـ]/g,'').replace(/[أإآ]/g,'ا').toLowerCase();
 function cleanQuestion(q:any){const {correct,answers,accepted,correctAnswer,explanation,manual_grade,...x}=q; if(q.pairs){x.pairs=q.pairs.map((p:any)=>({left:p.left}));x.choices=q.pairs.map((p:any)=>p.right).sort(()=>Math.random()-.5);}if(q.items)x.items=[...q.items].sort(()=>Math.random()-.5);if(q.categories){x.categories=q.categories.map((c:any)=>({title:c.title}));x.classItems=(q._classItems||[]).map(({category,...item}:any)=>item);delete x._classItems;}return x;}
+// Assignment-only target shooting options (answer-free, validated server-side).
+function shootingSettings(x:any){const o=x&&typeof x==='object'?x:{};const pick=(v:any,list:string[],d:string)=>list.includes(v)?v:d;return {mode:pick(o.mode,['choice','archery','birds','balloons','clay'],'choice'),difficulty:pick(o.difficulty,['beginner','intermediate','advanced'],'beginner'),arrowsPerQuestion:Math.max(1,Math.min(10,Math.round(Number(o.arrowsPerQuestion)||3))),aimAssist:pick(o.aimAssist,['auto','off','low','high'],'auto')};}
 function grade(q:any,value:any){const max=Math.max(1,Math.min(100,Number(q.points)||10));let correct=false,pending=false;
  if(['multiple_choice','true_false'].includes(q.type))correct=Number.isInteger(value)&&value===Number(q.correct);
  else if(q.type==='open_text'){pending=q.manual_grade!==false||!(q.answers?.length);correct=!pending&&q.answers.some((a:any)=>norm(a)===norm(value));}
@@ -34,6 +36,7 @@ const gameTitles:Record<string,[string,string,string]>={
  race:['سباق السيارات','حلبة سباق 3D','assets/game-covers/race.svg'],
  bowling:['البولينج','فيزياء 10 قوارير','assets/game-covers/bowling.svg'],
  fishing:['صيد الأسماك','بيئة بحرية 3D','assets/game-covers/fishing.svg'],
+ 'target-shooting':['التصويب على الهدف','٤ تحديات رماية 3D','assets/game-covers/target-shooting.svg'],
  classic:['تحدّي المعرفة','مسابقة تفاعلية','assets/game-covers/classic.svg'],
  puzzle:['بازل الصور','تركيب الصور','assets/game-covers/puzzle.svg']
 };
@@ -244,7 +247,7 @@ export async function handle(req:Request){if(req.method==='OPTIONS')return new R
  const jobs:Record<string,()=>Promise<any>>={games:()=>dbAll('manarat_games',f+'&order=created_at.desc'),assignments:()=>dbAll('school_assignments',f+'&order=created_at.desc'),videos:()=>dbAll('school_videos',f+'&order=created_at.desc'),sessions:()=>dbAll('school_sessions',f+'&select=id,assignment_id,teacher_id,student_name,student_key,mode,template,score,pending,finished_at,created_at&order=created_at.desc'),teachers:()=>p.admin?db('profiles','select=id,name,email,status,role'):Promise.resolve([])};
  const values=await Promise.all(selected.map(k=>jobs[k]()));out={profile:p,games:[],assignments:[],videos:[],sessions:[],teachers:[]};selected.forEach((k,i)=>out[k]=values[i]);}
 
- else if(a==='assignment'){const g=await owned('manarat_games',b.game_id,p);const settings={templates:(b.templates||templates).filter((t:string)=>templates.includes(t)),types:(b.types||types).filter((t:string)=>types.includes(t)),passing_score:Math.max(1,Math.min(100,Number(b.passing_score)||70)),deadline:b.deadline||null,leaderboard:b.leaderboard!==false};if(!settings.templates.length||!settings.types.length)throw new Error('اختر لعبة ونوع سؤال واحدًا على الأقل.');out=(await db('school_assignments','','POST',{teacher_id:g.teacher_id,game_id:g.id,title:String(b.title||g.title).slice(0,160),class_name:String(b.class_name||'').slice(0,80),settings}))[0];}
+ else if(a==='assignment'){const g=await owned('manarat_games',b.game_id,p);const settings={templates:(b.templates||templates).filter((t:string)=>templates.includes(t)),types:(b.types||types).filter((t:string)=>types.includes(t)),passing_score:Math.max(1,Math.min(100,Number(b.passing_score)||70)),deadline:b.deadline||null,leaderboard:b.leaderboard!==false,shooting:shootingSettings(b.shooting)};if(!settings.templates.length||!settings.types.length)throw new Error('اختر لعبة ونوع سؤال واحدًا على الأقل.');out=(await db('school_assignments','','POST',{teacher_id:g.teacher_id,game_id:g.id,title:String(b.title||g.title).slice(0,160),class_name:String(b.class_name||'').slice(0,80),settings}))[0];}
  else if(a==='toggleAssignment'){await owned('school_assignments',b.id,p);out=await db('school_assignments','id=eq.'+enc(b.id),'PATCH',{active:!!b.active});}
  else if(a==='video'){if(!/^https:\/\//.test(b.url)||!String(b.title||'').trim())throw new Error('اكتب عنوانًا ورابط فيديو https صالحًا.');if(b.game_id)await owned('manarat_games',b.game_id,p);out=await db('school_videos','','POST',{teacher_id:p.id,title:String(b.title).slice(0,160),subject:String(b.subject||'').slice(0,80),url:b.url,game_id:b.game_id||null});}
  else if(a==='deleteVideo'){await owned('school_videos',b.id,p);out=await db('school_videos','id=eq.'+enc(b.id),'DELETE');}
