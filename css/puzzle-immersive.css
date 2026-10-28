@@ -60,7 +60,7 @@ body.puzzle-result-page .puzzle-result-screen{width:min(620px,96vw);max-width:96
 .puzzle-result-actions button{padding:8px 14px;}
 .puzzle-leaderboard{max-height:20vh;overflow-y:auto;}
 @media(max-width:650px){
- body.playing-puzzle .game-session-hud{gap:3px 6px;}
+ body.playing-puzzle .game-session-hud{display:none!important;}
  body.playing-puzzle .session-details{display:none;}
  body.playing-puzzle .session-scores{gap:3px;width:auto;}
  body.playing-puzzle .session-scores>div{min-width:48px;padding:3px 5px;}
