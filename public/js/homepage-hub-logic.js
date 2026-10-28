@@ -81,6 +81,16 @@
       cover: 'assets/game-covers/target-shooting.svg',
       playableDemo: true
     },
+    'qatar-runner': {
+      key: 'qatar-runner',
+      name: 'عدّاء قطر',
+      badge: 'جري 3D في الدوحة',
+      eyebrow: 'سرعة وتركيز وتعلّم',
+      headline: 'اجرِ في كورنيش الدوحة وسوق واقف وافتح بوابات الأسئلة',
+      pitch: 'ولد قطري يجري بين المسارات الثلاثة، يقفز وينزلق، وتفتح الإجابة الصحيحة بوابة السؤال المضيئة.',
+      cover: 'assets/game-covers/qatar-runner.svg',
+      playableDemo: true
+    },
     classic: {
       key: 'classic',
       name: 'تحدّي المعرفة',
@@ -307,7 +317,7 @@
     const opts = options || {};
     const settings = opts.settings || {};
     const puzzleAvailable = !!opts.puzzleAvailable;
-    const defaultOrder = ['football', 'volleyball', 'basketball', 'race', 'bowling', 'fishing', 'target-shooting', 'classic', 'puzzle'];
+    const defaultOrder = ['football', 'volleyball', 'basketball', 'race', 'bowling', 'fishing', 'target-shooting', 'qatar-runner', 'classic', 'puzzle'];
     const configuredOrder = Array.isArray(settings.heroGames) && settings.heroGames.length
       ? settings.heroGames.filter(k => GAME_CATALOG[k])
       : defaultOrder;

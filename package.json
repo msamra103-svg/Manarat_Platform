@@ -30,7 +30,9 @@
     "test:fishing:browser": "node games/fishing/tools/build-offline.cjs dist && node tests/fishing-browser.cjs --dist=dist && node tests/fishing-school-browser.cjs",
     "build:fishing-assets": "node games/fishing/tools/build-assets.cjs && node games/fishing/tools/build-audio.cjs",
     "test:target-shooting": "node tests/target-shooting-physics.cjs && node tests/target-shooting-motion.cjs && node tests/target-shooting-modes.cjs && node tests/target-shooting-integration.cjs && node tests/target-shooting-offline.cjs && node tests/target-shooting-guided-trajectory.cjs && node tests/target-shooting-four-modes.cjs",
-    "build:target-shooting-offline": "node games/target-shooting/tools/build-offline.cjs"
+    "build:target-shooting-offline": "node games/target-shooting/tools/build-offline.cjs",
+    "test:qatar-runner": "node games/qatar-runner/tests/run-all.cjs && node tests/qatar-runner-integration.cjs",
+    "build:qatar-runner-offline": "node games/qatar-runner/tools/build-offline.cjs"
   },
   "dependencies": {
     "esbuild": "^0.28.2",

@@ -1,7 +1,7 @@
 /* Shared page navigation and explicit game lifecycle controls. */
 (()=>{'use strict';if(window.parent!==window||document.body?.hasAttribute('data-school-live'))return;
 const script=document.currentScript,home=new URL('../index.html',script.src).href;
-const standalone=/\/games\/(?:race\.html|puzzle\.html|(?:football|basketball|bowling|volleyball|fishing|target-shooting|puzzle|classic)\/(?:index\.html|teacher\.html)?)$/.test(location.pathname);
+const standalone=/\/games\/(?:race\.html|puzzle\.html|(?:football|basketball|bowling|volleyball|fishing|target-shooting|qatar-runner|puzzle|classic)\/(?:index\.html|teacher\.html)?)$/.test(location.pathname);
 let busy=false,bar,queued=false;
 const api=()=>window.ManaratGameControls;
 const active=()=>api()?.isActive?.()??standalone;

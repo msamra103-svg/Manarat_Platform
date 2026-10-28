@@ -5,7 +5,7 @@ const DESIGN_PREVIEW=false;
 const base=Deno.env.get('SUPABASE_URL')!, key=Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 const headers={'Content-Type':'application/json','apikey':key,'Authorization':'Bearer '+key};
 const cors={'Access-Control-Allow-Origin':'*','Access-Control-Allow-Headers':'authorization,apikey,content-type','Access-Control-Allow-Methods':'POST,OPTIONS'};
-const templates=['race','football','basketball','volleyball','bowling','fishing','target-shooting','puzzle','classic'];
+const templates=['race','football','basketball','volleyball','bowling','fishing','target-shooting','qatar-runner','puzzle','classic'];
 const types=['multiple_choice','true_false','open_text','matching','connecting','ordering','classification','puzzle_image'];
 const enc=encodeURIComponent;
 async function db(table:string,query='',method='GET',data?:unknown){const r=await fetch(`${base}/rest/v1/${table}${query?'?'+query:''}`,{method,headers:{...headers,Prefer:'return=representation'},body:data===undefined?undefined:JSON.stringify(data)});const j=await r.json().catch(()=>null);if(!r.ok)throw new Error('تعذر حفظ البيانات. أعد المحاولة.');return j;}
@@ -37,6 +37,7 @@ const gameTitles:Record<string,[string,string,string]>={
  bowling:['البولينج','فيزياء 10 قوارير','assets/game-covers/bowling.svg'],
  fishing:['صيد الأسماك','بيئة بحرية 3D','assets/game-covers/fishing.svg'],
  'target-shooting':['التصويب على الهدف','٤ تحديات رماية 3D','assets/game-covers/target-shooting.svg'],
+ 'qatar-runner':['عدّاء قطر','جري 3D في الدوحة','assets/game-covers/qatar-runner.svg'],
  classic:['تحدّي المعرفة','مسابقة تفاعلية','assets/game-covers/classic.svg'],
  puzzle:['بازل الصور','تركيب الصور','assets/game-covers/puzzle.svg']
 };

@@ -1,0 +1,40 @@
+name: Qatar Runner integration and browser tests
+
+on:
+  push:
+    branches:
+      - feature/qatar-runner-v1
+      - main
+    paths:
+      - "games/qatar-runner/**"
+      - "tests/qatar-runner-integration.cjs"
+      - ".github/workflows/qatar-runner.yml"
+      - "js/school.js"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-runner:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Install locked dependencies
+        run: npm ci
+      - name: Build platform and check mirrored public files
+        run: npm run build
+      - name: Install headless Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Validate Arabic Qatar Runner and platform bridge
+        run: npm run test:qatar-runner
+      - name: Check JavaScript files
+        run: |
+          npm run check:js
+          node --check js/design-schema.js
+          node --check games/qatar-runner/js/game.js
+          node --check supabase/functions/_shared/design-schema.js

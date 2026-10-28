@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+  <meta name="theme-color" content="#8a1538">
+  <title>عدّاء قطر — مغامرة التحدي</title>
+  <link rel="stylesheet" href="css/runner.css">
+</head>
+<body data-phase="boot">
+  <canvas id="view" aria-label="مشهد اللعبة ثلاثي الأبعاد: الولد يجري في شوارع الدوحة"></canvas>
+  <div id="flash" class="flash" aria-hidden="true"></div>
+
+  <!-- HUD -->
+  <header id="hud" class="hud" hidden>
+    <div class="hud-group hud-progress" aria-label="تقدم الدرس">
+      <span class="hud-label">الأسئلة</span>
+      <b id="hProg">٠ / ٠</b>
+      <span class="bar"><span id="hProgFill"></span></span>
+    </div>
+    <div class="hud-group hud-score" aria-label="النقاط"><span class="hud-label">النقاط</span><b id="hScore">٠</b><span id="hCombo" class="combo" hidden>×٢</span></div>
+    <div class="hud-group hud-coins" aria-label="العملات"><span class="coin-ico" aria-hidden="true"></span><b id="hCoins">٠</b></div>
+    <div class="hud-group hud-hearts" aria-label="المحاولات المتبقية"><span id="hHearts" class="hearts">❤❤❤</span></div>
+    <div class="hud-buttons">
+      <button id="btnMute" class="icon-btn" type="button" aria-label="كتم الصوت" aria-pressed="false"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor"/><path class="wave" d="M16 8.5a4.5 4.5 0 0 1 0 7M18.5 6a8 8 0 0 1 0 12" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg></button>
+      <button id="btnFull" class="icon-btn" type="button" aria-label="ملء الشاشة"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/></svg></button>
+      <button id="btnPause" class="icon-btn" type="button" aria-label="إيقاف مؤقت"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M8 5h3v14H8zM13 5h3v14h-3z" fill="currentColor"/></svg></button>
+    </div>
+  </header>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <!-- on-screen controls (layout is spatial, not mirrored for RTL: left moves left) -->
+  <div id="controls" class="controls" dir="ltr" hidden>
+    <div class="ctl-lr"><button type="button" data-ctl="left" aria-label="يسار">◀</button><button type="button" data-ctl="right" aria-label="يمين">▶</button></div>
+    <div class="ctl-ud"><button type="button" data-ctl="up" aria-label="قفز">▲</button><button type="button" data-ctl="down" aria-label="انزلاق">▼</button></div>
+  </div>
+
+  <!-- loading -->
+  <section id="loading" class="screen screen-loading">
+    <div class="brand"><span class="brand-mark" aria-hidden="true">؟</span><h1>عدّاء قطر</h1><p>مغامرة التحدي</p></div>
+    <div id="loadBar" class="load-bar"><span id="loadBarFill"></span></div>
+    <p id="loadMsg" class="load-msg">جارٍ التحميل…</p>
+  </section>
+
+  <!-- start menu -->
+  <section id="menu" class="screen screen-menu" hidden>
+    <div class="menu-card">
+      <div class="brand brand-lg"><span class="brand-mark" aria-hidden="true">؟</span><div><h1>عدّاء قطر</h1><p>مغامرة التحدي</p></div></div>
+      <dl class="lesson">
+        <div><dt>الدرس</dt><dd id="mLesson">—</dd></div>
+        <div><dt>المعلم</dt><dd id="mTeacher">—</dd></div>
+        <div><dt>المدرسة</dt><dd id="mSchool">—</dd></div>
+        <div><dt>المحتوى</dt><dd id="mCount">—</dd></div>
+      </dl>
+      <p id="mMode" class="mode-note"></p>
+      <label class="field-inline">المسار
+        <select id="envSel">
+          <option value="tour">جولة الدوحة: الكورنيش ← سوق واقف</option>
+          <option value="corniche">كورنيش الدوحة وأبراج الخليج الغربي</option>
+          <option value="souq">سوق واقف التراثي</option>
+        </select>
+      </label>
+      <button id="btnStart" class="btn btn-primary btn-xl" type="button" disabled>ابدأ الجري ←</button>
+      <div class="menu-row">
+        <button id="btnHelp" class="btn btn-ghost" type="button">طريقة اللعب</button>
+        <button id="btnTeacher" class="btn btn-ghost" type="button">لوحة المعلم</button>
+      </div>
+      <div class="sound-row">
+        <label>الموسيقى <input id="volMusic" type="range" min="0" max="1" step="0.05"></label>
+        <label>المؤثرات <input id="volSfx" type="range" min="0" max="1" step="0.05"></label>
+      </div>
+    </div>
+  </section>
+
+  <!-- how to play -->
+  <section id="help" class="screen screen-modal" hidden>
+    <div class="modal-card">
+      <h2>طريقة اللعب</h2>
+      <ul class="help-list">
+        <li><b>غيّر المسار:</b> سهم ← / → أو A / D، أو اسحب يسارًا ويمينًا.</li>
+        <li><b>اقفز:</b> سهم ↑ أو W أو المسافة، أو اسحب للأعلى — فوق الحواجز المنخفضة.</li>
+        <li><b>انزلق:</b> سهم ↓ أو S، أو اسحب للأسفل — تحت العوارض المرتفعة.</li>
+        <li><b>بوابة السؤال:</b> يتوقف الولد أمام البوابة المضيئة. الإجابة الصحيحة تفتح الجناحين، والخاطئة تردّه بموجة ضوئية وتخصم محاولة.</li>
+        <li><b>المفاتيح ١–٤</b> لاختيار الإجابة، و <b>P</b> للإيقاف المؤقت، و <b>M</b> لكتم الصوت.</li>
+      </ul>
+      <button id="btnHelpClose" class="btn btn-primary" type="button">فهمت</button>
+    </div>
+  </section>
+
+  <!-- question -->
+  <section id="question" class="question" hidden role="dialog" aria-modal="true" aria-labelledby="qText">
+    <div class="q-card">
+      <div class="q-top"><span id="qBadge" class="q-badge">السؤال ١</span><span id="qHearts" class="hearts small"></span></div>
+      <div id="qTimer" class="q-timer" hidden><span id="qTimerFill"></span></div>
+      <h2 id="qText" class="q-text"></h2>
+      <img id="qImage" class="q-image" alt="صورة السؤال" hidden>
+      <div id="qOptions" class="q-options"></div>
+      <p id="qFeedback" class="q-feedback" aria-live="assertive"></p>
+    </div>
+  </section>
+  <div id="platformWait" class="platform-wait" hidden><b>أجب عن السؤال في نافذة المنصة</b><span>تتوقف اللعبة حتى تصل نتيجة التصحيح.</span></div>
+
+  <!-- pause -->
+  <section id="pause" class="screen screen-modal" hidden>
+    <div class="modal-card"><h2>استراحة قصيرة</h2><p>اللعبة متوقفة مؤقتًا.</p>
+      <div class="menu-row"><button id="btnResume" class="btn btn-primary" type="button">متابعة</button><button id="btnRestart" class="btn btn-ghost" type="button">ابدأ من جديد</button></div></div>
+  </section>
+
+  <!-- game over -->
+  <section id="gameover" class="screen screen-modal" hidden>
+    <div class="modal-card"><h2>انتهت المحاولات</h2><p id="goText"></p>
+      <div class="menu-row"><button id="btnRetryGate" class="btn btn-primary" type="button">أعد المحاولة من البوابة</button><button id="btnRestartAll" class="btn btn-ghost" type="button">ابدأ الدرس من جديد</button></div></div>
+  </section>
+
+  <!-- results -->
+  <section id="results" class="screen screen-modal" hidden>
+    <div class="modal-card results-card">
+      <div class="brand"><span class="brand-mark" aria-hidden="true">✓</span><h2 id="rTitle">عدّاء قطر — مغامرة التحدي</h2></div>
+      <dl class="lesson">
+        <div><dt>المدرسة</dt><dd id="rSchool"></dd></div><div><dt>المعلم</dt><dd id="rTeacher"></dd></div>
+        <div><dt>الدرس</dt><dd id="rLesson"></dd></div><div><dt>الطالب</dt><dd id="rStudent"></dd></div>
+      </dl>
+      <div class="stats">
+        <div><b id="rCorrect"></b><span>إجابات صحيحة</span></div>
+        <div><b id="rFirst"></b><span>من المحاولة الأولى</span></div>
+        <div><b id="rScore"></b><span>النقاط</span></div>
+        <div><b id="rCoins"></b><span>العملات</span></div>
+      </div>
+      <p id="rStatus" class="r-status"></p>
+      <div class="menu-row"><button id="btnReplay" class="btn btn-primary" type="button">العب مجددًا</button><button id="btnCert" class="btn btn-gold" type="button">شهادة الإنجاز</button><button id="btnPlatformNext" class="btn btn-primary" type="button" hidden>عرض النتيجة في المنصة ←</button></div>
+    </div>
+  </section>
+
+  <!-- certificate (printable) -->
+  <section id="certificate" class="screen screen-modal cert-screen" hidden>
+    <div class="cert">
+      <div class="cert-inner">
+        <div class="cert-flag" aria-hidden="true"></div>
+        <p class="cert-kicker">شهادة إنجاز</p>
+        <h2>عدّاء قطر — مغامرة التحدي</h2>
+        <p>تشهد <b id="cSchool"></b> بأن الطالب</p>
+        <p class="cert-name" id="cName"></p>
+        <p>أتمّ بنجاح درس «<b id="cLesson"></b>»</p>
+        <p class="cert-score" id="cScore"></p>
+        <div class="cert-foot"><span>المعلم: <b id="cTeacher"></b></span><span id="cDate"></span></div>
+      </div>
+    </div>
+    <div class="menu-row no-print"><button id="btnPrint" class="btn btn-gold" type="button">طباعة الشهادة</button><button id="btnCertClose" class="btn btn-ghost" type="button">إغلاق</button></div>
+  </section>
+
+  <!-- teacher dashboard (rendered by js/teacher.js) -->
+  <section id="teacher" class="screen teacher-screen" hidden></section>
+
+  <script src="vendor/three.min.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/textures.js"></script>
+  <script src="js/props.js"></script>
+  <script src="js/world.js"></script>
+  <script src="js/track.js"></script>
+  <script src="js/gate.js"></script>
+  <script src="js/audio.js"></script>
+  <script src="js/boy-data.js"></script>
+  <script src="js/boy.js"></script>
+  <script src="js/teacher.js"></script>
+  <script src="js/game.js"></script>
+</body>
+</html>
