@@ -71,6 +71,16 @@
       cover: 'assets/game-covers/fishing.svg',
       playableDemo: true
     },
+    'target-shooting': {
+      key: 'target-shooting',
+      name: 'التصويب على الهدف',
+      badge: '٤ تحديات رماية 3D',
+      eyebrow: 'دقة التصويب وثبات الأداء',
+      headline: 'صوّب بقوسك نحو الهدف وثبّت نقاطك بالإجابة الصحيحة',
+      pitch: 'رامٍ واقعي وأربعة تحديات: رماية الأسهم، صيد الطيور الافتراضي، فرقعة البالونات، والطبق الطائر.',
+      cover: 'assets/game-covers/target-shooting.svg',
+      playableDemo: true
+    },
     classic: {
       key: 'classic',
       name: 'تحدّي المعرفة',
@@ -297,7 +307,7 @@
     const opts = options || {};
     const settings = opts.settings || {};
     const puzzleAvailable = !!opts.puzzleAvailable;
-    const defaultOrder = ['football', 'volleyball', 'basketball', 'race', 'bowling', 'fishing', 'classic', 'puzzle'];
+    const defaultOrder = ['football', 'volleyball', 'basketball', 'race', 'bowling', 'fishing', 'target-shooting', 'classic', 'puzzle'];
     const configuredOrder = Array.isArray(settings.heroGames) && settings.heroGames.length
       ? settings.heroGames.filter(k => GAME_CATALOG[k])
       : defaultOrder;

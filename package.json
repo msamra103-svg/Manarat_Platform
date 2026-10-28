@@ -28,7 +28,9 @@
     "test:basketball": "node tests/basketball-motion-v23.cjs && node tests/basketball-flow-v23.cjs && node tests/basketball-rig-v23.cjs",
     "test:fishing": "node tests/fishing-physics.cjs && node tests/fishing-flow.cjs && node tests/fishing-assets.cjs && node tests/experiences-motion.cjs && node tests/experiences-flow.cjs && node tests/experiences-scene.cjs",
     "test:fishing:browser": "node games/fishing/tools/build-offline.cjs dist && node tests/fishing-browser.cjs --dist=dist && node tests/fishing-school-browser.cjs",
-    "build:fishing-assets": "node games/fishing/tools/build-assets.cjs && node games/fishing/tools/build-audio.cjs"
+    "build:fishing-assets": "node games/fishing/tools/build-assets.cjs && node games/fishing/tools/build-audio.cjs",
+    "test:target-shooting": "node tests/target-shooting-physics.cjs && node tests/target-shooting-motion.cjs && node tests/target-shooting-modes.cjs && node tests/target-shooting-integration.cjs && node tests/target-shooting-offline.cjs",
+    "build:target-shooting-offline": "node games/target-shooting/tools/build-offline.cjs"
   },
   "dependencies": {
     "esbuild": "^0.28.2",

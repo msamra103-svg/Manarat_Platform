@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#5b0d24">
+<title>التصويب على الهدف</title>
+<link rel="stylesheet" href="style.css?v=1.0">
+</head>
+<body data-role="student" data-phase="loading">
+<template id="app-markup">
+<main id="stage">
+  <div id="viewport">
+    <canvas id="scene" aria-label="التصويب على الهدف — مشهد ثلاثي الأبعاد. حرّك المؤشر للتصويب، اضغط مطولًا لشد القوس، ثم اترك للإطلاق."></canvas>
+    <div id="fade" aria-hidden="true"></div>
+    <svg id="reticle" viewBox="-50 -50 100 100" aria-hidden="true">
+      <circle class="r-shadow" r="30"/><circle class="r-outer" r="30"/>
+      <circle class="r-draw" r="30" pathLength="100"/>
+      <path class="r-ticks" d="M-40 0H-24M24 0H40M0 -40V-24M0 24V40"/>
+      <circle class="r-dot" r="2.6"/>
+    </svg>
+    <div id="popups" aria-hidden="true"></div>
+
+    <header id="hud" hidden>
+      <div class="hud-id"><span class="hud-mark" aria-hidden="true"></span><div><b id="hudMode">رماية الأسهم</b><small id="hudSchool"></small></div></div>
+      <div class="hud-stats" aria-label="لوحة النتائج">
+        <div><span>السؤال</span><b id="hudProgress">١ / ٣</b></div>
+        <div><span>النقاط</span><b id="hudScore">٠</b></div>
+        <div><span>السهام</span><b id="hudArrows">٣</b></div>
+        <div><span id="hudTargetsLabel">الأهداف</span><b id="hudTargets">٣</b></div>
+        <div class="hud-diff"><span>المستوى</span><b id="hudDiff">مبتدئ</b></div>
+        <div id="hudTimerCell" hidden><span>الوقت</span><b id="hudTimer">—</b></div>
+      </div>
+      <div class="hud-tools">
+        <button id="btnPause" class="icon" title="إيقاف مؤقت" aria-label="إيقاف مؤقت"><svg viewBox="0 0 24 24"><path d="M8 5v14M16 5v14"/></svg></button>
+        <button id="btnSound" class="icon" title="الصوت" aria-label="كتم الصوت" aria-pressed="true"><svg viewBox="0 0 24 24"><path d="M4 10v4h4l5 4V6L8 10zM16 9q2 3 0 6M18.5 7q4 5 0 10"/></svg></button>
+        <button id="btnFull" class="icon" title="ملء الشاشة" aria-label="ملء الشاشة"><svg viewBox="0 0 24 24"><path d="M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5"/></svg></button>
+      </div>
+    </header>
+    <div id="hint" hidden><span id="hintText">حرّك المؤشر للتصويب · اضغط مطولًا لشد القوس · اترك للإطلاق</span></div>
+    <div id="drawMeter" hidden aria-hidden="true"><i></i></div>
+
+    <section id="menu" class="overlay" hidden aria-labelledby="menuTitle">
+      <div class="menu-head">
+        <div class="brand"><span class="crest" aria-hidden="true"><svg viewBox="0 0 48 48"><circle cx="24" cy="24" r="21"/><circle cx="24" cy="24" r="14"/><circle cx="24" cy="24" r="7"/><path d="M6 42L24 24M24 24l2-9 4 4z"/></svg></span>
+          <div><small id="menuSchool"></small><h1 id="menuTitle">التصويب على الهدف</h1><p id="menuLesson">لعبة تعليمية ثلاثية الأبعاد · أربعة تحديات رماية</p></div></div>
+        <div class="menu-tools"><button id="btnHelp" class="ghost">طريقة اللعب</button><button id="btnTeacher" class="ghost" hidden>لوحة المعلم</button><button id="btnMusic" class="ghost toggle" aria-pressed="true">الموسيقى: تعمل</button><button id="btnSfx" class="ghost toggle" aria-pressed="true">المؤثرات: تعمل</button></div>
+      </div>
+      <div id="modeCards" class="cards" role="radiogroup" aria-label="اختر التحدي"></div>
+      <div class="menu-foot">
+        <div class="diff" role="radiogroup" aria-label="مستوى الصعوبة" id="diffGroup">
+          <span>المستوى</span>
+          <button data-diff="beginner" role="radio">مبتدئ</button><button data-diff="intermediate" role="radio">متوسط</button><button data-diff="advanced" role="radio">متقدم</button>
+        </div>
+        <p id="menuNote"></p>
+        <button id="btnStart" class="primary big" disabled>جارٍ التجهيز…</button>
+      </div>
+    </section>
+
+    <section id="intro" class="banner" hidden aria-live="polite"><small id="introSmall"></small><h2 id="introTitle"></h2><p id="introText"></p></section>
+
+    <section id="question" class="overlay panel-q" hidden aria-labelledby="qText">
+      <div class="q-card">
+        <div class="q-top"><span class="tag" id="qType">سؤال</span><span id="qCount"></span></div>
+        <h2 id="qText"></h2>
+        <img id="qImage" alt="" hidden>
+        <div id="qBody"></div>
+        <div class="q-actions"><button id="qSubmit" class="primary" hidden>إرسال الإجابة</button></div>
+        <p id="qNote" class="note"></p>
+      </div>
+    </section>
+
+    <section id="waiting" class="banner" hidden aria-live="polite"><h2>حان وقت السؤال</h2><p>أجب عن السؤال الظاهر لتواصل التحدي.</p><button id="btnReopen" class="ghost">عرض السؤال</button></section>
+
+    <section id="feedback" class="overlay small" hidden aria-live="assertive">
+      <div class="fb-card">
+        <div id="fbIcon" class="fb-icon" aria-hidden="true"></div>
+        <small id="fbSmall"></small><h2 id="fbTitle"></h2><p id="fbText"></p>
+        <div class="fb-points"><div><span>نقاط الجولة</span><b id="fbRound">٠</b></div><div><span>المجموع</span><b id="fbTotal">٠</b></div></div>
+        <p id="fbSave" class="note"></p>
+        <button id="btnNext" class="primary big">التالي ←</button>
+      </div>
+    </section>
+
+    <section id="summary" class="overlay" hidden aria-labelledby="sumTitle">
+      <div class="sum-card">
+        <span class="eyebrow" id="sumSchool"></span>
+        <h1 id="sumTitle">التصويب على الهدف</h1>
+        <p id="sumMode"></p>
+        <div class="sum-name" id="sumStudentRow"><span>الطالب</span><b id="sumStudent">—</b></div>
+        <div class="sum-grid">
+          <div><span>الإجابات الصحيحة</span><b id="sumCorrect">٠</b></div>
+          <div><span>بانتظار المراجعة</span><b id="sumPending">٠</b></div>
+          <div><span>النقاط</span><b id="sumPoints">٠</b></div>
+          <div><span>دقة الإصابة</span><b id="sumAccuracy">٠٪</b></div>
+        </div>
+        <p id="sumNote" class="note"></p>
+        <div class="sum-actions"><button id="btnSubmit" class="primary big" hidden>حفظ النتيجة في المنصة ←</button><button id="btnAgain" class="primary">العب مرة أخرى</button><button id="btnMenu" class="ghost">اختر تحديًا آخر</button></div>
+      </div>
+    </section>
+
+    <section id="pause" class="overlay small" hidden aria-labelledby="pauseTitle">
+      <div class="fb-card"><h2 id="pauseTitle">إيقاف مؤقت</h2><p>اللعبة متوقفة. يمكنك المتابعة في أي وقت.</p>
+        <div class="sum-actions"><button id="btnResume" class="primary">متابعة</button><button id="btnQuit" class="ghost">القائمة الرئيسية</button></div></div>
+    </section>
+
+    <section id="help" class="overlay small" hidden aria-labelledby="helpTitle">
+      <div class="fb-card help"><h2 id="helpTitle">طريقة اللعب</h2>
+        <ul>
+          <li><b>التصويب:</b> حرّك الفأرة أو إصبعك على المشهد؛ الدائرة تُظهر نقطة الإصابة.</li>
+          <li><b>الشد والإطلاق:</b> اضغط مطولًا لشد القوس، ثم اترك للإطلاق. كلما اكتمل الشد ثبت السهم.</li>
+          <li><b>لوحة المفاتيح:</b> الأسهم أو W A S D للتصويب، المسافة مطولًا للشد، Esc للإيقاف المؤقت.</li>
+          <li><b>الوضع المبسّط:</b> المس الهدف مرة واحدة وسيصوّب الرامي ويطلق تلقائيًا.</li>
+          <li><b>الأسئلة:</b> بعد كل جولة يظهر سؤال تعليمي؛ الإجابة الصحيحة تثبّت نقاط الجولة.</li>
+        </ul>
+        <label class="check"><input type="checkbox" id="optSimple"> الوضع المبسّط (لمسة واحدة)</label>
+        <button id="btnHelpClose" class="primary">فهمت</button></div>
+    </section>
+
+    <section id="teacher" class="overlay teacher" hidden aria-labelledby="tTitle"></section>
+
+    <section id="loading" class="overlay">
+      <div class="load-card">
+        <span class="crest spin" aria-hidden="true"><svg viewBox="0 0 48 48"><circle cx="24" cy="24" r="21"/><circle cx="24" cy="24" r="14"/><circle cx="24" cy="24" r="7"/></svg></span>
+        <h2>التصويب على الهدف</h2><p id="loadText">جارٍ تجهيز الرامي والميدان…</p>
+        <div class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="loadMeter"><i id="loadBar"></i></div>
+        <button id="btnLoadRetry" class="ghost" hidden>إعادة المحاولة</button>
+      </div>
+    </section>
+    <section id="error" class="overlay small" hidden role="alert"><div class="fb-card"><h2>تعذر تشغيل اللعبة</h2><p id="errorText"></p><button id="btnErrorRetry" class="primary">إعادة المحاولة</button></div></section>
+    <div id="toast" role="status" aria-live="polite" hidden></div>
+  </div>
+</main>
+</template>
+<script id="ts-preset" type="application/json">null</script>
+<script src="../vendor/three.min.js"></script>
+<script src="vendor/meshopt_decoder.js"></script>
+<script src="vendor/GLTFLoader.js"></script>
+<script src="vendor/SkeletonUtils.js"></script>
+<script src="core/util.js"></script>
+<script src="core/config.js"></script>
+<script src="core/assets.js"></script>
+<script src="core/world.js"></script>
+<script src="core/fx.js"></script>
+<script src="core/diagnostics.js"></script>
+<script src="physics/projectile.js"></script>
+<script src="character/rig.js"></script>
+<script src="character/gear.js"></script>
+<script src="character/archer.js"></script>
+<script src="aiming/aim.js"></script>
+<script src="targets/common.js"></script>
+<script src="modes/archery/archery.js"></script>
+<script src="modes/birds/birds.js"></script>
+<script src="modes/balloons/balloons.js"></script>
+<script src="modes/clay-discs/clay.js"></script>
+<script src="audio/audio.js"></script>
+<script src="ui/questions.js"></script>
+<script src="ui/teacher.js"></script>
+<script src="ui/export.js"></script>
+<script src="game.js"></script>
+<script src="../../js/platform-nav.js?v=20.1"></script>
+</body>
+</html>
