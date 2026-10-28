@@ -326,8 +326,8 @@
       .filter(k => k !== 'puzzle' || puzzleAvailable)
       .map(k => ({
         ...GAME_CATALOG[k],
-        ctaLabel: k === 'puzzle' ? 'متاح داخل مهام الصور' : `جرّب ${GAME_CATALOG[k].name}`,
-        ctaHref: k === 'puzzle' ? '#joinForm' : `index.html?demo=${k}`
+        ctaLabel: k === 'puzzle' ? 'جرّب البازل' : `جرّب ${GAME_CATALOG[k].name}`,
+        ctaHref: `index.html?demo=${k}`
       }));
   }
 
