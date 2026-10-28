@@ -32,3 +32,6 @@ jobs:
 
       - name: Check school authorization and grading
         run: node tests/school-api.cjs
+
+      - name: Verify mid-flight question and graded arrow trajectory
+        run: node tests/target-shooting-guided-trajectory.cjs

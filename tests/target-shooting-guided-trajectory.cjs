@@ -1,38 +1,67 @@
 'use strict';
-/* The platform's simplified archer uses server-correct -> face centre, server-wrong -> clear miss.
-   Verify the projectile sweep for realistic archer nock positions at multiple frame rates. */
+// Regression: on BOTH direct hosted link and teacher assignments, launch precedes question,
+// pause occurs while arrow is in flight before contact, then correctness selects hit or miss.
 const assert = require('node:assert/strict');
-const path = require('node:path');
 const fs = require('node:fs');
+const path = require('node:path');
 const PH = require('../games/target-shooting/physics/projectile.js');
-const face = { x: 0, y: 1.55, z: -12 };
-function flight(origin, correct, dt) {
-  const goal = { ...face, x: face.x + (correct ? 0 : 2.8) };
-  const solution = PH.solveLaunch(origin, goal, PH.SPEED);
-  assert.ok(solution, 'flight solution exists');
-  const arrow = new PH.Flight(origin, solution.v, 'guided');
-  const colliders = [
-    { kind: 'disc', c0: face, c1: face, n: { x: 0, y: 0, z: 1 }, r: 0.61 },
-    { kind: 'plane', c0: { x: 0, y: 0, z: 0 }, n: { x: 0, y: 1, z: 0 } }
-  ];
-  for (let t = 0; t < 5; t += dt) {
-    const contact = arrow.step(dt, colliders);
-    if (contact) return contact;
-  }
-  return null;
-}
-for (const dt of [1 / 30, 1 / 60, 1 / 144, 1 / 240]) {
-  for (const o of [{ x: -0.5, y: 1.7, z: -0.1 }, { x: 0.8, y: 1.8, z: 0.4 }, { x: 0.1, y: 1.5, z: 0.2 }]) {
-    assert.equal(flight(o, true, dt)?.collider.kind, 'disc', 'correct answer hits the target');
-    assert.notEqual(flight(o, false, dt)?.collider.kind, 'disc', 'wrong answer misses the target');
-  }
-}
 const source = fs.readFileSync(path.join(__dirname, '../games/target-shooting/game.js'), 'utf8');
-assert.match(source, /const guided = embedded/);
-assert.match(source, /if \(guided && S\.phase === 'preparing' && archer\.state === 'AIM_HOLD'\)/);
-assert.match(source, /S\.guidedDecision = r\.correct === true \? 'hit' : 'miss'/);
-assert.match(source, /if \(r\.pending\) \{[\s\S]*?archer\.standDown\(\)/);
-const parent = fs.readFileSync(path.join(__dirname, '../js/school.js'), 'utf8');
-assert.ok(parent.includes("play.template+'-result'"), 'host uses backend result for this sport');
-assert.match(parent, /play\.template==='target-shooting'/);
-console.log('PASS guided archery: correct hits; wrong misses; pending neutral; server-result-only release');
+const html = fs.readFileSync(path.join(__dirname, '../games/target-shooting/index.html'), 'utf8');
+const school = fs.readFileSync(path.join(__dirname, '../js/school.js'), 'utf8');
+assert.match(source, /const guided = embedded \|\| \(!preset && location\.protocol !== 'file:'/);
+assert.match(source, /S\.drawing = false; phase\('flight'\); archer\.loose\(\)/);
+assert.match(source, /f\.flight\.t >= f\.pauseAt/);
+assert.match(source, /phase\('midflight'\)/);
+assert.match(source, /S\.midFlightPaused \|\| S\.phase === 'question'/);
+assert.match(source, /if \(embedded\) \{ show\('waiting', true\); post\('question'\); return; \}/);
+assert.match(source, /TS\.Questions\.ask/);
+assert.match(source, /const sol = PH\.solveLaunch\(f\.flight\.p, dest, PH\.SPEED\)/);
+assert.match(source, /clearArrows\(\); S\.midFlightPaused = false; archer\.standDown\(\)/);
+assert.match(school, /play\.template==='target-shooting'/);
+assert.match(school, /play\.template\+'-result'/);
+assert.match(html, /game\.js\?v=3-midflight/);
+
+const face = { x: 0, y: 1.55, z: -12 };
+const collider = { kind: 'disc', c0: face, c1: face, n: { x: 0, y: 0, z: 1 }, r: 0.61 };
+for (const fps of [30, 60, 144]) {
+  for (const origin of [
+    { x: -0.5, y: 1.7, z: -0.1 },
+    { x: 0.8, y: 1.8, z: 0.4 },
+    { x: 0.1, y: 1.5, z: 0.2 }
+  ]) {
+    for (const correct of [true, false]) {
+      const s = PH.solveLaunch(origin, face, PH.SPEED);
+      assert.ok(s);
+      const arrow = new PH.Flight(origin, s.v, 'midflight');
+      let preContact = null;
+      // Simulate 240 Hz physics, with additional per-frame validation at requested presentation FPS.
+      const pause = s.t * 0.43;
+      while (arrow.t < pause) {
+        preContact = arrow.step(PH.STEP, [collider]);
+        assert.equal(preContact, null, 'question must arrive before impact');
+      }
+      assert.ok(arrow.t > 0 && arrow.t < s.t * 0.7, 'arrow physically moved and paused before target');
+      const heldZ = arrow.p.z;
+      // Keep exactly the same arrow: redirect only its remaining trajectory after the answer.
+      const dest = { ...face, x: correct ? 0 : 2.9 };
+      const resume = PH.solveLaunch(arrow.p, dest, PH.SPEED);
+      assert.ok(resume);
+      Object.assign(arrow.v, resume.v);
+      arrow.tipOf(arrow.p, arrow.v, arrow.tip);
+      Object.assign(arrow.prevTip, arrow.tip);
+      let hit = null;
+      let frames = 0;
+      while (arrow.p.z > -15 && frames < fps * 2) {
+        for (let j = 0; j < Math.round(240 / fps); j++) {
+          const result = arrow.step(PH.STEP, [collider]);
+          if (result) { hit = result; break; }
+        }
+        if (hit) break;
+        frames++;
+      }
+      assert.ok(arrow.p.z < heldZ, 'the SAME arrow continues towards target after answer');
+      assert.equal(!!hit, correct, `fps=${fps}, correct=${correct}`);
+    }
+  }
+}
+console.log('PASS mid-flight question: one launched arrow freezes before impact; correct hits, wrong misses (30/60/144 FPS)');

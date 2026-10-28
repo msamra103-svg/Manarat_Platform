@@ -22,12 +22,14 @@
   const $ = id => document.getElementById(id);
   const PREFIX = 'school-' + C.KEY + '-';
   const embedded = window.parent !== window;
-  const guided = embedded; // only the school platform iframe uses the one-question/one-arrow flow
   const params = new URLSearchParams(location.search);
   const QA = params.has('qa'), MANUAL = QA && params.has('manual');
   let preset = null; try { preset = JSON.parse(($('ts-preset') || {}).textContent || 'null'); } catch (e) { preset = null; }
   const role = embedded ? 'student' : (preset && preset.role) || document.body.dataset.role || 'student';
   document.body.dataset.role = role;
+  // Public website preview and school assignments use one arrow per question.
+  // Existing exported file:// and teacher editions keep their manual four-challenge gameplay.
+  const guided = embedded || (!preset && location.protocol !== 'file:' && role !== 'teacher' && (!QA || params.has('guided')));
   const STORE_KEY = 'ts-teacher-config-v1';
   let cfg = C.sanitize(preset && preset.config ? preset.config : (role === 'teacher' || !embedded ? U.store.get(STORE_KEY, null) : null));
   if (preset && preset.config) cfg = C.sanitize(preset.config);
@@ -37,7 +39,7 @@
     phase: 'loading', round: 0, total: 0, token: '', configured: !embedded, title: '', student: prefs.name || '',
     mode: guided ? 'archery' : cfg.mode === 'choice' ? 'archery' : cfg.mode, difficulty: guided ? 'beginner' : cfg.difficulty, points: 0, roundPoints: 0, correct: 0, pending: 0,
     shots: 0, hits: 0, roundShots: 0, roundHits: 0, arrowsLeft: 0, questions: [], result: null, resultUsed: false, nextSent: false,
-    loaded: false, paused: false, roundTimer: 0, endTimer: -1, simple: !!prefs.simple || cfg.controls === 'simple', drawing: false, guidedDecision: null
+    loaded: false, paused: false, roundTimer: 0, endTimer: -1, simple: !!prefs.simple || cfg.controls === 'simple', drawing: false, guidedDecision: null, midFlightPaused: false
   };
   const timers = U.timerSet();
 
@@ -111,30 +113,36 @@
     const draw = Math.max(0.55, pose.draw);
     const speed = PH.SPEED * (0.6 + 0.4 * draw);
     const o = PH.v3(pose.nock.x, pose.nock.y, pose.nock.z);
-    // In school mode only the server-graded answer selects a deterministic trajectory.
-    // The target is stationary, centred, and the wrong trajectory passes well outside its rings.
+    // The arrow initially flies towards the target, then pauses BEFORE impact for the question.
     const target = guided ? mode.targets[0] : null;
-    const point = guided && target && S.guidedDecision
-      ? new T.Vector3(target.pos.x + (S.guidedDecision === 'miss' ? 2.8 : 0), target.pos.y, target.pos.z)
-      : aim.point;
+    const point = guided && target ? target.pos : aim.point;
     const sol = PH.solveLaunch(o, point, speed);
     const vel = sol ? sol.v : PH.v3(aim.launch.x * speed, aim.launch.y * speed, aim.launch.z * speed);
     const flight = new PH.Flight(o, vel, 'a' + S.shots);
     const mesh = arrowMesh(); orientArrow(mesh, flight.p, flight.v);
-    arrows.flights.push({ flight, mesh, aimPoint: aim.point.clone() });
+    arrows.flights.push({ flight, mesh, aimPoint: aim.point.clone(),
+      pauseAt: guided ? Math.max(0.045, (sol ? sol.t : 0.2) * 0.43) : Infinity });
     S.arrowsLeft--; S.shots++; S.roundShots++;
     audio.play('release');
     hud();
   }
 
   function simStep(h) {
-    if (!mode) return;
+    if (!mode || (guided && (S.midFlightPaused || S.phase === 'question'))) return;
     mode.preStep(); mode.step(h, S.phase, S.phase === 'shooting' && archer.state === 'AIM_HOLD');
     if (!arrows.flights.length) return;
     const cols = mode.colliders();
     for (const f of arrows.flights) {
       if (!f.flight.alive) continue;
       const hit = f.flight.step(h, cols);
+      if (guided && !S.resultUsed && !hit && S.phase === 'flight' && f.flight.t >= f.pauseAt) {
+        S.midFlightPaused = true;
+        phase('midflight');
+        hint('السهم في منتصف الطريق… أجب عن السؤال ليكمل إلى الهدف');
+        // Show the arrow suspended visibly before opening the centred question.
+        timers.later(() => { if (S.phase === 'midflight') { show('hint', false); openQuestion(); } }, 420);
+        break;
+      }
       if (hit) handleHit(f, hit);
       else if (f.flight.p.y < -2 || f.flight.t > 6) { f.flight.alive = false; f.lost = true; }
     }
@@ -235,9 +243,9 @@
     $('modeCards').querySelectorAll('.card').forEach(c => c.setAttribute('aria-checked', String(c.dataset.mode === S.mode)));
     $('diffGroup').querySelectorAll('button').forEach(b => b.setAttribute('aria-checked', String(b.dataset.diff === S.difficulty)));
     $('menuSchool').textContent = cfg.school + (cfg.department ? ' · ' + cfg.department : '');
-    $('menuLesson').textContent = guided ? (S.title || 'اسحب القوس · أجب عن السؤال · شاهد السهم يصيب أو يخطئ') : S.title || cfg.lesson || 'لعبة تعليمية ثلاثية الأبعاد · أربعة تحديات رماية';
+    $('menuLesson').textContent = guided ? (S.title || 'ينطلق السهم · يظهر السؤال في منتصف الطريق · تحدد إجابتك الإصابة') : S.title || cfg.lesson || 'لعبة تعليمية ثلاثية الأبعاد · أربعة تحديات رماية';
     const qn = S.total;
-    $('menuNote').textContent = guided ? (S.configured ? D(qn) + ' أسئلة · سهم واحد لكل سؤال · التصويب تلقائي' : 'بانتظار بيانات المهمة من المنصة…')
+    $('menuNote').textContent = guided ? (S.configured ? D(qn) + ' أسئلة · ينطلق السهم أولًا ثم يظهر السؤال' : 'بانتظار بيانات المهمة من المنصة…')
       : (cfg.questions ? D(qn) + ' أسئلة من إعداد المعلم' : 'تدريب بأسئلة تجريبية · لا يُسجّل في تقارير المنصة') + ' · ' + D(cfg.arrowsPerQuestion) + ' أسهم في كل جولة';
     const ready = S.loaded && S.configured;
     $('btnStart').disabled = !ready;
@@ -283,7 +291,7 @@
   function startRound() {
     timers.clear(); clearArrows();
     S.roundPoints = 0; S.roundShots = 0; S.roundHits = 0; S.arrowsLeft = guided ? 1 : cfg.arrowsPerQuestion; S.endTimer = -1;
-    S.guidedDecision = null; S.drawing = false;
+    S.guidedDecision = null; S.drawing = false; S.midFlightPaused = false;
     S.result = null; S.resultUsed = false; S.nextSent = false; S.outcomeSent = false;
     S.roundTimer = cfg.timeLimit;
     mode.rng = U.rng(101 + S.round * 7);
@@ -294,7 +302,7 @@
     const m = C.MODES[S.mode];
     $('introSmall').textContent = 'السؤال ' + D(S.round + 1) + ' من ' + D(S.total);
     $('introTitle').textContent = m.title;
-    $('introText').textContent = guided ? 'سهم واحد وسؤال واحد — الإجابة الصحيحة تُصيب الهدف' : D(cfg.arrowsPerQuestion) + ' أسهم في هذه الجولة' + (cfg.timeLimit ? ' · ' + D(cfg.timeLimit) + ' ثانية' : '');
+    $('introText').textContent = guided ? 'السهم ينطلق أولًا، والسؤال يظهر وهو في منتصف الطريق' : D(cfg.arrowsPerQuestion) + ' أسهم في هذه الجولة' + (cfg.timeLimit ? ' · ' + D(cfg.timeLimit) + ' ثانية' : '');
     show('intro', true); phase('intro'); hud();
     timers.later(() => {
       show('intro', false); show('hint', true);
@@ -302,7 +310,7 @@
         phase('preparing');
         const t = mode.targets[0];
         if (t) { aim.lookAtPoint(t.pos); aim.snap(); }
-        hint('الرامي يشد القوس… ثم أجب عن السؤال');
+        hint('الرامي يشد القوس… سيظهر السؤال عندما يصل السهم إلى منتصف الطريق');
         S.drawing = true; archer.draw(); audio.play('draw');
       } else {
         phase('shooting');
@@ -335,17 +343,31 @@
     if (S.resultUsed || S.phase !== 'question') return;
     S.resultUsed = true; S.result = r;
     if (guided) {
-      // The host is authoritative: do not release a shot until its server result arrives.
+      // One arrow ALREADY left the bow and is now suspended in flight.
+      // Server grades school assignments; the public preview grades demonstration questions locally.
       show('waiting', false); show('hint', false); show('drawMeter', false);
-      S.drawing = false; phase('flight');
+      S.drawing = false;
       if (r.pending) {
-        // Awaiting the teacher's grade is neither a hit nor a miss.
-        archer.standDown();
-        timers.later(() => finalizeResult(r), 850);
+        // Essay pending manual grade remains neutral: no hit or miss.
+        clearArrows(); S.midFlightPaused = false; archer.standDown(); phase('flight');
+        timers.later(() => finalizeResult(r), 650);
       } else {
+        const f = arrows.flights.find(x => x.flight.alive);
+        const target = mode.targets[0];
         S.guidedDecision = r.correct === true ? 'hit' : 'miss';
-        archer.loose();
-        timers.later(() => finalizeResult(r), 1450);
+        if (f && target) {
+          const dest = new T.Vector3(target.pos.x + (r.correct === true ? 0 : 2.9), target.pos.y, target.pos.z);
+          const sol = PH.solveLaunch(f.flight.p, dest, PH.SPEED);
+          if (sol) {
+            f.flight.v.x = sol.v.x; f.flight.v.y = sol.v.y; f.flight.v.z = sol.v.z;
+            f.flight.tipOf(f.flight.p, f.flight.v, f.flight.tip);
+            Object.assign(f.flight.prevTip, f.flight.tip);
+          }
+        }
+        S.midFlightPaused = false; phase('flight');
+        hint(r.correct === true ? 'إجابة صحيحة! السهم يتجه للهدف' : 'إجابة غير صحيحة… السهم يبتعد عن الهدف');
+        show('hint', true);
+        timers.later(() => { show('hint', false); finalizeResult(r); }, 1250);
       }
       return;
     }
@@ -631,8 +653,9 @@
     archer.setAim(aim.launch, aim.point);
     archer.update(live);
     if (guided && S.phase === 'preparing' && archer.state === 'AIM_HOLD') {
-      // The bow stays fully drawn while the school shows its centered question.
-      phase('question'); show('hint', false); show('waiting', true); post('question');
+      // Release the arrow FIRST, then freeze it halfway and ask the question.
+      S.drawing = false; phase('flight'); archer.loose();
+      hint('انطلق السهم…');
     }
     // round end bookkeeping
     if (S.phase === 'shooting' && live > 0) {
@@ -670,7 +693,7 @@
   // ------------------------------------------------------------------ QA hooks (no answers, no secrets)
   function qaApi() {
     return {
-      get state() { return { phase: S.phase, round: S.round, total: S.total, points: S.points, roundPoints: S.roundPoints, arrowsLeft: S.arrowsLeft, shots: S.shots, hits: S.hits, mode: S.mode, difficulty: S.difficulty, archer: archer.state, flights: arrows.flights.length, stuck: arrows.stuck.length, targets: mode ? mode.remaining() : 0, correct: S.correct, pending: S.pending, guided }; },
+      get state() { return { midFlightPaused: S.midFlightPaused, guidedDecision: S.guidedDecision, phase: S.phase, round: S.round, total: S.total, points: S.points, roundPoints: S.roundPoints, arrowsLeft: S.arrowsLeft, shots: S.shots, hits: S.hits, mode: S.mode, difficulty: S.difficulty, archer: archer.state, flights: arrows.flights.length, stuck: arrows.stuck.length, targets: mode ? mode.remaining() : 0, correct: S.correct, pending: S.pending, guided }; },
       start(m, d) { if (m) S.mode = m; if (d) S.difficulty = d; return startGame(); },
       setMode: (m) => { S.mode = m; return setMode(m, { fade: false }); },
       // snap = true jumps the smoothed aim (test convenience); snap = false moves it like real input (springs)
@@ -684,6 +707,7 @@
       next, finish, endRound: () => { if (S.phase === 'shooting') S.endTimer = 0; },
       aim: () => ({ point: aim.point.toArray(), launch: aim.launch.toArray(), yaw: aim.yaw.x, pitch: aim.pitch.x, range: aim.range.x }),
       impacts: () => arrows.stuck.map(s => s.mesh.getWorldPosition(new T.Vector3()).toArray()),
+      flightPosition: () => arrows.flights.map(f => ({ t: f.flight.t, p: [f.flight.p.x,f.flight.p.y,f.flight.p.z], pauseAt: f.pauseAt })),
       diag: () => diag ? diag.report() : null, resetDiag: () => diag && diag.reset(),
       targets: () => mode.targets.map(t => ({ id: t.id, alive: t.alive !== false, pos: t.pos.toArray(), vel: t.vel ? t.vel.toArray() : null, r: t.r })),
       world: () => world, archer: () => archer, mode: () => mode, cfg: () => cfg, fx: () => fx, project
