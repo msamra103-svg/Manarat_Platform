@@ -1,0 +1,41 @@
+name: Refresh actual 3D game-card screenshots
+
+on:
+  push:
+    paths:
+      - .github/workflows/refresh-game-covers.yml
+      - scripts/refresh-game-covers.cjs
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  capture-current-game-covers:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: Dependencies for current repo
+        run: npm ci --ignore-scripts
+      - name: Install browser
+        run: npx playwright install --with-deps chromium
+      - name: Capture latest 3D scenes
+        run: node scripts/refresh-game-covers.cjs
+      - name: Commit exact game-scene screenshots
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add assets/game-covers/{football,basketball,volleyball,bowling,fishing,race}.svg
+          git add public/assets/game-covers/{football,basketball,volleyball,bowling,fishing,race}.svg
+          if git diff --cached --quiet; then
+            echo "No homepage covers changed."
+          else
+            git commit -m "Refresh six game cards with real current 3D screenshots"
+            header="$(printf 'x-access-token:%s' "$GITHUB_TOKEN" | base64 -w0)"
+            git -c http.extraheader="AUTHORIZATION: basic $header" push origin HEAD:main
+          fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
