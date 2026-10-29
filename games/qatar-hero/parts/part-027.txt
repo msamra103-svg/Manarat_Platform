@@ -1236,21 +1236,60 @@ ches (shops): 2 per module
   doc.addEventListener('keyup', e => { if (KEYS[e.code]) keyState[e.code] = false; });
   root.addEventListener('blur', () => { for (const k in keyState) keyState[k] = false; });
   const touch = { left: false, right: false, jump: false };
-  // Touch a non-interactive play area to jump; smartboards may send mouse clicks.
-  let lastBoardPointerAt = -1000;
-  function classroomJump(e) {
-    if (S.phase !== 'play' || !cfg.autorun || S.paused || !S.engine || S.engine.frozen) return;
-    if (e.type === 'pointerdown') {
-      if (e.button != null && e.button !== 0) return;
-      lastBoardPointerAt = performance.now();
-    } else if (performance.now() - lastBoardPointerAt < 320) return;
-    if (e.target && e.target.closest && e.target.closest('button,a,input,textarea,select,label,[role="button"],.screen:not([hidden]),#controls')) return;
-    audio.init();
-    S.tapJumpUntil = S.time + 0.18;
+  // Classroom touch / smartboard controls: left edge = back, quick touch = jump,
+  // long hold (>=480ms) = stop while held; release resumes auto-run.
+  let lastBoardPointerAt = -1000, boardPointer = null, boardTimer = null;
+  let boardBackUntil = 0, boardHoldStop = false;
+  function boardAllowed(e) {
+    return S.phase === 'play' && cfg.autorun && !S.paused && !!S.engine &&
+      !S.engine.frozen && !(e.target && e.target.closest &&
+      e.target.closest('button,a,input,textarea,select,label,[role="button"],.screen:not([hidden]),#controls'));
+  }
+  function boardReset() {
+    if (boardTimer !== null) { clearTimeout(boardTimer); boardTimer = null; }
+    boardPointer = null; boardBackUntil = 0; boardHoldStop = false;
+    S.tapJumpUntil = 0;
+  }
+  function boardDown(e) {
+    if (!boardAllowed(e) || e.isPrimary === false || (e.button != null && e.button !== 0)) return;
+    boardReset(); audio.init();
+    lastBoardPointerAt = performance.now();
+    boardPointer = { id: e.pointerId, x: e.clientX, y: e.clientY,
+      zone: e.clientX < root.innerWidth * 0.30 ? 'back' : 'jump' };
+    if (boardPointer.zone === 'jump') S.tapJumpUntil = S.time + 0.18;
+    boardTimer = setTimeout(() => {
+      if (!boardPointer || S.phase !== 'play') return;
+      boardHoldStop = true; boardBackUntil = 0; S.tapJumpUntil = 0;
+      toast('توقّف مؤقت — ارفع إصبعك لمواصلة الجري', 0.9);
+    }, 480);
     if (e.cancelable) e.preventDefault();
   }
-  doc.addEventListener('pointerdown', classroomJump, { passive: false });
-  doc.addEventListener('click', classroomJump);
+  function boardMove(e) {
+    if (!boardPointer || boardPointer.id !== e.pointerId || boardHoldStop) return;
+    // Swiping left switches immediately from jump to backwards movement.
+    if (boardPointer.zone === 'jump' && e.clientX < boardPointer.x - 55) {
+      boardPointer.zone = 'back'; S.tapJumpUntil = 0;
+    }
+  }
+  function boardUp(e) {
+    if (!boardPointer || boardPointer.id !== e.pointerId) return;
+    if (boardPointer.zone === 'back' && !boardHoldStop) boardBackUntil = performance.now() + 320;
+    if (boardTimer !== null) { clearTimeout(boardTimer); boardTimer = null; }
+    boardPointer = null; boardHoldStop = false;
+  }
+  doc.addEventListener('pointerdown', boardDown, { passive: false });
+  doc.addEventListener('pointermove', boardMove, { passive: true });
+  doc.addEventListener('pointerup', boardUp);
+  doc.addEventListener('pointercancel', boardUp);
+  root.addEventListener('blur', boardReset);
+  // A few older interactive boards emit clicks but no pointer events.
+  doc.addEventListener('click', e => {
+    if (performance.now() - lastBoardPointerAt < 700 || !boardAllowed(e)) return;
+    lastBoardPointerAt = performance.now();
+    audio.init();
+    if (e.clientX < root.innerWidth * 0.30) boardBackUntil = performance.now() + 420;
+    else S.tapJumpUntil = S.time + 0.18;
+  });
   doc.querySelectorAll('[data-ctl]').forEach(b => {
     const k = b.dataset.ctl; const on = e => { e.preventDefault(); try { b.setPointerCapture(e.pointerId); } catch (x) { /* */ } touch[k] = true; b.classList.add('on'); audio.init(); };
     const off = e => { e.preventDefault(); touch[k] = false; b.classList.remove('on'); };
@@ -1263,6 +1302,8 @@ ches (shops): 2 per module
     for (const g of pads || []) { if (!g) continue; const ax = g.axes[0] || 0; if (ax < -0.35 || (g.buttons[14] && g.buttons[14].pressed)) left = true; if (ax > 0.35 || (g.buttons[15] && g.buttons[15].pressed)) right = true; if ((g.buttons[0] && g.buttons[0].pressed) || (g.buttons[1] && g.buttons[1].pressed)) jump = true; if (g.buttons[9] && g.buttons[9].pressed && !S.padStart) { S.padStart = true; togglePause(); } else if (g.buttons[9] && !g.buttons[9].pressed) S.padStart = false; for (let i = 0; i < 4; i++) { const pr = !!(g.buttons[i] && g.buttons[i].pressed); if (S.phase === 'question' && S.pt > 0.4 && pr && !S['padA' + i]) answer(i); S['padA' + i] = pr; } }
     if (S.qaInput) { left = left || S.qaInput.left; right = right || S.qaInput.right; jump = jump || S.qaInput.jump; }
     input.left = left; input.right = right; input.jump = jump || (S.tapJumpUntil > S.time);
+    input.back = left || (!!boardPointer && boardPointer.zone === 'back' && !boardHoldStop) || boardBackUntil > performance.now();
+    input.stop = boardHoldStop || k('ArrowDown') || k('KeyS');
   }
   function controlsVisibility() { const t = matchMedia('(pointer: coarse)').matches || navigator.maxTouchPoints > 0; const on = S.ctlOverride != null ? S.ctlOverride : (cfg.controls === 'on' || (cfg.controls === 'auto' && t)); $('controls').hidden = !on || S.phase === 'menu' || cfg.autorun; $('chkControls').checked = on && !cfg.autorun; }
 
@@ -1295,6 +1336,7 @@ ches (shops): 2 per module
   // ------------------------------------------------------------------ questions
   function openQuestion(d) {
     const E = S.engine, s = E.slots[d.slot]; if (!s || s.solved || S.q) return;
+    boardReset();
     S.q = { slot: d.slot, qIndex: d.qIndex, x: d.x, y: d.y, tries: 0, locked: false, wrong: new Set(), first: s.tries <= 1 };
     phase('question'); audio.setMode('question'); audio.questionOpen(); $('hintBubble').hidden = true;
     for (const k in touch) touch[k] = false; doc.querySelectorAll('.pad.on').forEach(p => p.classList.remove('on'));
@@ -1339,6 +1381,10 @@ ches (shops): 2 per module
       btns.forEach(b => { if (Number(b.dataset.i) === i) { b.classList.add('wrong'); b.disabled = true; } });
       $('qFeedback').textContent = WRONG_MSG[(S.q.tries - 1) % WRONG_MSG.length]; $('qFeedback').className = 'q-feedback bad';
       $('qTries').textContent = 'المحاولة ' + AR(S.q.tries + 1);
+      // Never leave every choice disabled, even with malformed imported questions.
+      if (![...btns].some(b => !b.disabled)) {
+        S.q.wrong.clear(); btns.forEach(b => { b.disabled = false; b.classList.remove('wrong'); });
+      }
       card.classList.remove('shake'); void card.offsetWidth; card.classList.add('shake'); audio.wrong();
       S.qTimer = cfg.timer; // fresh time for the next try
     }
@@ -1391,8 +1437,12 @@ ches (shops): 2 per module
       S.results.push({ q: S.platform.round, stage: S.stage.id, try: S.engine.slots[S.q.slot].tries, correct: b.correct === true, pending: b.pending === true });
       if (b.feedback) toast(String(b.feedback).slice(0, 140), 2.4);
       if (ok) { S.stage.solved++; if (b.correct === true) { S.score += 800; if (S.engine.slots[S.q.slot].tries === 1) { S.firstTry++; S.stage.first++; } audio.success(); } S.platform.round++; closeQuestion(); post('next'); }
-      else { // wrong: the question stays — the hero can hit the block again to ask for another try
-        S.wrongTotal++; audio.wrong(); S.q = null; phase('play'); audio.setMode('run'); S.engine.frozen = false; toast(b.feedback ? String(b.feedback).slice(0, 80) : 'حاول مرة أخرى — اضرب المكعب من جديد', 1.0); S.engine.auto.waitT = 0.1;
+      else { // Keep the same question open until a correct answer: no re-hit, no freeze.
+        S.wrongTotal++; S.stage.wrong++; audio.wrong();
+        S.engine.slots[S.q.slot].tries++;
+        S.platform.awaiting = true;
+        show('platformWait');
+        toast(b.feedback ? String(b.feedback).slice(0, 80) : 'إجابة غير صحيحة — اختر إجابة أخرى', 1.2);
       }
       return;
     }
