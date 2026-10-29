@@ -919,7 +919,7 @@ ches (shops): 2 per module
       school: 'مدرستي', teacher: 'المعلم', grade: '', className: '', lesson: 'درس تجريبي', logo: '', student: '',
       questions: SAMPLE.map(q => Object.assign({ image: '' }, q, { options: q.options.slice() })),
       stages: ['corniche'], perStage: 3, defaultStage: 'corniche', order: 'ordered',
-      attempts: 3, hearts: 3, onFail: 'checkpoint', timer: 0, autorun: false, doubleJump: false, difficulty: 'normal',
+      attempts: 3, hearts: 3, onFail: 'checkpoint', timer: 0, autorun: true, doubleJump: false, difficulty: 'normal',
       music: true, musicVol: 0.7, sfxVol: 0.9,
       startMsg: 'ساعد بطل قطر على عبور المراحل، واضرب مكعبات الأسئلة ؟ لتفتح الطريق!',
       endMsg: 'أحسنت يا بطل! أكملت المغامرة بنجاح.',
@@ -1236,6 +1236,21 @@ ches (shops): 2 per module
   doc.addEventListener('keyup', e => { if (KEYS[e.code]) keyState[e.code] = false; });
   root.addEventListener('blur', () => { for (const k in keyState) keyState[k] = false; });
   const touch = { left: false, right: false, jump: false };
+  // Touch a non-interactive play area to jump; smartboards may send mouse clicks.
+  let lastBoardPointerAt = -1000;
+  function classroomJump(e) {
+    if (S.phase !== 'play' || !cfg.autorun || S.paused || !S.engine || S.engine.frozen) return;
+    if (e.type === 'pointerdown') {
+      if (e.button != null && e.button !== 0) return;
+      lastBoardPointerAt = performance.now();
+    } else if (performance.now() - lastBoardPointerAt < 320) return;
+    if (e.target && e.target.closest && e.target.closest('button,a,input,textarea,select,label,[role="button"],.screen:not([hidden]),#controls')) return;
+    audio.init();
+    S.tapJumpUntil = S.time + 0.18;
+    if (e.cancelable) e.preventDefault();
+  }
+  doc.addEventListener('pointerdown', classroomJump, { passive: false });
+  doc.addEventListener('click', classroomJump);
   doc.querySelectorAll('[data-ctl]').forEach(b => {
     const k = b.dataset.ctl; const on = e => { e.preventDefault(); try { b.setPointerCapture(e.pointerId); } catch (x) { /* */ } touch[k] = true; b.classList.add('on'); audio.init(); };
     const off = e => { e.preventDefault(); touch[k] = false; b.classList.remove('on'); };
@@ -1247,9 +1262,9 @@ ches (shops): 2 per module
     const pads = navigator.getGamepads ? navigator.getGamepads() : [];
     for (const g of pads || []) { if (!g) continue; const ax = g.axes[0] || 0; if (ax < -0.35 || (g.buttons[14] && g.buttons[14].pressed)) left = true; if (ax > 0.35 || (g.buttons[15] && g.buttons[15].pressed)) right = true; if ((g.buttons[0] && g.buttons[0].pressed) || (g.buttons[1] && g.buttons[1].pressed)) jump = true; if (g.buttons[9] && g.buttons[9].pressed && !S.padStart) { S.padStart = true; togglePause(); } else if (g.buttons[9] && !g.buttons[9].pressed) S.padStart = false; for (let i = 0; i < 4; i++) { const pr = !!(g.buttons[i] && g.buttons[i].pressed); if (S.phase === 'question' && S.pt > 0.4 && pr && !S['padA' + i]) answer(i); S['padA' + i] = pr; } }
     if (S.qaInput) { left = left || S.qaInput.left; right = right || S.qaInput.right; jump = jump || S.qaInput.jump; }
-    input.left = left; input.right = right; input.jump = jump;
+    input.left = left; input.right = right; input.jump = jump || (S.tapJumpUntil > S.time);
   }
-  function controlsVisibility() { const t = matchMedia('(pointer: coarse)').matches || navigator.maxTouchPoints > 0; const on = S.ctlOverride != null ? S.ctlOverride : (cfg.controls === 'on' || (cfg.controls === 'auto' && t)); $('controls').hidden = !on || S.phase === 'menu'; $('chkControls').checked = on; }
+  function controlsVisibility() { const t = matchMedia('(pointer: coarse)').matches || navigator.maxTouchPoints > 0; const on = S.ctlOverride != null ? S.ctlOverride : (cfg.controls === 'on' || (cfg.controls === 'auto' && t)); $('controls').hidden = !on || S.phase === 'menu' || cfg.autorun; $('chkControls').checked = on && !cfg.autorun; }
 
   // ------------------------------------------------------------------ engine events → audio / view / ui
   function onEngineEvent(type, d) {
@@ -1335,6 +1350,22 @@ ches (shops): 2 per module
     const ss = (S.solvedSlots[S.stage.id] = S.solvedSlots[S.stage.id] || []); if (!ss.includes(d.slot)) ss.push(d.slot); S.solvedTotal = Object.values(S.solvedSlots).reduce((a, l) => a + l.length, 0);
     view.fx('correct', { x: d.x, y: d.y }); if (d.pts) popup(d.x, d.y + 1.5, '+' + AR(d.pts), 'green');
     S.q = null; phase('play'); audio.setMode('run'); post('outcome', { correct: true }); hud();
+    if (S.platform.on) {
+      const next = E.activeGate();
+      if (next) {
+        // Fast classroom progression on safe, flat ground before the next question.
+        const p = E.player, targetX = next.x - 3.8;
+        if (targetX > p.x + 6) {
+          p.x = targetX; p.y = next.top; p.vx = 0; p.vy = 0;
+          p.onGround = true; p.ground = null; p.jumpBuf = 0; p.held = false;
+          p.coyote = 0.1; p.invulT = Math.max(p.invulT, 1);
+          E.auto.waitT = 0; E.auto.jumpT = 0; E.acc = 0;
+          snapCam();
+        }
+      } else if (S.stage.solved >= S.stage.qCount) {
+        reachGoal();
+      }
+    }
   }
 
   // ------------------------------------------------------------------ platform bridge
@@ -1361,7 +1392,7 @@ ches (shops): 2 per module
       if (b.feedback) toast(String(b.feedback).slice(0, 140), 2.4);
       if (ok) { S.stage.solved++; if (b.correct === true) { S.score += 800; if (S.engine.slots[S.q.slot].tries === 1) { S.firstTry++; S.stage.first++; } audio.success(); } S.platform.round++; closeQuestion(); post('next'); }
       else { // wrong: the question stays — the hero can hit the block again to ask for another try
-        S.wrongTotal++; audio.wrong(); S.q = null; phase('play'); audio.setMode('run'); S.engine.frozen = false; toast(b.feedback ? String(b.feedback).slice(0, 80) : 'حاول مرة أخرى — اضرب المكعب من جديد', 2.2);
+        S.wrongTotal++; audio.wrong(); S.q = null; phase('play'); audio.setMode('run'); S.engine.frozen = false; toast(b.feedback ? String(b.feedback).slice(0, 80) : 'حاول مرة أخرى — اضرب المكعب من جديد', 1.0); S.engine.auto.waitT = 0.1;
       }
       return;
     }
@@ -1475,7 +1506,7 @@ ches (shops): 2 per module
     readInput();
     const ph = S.phase;
     if (E) {
-      if (ph === 'stageIntro') { E.input = { left: false, right: false, jump: false }; if (S.pt > 2.0) { hide('stageCard'); phase('play'); } }
+      if (ph === 'stageIntro') { E.input = { left: false, right: false, jump: false }; if (S.pt > (S.platform.on ? 0.45 : 2.0)) { hide('stageCard'); phase('play'); } }
       if (ph === 'play') { E.input = Object.assign({}, input); }
       if (ph === 'goal' || ph === 'dying' || ph === 'gameOver' || ph === 'stageClear') E.input = { left: false, right: false, jump: false };
       if (ph === 'menu') { showcaseAI(E, dt); }
@@ -1487,7 +1518,8 @@ ches (shops): 2 per module
         if (S.dieCause === 'pit') { p.y = Math.max(p.y - 6 * dt, -3.2); } else { p.vy -= 24 * dt; p.y += p.vy * dt; }
         if (S.pt > 1.6) afterDeath();
       }
-      if (ph === 'goal') { S.goalRaise = Math.min(1, S.goalRaise + dt / 2.4); if (S.pt > 4.4) stageClear(); }
+      if (ph === 'goal') { S.goalRaise = Math.min(1, S.goalRaise + dt / 2.4); if (S.pt > (S.platform.on ? 0.65 : 4.4)) stageClear(); }
+      if (ph === 'stageClear' && S.platform.on && S.pt > 0.65) nextStage();
       if (ph === 'question') {
         if (S.closeAt > 0 && S.time >= S.closeAt) closeQuestion();
         else if (cfg.timer && S.q && !S.q.locked && !S.platform.on) {
