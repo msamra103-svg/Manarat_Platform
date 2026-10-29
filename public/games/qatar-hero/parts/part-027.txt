@@ -1,0 +1,1589 @@
+ches (shops): 2 per module
+    const arch = (cx, w, h, y0) => { x.beginPath(); x.moveTo(cx - w / 2, y0); x.lineTo(cx - w / 2, y0 - h + w / 2); x.arc(cx, y0 - h + w / 2, w / 2, Math.PI, 0); x.lineTo(cx + w / 2, y0); x.closePath(); };
+    for (const k of [0, 1]) {
+      const cx = S * (0.27 + k * 0.46), w = S * 0.3, h = S * 0.4, y0 = S;
+      x.save(); arch(cx, w + 16, h + 10, y0); x.fillStyle = '#8a6440'; x.fill(); x.restore();
+      x.save(); arch(cx, w, h, y0); x.clip();
+      const g = x.createLinearGradient(0, y0 - h, 0, y0); g.addColorStop(0, '#3a2412'); g.addColorStop(1, '#1e130a'); x.fillStyle = g; x.fillRect(cx - w / 2, y0 - h, w, h);
+      // goods: jars & boxes on shelves above, burlap sacks with heaped spices below, hanging baskets
+      seed = 31 + k + variant * 3; const L0 = cx - w / 2, SP = ['#c2742e', '#d8b04a', '#8a3a24', '#6a8a3a', '#b8462a', '#e2c48a', '#5a3a20'];
+      for (let r = 0; r < 2; r++) { const sy = y0 - h * 0.46 - r * h * 0.16; x.fillStyle = '#5a3a1e'; x.fillRect(L0 + 4, sy, w - 8, 5); for (let i = 0; i < 7; i++) { const jx = L0 + 10 + i * (w - 20) / 7, jh = 12 + rnd() * 10, jw = 9 + rnd() * 5; x.fillStyle = ['#a86a3a', '#2e6a7a', '#c9a04a', '#7a3a2a', '#e8dcc0'][(rnd() * 5) | 0]; x.beginPath(); x.ellipse(jx + jw / 2, sy - jh / 2, jw / 2, jh / 2, 0, 0, 7); x.fill(); x.fillStyle = 'rgba(255,255,255,0.25)'; x.fillRect(jx + 2, sy - jh + 3, 2, jh - 6); } }
+      for (let i = 0; i < 5; i++) { const bx = L0 + 10 + i * (w - 20) / 5 + 6, by = y0 - 6, bw = (w - 20) / 5 - 2; x.fillStyle = '#b8955e'; x.beginPath(); x.moveTo(bx - 2, by); x.quadraticCurveTo(bx - 4, by - 26, bx + 2, by - 30); x.lineTo(bx + bw - 2, by - 30); x.quadraticCurveTo(bx + bw + 4, by - 26, bx + bw + 2, by); x.fill(); x.fillStyle = SP[(rnd() * SP.length) | 0]; x.beginPath(); x.ellipse(bx + bw / 2, by - 30, bw / 2 + 1, 7, 0, Math.PI, 0); x.fill(); x.fillStyle = 'rgba(60,40,20,0.35)'; x.fillRect(bx, by - 14, bw, 2); }
+      for (let i = 0; i < 3; i++) { const hx = L0 + w * (0.25 + i * 0.25); x.strokeStyle = '#2a1a0c'; x.lineWidth = 1.5; x.beginPath(); x.moveTo(hx, y0 - h + w * 0.35); x.lineTo(hx, y0 - h * 0.78); x.stroke(); x.fillStyle = ['#c9a04a', '#8a3a24', '#d8b04a'][i]; x.beginPath(); x.ellipse(hx, y0 - h * 0.74, 7, 9, 0, 0, 7); x.fill(); }
+      x.restore();
+      xe.save(); arch(cx, w, h, y0); xe.clip(); const ge = xe.createRadialGradient(cx, y0 - h * 0.6, 4, cx, y0 - h * 0.5, w); ge.addColorStop(0, 'rgba(255,190,110,0.9)'); ge.addColorStop(1, 'rgba(120,60,20,0.2)'); xe.fillStyle = ge; xe.fillRect(cx - w / 2, y0 - h, w, h); xe.restore();
+    }
+    // upper floor: wooden shuttered windows / mashrabiya
+    for (const k of [0, 1, 2]) {
+      const cx = S * (0.18 + k * 0.32), w = S * 0.12, h = S * 0.16, y = S * 0.18;
+      x.fillStyle = '#5a3a1e'; x.fillRect(cx - w / 2 - 6, y - 6, w + 12, h + 12);
+      if ((k + variant) % 2) { x.fillStyle = '#3a2412'; x.fillRect(cx - w / 2, y, w, h); x.strokeStyle = '#a77a48'; x.lineWidth = 2; for (let i = 0; i <= 6; i++) { x.beginPath(); x.moveTo(cx - w / 2, y + i * h / 6); x.lineTo(cx + w / 2, y + i * h / 6); x.stroke(); x.beginPath(); x.moveTo(cx - w / 2 + i * w / 6, y); x.lineTo(cx - w / 2 + i * w / 6, y + h); x.stroke(); } xe.fillStyle = 'rgba(255,180,90,0.5)'; xe.fillRect(cx - w / 2, y, w, h); }
+      else { x.fillStyle = '#7a5230'; x.fillRect(cx - w / 2, y, w / 2 - 2, h); x.fillRect(cx + 2, y, w / 2 - 2, h); x.fillStyle = 'rgba(0,0,0,0.25)'; for (let i = 0; i < 5; i++) { x.fillRect(cx - w / 2, y + 6 + i * h / 5, w, 3); } }
+    }
+    // drip stains under the roof poles
+    for (let i = 0; i < 10; i++) { const px = (i + 0.5) * S / 10; const g = x.createLinearGradient(0, 0, 0, 60); g.addColorStop(0, 'rgba(70,45,20,0.25)'); g.addColorStop(1, 'rgba(70,45,20,0)'); x.fillStyle = g; x.fillRect(px - 3, 18, 6, 60); }
+    return { map: tex(c, { wrap: false }), emissiveMap: tex(ce, { wrap: false }) };
+  }
+  const souq = {
+    id: 'souq', tod: 0.92, exposure: 0.88, water: false, dustColor: C('#cdb48e'), surface: 'stone', ambience: 'souq',
+    materials(v) {
+      if (this._m) return this._m;
+      return (this._m = {
+        top: std(Object.assign(X.pbr('souqfloor'), { color: C('#b5ab9c'), roughness: 1, normalScale: new T.Vector2(0.8, 0.8) })),
+        side: std({ map: X.photo('plaster_c', { repeat: [0.5, 0.5] }), normalMap: X.photo('plaster_n', { srgb: false, repeat: [0.5, 0.5] }), color: C('#c9a57e'), roughness: 0.95 }),
+        stoneSide: std(Object.assign(X.pbr('souqfloor'), { color: C('#8d8478'), roughness: 1 })),
+        terraceSide: std({ map: X.photo('plaster_c', { repeat: [0.5, 0.5] }), normalMap: X.photo('plaster_n', { srgb: false, repeat: [0.5, 0.5] }), color: C('#d8b892'), roughness: 0.95 }),
+        coping: std({ map: X.photo('souqfloor_c'), color: C('#c7bcab'), roughness: 0.9 }),
+        crate: std(Object.assign({}, HT.crate(), { roughness: 0.85 })),
+        stone: std(Object.assign({}, HT.brick([206, 176, 136], 'souqStair'), { roughness: 0.9 })),
+        wood: std(Object.assign({}, HT.planks('#6e4a2a'), { roughness: 0.85 })),
+        woodDark: std(Object.assign({}, HT.planks('#4a3018'), { roughness: 0.9 })),
+        brickMaps: HT.brick([190, 140, 92], 'souqBrick')
+      });
+    },
+    groundRun(v, x0, x1) { slab(v, x0, x1, v.mats.top, v.mats.side, { ts: 3 }); v.stage.add(mesh(box(x0, x1, -0.02, 0.06, 2.0, 2.35, { top: 1, side: 1 }), v.mats.coping, false, true)); },
+    pitRun(v, x0, x1) { darkPit(v, x0, x1, v.mats.stoneSide); },
+    terrace(v, x0, x1, h) { // raised stone dakka with plaster sides and carpets
+      const st = v.stage, m = v.mats; st.add(mesh(box(x0, x1, 0, h - 0.12, -1.6, 1.6, { top: 2, side: 1.4 }), m.terraceSide)); st.add(mesh(box(x0 - 0.05, x1 + 0.05, h - 0.12, h, -1.65, 1.65, { top: 2, side: 2 }), m.coping));
+      const rug = std({ map: rugTex(), roughness: 0.9 }); const g = new T.PlaneGeometry(Math.min(2.4, x1 - x0 - 0.6), 1.4); g.rotateX(-Math.PI / 2); const r = mesh(g, rug, false, true); r.position.set((x0 + x1) / 2, h + 0.012, -0.6); st.add(r);
+    },
+    ledge(v, x0, x1, y) { // wooden balcony with carved brackets
+      const st = v.stage, m = v.mats; st.add(mesh(box(x0, x1, y + 0.7, y + 1, -0.9, 0.9, { top: 1, side: 1 }), m.wood)); st.add(mesh(box(x0 - 0.06, x1 + 0.06, y + 0.58, y + 0.72, -0.95, 0.95, { top: 1, side: 1 }), m.woodDark));
+      for (let x = x0 + 0.3; x < x1; x += 1) { const br = mesh(new T.BoxGeometry(0.1, 0.5, 0.1), m.woodDark); br.position.set(x, y + 0.38, -0.85); br.rotation.x = 0.5; st.add(br); }
+      for (const px of [x0 + 0.12, x1 - 0.12]) { let bot = -0.5; for (let yy = y - 1; yy >= -4; yy--) if (v.engine.solid(Math.floor(px), yy)) { bot = yy + 1; break; } st.add(mesh(box(px - 0.07, px + 0.07, bot, y + 0.6, -0.8, -0.66, { top: 1, side: 1 }), m.woodDark, true, false)); }
+    },
+    mover(v, m) { if (m.kind !== 'float') return null; const g = new T.Group(), rug = std({ map: rugTex(), roughness: 0.85, side: T.DoubleSide }); const geo = new T.PlaneGeometry(m.w, 1.4, 16, 4); geo.rotateX(-Math.PI / 2); geo.translate(m.w / 2, 0.28, 0); const base = geo.attributes.position.array.slice(); const r = mesh(geo, rug, true, true); g.add(r); const fr = []; for (let i = 0; i < 10; i++) { const f = mesh(new T.BoxGeometry(0.02, 0.01, 0.12), std({ color: C('#e8c070') }), false, false); f.position.set(i * m.w / 9, 0.28, 0.76); g.add(f); fr.push(f); } const glow = A2.glowSprite(0xffd27a, 2.2, 0.25); glow.position.set(m.w / 2, 0.1, 0); g.add(glow); return { group: g, update(dt, st) { const p = geo.attributes.position, t = st.t || 0; for (let i = 0; i < p.count; i++) p.setY(i, base[i * 3 + 1] + 0.05 * Math.sin(t * 4 + base[i * 3] * 2.2) + 0.03 * Math.sin(t * 3 + base[i * 3 + 2] * 3)); p.needsUpdate = true; geo.computeVertexNormals(); } }; },
+    enemy(v, type) { return type === 'pigeon' ? A2.pigeon() : type === 'hedgehog' ? A2.hedgehog() : A2.lanternSpirit(); },
+    scenery(v, L, E) {
+      const st = v.stage, m = v.mats, q = v.q;
+      // souq buildings behind the lane: modules 6–9 m wide, 6–9 m tall, mud plaster facades with arched shops
+      backFloor(v, L, m.top);
+      const variants = this._fac || (this._fac = [0, 1, 2].map(k => { const f = souqFacadeTex(k); return std({ map: f.map, emissiveMap: f.emissiveMap, emissive: new T.Color(1, 0.75, 0.45), emissiveIntensity: 0.55, roughness: 0.95 }); }));
+      variants.forEach(mt => v.world.glowMat && v.world.glowMat(mt, 0.3, 1.2));
+      const plaster = m.side; const rr = mulberry(808); seed = 77;
+      const lanterns = [], signs = [], poles = [], crenel = [], towers = [], awn = [], awnP = [], sacks = [];
+      const SPC = ['#c2742e', '#d8a040', '#9a3a22', '#7a8a3a', '#c8502a', '#e8d6a8'].map(h => new T.Color(h).convertSRGBToLinear());
+      let x = -12; const SIGNS = ['عطارة', 'بهارات', 'تمور', 'عسل', 'عطور', 'سجاد', 'حلويات', 'مقهى', 'فخار', 'قهوة'];
+      while (x < L.W + 14) {
+        const w = 6 + Math.round(rr() * 3), h = 5.2 + rr() * 1.4, k = (rr() * 3) | 0, z0 = -6.2 - rr() * 0.5;
+        const g = new T.BoxGeometry(w, h, 3); g.translate(0, h / 2, -1.5);
+        const mats = [plaster, plaster, plaster, plaster, variants[k], plaster]; // front (+z) gets the facade
+        const b = mesh(g, mats, q === 'high', true); b.position.set(x + w / 2, 0, z0 + 0.0); st.add(b);
+        for (let i = 0; i < Math.floor(w / 0.85); i++) poles.push({ x: x + 0.45 + i * 0.85, y: h - 0.7, z: z0 });
+        for (let i = 0; i < Math.floor(w / 1.2); i++) crenel.push({ x: x + 0.6 + i * 1.2, y: h, z: z0 - 0.15, w: 0.5, h: 0.45, d: 0.3 });
+        for (const kk of [0.27, 0.73]) { lanterns.push({ x: x + w * kk, y: 2.75, z: z0 + 1.3 }); if (rr() < 0.8) signs.push({ x: x + w * kk, z: z0 + 0.04, t: SIGNS[(rr() * SIGNS.length) | 0] }); }
+        awn.push({ x: x + w / 2, y: 3.55, z: z0 + 0.7, w: w - 0.2, h: 0.07, d: 1.45 }); for (const px of [x + 0.25, x + w - 0.25]) awnP.push({ x: px, y: 0, z: z0 + 1.35, w: 0.09, h: 3.55, d: 0.09 });
+        for (const kk of [0.27, 0.73]) if (rr() < 0.7) for (let s2 = 0; s2 < 3; s2++) sacks.push({ x: x + w * kk + (s2 - 1) * 0.55, z: z0 + 0.55 + (s2 % 2) * 0.2, c: SPC[(rr() * SPC.length) | 0] });
+        if (rr() < 0.35) towers.push({ x: x + w * (0.3 + rr() * 0.4), y: h, z: z0 - 1.5, w: 1.6, h: 3.2 + rr(), d: 1.6 });
+        x += w + 0.02;
+      }
+      // protruding danshal roof poles, parapet crenellations, wind towers
+      const poleG = new T.CylinderGeometry(0.06, 0.07, 0.9, 6); poleG.rotateX(Math.PI / 2); poleG.translate(0, 0, 0.35);
+      const pm = new T.InstancedMesh(poleG, m.woodDark, poles.length); poles.forEach((p, i) => pm.setMatrixAt(i, mtx(p.x, p.y, p.z))); pm.castShadow = q === 'high'; st.add(pm);
+      boxes(v, plaster, crenel); boxes(v, plaster, towers);
+      // reed-and-pole awnings over the shopfronts, and sacks of spices on the ground
+      boxes(v, std({ map: X.photo('wood_c'), color: C('#a98a62'), roughness: 0.95 }), awn); boxes(v, m.woodDark, awnP);
+      { const sg = new T.CylinderGeometry(0.2, 0.25, 0.45, 10); sg.translate(0, 0.22, 0); const pg = new T.SphereGeometry(0.21, 10, 6, 0, Math.PI * 2, 0, Math.PI / 2); pg.scale(1, 0.55, 1); pg.translate(0, 0.43, 0);
+        const sm = new T.InstancedMesh(sg, std({ normalMap: X.photo('cloth_n', { srgb: false }), color: C('#b8955e'), roughness: 1 }), sacks.length), sp = new T.InstancedMesh(pg, std({ color: 0xffffff, roughness: 1 }), sacks.length);
+        sacks.forEach((s3, i) => { sm.setMatrixAt(i, mtx(s3.x, 0, s3.z, i)); sp.setMatrixAt(i, mtx(s3.x, 0, s3.z, i)); sp.setColorAt(i, s3.c); }); sm.castShadow = sp.castShadow = q === 'high'; st.add(sm); st.add(sp); }
+      const slots = []; towers.forEach(t => { for (const s of [-0.45, 0, 0.45]) slots.push({ x: t.x + s, y: t.y + t.h - 1.6, z: t.z + 0.81, w: 0.18, h: 1.3, d: 0.05 }); }); boxes(v, m.woodDark, slots, { shadow: false });
+      // hanging lanterns + shop signs
+      const ld = P.lantern(); prop(v, ld, lanterns, { name: 'lantern', shadow: false }); v.world.glowMat && v.world.glowMat(ld.parts[1].mat, 0.8, 1.6);
+      for (const s of signs) { const g = new T.PlaneGeometry(1.5, 0.38); const sm = mesh(g, signMat(s.t, '#3a2414', '#f3dca5'), false, false); sm.position.set(s.x, 3.85, s.z + 0.02); st.add(sm); }
+      // street furniture: spice carts, crates, café umbrellas, carpets
+      const carts = [], crates = [], umbs = [], carpets = [];
+      for (let xx = 8; xx < L.W; xx += 9 + rr() * 8) { if (nearPit(E, xx, 2)) continue; const r = rr(); if (r < 0.4) carts.push({ x: xx, z: -3.9, ry: Math.PI / 2 }); else if (r < 0.7) crates.push({ x: xx, z: -4.0, ry: rr() * 0.4 }); else umbs.push({ x: xx, z: -3.8, ry: rr() }); }
+      prop(v, P.cart(), carts, { name: 'cart' }); prop(v, P.crates(), crates, { name: 'crates' }); prop(v, P.umbrella(), umbs, { name: 'umb' });
+      // the Souq gate at the goal
+      for (const d of L.deco) if (d.type === 'souqGate') {
+        const gx = d.x, gm = std(Object.assign({}, HT.brick([214, 184, 140], 'gate'), { roughness: 0.9 }));
+        for (const s of [-1, 1]) st.add(mesh(box(gx + s * 2.6 - 0.45, gx + s * 2.6 + 0.45, 0, 5.2, -2.4, -1.5, { top: 1, side: 1 }), gm));
+        st.add(mesh(box(gx - 3.2, gx + 3.2, 5.2, 6.1, -2.5, -1.4, { top: 1, side: 1 }), gm));
+        const sm = mesh(new T.PlaneGeometry(4, 0.8), signMat('سوق واقف', '#3a2414', '#ffe6a8'), false, false); sm.position.set(gx, 5.65, -1.38); st.add(sm);
+      }
+      // far: the spiral minaret and the city beyond the rooftops
+      const wd = v.world; if (wd.fanar) { wd.fanar.visible = true; }
+      wd.skyline.visible = true; wd.skyline.position.set(-120, -6, -900);
+      const far = new T.Group(); const fm = std({ color: C('#c4a27a'), roughness: 1 }); const fr2 = mulberry(9);
+      for (let i = 0; i < 60; i++) { const w = 8 + fr2() * 14, h = 7 + fr2() * 10; const b = mesh(new T.BoxGeometry(w, h, 8), fm, false, false); b.position.set(-30 + i * 6 + fr2() * 4, h / 2 - 1, -26 - fr2() * 14); far.add(b); }
+      st.add(far);
+    },
+    animate() {}
+  };
+
+  // ============================================================== مشيرب قلب الدوحة
+  function screenTex(col = '#e9dcc6') { // geometric shading screen (alpha) — modern mashrabiya
+    const S = 256, [c, x] = cv(S, S); x.clearRect(0, 0, S, S); x.fillStyle = col;
+    for (let j = 0; j < 4; j++) for (let i = 0; i < 4; i++) { const cx = i * 64 + 32, cy = j * 64 + 32; x.beginPath(); for (let k = 0; k < 8; k++) { const a = k / 8 * Math.PI * 2 + Math.PI / 8; x.lineTo(cx + Math.cos(a) * 30, cy + Math.sin(a) * 30); } x.closePath(); x.fill(); }
+    x.globalCompositeOperation = 'destination-out'; for (let j = 0; j < 4; j++) for (let i = 0; i < 4; i++) { const cx = i * 64 + 32, cy = j * 64 + 32; x.beginPath(); for (let k = 0; k < 8; k++) { const a = k / 8 * Math.PI * 2, r = k % 2 ? 11 : 20; x.lineTo(cx + Math.cos(a) * r, cy + Math.sin(a) * r); } x.fill(); }
+    return tex(c);
+  }
+  function poolTileTex() { const S = 128, [c, x] = cv(S, S); x.fillStyle = '#4fb6c7'; x.fillRect(0, 0, S, S); x.strokeStyle = '#d8f2f5'; x.lineWidth = 2; for (let i = 0; i <= 8; i++) { x.beginPath(); x.moveTo(i * 16, 0); x.lineTo(i * 16, S); x.stroke(); x.beginPath(); x.moveTo(0, i * 16); x.lineTo(S, i * 16); x.stroke(); } return tex(c); }
+  const msheireb = {
+    id: 'msheireb', tod: 0.32, exposure: 0.72, water: false, dustColor: C('#ece4d6'), surface: 'paver', ambience: 'city',
+    materials(v) {
+      if (this._m) return this._m;
+      return (this._m = {
+        top: std(Object.assign(X.pbr('paver'), { color: C('#ece6dc'), roughness: 0.95, normalScale: new T.Vector2(0.6, 0.6) })),
+        side: std(Object.assign(X.pbr('stonefac'), { color: C('#efe8da'), roughness: 0.9 })),
+        white: std({ color: C('#f3eee4'), roughness: 0.85 }), beige: std({ color: C('#e2d3b8'), roughness: 0.9 }),
+        metal: std({ color: C('#f4f4f2'), roughness: 0.3, metalness: 0.6 }), dark: std({ color: C('#2b2f33'), roughness: 0.4, metalness: 0.3 }),
+        screen: std({ map: screenTex(), alphaTest: 0.5, side: T.DoubleSide, roughness: 0.8 }),
+        grass: std({ map: X.photo('grass_c'), normalMap: X.photo('grass_n', { srgb: false }), roughness: 0.95 }),
+        crate: std(Object.assign({}, HT.crate(), { roughness: 0.85 })),
+        stone: std(Object.assign({}, HT.brick([236, 228, 212], 'mshStair'), { roughness: 0.8 })),
+        wood: std(Object.assign({}, HT.planks('#a87a4e'), { roughness: 0.7 })),
+        tiles: std({ map: poolTileTex(), roughness: 0.3 }),
+        poolWater: phys({ color: C('#2a9db0'), roughness: 0.05, metalness: 0, transparent: true, opacity: 0.82, clearcoat: 1, normalMap: X.photo('water_n', { srgb: false, repeat: [3, 3] }), normalScale: new T.Vector2(0.4, 0.4) }),
+        brickMaps: HT.brick([226, 206, 172], 'mshBrick')
+      });
+    },
+    groundRun(v, x0, x1) { slab(v, x0, x1, v.mats.top, v.mats.side); v.stage.add(mesh(box(x0, x1, -0.02, 0.05, 2.0, 2.3, { top: 1, side: 1 }), v.mats.white, false, true)); },
+    pitRun(v, x0, x1) { // reflecting pool: turquoise tiles, water at −0.55
+      const st = v.stage, m = v.mats; st.add(mesh(box(x0, x1, -1.6, -1.5, -2.6, 2.3, { top: 1, side: 1 }), m.tiles, false, true));
+      for (const [a, b] of [[x0, x0 + 0.02], [x1 - 0.02, x1]]) st.add(mesh(box(a, b, -1.5, 0, -2.6, 2.3, { top: 1, side: 1 }), m.tiles, false, true));
+      st.add(mesh(box(x0, x1, -1.5, 0, -2.62, -2.58, { top: 1, side: 1 }), m.tiles, false, true));
+      const w = mesh(new T.PlaneGeometry(x1 - x0, 4.9), m.poolWater, false, true); w.rotation.x = -Math.PI / 2; w.position.set((x0 + x1) / 2, -0.55, -0.15); st.add(w); this.pools = (this.pools || []).concat(w);
+      const fade = new T.Mesh(new T.PlaneGeometry(x1 - x0, 4.6), new T.MeshBasicMaterial({ color: 0x06323a, transparent: true, opacity: 0.5, depthWrite: false })); fade.rotation.x = -Math.PI / 2; fade.position.set((x0 + x1) / 2, -1.45, -0.15); st.add(fade);
+    },
+    terrace(v, x0, x1, h) { // planter box: white stone, grass top, small shrubs
+      const st = v.stage, m = v.mats; st.add(mesh(box(x0, x1, 0, h, -1.6, 1.6, { top: 2, side: 1.5 }), [m.side, m.side, m.white, m.side, m.side, m.side]));
+      st.add(mesh(box(x0 + 0.25, x1 - 0.25, h, h + 0.02, -1.4, -0.4, { top: 2, side: 2 }), m.grass, false, true));
+      const sh = P.shrub(), n = Math.max(1, Math.round((x1 - x0) / 1.6)); const im = new T.InstancedMesh(sh.parts[0].geo, sh.parts[0].mat, n); for (let i = 0; i < n; i++) im.setMatrixAt(i, mtx(x0 + 0.8 + i * (x1 - x0 - 1.6) / Math.max(1, n - 1), h, -0.95, i, 0.45)); st.add(im);
+    },
+    ledge(v, x0, x1, y) { // white steel canopy on slim posts
+      const st = v.stage, m = v.mats; st.add(mesh(box(x0, x1, y + 0.82, y + 1, -1.0, 1.0, { top: 1, side: 1 }), m.white)); st.add(mesh(box(x0, x1, y + 0.76, y + 0.82, -1.0, 1.0, { top: 1, side: 1 }), m.dark, false, false));
+      for (const px of [x0 + 0.15, x1 - 0.15]) { let bot = -0.6; for (let yy = y - 1; yy >= -4; yy--) if (v.engine.solid(Math.floor(px), yy)) { bot = yy + 1; break; } st.add(mesh(new T.CylinderGeometry(0.05, 0.05, y + 0.8 - bot, 8).translate(px, (y + 0.8 + bot) / 2, -0.85), m.metal, true, false)); }
+    },
+    mover(v, mv) {
+      if (mv.kind === 'float') { const g = new T.Group(), m = this._m; g.add(mesh(box(0, mv.w, 0.05, 0.3, -0.7, 0.7, { top: 1, side: 1 }), m.white)); const led = mesh(box(0.02, mv.w - 0.02, 0.02, 0.06, 0.66, 0.72, { top: 1, side: 1 }), std({ color: C('#7ff3ff'), emissive: C('#30d8ff'), emissiveIntensity: 1.6 }), false, false); g.add(led); for (const x of [0.3, mv.w - 0.3]) { const j = mesh(new T.CylinderGeometry(0.12, 0.16, 0.12, 12), m.dark); j.position.set(x, 0, 0); g.add(j); } const glow = A2.glowSprite(0x60d8ff, 1.8, 0.35); glow.position.set(mv.w / 2, -0.15, 0); g.add(glow); return { group: g, update(dt, st) { glow.material.opacity = 0.25 + 0.1 * Math.sin((st.t || 0) * 5); } }; }
+      if (mv.kind === 'fall') { const g = new T.Group(), inner = new T.Group(), m = this._m; g.add(inner); inner.add(mesh(box(0, mv.w, 0.08, 0.3, -0.6, 0.6, { top: 1, side: 1 }), m.white)); inner.add(mesh(box(0, mv.w, 0.02, 0.08, -0.6, 0.6, { top: 1, side: 1 }), m.dark, false, false)); return { group: g, update(dt, st) { inner.rotation.z = st.state === 'shake' ? Math.sin((st.t || 0) * 70) * 0.03 : st.state === 'falling' ? -0.15 : 0; } }; }
+      if (mv.kind === 'lift') { const g = new T.Group(), m = this._m; g.add(mesh(box(0, mv.w, 0.12, 0.3, -0.6, 0.6, { top: 1, side: 1 }), m.metal)); for (const [x, z] of [[0.05, -0.55], [mv.w - 0.05, -0.55]]) { g.add(mesh(new T.BoxGeometry(0.04, 1.0, 0.04).translate(x, 0.8, z), m.metal)); g.add(mesh(new T.CylinderGeometry(0.012, 0.012, 14, 4).translate(x, 7.8, z), m.dark, false, false)); } g.add(mesh(box(0, mv.w, 1.25, 1.3, -0.6, -0.5, { top: 1, side: 1 }), m.metal)); return { group: g, update() {} }; }
+      return null;
+    },
+    enemy(v, type) { return type === 'drone' ? A2.drone() : type === 'cactus' ? A2.cactus() : A2.robot(); },
+    scenery(v, L, E) {
+      const st = v.stage, m = v.mats, q = v.q, rr = mulberry(4242); this.pools = [];
+      backFloor(v, L, m.top);
+      // modern Qatari blocks: white / beige volumes, recessed windows (facade shader lights them at night), fins and screens
+      const kinds = [{ maps: X.pbr('stonefac', { emissive: true }), tint: '#f4efe6' }, { maps: X.pbr('mashfac', { emissive: true }), tint: '#efe3cf' }, { maps: X.pbr('glassfac2', { emissive: true }), tint: '#e8f0f4' }];
+      const mats = kinds.map(k => { const mt = W.facadeMat(k.maps, 3, 3.6, { metal: 0.1 }); mt.color = C(k.tint); return mt; });
+      const lists = [[], [], []], podium = [], fins = [], screens = [], roofs = [], arc = [];
+      let x = -14;
+      while (x < L.W + 16) {
+        const w = 8 + Math.round(rr() * 6), h = 9 + rr() * 9, k = (rr() * 3) | 0, z = -6.5 - rr() * 1.5, d = 5;
+        lists[k].push({ x: x + w / 2, y: 0, z: z - d / 2, w, h, d });
+        roofs.push({ x: x + w / 2, y: h, z: z - d / 2, w: w + 0.3, h: 0.35, d: d + 0.3 });
+        // ground-floor arcade: slender columns and a deep shade slab
+        for (let c = 0; c <= Math.floor(w / 2.2); c++) arc.push({ x: x + 0.4 + c * (w - 0.8) / Math.floor(w / 2.2), y: 0, z: z + 1.4, w: 0.28, h: 3.8, d: 0.28 });
+        podium.push({ x: x + w / 2, y: 3.8, z: z + 0.7, w: w, h: 0.5, d: 1.6 });
+        if (k !== 2) for (let f = 0; f < Math.floor(w / 1.5); f++) fins.push({ x: x + 0.75 + f * 1.5, y: 4.3, z: z + 0.15, w: 0.12, h: h - 4.3, d: 0.5 });
+        if (rr() < 0.5) screens.push({ x: x + w * (0.25 + rr() * 0.5), y: 5 + rr() * 2, z: z + 0.32, w: 3 + rr() * 2, h: 2.4 });
+        x += w + 1.5 + rr() * 2;
+      }
+      lists.forEach((l, k) => boxes(v, mats[k], l, { shadow: q === 'high' }));
+      boxes(v, m.white, roofs); boxes(v, m.white, arc); boxes(v, m.beige, podium); boxes(v, m.white, fins, { shadow: false });
+      for (const s of screens) { const sm = mesh(new T.PlaneGeometry(s.w, s.h), m.screen, false, false); sm.material.map.repeat.set(s.w / 1.2, s.h / 1.2); sm.position.set(s.x, s.y + s.h / 2, s.z); st.add(sm); }
+      // shade trees in round planters along the plaza, benches
+      const trees = []; for (let xx = 5; xx < L.W; xx += 9 + rr() * 6) if (!nearPit(E, xx, 1.8)) trees.push({ x: xx, z: -2.3 - rr() * 0.4, ry: rr() * 6, s: 0.9 + rr() * 0.25 });
+      prop(v, treeDef('#7a6048', '#6f9a4e', 4.6, 1.1), trees, { name: 'tree' });
+      const pl = []; for (const t of trees) pl.push({ x: t.x, y: 0, z: t.z, w: 1.4, h: 0.45, d: 1.4 }); boxes(v, m.white, pl);
+      const lampDef = P.lamp(1); prop(v, lampDef, Array.from({ length: Math.ceil(L.W / 16) }, (_, i) => ({ x: 10 + i * 16, z: -1.9, s: 0.55 })).filter(o => !nearPit(E, o.x, 1)), { name: 'lamp', shadow: false });
+      // the downtown tram gliding behind the plaza
+      const tram = this.tram = new T.Group(); const body = mesh(box(0, 14, 0.4, 3.3, -1.1, 1.1, { top: 2, side: 2 }), std({ color: C('#efe7da'), roughness: 0.4, metalness: 0.2 })); tram.add(body);
+      const glass = mesh(box(0.4, 13.6, 1.5, 2.8, 1.11, 1.13, { top: 1, side: 1 }), std({ color: C('#25313a'), roughness: 0.05, metalness: 0.8, envMapIntensity: 1.4 }), false, false); tram.add(glass);
+      const band = mesh(box(0, 14, 1.2, 1.35, 1.12, 1.14, { top: 1, side: 1 }), std({ color: C('#b58a3a'), metalness: 0.8, roughness: 0.3 }), false, false); tram.add(band);
+      for (const xx of [2, 12]) tram.add(mesh(box(xx - 0.9, xx + 0.9, 0, 0.45, -0.9, 0.9, { top: 1, side: 1 }), m.dark, false, false));
+      tram.position.set(-30, 0, -4.4); st.add(tram); this.tramX = -30;
+      st.add(mesh(box(-40, L.W + 40, 0.0, 0.03, -4.9, -3.9, { top: 2, side: 2 }), m.dark, false, true));
+      // far: Doha's towers beyond the roofs
+      const wd = v.world; wd.skyline.visible = true; wd.skyline.position.set(-80, -10, -700);
+    },
+    animate(v, dt, t) { if (this.tram) { this.tramX += dt * 4.2; if (this.tramX > v.level.W + 40) this.tramX = -40; this.tram.position.x = this.tramX; } }
+  };
+
+  // ============================================================== لوسيل (ليلًا)
+  function ledStrip(col) { return std({ color: C(col), emissive: C(col), emissiveIntensity: 1.1, roughness: 0.4 }); }
+  const lusail = {
+    id: 'lusail', tod: 3.0, dustColor: C('#9aa3ad'), surface: 'paver', ambience: 'city', bgWaterColor: C('#0e2238'),
+    materials(v) {
+      if (this._m) return this._m;
+      return (this._m = {
+        top: std(Object.assign(X.pbr('paver'), { color: C('#5e6268'), roughness: 0.7, metalness: 0.15, normalScale: new T.Vector2(0.6, 0.6) })),
+        side: std(Object.assign(X.pbr('stonefac'), { color: C('#4a4e55'), roughness: 0.6 })),
+        dark: std({ color: C('#23262b'), roughness: 0.35, metalness: 0.5 }), steel: std({ color: C('#c9ced4'), roughness: 0.25, metalness: 0.85 }),
+        glass: phys({ color: C('#9fc7e8'), roughness: 0.05, metalness: 0.1, transparent: true, opacity: 0.35, clearcoat: 1 }),
+        ledC: ledStrip('#36e0ff'), ledG: ledStrip('#ffc85a'), ledM: ledStrip('#ff3d7f'),
+        crate: std(Object.assign({}, HT.crate(), { roughness: 0.85 })),
+        stone: std(Object.assign({}, HT.brick([120, 126, 136], 'lusStair'), { roughness: 0.6, metalness: 0.2 })),
+        wood: std({ color: C('#3a3f46'), roughness: 0.4, metalness: 0.6 }),
+        brickMaps: HT.brick([110, 118, 132], 'lusBrick')
+      });
+    },
+    groundRun(v, x0, x1) { const m = v.mats; slab(v, x0, x1, m.top, m.side); v.stage.add(mesh(box(x0, x1, -0.12, 0.0, 2.24, 2.3, { top: 1, side: 1 }), m.ledC, false, false)); v.stage.add(mesh(box(x0, x1, -0.02, 0.08, -2.62, -2.2, { top: 1, side: 1 }), m.dark, false, true)); v.stage.add(mesh(new T.BoxGeometry(x1 - x0, 1.0, 0.04).translate((x0 + x1) / 2, 0.55, -2.42), m.glass, false, false)); v.stage.add(mesh(new T.BoxGeometry(x1 - x0, 0.04, 0.06).translate((x0 + x1) / 2, 1.06, -2.42), m.ledG, false, false)); },
+    pitRun(v, x0, x1) { v.stage.add(mesh(box(x0 - 0.1, x1 + 0.1, 2.24, 2.3, -0.2, 0.0, { top: 1, side: 1 }), v.mats.ledC, false, false)); },
+    terrace(v, x0, x1, h) { const st = v.stage, m = v.mats; st.add(mesh(box(x0, x1, 0, h, -1.6, 1.6, { top: 2, side: 2 }), [m.side, m.side, m.top, m.side, m.side, m.side])); st.add(mesh(box(x0, x1, h - 0.08, h - 0.02, 1.6, 1.64, { top: 1, side: 1 }), m.ledM, false, false)); },
+    ledge(v, x0, x1, y) { const st = v.stage, m = v.mats; st.add(mesh(box(x0, x1, y + 0.8, y + 1, -0.95, 0.95, { top: 1, side: 1 }), m.glass, false, true)); st.add(mesh(box(x0, x1, y + 0.72, y + 0.8, -0.95, 0.95, { top: 1, side: 1 }), m.steel)); st.add(mesh(box(x0, x1, y + 0.72, y + 0.76, 0.95, 0.98, { top: 1, side: 1 }), m.ledC, false, false)); for (const px of [x0 + 0.15, x1 - 0.15]) { let bot = -0.7; for (let yy = y - 1; yy >= -4; yy--) if (v.engine.solid(Math.floor(px), yy)) { bot = yy + 1; break; } st.add(mesh(new T.CylinderGeometry(0.05, 0.05, y + 0.72 - bot, 8).translate(px, (y + 0.72 + bot) / 2, -0.8), m.steel, true, false)); } },
+    mover(v, mv) {
+      const m = this._m;
+      if (mv.kind === 'boat') { const a = A.boat(mv.w); a.group.traverse(o => { if (o.isMesh && o.material.color && o.material.color.r > 0.8) o.material = phys({ color: C('#f4f6f8'), roughness: 0.2, clearcoat: 1 }); }); const led = mesh(box(-0.1, mv.w + 0.1, 0.36, 0.4, 0.8, 0.82, { top: 1, side: 1 }), m.ledC, false, false); a.group.add(led); return a; }
+      if (mv.kind === 'fall') { const g = new T.Group(), inner = new T.Group(); g.add(inner); inner.add(mesh(box(0, mv.w, 0.15, 0.3, -0.6, 0.6, { top: 1, side: 1 }), m.steel)); inner.add(mesh(box(0, mv.w, 0.1, 0.15, 0.58, 0.62, { top: 1, side: 1 }), m.ledM, false, false)); return { group: g, update(dt, st) { inner.rotation.z = st.state === 'shake' ? Math.sin((st.t || 0) * 70) * 0.03 : st.state === 'falling' ? -0.2 : 0; inner.children[1].material.emissiveIntensity = st.state === 'shake' ? 4 * Math.abs(Math.sin((st.t || 0) * 20)) : 1.1; } }; }
+      if (mv.kind === 'lift') { const g = new T.Group(); g.add(mesh(box(0, mv.w, 0.12, 0.3, -0.6, 0.6, { top: 1, side: 1 }), m.steel)); g.add(mesh(box(0, mv.w, 0.08, 0.12, 0.58, 0.62, { top: 1, side: 1 }), m.ledC, false, false)); for (const x of [0.05, mv.w - 0.05]) g.add(mesh(new T.CylinderGeometry(0.015, 0.015, 14, 4).translate(x, 7.3, -0.55), m.dark, false, false)); return { group: g, update() {} }; }
+      return null;
+    },
+    enemy(v, type) { return type === 'drone' ? A2.drone() : type === 'spark' ? A2.spark() : A2.robot(); },
+    scenery(v, L, E) {
+      const st = v.stage, m = v.mats, rr = mulberry(2022);
+      // the marina: moored yachts (white hulls, lit cabins) and a far quay of lights
+      const ym = phys({ color: C('#f4f6f8'), roughness: 0.18, clearcoat: 1 }), yw = std({ color: C('#1d2733'), roughness: 0.1, metalness: 0.6, emissive: C('#ffd9a0'), emissiveIntensity: 0.9 }), yd = std(Object.assign({}, HT.planks('#a87a4e'), { roughness: 0.6 }));
+      for (let x = -20; x < L.W + 30; x += 16 + rr() * 14) {
+        const len = 8 + rr() * 6, g = new T.Group(), sh = new T.Shape();
+        sh.moveTo(0, 0.9); sh.lineTo(len * 0.78, 0.9); sh.quadraticCurveTo(len * 0.98, 0.85, len, 1.2); sh.quadraticCurveTo(len * 0.9, 0.1, len * 0.7, -0.2); sh.lineTo(0.3, -0.2); sh.quadraticCurveTo(0, 0.2, 0, 0.9);
+        const hull = new T.Mesh(new T.ExtrudeGeometry(sh, { depth: 2.6, bevelEnabled: true, bevelThickness: 0.15, bevelSize: 0.12, bevelSegments: 2 }), ym); hull.position.z = -1.3; g.add(hull);
+        g.add(new T.Mesh(box(0.3, len * 0.8, 0.9, 0.98, -1.2, 1.2, { top: 1, side: 1 }), yd));
+        g.add(new T.Mesh(box(len * 0.18, len * 0.62, 0.98, 2.1, -0.95, 0.95, { top: 1, side: 1 }), ym)); g.add(new T.Mesh(box(len * 0.2, len * 0.6, 1.3, 1.85, -0.97, 0.97, { top: 1, side: 1 }), yw));
+        if (rr() < 0.6) { g.add(new T.Mesh(box(len * 0.25, len * 0.52, 2.1, 2.9, -0.75, 0.75, { top: 1, side: 1 }), ym)); g.add(new T.Mesh(box(len * 0.27, len * 0.5, 2.3, 2.7, -0.77, 0.77, { top: 1, side: 1 }), yw)); }
+        g.add(new T.Mesh(box(0, len * 0.85, 0.42, 0.48, 1.33, 1.36, { top: 1, side: 1 }), m.ledC));
+        g.position.set(x, -1.1, -11 - rr() * 16); g.rotation.y = (rr() < 0.5 ? 0 : Math.PI) + (rr() - 0.5) * 0.2; st.add(g);
+      }
+      { const quay = []; for (let x = -60; x < L.W + 60; x += 3.2) quay.push({ x, y: 0.6, z: -46 }); const gl = new T.InstancedMesh(new T.SphereGeometry(0.22, 8, 6), std({ color: C('#fff2d0'), emissive: C('#ffd9a0'), emissiveIntensity: 2 }), quay.length); quay.forEach((q2, i) => gl.setMatrixAt(i, mtx(q2.x, q2.y, q2.z))); st.add(gl); st.add(mesh(box(-80, L.W + 80, -1, 0.3, -52, -45, { top: 4, side: 4 }), m.side, false, true)); }
+      // palms with uplights on the promenade
+      { const palms = []; for (let xx = 9; xx < L.W; xx += 13 + rr() * 6) if (!nearPit(E, xx, 1.6)) palms.push({ x: xx, z: -3.4, ry: rr() * 6, s: 0.6 }); prop(v, P.palm(7), palms, { name: 'palm' }); for (const pp of palms) { const gsp = A2.glowSprite(0x7fd8ff, 2.4, 0.35); gsp.position.set(pp.x, 0.5, pp.z + 0.3); st.add(gsp); } }
+      // promenade lamps (lit)
+      const lampDef = P.lamp(2); prop(v, lampDef, Array.from({ length: Math.ceil(L.W / 14) }, (_, i) => ({ x: 6 + i * 14, z: -2.2, s: 0.58 })).filter(o => !nearPit(E, o.x, 1.2)), { name: 'lamp', shadow: false });
+      v.world.glowMat && v.world.glowMat(lampDef.parts[1].mat, 0.2, 2.6);
+      // night skyline (background pass): individual glass towers with lit windows and crown lights,
+      // a curved twin pair (an original form inspired by Lusail's skyline) and a golden lattice stadium bowl
+      const bg = new T.Group(); v.addBg(bg); const tmats = this._tm || (this._tm = []); const tints = ['#3f5f86', '#4d6f96', '#36506e', '#5a7a9c'], crowns = [m.ledC, m.ledG, m.ledM];
+      for (let i = 0; i < 30; i++) {
+        const h = 70 + rr() * 150, w = 22 + rr() * 18, light = rr() < 0.35, kind = rr();
+        const mk = (light ? 1 : 0) * 4 + i % 4, mat = tmats[mk] || (tmats[mk] = (() => { const fm = W.facadeMat(X.pbr(light ? 'glassfac2' : 'glassfac', { emissive: true }), 3.2, 3.9, { metal: 0.65, env: 1.4 }); fm.color = C(tints[i % 4]); fm.roughness = 0.25; fm.emissive = C(['#ffd8a0', '#fff1d6', '#ffe2b0', '#d8ecff'][i % 4]); fm.emissiveIntensity = 0.55 + (i % 3) * 0.12; return fm; })());
+        const geo = kind < 0.45 ? new T.BoxGeometry(w, h, w * (0.7 + rr() * 0.5)) : kind < 0.8 ? new T.CylinderGeometry(w * 0.5, w * 0.58, h, 8) : new T.CylinderGeometry(w * 0.3, w * 0.6, h, 4);
+        const t = new T.Mesh(geo, mat); t.position.set(-320 + i * 34 + rr() * 16, h / 2 - 2, -720 - rr() * 380); t.rotation.y = kind >= 0.8 ? Math.PI / 4 : rr() * 0.4; bg.add(t);
+        if (rr() < 0.5) { const c2 = new T.Mesh(new T.CylinderGeometry(w * 0.55, w * 0.55, 2.2, 8, 1, true), crowns[i % 3]); c2.position.set(t.position.x, h - 6, t.position.z); bg.add(c2); }
+        if (h > 160) { const tip = new T.Mesh(new T.SphereGeometry(1.4, 8, 6), std({ color: C('#ff4040'), emissive: C('#ff2020'), emissiveIntensity: 3 })); tip.position.set(t.position.x, h + 1, t.position.z); bg.add(tip); }
+      }
+      { const cres = new T.Shape(); cres.absarc(0, 0, 24, -1.15, 1.15, false); cres.absarc(11, 0, 17, 1.0, -1.0, true); cres.closePath();
+        const cg = new T.ExtrudeGeometry(cres, { depth: 235, bevelEnabled: false, curveSegments: 28 }); cg.rotateX(-Math.PI / 2);
+        const cm = W.facadeMat(X.pbr('glassfac', { emissive: true }), 3.2, 3.9, { metal: 0.8, env: 1.6 }); cm.color = C('#a8c4e0'); cm.roughness = 0.12; cm.emissive = C('#ffe0b0'); cm.emissiveIntensity = 0.85;
+        for (const [x, ry] of [[250, 0.35], [300, Math.PI - 0.35]]) { const c3 = new T.Mesh(cg, cm); c3.position.set(x, -2, -820); c3.rotation.y = ry; bg.add(c3); const top = new T.Mesh(new T.CylinderGeometry(5, 5, 3, 12), m.ledG); top.position.set(x + (ry > 1 ? -12 : 12), 235, -820); bg.add(top); } }
+      { const lt = X.lattice('#ffe08a', 14); lt.repeat.set(40, 3); const bowlM = std({ map: lt, alphaTest: 0.4, side: T.DoubleSide, color: C('#d9a93a'), emissive: C('#ffb840'), emissiveMap: lt, emissiveIntensity: 1.4, metalness: 0.6, roughness: 0.4 });
+        const sx = -150, sz = -760; const bowl = new T.Mesh(new T.CylinderGeometry(95, 80, 48, 64, 1, true), bowlM); bowl.position.set(sx, 22, sz); bg.add(bowl);
+        const inner = new T.Mesh(new T.CylinderGeometry(88, 76, 46, 48, 1, true), std({ color: C('#3a2a14'), emissive: C('#ffb24a'), emissiveIntensity: 0.55, side: T.DoubleSide })); inner.position.copy(bowl.position); bg.add(inner);
+        const roof = new T.Mesh(new T.SphereGeometry(96, 48, 8, 0, Math.PI * 2, 0, Math.PI * 0.14), std({ color: C('#efe3c2'), emissive: C('#ffe2a0'), emissiveIntensity: 0.35, roughness: 0.6, side: T.DoubleSide })); roof.position.set(sx, 46 - 96 * Math.cos(Math.PI * 0.14) + 0, sz); bg.add(roof); }
+      v.world.skyline.visible = false; this.fireT = 2;
+    },
+    animate(v, dt, t) { // occasional fireworks over the marina (celebration city)
+      this.fireT -= dt; if (this.fireT < 0) { this.fireT = 3 + Math.random() * 4; const cx = v.engine.player.x + (Math.random() - 0.5) * 30; const cols = [[C('#ff4d7a'), C('#ffffff')], [C('#36e0ff'), C('#ffffff')], [C('#ffd34d'), C('#ffffff')]][(Math.random() * 3) | 0]; v.sparks.emit(cx, 12 + Math.random() * 5, -30, 70, { color: cols, speed: 6, up: 1, life: 1.6, size: 0.9 }); }
+    }
+  };
+
+  Object.assign(TH.THEMES, { souq, msheireb, lusail });
+  root.QHThemeKit = { backFloor, mtx, box, mesh, boxes, prop, darkPit, treeDef, rugTex, signMat, cv, tex, noiseFill, slab, nearPit, isPit, ledStrip, std, phys, C };
+})(typeof window !== 'undefined' ? window : globalThis);
+</script>
+<script data-src="js/themes3.js">/* مغامرات بطل قطر — environments for stages 5–6: كتارا (sunset) · الصحراء القطرية.
+ * Inspired by the cultural village and by Qatar's southern dunes — original procedural geometry, not surveyed replicas.
+ */
+(function (root) {
+  'use strict';
+  const T = root.THREE, X = root.QRTex, HT = root.QHTex, A = root.QHActors, A2 = root.QHActors2, P = root.QRProps, W = root.QRWorld, TH = root.QHThemes, K = root.QHThemeKit;
+  const { mtx, box, mesh, boxes, prop, darkPit, treeDef, signMat, cv, tex, noiseFill, slab, nearPit, std, phys, C } = K;
+  const mulberry = W.mulberry;
+  const fromSolid = (v, px, y) => { for (let yy = y - 1; yy >= -4; yy--) if (v.engine.solid(Math.floor(px), yy)) return yy + 1; return -0.7; };
+  // a back floor so the space between the lane and the scenery is never empty
+  const backFloor = K.backFloor;
+
+  // ============================================================== كتارا
+  function arcadeTex() { // limestone wall with a pointed-arch arcade and carved wooden doors
+    const S = 512, [c, x] = cv(S, 256), [ce, xe] = cv(S, 256);
+    noiseFill(x, S, 256, '#dcc29a', 0.1, 700, 21); xe.fillStyle = '#000'; xe.fillRect(0, 0, S, 256);
+    x.strokeStyle = 'rgba(120,90,50,0.18)'; x.lineWidth = 2; for (let y = 16; y < 256; y += 24) { x.beginPath(); x.moveTo(0, y); x.lineTo(S, y); x.stroke(); }
+    for (let k = 0; k < 4; k++) {
+      const cx = 64 + k * 128, w = 76, top = 70, y0 = 256;
+      const path = (ctx, ww, tt) => { ctx.beginPath(); ctx.moveTo(cx - ww / 2, y0); ctx.lineTo(cx - ww / 2, tt + ww * 0.45); ctx.quadraticCurveTo(cx - ww / 2, tt + 6, cx, tt); ctx.quadraticCurveTo(cx + ww / 2, tt + 6, cx + ww / 2, tt + ww * 0.45); ctx.lineTo(cx + ww / 2, y0); ctx.closePath(); };
+      path(x, w + 14, top - 8); x.fillStyle = '#b89668'; x.fill();
+      path(x, w, top); const g = x.createLinearGradient(0, top, 0, y0); g.addColorStop(0, '#4a3420'); g.addColorStop(1, '#2a1c10'); x.fillStyle = g; x.fill();
+      if (k % 2 === 0) { x.fillStyle = '#7a4e28'; x.fillRect(cx - w / 2 + 8, top + 40, w - 16, y0 - top - 40); x.strokeStyle = '#4a2e14'; x.lineWidth = 3; for (let i = 0; i < 3; i++) for (let j = 0; j < 4; j++) x.strokeRect(cx - w / 2 + 14 + i * (w - 28) / 3, top + 48 + j * 34, (w - 28) / 3 - 4, 28); x.fillStyle = '#c9a04a'; x.beginPath(); x.arc(cx + 6, top + 130, 4, 0, 7); x.fill(); }
+      else { xe.save(); path(xe, w, top); xe.clip(); const ge = xe.createRadialGradient(cx, top + 70, 4, cx, top + 90, 70); ge.addColorStop(0, 'rgba(255,200,120,0.9)'); ge.addColorStop(1, 'rgba(120,60,20,0.15)'); xe.fillStyle = ge; xe.fillRect(cx - w, top, w * 2, y0 - top); xe.restore(); }
+    }
+    return { map: tex(c, { wrap: false }), emissiveMap: tex(ce, { wrap: false }) };
+  }
+  function domeTileTex() { const S = 256, [c, x] = cv(S, S); x.fillStyle = '#1f8f9e'; x.fillRect(0, 0, S, S); for (let j = 0; j < 8; j++) for (let i = 0; i < 8; i++) { const cx = i * 32 + 16, cy = j * 32 + 16; x.fillStyle = (i + j) % 2 ? '#2fb6c4' : '#167a8a'; x.beginPath(); for (let k = 0; k < 8; k++) { const a = k / 8 * Math.PI * 2, r = k % 2 ? 7 : 14; x.lineTo(cx + Math.cos(a) * r, cy + Math.sin(a) * r); } x.fill(); x.fillStyle = '#e9d27a'; x.fillRect(cx - 1.5, cy - 1.5, 3, 3); } return tex(c, { repeat: [6, 3] }); }
+  const katara = {
+    id: 'katara', tod: 1.78, dustColor: C('#e6cfa8'), surface: 'stone', ambience: 'sea',
+    materials(v) {
+      if (this._m) return this._m;
+      return (this._m = {
+        top: std(Object.assign(X.pbr('souqfloor'), { color: C('#e6cfaa'), roughness: 0.95, normalScale: new T.Vector2(0.7, 0.7) })),
+        side: std(Object.assign(X.pbr('stonefac'), { color: C('#dcc29a'), roughness: 0.92 })),
+        lime: std({ map: X.photo('plaster_c'), normalMap: X.photo('plaster_n', { srgb: false }), color: C('#e3c99f'), roughness: 0.92 }),
+        limeDark: std({ map: X.photo('plaster_c'), normalMap: X.photo('plaster_n', { srgb: false }), color: C('#b99a6e'), roughness: 0.95 }),
+        coping: std({ map: X.photo('souqfloor_c'), color: C('#efdcbc'), roughness: 0.85 }),
+        sail: std({ color: C('#f6efe2'), roughness: 0.9, side: T.DoubleSide }),
+        wood: std(Object.assign({}, HT.planks('#8a5a32'), { roughness: 0.8 })),
+        crate: std(Object.assign({}, HT.crate(), { roughness: 0.85 })),
+        stone: std(Object.assign({}, HT.brick([226, 196, 150], 'katStair'), { roughness: 0.85 })),
+        dome: std({ map: domeTileTex(), roughness: 0.35, metalness: 0.1 }),
+        brickMaps: HT.brick([212, 170, 112], 'katBrick')
+      });
+    },
+    groundRun(v, x0, x1) { const m = v.mats; slab(v, x0, x1, m.top, m.side); v.stage.add(mesh(box(x0, x1, -0.15, 0.04, 2.3, 2.6, { top: 1.5, side: 1.5 }), m.coping, false, true)); v.stage.add(mesh(box(x0, x1, -0.02, 0.35, -2.62, -2.25, { top: 1.5, side: 1.5 }), m.lime, false, true)); },
+    pitRun(v, x0, x1) { // the sea comes into a little quay basin: stone parapet in front, steps down at the back
+      const m = v.mats, st = v.stage; st.add(mesh(box(x0 - 0.15, x1 + 0.15, -0.6, 0.3, 2.3, 2.62, { top: 1.5, side: 1.5 }), m.coping, false, true));
+      for (let i = 0; i < 3; i++) st.add(mesh(box(x0, x1, -0.75 + i * 0.25 - 0.25, -0.75 + i * 0.25, -2.6 - (3 - i) * 0.3, -2.6 - (2 - i) * 0.3, { top: 1.5, side: 1.5 }), m.limeDark, false, true));
+    },
+    terrace(v, x0, x1, h) { // stepped limestone seating, like the amphitheatre's tiers
+      const st = v.stage, m = v.mats; st.add(mesh(box(x0, x1, 0, h - 0.1, -1.6, 1.6, { top: 2, side: 1.4 }), m.lime)); st.add(mesh(box(x0 - 0.05, x1 + 0.05, h - 0.1, h, -1.65, 1.65, { top: 2, side: 2 }), m.coping));
+      st.add(mesh(box(x0 - 0.02, x1 + 0.02, h * 0.45, h * 0.45 + 0.08, 1.6, 1.68, { top: 1, side: 1 }), m.coping, false, true));
+    },
+    ledge(v, x0, x1, y) { // timber pergola deck with a white fabric shade sail above
+      const st = v.stage, m = v.mats; st.add(mesh(box(x0, x1, y + 0.72, y + 1, -0.95, 0.95, { top: 1, side: 1 }), m.wood));
+      for (const px of [x0 + 0.12, x1 - 0.12]) { const bot = fromSolid(v, px, y); st.add(mesh(box(px - 0.08, px + 0.08, bot, y + 2.6, -0.88, -0.72, { top: 1, side: 1 }), m.wood, true, false)); }
+      const g = new T.PlaneGeometry(x1 - x0 + 0.4, 1.8, 8, 4); const p = g.attributes.position; for (let i = 0; i < p.count; i++) p.setZ(i, -0.18 * Math.cos(p.getX(i) / (x1 - x0 + 0.4) * Math.PI) * Math.cos(p.getY(i) / 1.8 * Math.PI)); g.computeVertexNormals();
+      const s = mesh(g, m.sail, true, false); s.rotation.x = -Math.PI / 2 + 0.12; s.position.set((x0 + x1) / 2, y + 2.7, -0.75); st.add(s);
+    },
+    mover(v, mv) {
+      const m = this._m;
+      if (mv.kind === 'float') { // floating stage riser with footlights
+        const g = new T.Group(); g.add(mesh(box(0, mv.w, 0.0, 0.3, -0.7, 0.7, { top: 1, side: 1 }), m.wood)); g.add(mesh(box(-0.04, mv.w + 0.04, -0.06, 0.02, -0.72, 0.72, { top: 1, side: 1 }), std({ color: C('#7a1230'), roughness: 0.9 })));
+        const lights = []; for (let i = 0; i < 4; i++) { const l = mesh(new T.SphereGeometry(0.05, 8, 6), std({ color: C('#fff1c8'), emissive: C('#ffc26a'), emissiveIntensity: 2 }), false); l.position.set(0.25 + i * (mv.w - 0.5) / 3, 0.15, 0.72); g.add(l); lights.push(l); }
+        const glow = A2.glowSprite(0xffc070, 2.0, 0.3); glow.position.set(mv.w / 2, 0, 0.3); g.add(glow);
+        return { group: g, update(dt, st) { const t = st.t || 0; lights.forEach((l, i) => { l.material.emissiveIntensity = 1.4 + 0.8 * Math.sin(t * 4 + i); }); } };
+      }
+      if (mv.kind === 'fall') { const g = new T.Group(), inner = new T.Group(); g.add(inner); const halves = []; for (const [a, b] of [[0, mv.w / 2 - 0.02], [mv.w / 2 + 0.02, mv.w]]) { const h = mesh(box(a, b, 0.08, 0.3, -0.6, 0.6, { top: 1, side: 1 }), m.limeDark); inner.add(h); halves.push(h); } return { group: g, update(dt, st) { const sh = st.state === 'shake', fa = st.state === 'falling'; inner.rotation.z = sh ? Math.sin((st.t || 0) * 70) * 0.03 : 0; halves[0].rotation.z = fa ? 0.12 : 0; halves[1].rotation.z = fa ? -0.12 : 0; } }; }
+      return null;
+    },
+    enemy(v, type) { return type === 'pigeon' ? A2.pigeon() : type === 'hedgehog' ? A2.hedgehog() : A2.mask(); },
+    scenery(v, L, E) {
+      const st = v.stage, m = v.mats, q = v.q, rr = mulberry(1717);
+      backFloor(v, L, m.top);
+      // limestone arcades behind the promenade, with flat roofs and parapets
+      const f = arcadeTex(), fac = std({ map: f.map, emissiveMap: f.emissiveMap, emissive: new T.Color(1, 0.8, 0.5), emissiveIntensity: 0.7, roughness: 0.92 });
+      v.world.glowMat && v.world.glowMat(fac, 0.25, 1.0);
+      const blocks = [], parapets = []; let x = -14;
+      const ampX = Math.round(L.W * 0.42), mosqueX = Math.round(L.W * 0.74);
+      while (x < L.W + 16) {
+        if (Math.abs(x - ampX) < 16 || Math.abs(x - mosqueX) < 10) { x += 4; continue; }
+        const w = 8 + Math.round(rr() * 5), h = 4.6 + rr() * 2, z = -7 - rr();
+        const g = new T.BoxGeometry(w, h, 4); g.translate(0, h / 2, -2); const mt = m.lime; const b = mesh(g, [mt, mt, mt, mt, fac, mt], q === 'high', true); fac.map.repeat.set(1, 1); b.position.set(x + w / 2, 0, z); st.add(b);
+        parapets.push({ x: x + w / 2, y: h, z: z - 2, w: w + 0.2, h: 0.4, d: 4.2 });
+        x += w + 0.6 + rr() * 1.5;
+      }
+      boxes(v, m.coping, parapets);
+      // amphitheatre (inspired by Katara's open-air theatre): concentric limestone tiers and a colonnade crown
+      { const g = new T.Group(); for (let i = 0; i < 9; i++) { const r0 = 9 + i * 1.6; const ring = new T.CylinderGeometry(r0 + 1.6, r0 + 1.6, 0.55, 48, 1, false, Math.PI * 0.5, Math.PI); ring.translate(0, 0.55 * i + 0.27, 0); g.add(mesh(ring, i % 2 ? m.lime : m.coping, false, true)); }
+        for (let i = 0; i <= 16; i++) { const a = Math.PI * 0.5 + i / 16 * Math.PI, r = 24.6; g.add(mesh(new T.CylinderGeometry(0.35, 0.4, 4, 10).translate(Math.sin(a) * r, 7.2, Math.cos(a) * r), m.coping, q === 'high', true)); }
+        g.add(mesh(new T.CylinderGeometry(9, 9, 0.4, 40).translate(0, 0.2, 0), m.wood, false, true));
+        g.position.set(ampX, 0, -32); g.rotation.y = Math.PI; st.add(g); }
+      // a small mosque with a turquoise tiled dome and slim minaret (inspired by Katara's famous blue mosque)
+      { const g = new T.Group(); g.add(mesh(box(-7, 7, 0, 7, -7, 7, { top: 2, side: 2 }), m.lime, q === 'high', true));
+        const drum = mesh(new T.CylinderGeometry(4.2, 4.2, 1.6, 32).translate(0, 7.8, 0), m.coping); g.add(drum);
+        const dome = mesh(new T.SphereGeometry(4.2, 40, 20, 0, Math.PI * 2, 0, Math.PI / 2).translate(0, 8.6, 0), m.dome); g.add(dome);
+        g.add(mesh(new T.ConeGeometry(0.35, 1.6, 12).translate(0, 13.6, 0), std({ color: C('#d8b45a'), metalness: 0.9, roughness: 0.3 })));
+        const mn = new T.Group(); mn.add(mesh(new T.CylinderGeometry(0.9, 1.1, 18, 16).translate(0, 9, 0), m.lime)); mn.add(mesh(new T.CylinderGeometry(1.5, 1.2, 0.6, 16).translate(0, 15, 0), m.coping)); mn.add(mesh(new T.CylinderGeometry(0.7, 0.7, 2.5, 12).translate(0, 17.3, 0), m.dome)); mn.add(mesh(new T.ConeGeometry(0.8, 2, 12).translate(0, 19.6, 0), m.dome)); mn.position.set(8.5, 0, 2); g.add(mn);
+        g.position.set(mosqueX, 0, -24); st.add(g); }
+      // pigeon towers: tapered mud towers with nesting holes and perch sticks
+      for (const px of [Math.round(L.W * 0.2), Math.round(L.W * 0.58), Math.round(L.W * 0.9)]) {
+        const g = new T.Group(); const body = new T.CylinderGeometry(1.0, 1.9, 9, 20, 6); g.add(mesh(body.translate(0, 4.5, 0), m.limeDark, q === 'high', true));
+        g.add(mesh(new T.ConeGeometry(1.15, 1.4, 20).translate(0, 9.7, 0), m.limeDark));
+        const holes = [], sticks = []; for (let j = 0; j < 6; j++) for (let i = 0; i < 8; i++) { const a = i / 8 * Math.PI * 2 + j * 0.4, y = 2 + j * 1.15, r = 1.9 - (y / 9) * 0.9 + 0.01; holes.push({ x: Math.sin(a) * r, y, z: Math.cos(a) * r, ry: a, w: 0.22, h: 0.28, d: 0.06 }); sticks.push({ x: Math.sin(a) * (r + 0.15), y: y - 0.2, z: Math.cos(a) * (r + 0.15), ry: a, w: 0.04, h: 0.04, d: 0.4 }); }
+        boxes(v, std({ color: C('#2a1c10'), roughness: 1 }), holes, { parent: g, shadow: false }); boxes(v, m.wood, sticks, { parent: g, shadow: false });
+        g.position.set(px, 0, -13); st.add(g);
+      }
+      // palms and lamps on the promenade
+      const palms = []; for (let xx = 7; xx < L.W; xx += 11 + rr() * 7) if (!nearPit(E, xx, 1.6)) palms.push({ x: xx, z: -3.2, ry: rr() * 6, s: 0.62 + rr() * 0.1 });
+      prop(v, P.palm(7), palms, { name: 'palm' });
+      const lampDef = P.lamp(1); prop(v, lampDef, Array.from({ length: Math.ceil(L.W / 15) }, (_, i) => ({ x: 12 + i * 15, z: -2.3, s: 0.5 })).filter(o => !nearPit(E, o.x, 1)), { name: 'lamp', shadow: false });
+      // across the bay: the city's towers at sunset
+      v.world.skyline.visible = true; v.world.skyline.position.set(60, -8, -780);
+    },
+    animate() {}
+  };
+
+  // ============================================================== الصحراء القطرية
+  function sanduTex() { // Sadu-style woven stripes for the tents' side curtains (original pattern)
+    const S = 256, [c, x] = cv(S, S); x.fillStyle = '#1c1612'; x.fillRect(0, 0, S, S);
+    const bands = [['#8a1538', 18], ['#efe4cf', 6], ['#1c1612', 10], ['#c98a2a', 8], ['#efe4cf', 6], ['#8a1538', 18]]; let y = 70;
+    for (const [col, h] of bands) { x.fillStyle = col; x.fillRect(0, y, S, h); y += h; }
+    x.fillStyle = '#efe4cf'; for (let i = 0; i < 16; i++) { const cx = i * 16 + 8; x.beginPath(); x.moveTo(cx, 96); x.lineTo(cx + 6, 104); x.lineTo(cx, 112); x.lineTo(cx - 6, 104); x.fill(); }
+    x.globalAlpha = 0.25; for (let i = 0; i < S; i += 2) { x.fillStyle = i % 4 ? '#000' : '#fff'; x.fillRect(i, 0, 1, S); } x.globalAlpha = 1;
+    return tex(c, { repeat: [3, 1] });
+  }
+  function duneGeo(w, h, d, seg = 48, seedN = 1) { // smooth dune with a sharp crest, slip face toward +x
+    const g = new T.PlaneGeometry(w, d, seg, 12); g.rotateX(-Math.PI / 2); const p = g.attributes.position, rr = mulberry(seedN);
+    const ph = rr() * 6;
+    for (let i = 0; i < p.count; i++) { const x = p.getX(i) / (w / 2), z = p.getZ(i) / (d / 2); const crest = 0.3 * Math.sin(z * 2.2 + ph); const u = x - crest; let y = u < 0 ? Math.pow(Math.max(0, 1 + u), 1.6) : Math.pow(Math.max(0, 1 - u * 1.8), 2.2); y *= Math.max(0, 1 - z * z) * (0.85 + 0.15 * Math.sin(z * 5 + ph)); p.setY(i, y * h); }
+    g.computeVertexNormals(); return g;
+  }
+  const desert = {
+    id: 'desert', tod: 0.62, exposure: 0.8, water: false, bgWater: false, dustColor: C('#e2c38e'), surface: 'sand', ambience: 'desert',
+    materials(v) {
+      if (this._m) return this._m;
+      const sand = (rep, col) => std({ map: X.photo('sand_c', { repeat: rep }), normalMap: X.photo('plaster_n', { srgb: false, repeat: rep }), normalScale: new T.Vector2(0.35, 0.35), color: C(col), roughness: 1 });
+      return (this._m = {
+        top: sand([1, 1], '#f1d6a6'), side: sand([0.5, 0.5], '#c79b62'), far: sand([1, 1], '#f0cf98'), dune: sand([24, 10], '#efcb92'),
+        rock: std({ map: X.photo('plaster_c', { repeat: [0.4, 0.4] }), normalMap: X.photo('plaster_n', { srgb: false, repeat: [0.4, 0.4] }), color: C('#b8835a'), roughness: 0.95 }),
+        rockDark: std({ map: X.photo('plaster_c', { repeat: [0.4, 0.4] }), normalMap: X.photo('plaster_n', { srgb: false, repeat: [0.4, 0.4] }), color: C('#8d5f3e'), roughness: 1 }),
+        tent: std({ map: sanduTex(), roughness: 0.95, side: T.DoubleSide }), tentTop: std({ color: C('#231b16'), roughness: 1, side: T.DoubleSide }),
+        wood: std(Object.assign({}, HT.planks('#7a5634'), { roughness: 0.9 })),
+        crate: std(Object.assign({}, HT.crate(), { roughness: 0.85 })),
+        stone: std({ map: X.photo('plaster_c', { repeat: [0.6, 0.6] }), normalMap: X.photo('plaster_n', { srgb: false, repeat: [0.6, 0.6] }), color: C('#c4915e'), roughness: 0.95 }),
+        rune: std({ color: C('#8ff3e6'), emissive: C('#3fe0d0'), emissiveIntensity: 1.6 }),
+        brickMaps: HT.brick([206, 150, 92], 'desBrick')
+      });
+    },
+    groundRun(v, x0, x1) { const m = v.mats; slab(v, x0, x1, m.top, m.side, { ts: 3, ss: 2 });
+      // soft wind ripples on the sand top
+      const g = new T.PlaneGeometry(x1 - x0, 4.6, Math.max(4, (x1 - x0) * 3) | 0, 10); g.rotateX(-Math.PI / 2); const p = g.attributes.position; for (let i = 0; i < p.count; i++) p.setY(i, 0.012 + 0.012 * Math.sin(p.getX(i) * 7 + p.getZ(i) * 1.3)); g.computeVertexNormals(); const r = mesh(g, m.top, false, true); r.position.set((x0 + x1) / 2, 0, -0.15); v.stage.add(r); },
+    pitRun(v, x0, x1) { darkPit(v, x0, x1, v.mats.side, '#3a2412'); },
+    terrace(v, x0, x1, h) { // layered sandstone outcrop with a sand cap
+      const st = v.stage, m = v.mats, n = Math.max(2, Math.round(h / 0.5));
+      for (let i = 0; i < n; i++) { const y0 = i * h / n, y1 = (i + 1) * h / n, inset = (i % 2) * 0.06; st.add(mesh(box(x0 + inset, x1 - inset, y0, y1, -1.6 + inset, 1.6 - inset, { top: 2, side: 1.2 }), i % 2 ? m.rockDark : m.rock)); }
+      st.add(mesh(box(x0 - 0.03, x1 + 0.03, h - 0.04, h + 0.01, -1.62, 1.62, { top: 2, side: 2 }), m.top, false, true));
+    },
+    ledge(v, x0, x1, y) { // weathered stone lintel on rock pillars
+      const st = v.stage, m = v.mats; st.add(mesh(box(x0, x1, y + 0.7, y + 1, -0.9, 0.9, { top: 1, side: 1 }), m.rock));
+      for (const px of [x0 + 0.2, x1 - 0.2]) { const bot = fromSolid(v, px, y); st.add(mesh(box(px - 0.18, px + 0.18, bot, y + 0.7, -0.85, -0.45, { top: 1, side: 1 }), m.rockDark, true, false)); }
+    },
+    mover(v, mv) {
+      const m = this._m;
+      if (mv.kind === 'float') { // hovering sandstone slab with glowing runes and a trickle of sand
+        const g = new T.Group(); g.add(mesh(box(0, mv.w, -0.05, 0.3, -0.65, 0.65, { top: 1, side: 1 }), m.rock));
+        for (let i = 0; i < 3; i++) g.add(mesh(box(0.3 + i * (mv.w - 0.6) / 2 - 0.08, 0.3 + i * (mv.w - 0.6) / 2 + 0.08, 0.02, 0.22, 0.65, 0.67, { top: 1, side: 1 }), m.rune, false));
+        const glow = A2.glowSprite(0x60f0e0, 2.0, 0.3); glow.position.set(mv.w / 2, -0.25, 0.2); g.add(glow);
+        const grains = new T.Points(new T.BufferGeometry().setAttribute('position', new T.BufferAttribute(new Float32Array(60 * 3), 3)), new T.PointsMaterial({ color: 0xe8c890, size: 0.05 })); g.add(grains); const gp = grains.geometry.attributes.position, seedA = Array.from({ length: 60 }, () => Math.random());
+        return { group: g, update(dt, st) { const t = st.t || 0; glow.material.opacity = 0.22 + 0.1 * Math.sin(t * 3); for (let i = 0; i < 60; i++) { const k = (seedA[i] + t * 0.6) % 1; gp.setXYZ(i, 0.3 + seedA[i] * (mv.w - 0.6), -0.05 - k * 2.2, (seedA[(i + 7) % 60] - 0.5) * 0.8); } gp.needsUpdate = true; } };
+      }
+      if (mv.kind === 'fall') { const g = new T.Group(), inner = new T.Group(); g.add(inner); for (let i = 0; i < 3; i++) { const a = i * mv.w / 3 + 0.02, b = (i + 1) * mv.w / 3 - 0.02; inner.add(mesh(box(a, b, 0.05, 0.3, -0.6, 0.6, { top: 1, side: 1 }), i % 2 ? m.rockDark : m.rock)); } return { group: g, update(dt, st) { const sh = st.state === 'shake'; inner.rotation.z = sh ? Math.sin((st.t || 0) * 70) * 0.03 : 0; inner.children.forEach((c, i) => { c.position.y = st.state === 'falling' ? -0.08 * i : 0; c.rotation.z = st.state === 'falling' ? (i - 1) * 0.1 : 0; }); } }; }
+      if (mv.kind === 'lift') { // a stone pillar rising out of the sand
+        const g = new T.Group(); g.add(mesh(box(0, mv.w, 0.0, 0.3, -0.6, 0.6, { top: 1, side: 1 }), m.rock)); g.add(mesh(box(0.15, mv.w - 0.15, -9, 0.0, -0.5, 0.5, { top: 1, side: 1 }), m.rockDark, true, false));
+        g.add(mesh(box(mv.w / 2 - 0.12, mv.w / 2 + 0.12, 0.05, 0.25, 0.6, 0.62, { top: 1, side: 1 }), m.rune, false)); return { group: g, update() {} };
+      }
+      return null;
+    },
+    enemy(v, type) { return type === 'dust' ? A2.dustDevil() : type === 'locust' ? A2.locust() : A2.scarab(); },
+    scenery(v, L, E) {
+      const st = v.stage, m = v.mats, q = v.q, rr = mulberry(5150);
+      backFloor(v, L, m.far, -2.6, 400, 3);
+      // near & mid dunes
+      for (let i = 0; i < 16; i++) { const w = 30 + rr() * 30, h = 4 + rr() * 6, d = 18 + rr() * 14; const dn = mesh(duneGeo(w, h, d, 40, 10 + i), m.dune, q === 'high', true); dn.position.set(-30 + i * (L.W + 60) / 15 + rr() * 10, -0.05, -16 - rr() * 22); st.add(dn); }
+      // far dunes in the background pass (layered ridges, the sea-like haze of the south)
+      const bg = new T.Group(); v.addBg(bg); const farMat = std({ color: C('#e9c48a'), roughness: 1 });
+      for (let i = 0; i < 26; i++) { const w = 120 + rr() * 140, h = 14 + rr() * 26, d = 80; const dn = new T.Mesh(duneGeo(w, h, d, 24, 40 + i), farMat); dn.position.set(-260 + i * 40 + rr() * 30, -1, -180 - rr() * 380); bg.add(dn); }
+      const fl = new T.Mesh(new T.PlaneGeometry(6000, 6000), farMat); fl.rotation.x = -Math.PI / 2; fl.position.set(0, -1, -2000); bg.add(fl);
+      // ghaf trees, desert shrubs and scattered rocks
+      const trees = []; for (let xx = 12; xx < L.W; xx += 18 + rr() * 16) if (!nearPit(E, xx, 2)) trees.push({ x: xx, z: -4.5 - rr() * 3, ry: rr() * 6, s: 0.9 + rr() * 0.3 });
+      prop(v, treeDef('#6a5038', '#8f9c62', 3.4, 1.35), trees, { name: 'ghaf' });
+      const sh = P.shrub(), shrubs = []; for (let xx = 4; xx < L.W; xx += 4 + rr() * 6) if (!nearPit(E, xx, 1)) shrubs.push({ x: xx, z: -3 - rr() * 1.5, ry: rr() * 6, s: 0.35 + rr() * 0.25, c: new T.Color(0.75, 0.72, 0.5) });
+      prop(v, sh, shrubs, { name: 'shrub' });
+      { const rg = new T.IcosahedronGeometry(0.5, 1), rp = rg.attributes.position, r2 = mulberry(31); for (let i = 0; i < rp.count; i++) { const k = 0.75 + 0.4 * r2(); rp.setXYZ(i, rp.getX(i) * k, Math.max(-0.1, rp.getY(i) * k), rp.getZ(i) * k); } rg.computeVertexNormals(); rg.translate(0, 0.08, 0);
+        const rocks = []; for (let i = 0; i < 46; i++) { const xx = rr() * L.W; if (nearPit(E, xx, 1)) continue; rocks.push({ x: xx, y: -0.05, z: -3 - rr() * 9, ry: rr() * 6, s: 0.4 + rr() * 1.0, sy: 0.25 + rr() * 0.5 }); }
+        const im = new T.InstancedMesh(rg, m.rock, rocks.length); rocks.forEach((r3, i) => im.setMatrixAt(i, mtx(r3.x, r3.y, r3.z, r3.ry, r3.s, r3.s * r3.sy * 2, r3.s * 0.8))); im.castShadow = q === 'high'; im.receiveShadow = true; st.add(im); }
+      // Bedouin camp near the finish: black goat-hair tents with Sadu curtains, camels, a campfire
+      for (const d of L.deco) if (d.type === 'camp') {
+        const cx = d.x;
+        for (const [ox, oz, s] of [[-7, -6.5, 1], [3, -8, 1.2], [12, -6.8, 0.9]]) {
+          const g = new T.Group(); const w = 6 * s, dd = 4 * s, h = 2.2 * s;
+          const roof = new T.PlaneGeometry(w, dd, 8, 4); const p = roof.attributes.position; for (let i = 0; i < p.count; i++) { const x = p.getX(i) / (w / 2); p.setZ(i, h - 0.35 * s * Math.abs(Math.sin(x * Math.PI * 1.5))); } roof.rotateX(-Math.PI / 2); roof.computeVertexNormals();
+          const rm = mesh(roof, m.tentTop, true, true); g.add(rm);
+          const back = mesh(new T.PlaneGeometry(w, h).translate(0, h / 2, -dd / 2), m.tent, true, true); g.add(back);
+          for (const sx of [-1, 1]) g.add(mesh(new T.PlaneGeometry(dd, h).rotateY(Math.PI / 2).translate(sx * w / 2, h / 2, 0), m.tent, true, true));
+          for (const px of [-w / 2, 0, w / 2]) g.add(mesh(new T.CylinderGeometry(0.06, 0.06, h + 0.3).translate(px, (h + 0.3) / 2, dd / 2), m.wood));
+          g.position.set(cx + ox, 0, oz); st.add(g);
+        }
+        for (const [ox, oz, ry] of [[-14, -5, 0.3], [-17, -7, -0.4], [18, -5.5, Math.PI - 0.2]]) { const a = A2.camel(); a.group.position.set(cx + ox, 0, oz); a.group.rotation.y = ry; a.group.scale.setScalar(0.95); st.add(a.group); }
+        const fire = new T.Group(); for (let i = 0; i < 6; i++) fire.add(mesh(new T.CylinderGeometry(0.06, 0.07, 0.9).rotateZ(Math.PI / 2).rotateY(i / 6 * Math.PI).translate(0, 0.08, 0), m.wood));
+        const flame = A2.glowSprite(0xff9a3a, 1.6, 0.8); flame.position.y = 0.5; fire.add(flame); const fl2 = A2.glowSprite(0xffe08a, 0.8, 0.9); fl2.position.y = 0.45; fire.add(fl2); fire.position.set(cx - 2, 0, -4.2); st.add(fire); this.flame = [flame, fl2];
+        const coffee = mesh(new T.CylinderGeometry(0.12, 0.18, 0.4, 12).translate(0, 0.2, 0), std({ color: C('#c9a04a'), metalness: 0.9, roughness: 0.3 })); coffee.position.set(cx - 1.3, 0, -4); st.add(coffee);
+      }
+      v.world.skyline.visible = false;
+    },
+    animate(v, dt, t) { if (this.flame) { const k = 0.85 + 0.15 * Math.sin(t * 13) * Math.sin(t * 7.3); this.flame[0].scale.set(1.6 * k, 1.9 * k, 1); this.flame[1].scale.set(0.8 * k, 1.1 * k, 1); } }
+  };
+
+  Object.assign(TH.THEMES, { katara, desert });
+})(typeof window !== 'undefined' ? window : globalThis);
+</script>
+<script data-src="js/audio.js">/* عدّاء قطر — original audio, synthesised in the browser with the Web Audio API (no recordings, no external files).
+ * Music: an original running theme in maqam Hijaz on D (plucked-string lead by Karplus–Strong, darbuka-style
+ * doum/tak, Gulf-style hand-claps, bass, pad), with menu / run / question / finish arrangements and ducking.
+ * SFX are timed by gameplay events (footsteps come from the animator's real foot contacts).
+ */
+(function (root) {
+  'use strict';
+  const NOTE = n => 440 * Math.pow(2, (n - 69) / 12);
+  // MIDI numbers for D Hijaz: D Eb F# G A Bb C
+  const D3 = 50, Eb3 = 51, Fs3 = 54, G3 = 55, A3 = 57, Bb3 = 58, C4 = 60, D4 = 62, Eb4 = 63, Fs4 = 66, G4 = 67, A4 = 69, Bb4 = 70, C5 = 72, D5 = 74;
+  const A1 = 33, Bb1 = 34, C2 = 36, D2 = 38;
+
+  class QRAudio {
+    constructor(prefs = {}) { this.prefs = { music: prefs.music == null ? 0.7 : prefs.music, sfx: prefs.sfx == null ? 0.9 : prefs.sfx, muted: !!prefs.muted }; this.ctx = null; this.mode = 'menu'; this.intensity = 0.4; this.zone = 'corniche'; this.log = []; }
+    get ready() { return !!this.ctx; }
+    init() {
+      if (this.ctx) { if (this.ctx.state === 'suspended') this.ctx.resume(); return; }
+      const AC = root.AudioContext || root.webkitAudioContext; if (!AC) return;
+      const ctx = this.ctx = new AC();
+      const comp = ctx.createDynamicsCompressor(); comp.threshold.value = -14; comp.ratio.value = 3.5; comp.attack.value = 0.004; comp.release.value = 0.2;
+      this.master = ctx.createGain(); this.master.gain.value = this.prefs.muted ? 0 : 0.9; this.master.connect(comp); comp.connect(ctx.destination);
+      this.musicBus = ctx.createGain(); this.musicBus.gain.value = this.prefs.music * 0.55; this.duckG = ctx.createGain(); this.musicBus.connect(this.duckG); this.duckG.connect(this.master);
+      this.sfxBus = ctx.createGain(); this.sfxBus.gain.value = this.prefs.sfx; this.sfxBus.connect(this.master);
+      this.ambBus = ctx.createGain(); this.ambBus.gain.value = this.prefs.sfx * 0.55; this.ambBus.connect(this.master);
+      // a small room reverb for the music + sfx tails (generated impulse)
+      this.verb = ctx.createConvolver(); this.verb.buffer = this.impulse(1.6, 2.6); const vg = ctx.createGain(); vg.gain.value = 0.16; this.verb.connect(vg); vg.connect(this.master);
+      this.noiseW = this.noiseBuffer('white', 2); this.noiseP = this.noiseBuffer('pink', 4); this.noiseB = this.noiseBuffer('brown', 4);
+      this.plucks = {}; for (const n of [D3, Eb3, Fs3, G3, A3, Bb3, C4, D4, Eb4, Fs4, G4, A4, Bb4, C5, D5]) this.plucks[n] = this.pluckBuffer(NOTE(n), 1.5);
+      this.startAmbience(); this.step = 0; this.nextT = ctx.currentTime + 0.1; this.bar = 0;
+      this.timer = setInterval(() => this.schedule(), 25);
+    }
+    noiseBuffer(kind, secs) {
+      const ctx = this.ctx, n = Math.floor(ctx.sampleRate * secs), b = ctx.createBuffer(1, n, ctx.sampleRate), d = b.getChannelData(0);
+      let b0 = 0, b1 = 0, b2 = 0, last = 0;
+      for (let i = 0; i < n; i++) {
+        const w = Math.random() * 2 - 1;
+        if (kind === 'white') d[i] = w;
+        else if (kind === 'pink') { b0 = 0.99765 * b0 + w * 0.099046; b1 = 0.963 * b1 + w * 0.2965164; b2 = 0.57 * b2 + w * 1.0526913; d[i] = (b0 + b1 + b2 + w * 0.1848) * 0.2; }
+        else { last = (last + 0.02 * w) / 1.02; d[i] = last * 3.5; }
+      }
+      return b;
+    }
+    pluckBuffer(f, secs) { // Karplus–Strong plucked string (oud-like), rendered once
+      const ctx = this.ctx, sr = ctx.sampleRate, n = Math.floor(sr * secs), b = ctx.createBuffer(1, n, sr), d = b.getChannelData(0);
+      const N = Math.max(2, Math.round(sr / f)); const ring = new Float32Array(N);
+      let lp = 0; for (let i = 0; i < N; i++) { lp = lp * 0.6 + (Math.random() * 2 - 1) * 0.4; ring[i] = lp; }
+      let idx = 0, prev = 0; const decay = 0.996 - Math.min(0.006, f / 120000);
+      for (let i = 0; i < n; i++) { const cur = ring[idx]; const nxt = ring[(idx + 1) % N]; const v = (cur + nxt) * 0.5 * decay; ring[idx] = v; d[i] = cur * 0.9 + prev * 0.1; prev = cur; idx = (idx + 1) % N; }
+      return b;
+    }
+    impulse(secs, decay) { const ctx = this.ctx, n = Math.floor(ctx.sampleRate * secs), b = ctx.createBuffer(2, n, ctx.sampleRate); for (let c = 0; c < 2; c++) { const d = b.getChannelData(c); for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, decay); } return b; }
+    // ---------------------------------------------------------------- prefs
+    set(k, v) { this.prefs[k] = v; if (!this.ctx) return; const t = this.ctx.currentTime; if (k === 'music') this.musicBus.gain.setTargetAtTime(v * 0.55, t, 0.05); if (k === 'sfx') { this.sfxBus.gain.setTargetAtTime(v, t, 0.05); this.ambBus.gain.setTargetAtTime(v * 0.55, t, 0.05); } }
+    toggleMute(force) { this.prefs.muted = force == null ? !this.prefs.muted : !!force; if (this.ctx) this.master.gain.setTargetAtTime(this.prefs.muted ? 0 : 0.9, this.ctx.currentTime, 0.04); return this.prefs.muted; }
+    suspend() { if (this.ctx && this.ctx.state === 'running') this.ctx.suspend(); }
+    resume() { if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume(); }
+    close() { clearInterval(this.timer); if (this.ctx) this.ctx.close(); this.ctx = null; }
+    duck(amount = 0.35, hold = 1.2) { if (!this.ctx) return; const g = this.duckG.gain, t = this.ctx.currentTime; g.cancelScheduledValues(t); g.setTargetAtTime(amount, t, 0.05); g.setTargetAtTime(1, t + hold, 0.4); }
+    note(name) { this.log.push(name); if (this.log.length > 400) this.log.shift(); const c = this.counts || (this.counts = {}); c[name] = (c[name] || 0) + 1; }
+    // ---------------------------------------------------------------- building blocks
+    env(g, t, a, peak, d, sustain = 0, rel = 0.05, hold = 0) { g.gain.cancelScheduledValues(t); g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(peak, t + a); g.gain.setTargetAtTime(sustain, t + a + hold, d); if (rel) g.gain.setTargetAtTime(0.0001, t + a + hold + d * 3, rel); }
+    noise(t, dur, { type = 'bandpass', freq = 1000, q = 1, gain = 0.3, buf = 'W', attack = 0.002, sweep = null, bus = null, pan = 0, rate = 1 } = {}) {
+      const ctx = this.ctx, s = ctx.createBufferSource(); s.buffer = buf === 'P' ? this.noiseP : buf === 'B' ? this.noiseB : this.noiseW; s.playbackRate.value = rate;
+      const f = ctx.createBiquadFilter(); f.type = type; f.frequency.setValueAtTime(freq, t); f.Q.value = q; if (sweep) f.frequency.exponentialRampToValueAtTime(sweep, t + dur);
+      const g = ctx.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(gain, t + attack); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+      let out = g; if (pan && ctx.createStereoPanner) { const p = ctx.createStereoPanner(); p.pan.value = pan; g.connect(p); out = p; }
+      s.connect(f); f.connect(g); out.connect(bus || this.sfxBus); s.start(t, Math.random() * 1.5); s.stop(t + dur + 0.05); return { s, f, g };
+    }
+    tone(t, freq, dur, { type = 'sine', gain = 0.2, attack = 0.005, glide = null, bus = null, detune = 0, verb = 0, pan = 0 } = {}) {
+      const ctx = this.ctx, o = ctx.createOscillator(); o.type = type; o.frequency.setValueAtTime(freq, t); o.detune.value = detune; if (glide) o.frequency.exponentialRampToValueAtTime(glide, t + dur);
+      const g = ctx.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(gain, t + attack); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+      o.connect(g); let out = g; if (pan && ctx.createStereoPanner) { const p = ctx.createStereoPanner(); p.pan.value = pan; g.connect(p); out = p; }
+      out.connect(bus || this.sfxBus); if (verb) { const v = ctx.createGain(); v.gain.value = verb; out.connect(v); v.connect(this.verb); }
+      o.start(t); o.stop(t + dur + 0.05); return o;
+    }
+    pluck(t, n, gain = 0.25, bus = null, pan = 0) {
+      const ctx = this.ctx, b = this.plucks[n]; if (!b) return; const s = ctx.createBufferSource(); s.buffer = b;
+      const f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 3200; const g = ctx.createGain(); g.gain.value = gain;
+      s.connect(f); f.connect(g); let out = g; if (pan && ctx.createStereoPanner) { const p = ctx.createStereoPanner(); p.pan.value = pan; g.connect(p); out = p; }
+      out.connect(bus || this.musicBus); const v = ctx.createGain(); v.gain.value = 0.35; out.connect(v); v.connect(this.verb);
+      s.start(t); s.stop(t + 1.5);
+    }
+    brass(t, n, dur, gain = 0.12, bus = null) {
+      const ctx = this.ctx, f = ctx.createBiquadFilter(); f.type = 'lowpass'; f.Q.value = 2; f.frequency.setValueAtTime(400, t); f.frequency.linearRampToValueAtTime(2600, t + 0.06); f.frequency.setTargetAtTime(1400, t + 0.08, 0.2);
+      const g = ctx.createGain(); this.env(g, t, 0.03, gain, 0.25, gain * 0.7, 0.08, Math.max(0, dur - 0.3)); f.connect(g); g.connect(bus || this.musicBus); const v = ctx.createGain(); v.gain.value = 0.4; g.connect(v); v.connect(this.verb);
+      for (const d of [-7, 0, 6]) { const o = ctx.createOscillator(); o.type = 'sawtooth'; o.frequency.value = NOTE(n); o.detune.value = d; o.connect(f); o.start(t); o.stop(t + dur + 0.5); }
+    }
+    // ---------------------------------------------------------------- music
+    setMode(mode) { if (mode === this.mode) return; this.mode = mode; this.note('music:' + mode); if (mode === 'finish' && this.ctx) this.victory(); }
+    schedule() {
+      const ctx = this.ctx; if (!ctx || ctx.state !== 'running') return;
+      const bpm = this.mode === 'run' ? 118 + 10 * this.intensity : this.mode === 'question' ? 84 : 96, s16 = 60 / bpm / 4;
+      while (this.nextT < ctx.currentTime + 0.14) { this.playStep(this.step, this.nextT, s16); this.nextT += s16; this.step = (this.step + 1) % 16; if (this.step === 0) this.bar++; }
+    }
+    playStep(st, t, s16) {
+      const m = this.mode, bar = this.bar % 8, I = this.intensity, mb = this.musicBus;
+      if (m === 'silent' || m === 'finish') return;
+      const chord = [[D2, D3], [D2, D3], [C2, C4], [Bb1, Bb3], [D2, D3], [D2, D3], [C2, C4], [A1, A3]][bar];
+      if (m === 'question') { // calm pad + soft pulse while thinking
+        if (st === 0 && bar % 2 === 0) this.pad(t, [D3, A3, D4, Fs4].map(NOTE), s16 * 32, 0.035);
+        if (st % 8 === 0) this.tone(t, 55, 0.25, { gain: 0.08, bus: mb });
+        if (st === 6 || st === 14) this.pluck(t, [A4, Fs4, G4, Eb4][(this.bar + (st > 8 ? 1 : 0)) % 4], 0.06, mb, 0.3);
+        return;
+      }
+      const run = m === 'run';
+      // percussion: doum / tak / clap / shaker (Gulf-inspired, original pattern)
+      if ([0, 6, 10].includes(st)) this.doum(t, run ? 0.5 : 0.32);
+      if ([4, 12].includes(st) || (run && st === 14)) this.tak(t, run ? 0.26 : 0.16);
+      if (run && I > 0.25 && (st === 4 || st === 12)) this.clap(t, 0.2 + 0.1 * I);
+      if (st % 2 === 0) this.noise(t, 0.04, { type: 'highpass', freq: 7000, gain: (st % 4 === 2 ? 0.05 : 0.025) * (run ? 1 : 0.6), bus: mb });
+      if (run && I > 0.55 && (st === 0 || st === 8)) this.kick(t, 0.5);
+      // bass
+      const bassPat = run ? [0, 3, 6, 8, 11, 14] : [0, 8];
+      if (bassPat.includes(st)) this.bass(t, NOTE(st === 6 || st === 14 ? chord[0] + 7 : chord[0]), s16 * (run ? 1.6 : 6), run ? 0.2 : 0.14);
+      // lead motif (plucked string), call & answer over two bars
+      const motifA = { 0: D4, 2: Eb4, 3: Fs4, 4: G4, 6: A4, 8: Bb4, 10: A4, 12: G4, 13: Fs4, 14: Eb4 };
+      const motifB = { 0: Fs4, 2: G4, 4: A4, 7: C5, 8: Bb4, 10: A4, 12: G4, 14: Fs4 };
+      const motifC = { 0: D5, 3: C5, 4: Bb4, 6: A4, 8: G4, 10: Fs4, 11: G4, 12: Eb4, 14: D4 };
+      const motif = bar === 7 ? motifC : bar % 2 ? motifB : motifA;
+      if ((run || st % 4 === 0) && motif[st] != null && (run || bar % 2 === 0)) this.pluck(t, motif[st], run ? 0.2 : 0.13, mb, st % 2 ? -0.2 : 0.2);
+      if (run && I > 0.7 && st % 2 === 1) this.pluck(t, [D4, Fs4, A4, D5][(st >> 1) % 4], 0.06, mb, 0.4);
+      if (st === 0 && bar % 4 === 0) this.pad(t, [chord[1], chord[1] + 7, chord[1] + 12].map(NOTE), s16 * 64, run ? 0.03 : 0.04);
+    }
+    doum(t, g) { this.tone(t, 110, 0.32, { glide: 52, gain: g, bus: this.musicBus }); this.noise(t, 0.05, { type: 'lowpass', freq: 400, gain: g * 0.3, bus: this.musicBus }); }
+    tak(t, g) { this.noise(t, 0.07, { type: 'bandpass', freq: 2600, q: 2, gain: g, bus: this.musicBus }); this.tone(t, 900, 0.05, { glide: 600, gain: g * 0.35, bus: this.musicBus }); }
+    clap(t, g) { for (let i = 0; i < 3; i++) this.noise(t + i * 0.011, 0.09, { type: 'bandpass', freq: 1400 + i * 300, q: 1.2, gain: g * (1 - i * 0.2), bus: this.musicBus, pan: (i - 1) * 0.3 }); }
+    kick(t, g) { this.tone(t, 150, 0.22, { glide: 42, gain: g, bus: this.musicBus }); }
+    bass(t, f, dur, g) {
+      const ctx = this.ctx, o = ctx.createOscillator(); o.type = 'sawtooth'; o.frequency.value = f; const fl = ctx.createBiquadFilter(); fl.type = 'lowpass'; fl.Q.value = 6; fl.frequency.setValueAtTime(220, t); fl.frequency.linearRampToValueAtTime(700, t + 0.02); fl.frequency.setTargetAtTime(240, t + 0.03, 0.08);
+      const gg = ctx.createGain(); gg.gain.setValueAtTime(0.0001, t); gg.gain.linearRampToValueAtTime(g, t + 0.01); gg.gain.setTargetAtTime(0.0001, t + dur * 0.6, dur * 0.2);
+      o.connect(fl); fl.connect(gg); gg.connect(this.musicBus); o.start(t); o.stop(t + dur + 0.3);
+    }
+    pad(t, freqs, dur, g) {
+      const ctx = this.ctx, fl = ctx.createBiquadFilter(); fl.type = 'lowpass'; fl.frequency.value = 900; const gg = ctx.createGain(); gg.gain.setValueAtTime(0.0001, t); gg.gain.linearRampToValueAtTime(g, t + dur * 0.25); gg.gain.linearRampToValueAtTime(0.0001, t + dur);
+      fl.connect(gg); gg.connect(this.musicBus); const v = ctx.createGain(); v.gain.value = 0.6; gg.connect(v); v.connect(this.verb);
+      for (const f of freqs) for (const d of [-9, 8]) { const o = ctx.createOscillator(); o.type = 'sawtooth'; o.frequency.value = f; o.detune.value = d; o.connect(fl); o.start(t); o.stop(t + dur + 0.1); }
+    }
+    // ---------------------------------------------------------------- ambience (city / sea / souq) + wind
+    startAmbience() {
+      const ctx = this.ctx;
+      const loop = (buf, type, freq, q, gain) => { const s = ctx.createBufferSource(); s.buffer = buf; s.loop = true; const f = ctx.createBiquadFilter(); f.type = type; f.frequency.value = freq; f.Q.value = q; const g = ctx.createGain(); g.gain.value = gain; s.connect(f); f.connect(g); g.connect(this.ambBus); s.start(); return { s, f, g }; };
+      this.amb = {
+        sea: loop(this.noiseB, 'lowpass', 520, 0.5, 0.0), traffic: loop(this.noiseB, 'lowpass', 180, 0.7, 0.0),
+        murmur: loop(this.noiseP, 'bandpass', 700, 0.8, 0.0), wind: loop(this.noiseW, 'bandpass', 900, 0.5, 0.0)
+      };
+      this.ambT = 0; this.nextGull = 6; this.nextVoice = 3;
+    }
+    update(dt, s) { // s = {speed, zone, paused}
+      if (!this.ctx || this.ctx.state !== 'running') return; const t = this.ctx.currentTime; this.ambT += dt;
+      const sea = s.zone === 'corniche' ? 1 : 0, souq = s.zone === 'souq' ? 1 : 0, v = s.paused ? 0 : s.speed;
+      this.amb.sea.g.gain.setTargetAtTime(0.22 * sea * (0.65 + 0.35 * Math.sin(this.ambT * 0.7)), t, 0.5);
+      this.amb.traffic.g.gain.setTargetAtTime(0.12 * (1 - souq * 0.7), t, 0.8);
+      this.amb.murmur.g.gain.setTargetAtTime(0.1 * souq * (0.8 + 0.2 * Math.sin(this.ambT * 2.3)), t, 0.3);
+      this.amb.murmur.f.frequency.setTargetAtTime(600 + 300 * Math.sin(this.ambT * 1.7), t, 0.2);
+      this.amb.wind.g.gain.setTargetAtTime(Math.min(0.2, 0.0021 * v * v), t, 0.15); this.amb.wind.f.frequency.setTargetAtTime(600 + Math.abs(v) * 70, t, 0.2);
+      this.intensity = Math.min(1, Math.max(0, (v - 5) / 6));
+      if (sea && (this.nextGull -= dt) < 0) { this.nextGull = 7 + Math.random() * 10; for (let i = 0; i < 2 + (Math.random() * 2 | 0); i++) this.tone(t + i * 0.22, 1900 + Math.random() * 300, 0.18, { type: 'triangle', glide: 1200, gain: 0.025, bus: this.ambBus, pan: 0.6 }); }
+      if (souq && (this.nextVoice -= dt) < 0) { this.nextVoice = 1.2 + Math.random() * 2.5; this.noise(t, 0.35, { type: 'bandpass', freq: 500 + Math.random() * 700, q: 6, gain: 0.04, buf: 'P', bus: this.ambBus, pan: Math.random() * 1.6 - 0.8 }); }
+    }
+    // ---------------------------------------------------------------- SFX
+    now() { return this.ctx ? this.ctx.currentTime : 0; }
+    footstep(side, speed, surface = 'asphalt') {
+      if (!this.ctx) return; const t = this.now(), k = Math.min(1, 0.35 + speed / 10), pan = side === 'L' ? -0.12 : 0.12;
+      const f = surface === 'stone' ? 2300 : surface === 'paver' ? 1500 : 1100;
+      this.noise(t, 0.05 + 0.02 * Math.random(), { type: 'bandpass', freq: f * (0.85 + Math.random() * 0.3), q: 1.4, gain: 0.16 * k, pan });
+      this.tone(t, 85, 0.07, { glide: 48, gain: 0.12 * k, pan });
+    }
+    jump() { if (!this.ctx) return; const t = this.now(); this.note('jump'); this.noise(t, 0.32, { type: 'bandpass', freq: 500, sweep: 2600, q: 0.8, gain: 0.14 }); this.noise(t + 0.02, 0.22, { type: 'highpass', freq: 2500, gain: 0.05, buf: 'P' }); this.tone(t, 260, 0.12, { glide: 360, gain: 0.04, type: 'triangle' }); }
+    land(k = 1) { if (!this.ctx) return; const t = this.now(); this.note('land'); this.tone(t, 95, 0.16, { glide: 45, gain: 0.26 * k }); this.noise(t, 0.12, { type: 'bandpass', freq: 900, q: 0.9, gain: 0.18 * k }); this.noise(t + 0.03, 0.18, { type: 'highpass', freq: 3000, gain: 0.04 * k, buf: 'P' }); }
+    slide() { if (!this.ctx) return; const t = this.now(); this.note('slide'); const n = this.noise(t, 0.75, { type: 'bandpass', freq: 1700, q: 0.7, gain: 0.13, attack: 0.04 }); n.f.frequency.linearRampToValueAtTime(900, t + 0.7); this.noise(t, 0.3, { type: 'highpass', freq: 3500, gain: 0.05, buf: 'P' }); }
+    lane(dir) { if (!this.ctx) return; const t = this.now(); this.noise(t, 0.16, { type: 'bandpass', freq: 1200, sweep: 2400, q: 1.2, gain: 0.06, pan: dir * 0.5 }); }
+    coin(chain = 0) { if (!this.ctx) return; const t = this.now(); const st = [0, 2, 4, 7, 9, 12][Math.min(5, chain % 6)]; const f = 1568 * Math.pow(2, st / 12); this.tone(t, f, 0.18, { gain: 0.07, type: 'triangle', verb: 0.3 }); this.tone(t + 0.045, f * 1.5, 0.25, { gain: 0.05, verb: 0.3 }); }
+    hit(kind = 'soft') { if (!this.ctx) return; const t = this.now(); this.note('hit:' + kind); if (kind === 'cone' || kind === 'soft') { this.tone(t, 300, 0.12, { glide: 140, gain: 0.12, type: 'triangle' }); this.noise(t, 0.18, { type: 'bandpass', freq: 700, gain: 0.18 }); } else { this.tone(t, 70, 0.3, { glide: 40, gain: 0.32 }); this.noise(t, 0.25, { type: 'lowpass', freq: 1400, gain: 0.25 }); this.tone(t, 520, 0.25, { glide: 260, gain: 0.05, type: 'square' }); } }
+    gateAppear() { if (!this.ctx) return; const t = this.now(); this.note('gate-appear'); [D4, Fs4, A4, D5].forEach((n, i) => this.tone(t + i * 0.09, NOTE(n), 1.4, { type: 'triangle', gain: 0.045, verb: 0.6 })); this.noise(t, 1.2, { type: 'bandpass', freq: 3000, sweep: 6000, q: 3, gain: 0.03 }); }
+    questionOpen() { if (!this.ctx) return; const t = this.now(); this.note('question-open'); this.tone(t, NOTE(A4), 0.5, { type: 'sine', gain: 0.07, verb: 0.5 }); this.tone(t + 0.12, NOTE(D5), 0.7, { type: 'sine', gain: 0.07, verb: 0.5 }); }
+    select() { if (!this.ctx) return; const t = this.now(); this.note('select'); this.tone(t, 900, 0.06, { type: 'square', gain: 0.04 }); this.tone(t, 1800, 0.05, { gain: 0.03 }); }
+    tick(urgent) { if (!this.ctx) return; const t = this.now(); this.tone(t, urgent ? 1320 : 880, 0.06, { type: 'triangle', gain: urgent ? 0.07 : 0.04 }); }
+    success() {
+      if (!this.ctx) return; const t = this.now(); this.note('success'); this.duck(0.3, 1.6);
+      [D4, Fs4, A4, D5].forEach((n, i) => { this.tone(t + i * 0.075, NOTE(n), 0.6, { type: 'triangle', gain: 0.09, verb: 0.6 }); this.tone(t + i * 0.075, NOTE(n + 12), 0.35, { gain: 0.03 }); });
+      this.brass(t + 0.3, D4, 0.6, 0.06, this.sfxBus); this.brass(t + 0.3, A4, 0.6, 0.05, this.sfxBus);
+      this.noise(t + 0.2, 1.0, { type: 'highpass', freq: 5000, gain: 0.05, attack: 0.3 });
+    }
+    gateOpen() { if (!this.ctx) return; const t = this.now(); this.note('gate-open'); this.noise(t, 1.1, { type: 'bandpass', freq: 300, sweep: 3200, q: 0.9, gain: 0.12, attack: 0.25 }); this.tone(t, 70, 1.0, { glide: 140, gain: 0.08 }); [D5, A4, Fs4].forEach((n, i) => this.tone(t + 0.4 + i * 0.06, NOTE(n + 12), 0.9, { gain: 0.03, verb: 0.8 })); }
+    wrong() { if (!this.ctx) return; const t = this.now(); this.note('wrong'); this.duck(0.35, 1.8); this.tone(t, NOTE(G3), 0.35, { type: 'triangle', gain: 0.12 }); this.tone(t + 0.18, NOTE(Eb3), 0.6, { type: 'triangle', gain: 0.12 }); this.tone(t, 98, 0.8, { gain: 0.06 }); }
+    wave() { if (!this.ctx) return; const t = this.now(); this.note('wave'); this.noise(t, 0.6, { type: 'bandpass', freq: 3000, sweep: 260, q: 1.1, gain: 0.2, attack: 0.02 }); this.tone(t + 0.25, 60, 0.5, { glide: 38, gain: 0.25 }); }
+    recoil() { if (!this.ctx) return; const t = this.now(); this.note('recoil'); this.noise(t, 0.2, { type: 'bandpass', freq: 800, q: 1, gain: 0.12 }); this.noise(t + 0.1, 0.5, { type: 'highpass', freq: 2500, gain: 0.05, buf: 'P' }); }
+    stage() { if (!this.ctx) return; const t = this.now(); this.note('stage'); this.duck(0.4, 1.6); [D4, A4, D5, Fs4 + 12].forEach((n, i) => this.brass(t + i * 0.12, n, 0.35, 0.05, this.sfxBus)); }
+    victory() {
+      if (!this.ctx) return; const t = this.now() + 0.05; this.note('victory');
+      const mel = [[D4, 0, 0.25], [D4, 0.25, 0.25], [Fs4, 0.5, 0.25], [A4, 0.75, 0.5], [G4, 1.25, 0.25], [A4, 1.5, 0.25], [D5, 1.75, 1.2]];
+      for (const [n, at, d] of mel) { this.brass(t + at, n, d, 0.09); this.brass(t + at, n - 12, d, 0.05); }
+      for (const at of [0, 0.5, 1.0, 1.25, 1.5, 1.75]) this.tone(t + at, 98, 0.5, { glide: 70, gain: 0.25, bus: this.musicBus });
+      [D3, A3, D4, Fs4, A4].forEach(n => this.pad(t + 1.75, [NOTE(n)], 2.6, 0.02));
+      this.crowd(t + 0.3, 3.2);
+    }
+    crowd(t, dur) { // synthesised cheering: formant-filtered noise swells, whistles and scattered claps
+      if (!this.ctx) return; t = t || this.now(); this.note('crowd');
+      for (const [f, g] of [[520, 0.12], [1100, 0.09], [2500, 0.05]]) { const n = this.noise(t, dur, { type: 'bandpass', freq: f, q: 1.6, gain: g, buf: 'P', attack: 0.35 }); n.f.frequency.linearRampToValueAtTime(f * 1.15, t + dur * 0.4); }
+      for (let i = 0; i < 26; i++) this.noise(t + Math.random() * dur * 0.8, 0.05, { type: 'bandpass', freq: 1300 + Math.random() * 900, q: 1.5, gain: 0.05 + Math.random() * 0.05, pan: Math.random() * 1.6 - 0.8 });
+      for (let i = 0; i < 2; i++) this.tone(t + 0.4 + i * 0.7, 2200, 0.45, { glide: 3000, gain: 0.03, type: 'sine', pan: i ? 0.5 : -0.5 });
+    }
+    carPass(pan = -0.7) { if (!this.ctx) return; const t = this.now(); const n = this.noise(t, 1.0, { type: 'lowpass', freq: 900, gain: 0.08, attack: 0.35, buf: 'P', pan }); n.f.frequency.linearRampToValueAtTime(400, t + 0.9); this.tone(t, 120, 0.9, { type: 'sawtooth', glide: 80, gain: 0.015, attack: 0.3, pan }); }
+  }
+  root.QRAudio = QRAudio;
+})(typeof window !== 'undefined' ? window : globalThis);
+</script>
+<script data-src="js/hero-audio.js">/* مغامرات بطل قطر — original sound identity (Web Audio, synthesised live — no recordings, no external files).
+ * Extends the runner's audio engine (js/audio.js) with:
+ *   · a song per stage, each with its own maqam / key, tempo, lead instrument and percussion style:
+ *       menu (anthem, brass)  · corniche (D Ajam, marimba + oud, Gulf clap groove)  · souq (D Hijaz, oud + darbuka)
+ *       msheireb (E Nahawand, plucked synth, light beat) · lusail (A Ajam night synth, four-on-the-floor)
+ *       katara (G Kurd, qanun + strings, frame drum)  · desert (D Hijaz, ney flute, camel-gait drum)
+ *   · platformer SFX: hop, bump, question-block bonk, brick crunch, stomp, item, extra life, hurt, life lost,
+ *     game over, checkpoint, splash, plank creak, hint ping, gentle wrong answer, stage-clear fanfare.
+ * All melodies are written for this game; none is taken from any other game's soundtrack.
+ */
+(function (root) {
+  'use strict';
+  const Base = root.QRAudio;
+  const NOTE = n => 440 * Math.pow(2, (n - 69) / 12);
+  const NAMES = { C: 0, 'C#': 1, Db: 1, D: 2, 'D#': 3, Eb: 3, E: 4, F: 5, 'F#': 6, Gb: 6, G: 7, 'G#': 8, Ab: 8, A: 9, 'A#': 10, Bb: 10, B: 11 };
+  const midi = s => { const m = /^([A-G][#b]?)(-?\d)$/.exec(s); if (!m) return null; return 12 * (Number(m[2]) + 1) + NAMES[m[1]]; };
+  const bar = s => s.trim().split(/\s+/).map(t => t === '-' ? null : t === '.' ? 0 : midi(t));
+  // chord progression helper: "D:D3,F#3,A3" per bar
+  const prog = list => list.map(s => { const [b, c] = s.split(':'); return { bass: midi(b), tones: c.split(',').map(midi) }; });
+
+  const SONGS = {
+    menu: { bpm: 96, lead: 'brass', perc: 'march', bars: [
+      'D4 - - - A4 - - F#4 G4 - A4 - B4 - A4 -', 'G4 - - - D5 - - B4 C#5 - D5 - E5 - - -',
+      'F#5 - E5 - D5 - C#5 - B4 - A4 - G4 - F#4 -', 'E4 - F#4 - G4 - A4 - A4 - - - - - - -'],
+      chords: prog(['D2:D3,F#3,A3', 'G2:G3,B3,D4', 'B1:B3,D4,F#4', 'A1:A3,C#4,E4']) },
+    corniche: { bpm: 136, lead: 'marimba', counter: 'pluck', perc: 'gulf', bars: [
+      'D5 - F#5 - A5 - - F#5 G5 - F#5 - E5 - D5 -', 'B4 - D5 - G5 - - F#5 E5 - D5 - B4 - - -',
+      'C#5 - E5 - A5 - - G5 F#5 - E5 - C#5 - A4 -', 'D5 - - F#5 A5 - D6 - A5 - F#5 - D5 - - -',
+      'B4 - D5 - F#5 - B5 - A5 - F#5 - D5 - - -', 'G5 - F#5 - E5 - D5 - B4 - D5 - G5 - - -',
+      'A5 - G5 - F#5 - E5 - C#5 - E5 - A5 - G5 -', 'F#5 - - E5 D5 - - - A4 - C#5 - D5 - - -'],
+      chords: prog(['D2:D3,F#3,A3', 'G2:G3,B3,D4', 'A2:A3,C#4,E4', 'D2:D3,F#3,A3', 'B1:B3,D4,F#4', 'G2:G3,B3,D4', 'A2:A3,C#4,E4', 'D2:D3,F#3,A3']) },
+    souq: { bpm: 124, lead: 'oud', counter: 'qanun', perc: 'darbuka', bars: [
+      'D5 - Eb5 - F#5 - - G5 A5 - G5 F#5 Eb5 - D5 -', 'A4 - - Bb4 A4 - G4 - F#4 - G4 - A4 - - -',
+      'D5 - - C5 Bb4 - A4 - G4 - Bb4 - A4 - - -', 'G4 - F#4 - Eb4 - - F#4 D4 - - - - - - -',
+      'A4 - D5 - Eb5 - F#5 - G5 - F#5 - Eb5 - D5 -', 'C5 - Bb4 - A4 - G4 - A4 - Bb4 - C5 - - -',
+      'Bb4 - A4 - G4 - F#4 - G4 - A4 - Bb4 - A4 -', 'G4 - F#4 - Eb4 - F#4 - D4 - - - - - - -'],
+      chords: prog(['D2:D3,F#3,A3', 'D2:D3,F#3,A3', 'C2:C3,Eb3,G3', 'D2:D3,F#3,A3', 'D2:D3,F#3,A3', 'C2:C3,Eb3,G3', 'Bb1:Bb2,D3,F3', 'D2:D3,F#3,A3']) },
+    msheireb: { bpm: 118, lead: 'synthPluck', counter: 'marimba', perc: 'pop', bars: [
+      'E5 - G5 - B5 - - A5 G5 - F#5 - E5 - - -', 'C5 - E5 - G5 - - F#5 E5 - D5 - B4 - - -',
+      'A4 - C5 - E5 - - D5 C5 - B4 - A4 - - -', 'B4 - D#5 - F#5 - B5 - A5 - F#5 - D#5 - - -',
+      'E5 - - G5 B5 - E6 - D6 - B5 - G5 - - -', 'C6 - B5 - A5 - G5 - E5 - G5 - C6 - - -',
+      'A5 - G5 - F#5 - E5 - D5 - F#5 - A5 - - -', 'B5 - - A5 G5 - F#5 - E5 - - - - - - -'],
+      chords: prog(['E2:E3,G3,B3', 'C2:C3,E3,G3', 'A1:A2,C3,E3', 'B1:B2,D#3,F#3', 'E2:E3,G3,B3', 'C2:C3,E3,G3', 'D2:D3,F#3,A3', 'B1:B2,D#3,F#3']) },
+    lusail: { bpm: 128, lead: 'synth', counter: 'arp', perc: 'electro', bars: [
+      'A4 - C#5 - E5 - A5 - G#5 - E5 - C#5 - E5 -', 'F#5 - E5 - D5 - C#5 - B4 - C#5 - D5 - - -',
+      'E5 - - F#5 G#5 - - B5 A5 - G#5 - F#5 - E5 -', 'C#5 - D5 - E5 - - - A4 - - - - - - -',
+      'A5 - - G#5 F#5 - E5 - F#5 - G#5 - A5 - - -', 'D6 - C#6 - B5 - A5 - F#5 - A5 - D6 - - -',
+      'C#6 - B5 - A5 - G#5 - E5 - G#5 - B5 - - -', 'A5 - - - E5 - C#5 - A4 - - - - - - -'],
+      chords: prog(['A1:A2,C#3,E3', 'D2:D3,F#3,A3', 'E2:E3,G#3,B3', 'A1:A2,C#3,E3', 'F#1:F#2,A2,C#3', 'D2:D3,F#3,A3', 'E2:E3,G#3,B3', 'A1:A2,C#3,E3']) },
+    katara: { bpm: 112, lead: 'qanun', counter: 'strings', perc: 'frame', bars: [
+      'G4 - Ab4 - Bb4 - C5 - D5 - - C5 Bb4 - Ab4 -', 'G4 - - F4 Eb4 - D4 - Eb4 - F4 - G4 - - -',
+      'Bb4 - C5 - D5 - Eb5 - D5 - C5 - Bb4 - Ab4 -', 'G4 - Ab4 - G4 - F4 - G4 - - - - - - -',
+      'D5 - Eb5 - D5 - C5 - Bb4 - C5 - D5 - - -', 'Eb5 - D5 - C5 - Bb4 - Ab4 - Bb4 - C5 - - -',
+      'Bb4 - Ab4 - G4 - F4 - Eb4 - F4 - G4 - Ab4 -', 'G4 - - - D4 - - - G4 - - - - - - -'],
+      chords: prog(['G2:G3,Bb3,D4', 'Eb2:Eb3,G3,Bb3', 'Bb1:Bb2,D3,F3', 'G2:G3,Bb3,D4', 'G2:G3,Bb3,D4', 'Ab2:Ab3,C4,Eb4', 'Eb2:Eb3,G3,Bb3', 'G2:G3,Bb3,D4']) },
+    desert: { bpm: 104, lead: 'ney', counter: 'oud', perc: 'camel', bars: [
+      'D5 - - Eb5 F#5 - - - G5 - F#5 - Eb5 - D5 -', 'A4 - - - Bb4 - A4 - G4 - - - F#4 - - -',
+      'G4 - A4 - Bb4 - - - C5 - Bb4 - A4 - - -', 'Bb4 - A4 - G4 - F#4 - D4 - - - - - - -',
+      'D5 - - - A5 - - G5 F#5 - - Eb5 D5 - - -', 'C5 - - Bb4 A4 - - - G4 - A4 - Bb4 - - -',
+      'A4 - - Bb4 C5 - Bb4 - A4 - G4 - F#4 - - -', 'G4 - F#4 - Eb4 - - - D4 - - - - - - -'],
+      chords: prog(['D2:D3,F#3,A3', 'D2:D3,F#3,A3', 'G2:G3,Bb3,D4', 'D2:D3,F#3,A3', 'D2:D3,F#3,A3', 'C2:C3,Eb3,G3', 'D2:D3,F#3,A3', 'D2:D3,F#3,A3']) }
+  };
+  for (const k in SONGS) SONGS[k].bars = SONGS[k].bars.map(bar);
+
+  class HeroAudio extends Base {
+    constructor(prefs = {}) { super(prefs); this.song = 'menu'; this.theme = 'corniche'; this.enabled = prefs.enabled !== false; }
+    init() {
+      if (this.ctx) { super.init(); return; }
+      super.init(); if (!this.ctx) return;
+      // plucked strings for the whole melodic range used by the songs (rendered once, ~1 s each)
+      for (let n = 45; n <= 88; n++) if (!this.plucks[n]) this.plucks[n] = this.pluckBuffer(NOTE(n), 1.2);
+      if (!this.enabled) this.musicBus.gain.value = 0;
+    }
+    setSong(name) { if (SONGS[name] && name !== this.song) { this.song = name; this.note('song:' + name); this.bar = 0; this.step = 0; } }
+    setEnabled(on) { this.enabled = !!on; if (this.ctx) this.musicBus.gain.setTargetAtTime(on ? this.prefs.music * 0.55 : 0, this.ctx.currentTime, 0.1); }
+    set(k, v) { super.set(k, v); if (k === 'music' && !this.enabled && this.ctx) this.musicBus.gain.setTargetAtTime(0, this.ctx.currentTime, 0.05); }
+    schedule() {
+      const ctx = this.ctx; if (!ctx || ctx.state !== 'running') return;
+      const S = SONGS[this.mode === 'menu' ? 'menu' : this.song] || SONGS.corniche;
+      const bpm = this.mode === 'question' ? 84 : S.bpm, s16 = 60 / bpm / 4;
+      while (this.nextT < ctx.currentTime + 0.14) { this.playStep(this.step, this.nextT, s16); this.nextT += s16; this.step = (this.step + 1) % 16; if (this.step === 0) this.bar++; }
+    }
+    playStep(st, t, s16) {
+      const m = this.mode; if (m === 'silent' || m === 'finish' || m === 'paused') return;
+      if (m === 'question') { return super.playStep(st, t, s16); }
+      const S = SONGS[m === 'menu' ? 'menu' : this.song] || SONGS.corniche, mb = this.musicBus;
+      const nb = S.bars.length, bi = this.bar % nb, ch = S.chords[bi % S.chords.length];
+      const swing = S.perc === 'camel' && st % 2 ? s16 * 0.18 : 0; t += swing;
+      this.perc(S.perc, st, t, bi);
+      // bass
+      const bp = { gulf: [0, 3, 6, 8, 11, 14], darbuka: [0, 6, 8, 14], pop: [0, 3, 8, 10, 14], electro: [0, 2, 4, 6, 8, 10, 12, 14], frame: [0, 8, 11], camel: [0, 7, 10], march: [0, 4, 8, 12] }[S.perc] || [0, 8];
+      if (bp.includes(st)) { const up = (S.perc === 'electro' && st % 4 === 2) || (S.perc === 'gulf' && (st === 6 || st === 14)); this.bass(t, NOTE(ch.bass + (up ? 12 : 0)), s16 * (S.perc === 'electro' ? 1.4 : 2.2), S.perc === 'electro' ? 0.17 : 0.2); }
+      // pad / chord stabs
+      if (st === 0 && bi % 2 === 0) this.pad(t, ch.tones.map(n => NOTE(n + 12)), s16 * 32, m === 'menu' ? 0.045 : 0.026);
+      if (S.counter === 'strings' && st === 0) this.pad(t, ch.tones.map(NOTE), s16 * 16, 0.03);
+      // lead melody (+ answering counter line an octave down, every other bar)
+      const note = S.bars[bi][st];
+      if (note) {
+        let len = 1; while (st + len < 16 && S.bars[bi][st + len] === null) len++;
+        this.inst(S.lead, t, note, s16 * len, m === 'menu' ? 0.07 : 0.11);
+        if (S.counter && S.counter !== 'arp' && S.counter !== 'strings' && bi % 2 === 1 && st % 4 === 0) this.inst(S.counter, t, note - 12, s16 * 2, 0.05);
+      }
+      if (S.counter === 'arp' && st % 2 === 1) { const tn = ch.tones[(st >> 1) % ch.tones.length] + 24; this.inst('synthPluck', t, tn, s16, 0.03); }
+    }
+    perc(style, st, t, bi) {
+      const g = 1;
+      switch (style) {
+        case 'gulf': if ([0, 6, 10].includes(st)) this.doum(t, 0.42 * g); if ([4, 12].includes(st)) { this.tak(t, 0.2); this.clap(t, 0.26); } if (st === 14) this.clap(t, 0.16); if (st % 2 === 0) this.hat(t, st % 4 === 2 ? 0.045 : 0.025); break;
+        case 'darbuka': if ([0, 7].includes(st)) this.doum(t, 0.45); if ([3, 4, 10, 12, 14].includes(st)) this.tak(t, st === 4 || st === 12 ? 0.25 : 0.13); if (st % 2 === 1) this.hat(t, 0.02); break;
+        case 'pop': if ([0, 8, 10].includes(st)) this.kick(t, 0.45); if ([4, 12].includes(st)) this.snare(t, 0.16); if (st % 2 === 0) this.hat(t, 0.03); break;
+        case 'electro': if (st % 4 === 0) this.kick(t, 0.5); if ([4, 12].includes(st)) this.clap(t, 0.2); if (st % 4 === 2) this.hat(t, 0.06); break;
+        case 'frame': if ([0, 8].includes(st)) this.doum(t, 0.4); if ([4, 11, 12].includes(st)) this.tak(t, 0.16); if (st % 2 === 0) this.noise(t, 0.08, { type: 'highpass', freq: 6000, gain: 0.025, bus: this.musicBus }); break;
+        case 'camel': if ([0, 9].includes(st)) this.doum(t, 0.42); if ([6, 12, 14].includes(st)) this.tak(t, 0.16); if (st % 4 === 3) this.noise(t, 0.12, { type: 'highpass', freq: 7000, gain: 0.03, bus: this.musicBus }); break;
+        case 'march': if ([0, 8].includes(st)) this.timp(t, 0.3); if ([4, 12].includes(st)) this.snare(t, 0.1); if (st === 14 && bi % 2) this.snare(t, 0.07); break;
+      }
+    }
+    hat(t, g) { this.noise(t, 0.035, { type: 'highpass', freq: 7500, gain: g, bus: this.musicBus }); }
+    snare(t, g) { this.noise(t, 0.14, { type: 'bandpass', freq: 1900, q: 0.7, gain: g, bus: this.musicBus }); this.tone(t, 190, 0.08, { glide: 140, gain: g * 0.7, bus: this.musicBus, type: 'triangle' }); }
+    timp(t, g) { this.tone(t, 98, 0.6, { glide: 82, gain: g, bus: this.musicBus }); this.noise(t, 0.08, { type: 'lowpass', freq: 500, gain: g * 0.4, bus: this.musicBus }); }
+    // ---- instruments
+    inst(kind, t, n, dur, g) {
+      const mb = this.musicBus, f = NOTE(n);
+      switch (kind) {
+        case 'marimba': this.tone(t, f, Math.min(0.5, dur + 0.25), { gain: g, bus: mb, verb: 0.25 }); this.tone(t, f * 3.99, 0.09, { gain: g * 0.25, bus: mb }); this.tone(t, f * 2, 0.2, { gain: g * 0.2, bus: mb, type: 'triangle' }); break;
+        case 'pluck': case 'oud': this.pluck(t, n, g * 1.6, mb, 0.1); break;
+        case 'qanun': this.pluck(t, n, g * 1.3, mb, -0.15); this.pluck(t, Math.min(88, n + 12), g * 0.45, mb, 0.2); break;
+        case 'brass': this.brass(t, n, Math.max(0.2, dur * 0.95), g, mb); break;
+        case 'synth': { const ctx = this.ctx, fl = ctx.createBiquadFilter(); fl.type = 'lowpass'; fl.Q.value = 4; fl.frequency.setValueAtTime(600, t); fl.frequency.linearRampToValueAtTime(3200, t + 0.04); fl.frequency.setTargetAtTime(1200, t + 0.05, dur * 0.4);
+          const gg = ctx.createGain(); this.env(gg, t, 0.01, g * 0.8, dur * 0.5, g * 0.4, 0.06, Math.max(0, dur - 0.1)); fl.connect(gg); gg.connect(mb); const v = ctx.createGain(); v.gain.value = 0.3; gg.connect(v); v.connect(this.verb);
+          for (const d of [-8, 7]) { const o = ctx.createOscillator(); o.type = 'sawtooth'; o.frequency.value = f; o.detune.value = d; o.connect(fl); o.start(t); o.stop(t + dur + 0.4); } break; }
+        case 'synthPluck': this.tone(t, f, Math.min(0.35, dur + 0.15), { type: 'square', gain: g * 0.35, bus: mb, verb: 0.3 }); this.tone(t, f * 2, 0.12, { type: 'triangle', gain: g * 0.3, bus: mb }); break;
+        case 'ney': { const ctx = this.ctx, o = ctx.createOscillator(); o.type = 'sine'; o.frequency.setValueAtTime(f * 0.985, t); o.frequency.linearRampToValueAtTime(f, t + 0.07);
+          const lfo = ctx.createOscillator(), lg = ctx.createGain(); lfo.frequency.value = 5.2; lg.gain.setValueAtTime(0, t); lg.gain.linearRampToValueAtTime(f * 0.012, t + 0.3); lfo.connect(lg); lg.connect(o.frequency);
+          const gg = ctx.createGain(); this.env(gg, t, 0.07, g * 1.1, dur * 0.7, g * 0.8, 0.12, Math.max(0, dur - 0.15)); o.connect(gg); gg.connect(mb); const v = ctx.createGain(); v.gain.value = 0.5; gg.connect(v); v.connect(this.verb);
+          o.start(t); lfo.start(t); o.stop(t + dur + 0.6); lfo.stop(t + dur + 0.6);
+          this.noise(t, Math.min(0.5, dur), { type: 'bandpass', freq: f * 2, q: 3, gain: g * 0.18, bus: mb, buf: 'P', attack: 0.05 }); break; }
+        default: this.pluck(t, n, g * 1.5, mb, 0);
+      }
+    }
+    // ---- ambience per place
+    update(dt, s) {
+      if (!this.ctx || this.ctx.state !== 'running') return; const t = this.ctx.currentTime; this.ambT += dt;
+      const th = s.theme || this.theme, sea = th === 'corniche' || th === 'katara' ? 1 : 0, souq = th === 'souq' ? 1 : 0, city = th === 'msheireb' || th === 'lusail' ? 1 : 0, desert = th === 'desert' ? 1 : 0, v = s.paused ? 0 : s.speed || 0;
+      this.amb.sea.g.gain.setTargetAtTime(0.2 * sea * (0.65 + 0.35 * Math.sin(this.ambT * 0.7)), t, 0.5);
+      this.amb.traffic.g.gain.setTargetAtTime(0.1 * (th === 'corniche' ? 0.6 : city), t, 0.8);
+      this.amb.murmur.g.gain.setTargetAtTime(0.09 * (souq + 0.4 * (th === 'katara')) * (0.8 + 0.2 * Math.sin(this.ambT * 2.3)), t, 0.3);
+      this.amb.murmur.f.frequency.setTargetAtTime(600 + 300 * Math.sin(this.ambT * 1.7), t, 0.2);
+      this.amb.wind.g.gain.setTargetAtTime(0.03 + 0.12 * desert * (0.6 + 0.4 * Math.sin(this.ambT * 0.3)) + Math.min(0.08, 0.002 * v * v), t, 0.3); this.amb.wind.f.frequency.setTargetAtTime(500 + desert * 300 + Math.abs(v) * 60, t, 0.2);
+      if (sea && !s.paused && (this.nextGull -= dt) < 0) { this.nextGull = 7 + Math.random() * 10; for (let i = 0; i < 2 + (Math.random() * 2 | 0); i++) this.tone(t + i * 0.22, 1900 + Math.random() * 300, 0.18, { type: 'triangle', glide: 1200, gain: 0.02, bus: this.ambBus, pan: 0.6 }); }
+      if (souq && !s.paused && (this.nextVoice -= dt) < 0) { this.nextVoice = 1.2 + Math.random() * 2.5; this.noise(t, 0.35, { type: 'bandpass', freq: 500 + Math.random() * 700, q: 6, gain: 0.035, buf: 'P', bus: this.ambBus, pan: Math.random() * 1.6 - 0.8 }); }
+    }
+    // ---- platformer SFX
+    jump(double) { if (!this.ctx) return; const t = this.now(); this.note(double ? 'jump2' : 'jump'); this.tone(t, double ? 520 : 330, 0.16, { type: 'square', glide: double ? 1040 : 700, gain: 0.035 }); this.tone(t, double ? 780 : 495, 0.14, { type: 'triangle', glide: double ? 1300 : 990, gain: 0.04 }); this.noise(t, 0.18, { type: 'bandpass', freq: 900, sweep: 2600, q: 0.8, gain: 0.05 }); }
+    bump() { if (!this.ctx) return; const t = this.now(); this.note('bump'); this.tone(t, 190, 0.12, { glide: 90, gain: 0.22, type: 'triangle' }); this.noise(t, 0.08, { type: 'lowpass', freq: 700, gain: 0.2 }); }
+    qbump() { if (!this.ctx) return; const t = this.now(); this.note('qbump'); this.tone(t, 260, 0.1, { glide: 130, gain: 0.2, type: 'triangle' }); [880, 1320, 1760].forEach((f, i) => this.tone(t + 0.04 + i * 0.05, f, 0.5, { gain: 0.05, verb: 0.6 })); }
+    brick() { if (!this.ctx) return; const t = this.now(); this.note('brick'); this.noise(t, 0.3, { type: 'bandpass', freq: 1300, q: 0.7, gain: 0.25 }); this.tone(t, 120, 0.2, { glide: 60, gain: 0.25 }); for (let i = 0; i < 6; i++) this.noise(t + 0.05 + Math.random() * 0.35, 0.03, { type: 'bandpass', freq: 2500 + Math.random() * 2000, q: 3, gain: 0.06 }); }
+    stomp(chain = 1) { if (!this.ctx) return; const t = this.now(); this.note('stomp'); const k = Math.pow(2, Math.min(6, chain - 1) / 12); this.tone(t, 420 * k, 0.16, { type: 'triangle', glide: 140 * k, gain: 0.2 }); this.noise(t, 0.1, { type: 'lowpass', freq: 800, gain: 0.15 }); this.tone(t + 0.05, 900 * k, 0.12, { type: 'square', glide: 1400 * k, gain: 0.03 }); }
+    itemAppear() { if (!this.ctx) return; const t = this.now(); this.note('item'); for (let i = 0; i < 8; i++) this.tone(t + i * 0.045, NOTE(62 + [0, 4, 7, 12, 4, 7, 12, 16][i]), 0.16, { type: 'triangle', gain: 0.05, verb: 0.3 }); }
+    collect(kind) { if (!this.ctx) return; const t = this.now(); this.note('collect:' + kind); const seq = kind === 'life' ? [74, 78, 81, 86, 90, 93] : [76, 83, 88]; seq.forEach((n, i) => this.tone(t + i * 0.08, NOTE(n), 0.3, { type: 'triangle', gain: 0.07, verb: 0.5 })); if (kind === 'life') this.brass(t + 0.48, 74, 0.5, 0.05, this.sfxBus); }
+    hurt() { if (!this.ctx) return; const t = this.now(); this.note('hurt'); this.tone(t, 520, 0.25, { type: 'triangle', glide: 260, gain: 0.12 }); this.noise(t, 0.15, { type: 'bandpass', freq: 900, gain: 0.12 }); }
+    lifeLost() { if (!this.ctx) return; const t = this.now(); this.note('life-lost'); this.duck(0.2, 2.2); [69, 66, 62, 57].forEach((n, i) => this.tone(t + i * 0.18, NOTE(n), 0.35, { type: 'triangle', gain: 0.09, verb: 0.4 })); }
+    gameOver() { if (!this.ctx) return; const t = this.now(); this.note('game-over'); this.duck(0.1, 4); [62, 61, 60, 59, 55].forEach((n, i) => this.brass(t + i * 0.35, n, 0.32, 0.05, this.sfxBus)); }
+    checkpoint() { if (!this.ctx) return; const t = this.now(); this.note('checkpoint'); [74, 78, 81].forEach((n, i) => this.tone(t + i * 0.09, NOTE(n), 0.5, { type: 'triangle', gain: 0.07, verb: 0.6 })); this.noise(t, 0.6, { type: 'highpass', freq: 6000, gain: 0.04, attack: 0.1 }); }
+    splash() { if (!this.ctx) return; const t = this.now(); this.note('splash'); const n = this.noise(t, 0.7, { type: 'lowpass', freq: 3000, gain: 0.3, buf: 'P' }); n.f.frequency.exponentialRampToValueAtTime(400, t + 0.6); this.tone(t, 300, 0.25, { glide: 80, gain: 0.1 }); }
+    plank() { if (!this.ctx) return; const t = this.now(); this.note('plank'); const ctx = this.ctx, o = ctx.createOscillator(); o.type = 'sawtooth'; o.frequency.setValueAtTime(110, t); o.frequency.linearRampToValueAtTime(70, t + 0.4); const f = ctx.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = 600; f.Q.value = 6; const g = ctx.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(0.07, t + 0.05); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.45); o.connect(f); f.connect(g); g.connect(this.sfxBus); o.start(t); o.stop(t + 0.5); }
+    hint() { if (!this.ctx) return; const t = this.now(); this.note('hint'); this.tone(t, 1320, 0.25, { gain: 0.04, verb: 0.5 }); this.tone(t + 0.12, 1760, 0.3, { gain: 0.035, verb: 0.5 }); }
+    wrong() { if (!this.ctx) return; const t = this.now(); this.note('wrong'); this.duck(0.45, 1.2); this.tone(t, NOTE(64), 0.22, { type: 'triangle', gain: 0.08 }); this.tone(t + 0.14, NOTE(60), 0.35, { type: 'triangle', gain: 0.08 }); }
+    stageClear() {
+      if (!this.ctx) return; const t = this.now() + 0.05; this.note('stage-clear'); this.duck(0.15, 4.5);
+      const mel = [[62, 0, 0.18], [66, 0.18, 0.18], [69, 0.36, 0.18], [74, 0.54, 0.45], [71, 1.0, 0.18], [74, 1.18, 0.18], [78, 1.36, 0.9]];
+      for (const [n, at, d] of mel) { this.brass(t + at, n, d, 0.08, this.sfxBus); this.tone(t + at, NOTE(n + 12), d, { type: 'triangle', gain: 0.03 }); }
+      for (const at of [0, 0.54, 1.0, 1.36]) this.tone(t + at, 98, 0.4, { glide: 70, gain: 0.22 });
+      this.crowd(t + 0.4, 2.6);
+    }
+  }
+  root.QHAudio = HeroAudio; root.QHAudio.SONGS = SONGS;
+})(typeof window !== 'undefined' ? window : globalThis);
+</script>
+<script data-src="js/config.js">/* مغامرات بطل قطر — lesson configuration: defaults, validation, storage (own key, never touches other games),
+ * sample questions (only until the teacher saves a lesson), question allocation across stages, balanced
+ * answer shuffling (the correct answer never sits in one fixed place), and answer-key hashing for the
+ * student build (the exported file carries no plain correct answers).
+ */
+(function (root) {
+  'use strict';
+  const KEY = 'qatarHero.config.v1';
+  const STAGE_IDS = ['corniche', 'souq', 'msheireb', 'lusail', 'katara', 'desert'];
+  const SAMPLE = [
+    { id: 's1', type: 'mcq', text: 'ما عاصمة دولة قطر؟', options: ['الدوحة', 'الوكرة', 'الخور', 'الريان'], correct: 0 },
+    { id: 's2', type: 'mcq', text: 'كم يساوي ٨ × ٧؟', options: ['٥٤', '٥٦', '٦٤', '٤٨'], correct: 1 },
+    { id: 's3', type: 'tf', text: 'يتكوّن علم دولة قطر من اللونين العنابي والأبيض.', options: ['صح', 'خطأ'], correct: 0 },
+    { id: 's4', type: 'mcq', text: 'أيّ هذه الكلمات اسمٌ؟', options: ['يجري', 'سريعًا', 'في', 'المدرسة'], correct: 3 },
+    { id: 's5', type: 'mcq', text: 'الماء يتجمّد عند درجة حرارة…', options: ['صفر درجة مئوية', '٥٠ درجة مئوية', '١٠٠ درجة مئوية', '٢٥ درجة مئوية'], correct: 0 },
+    { id: 's6', type: 'tf', text: 'الشمس كوكبٌ يدور حول الأرض.', options: ['صح', 'خطأ'], correct: 1 },
+    { id: 's7', type: 'mcq', text: 'ما ناتج ١٢ + ١٩؟', options: ['٢١', '٣٠', '٣١', '٢٩'], correct: 2 },
+    { id: 's8', type: 'mcq', text: 'في أيّ قارة تقع دولة قطر؟', options: ['أفريقيا', 'آسيا', 'أوروبا', 'أستراليا'], correct: 1 },
+    { id: 's9', type: 'mcq', text: 'ما جمع كلمة «كتاب»؟', options: ['كتابات', 'كاتب', 'كُتُب', 'مكتبة'], correct: 2 },
+    { id: 's10', type: 'tf', text: 'يحتاج النبات إلى ضوء الشمس ليصنع غذاءه.', options: ['صح', 'خطأ'], correct: 0 },
+    { id: 's11', type: 'mcq', text: 'كم ضلعًا للمثلث؟', options: ['٤', '٣', '٥', '٦'], correct: 1 },
+    { id: 's12', type: 'mcq', text: 'أيّ هذه الحيوانات من الثدييات؟', options: ['السمكة', 'الجمل', 'الصقر', 'السلحفاة'], correct: 1 }
+  ];
+  function defaults() {
+    return {
+      version: 1, sample: true,
+      school: 'مدرستي', teacher: 'المعلم', grade: '', className: '', lesson: 'درس تجريبي', logo: '', student: '',
+      questions: SAMPLE.map(q => Object.assign({ image: '' }, q, { options: q.options.slice() })),
+      stages: ['corniche'], perStage: 3, defaultStage: 'corniche', order: 'ordered',
+      attempts: 3, hearts: 3, onFail: 'checkpoint', timer: 0, autorun: false, doubleJump: false, difficulty: 'normal',
+      music: true, musicVol: 0.7, sfxVol: 0.9,
+      startMsg: 'ساعد بطل قطر على عبور المراحل، واضرب مكعبات الأسئلة ؟ لتفتح الطريق!',
+      endMsg: 'أحسنت يا بطل! أكملت المغامرة بنجاح.',
+      controls: 'auto', quality: 'auto'
+    };
+  }
+  const str = (v, n, d = '') => typeof v === 'string' ? v.trim().slice(0, n) : d;
+  const pick = (v, list, d) => list.includes(v) ? v : d;
+  const num = (v, a, b, d) => { const x = Number(v); return Number.isFinite(x) ? Math.max(a, Math.min(b, x)) : d; };
+  const IMG = /^data:image\/(png|jpeg|webp|gif);base64,[A-Za-z0-9+/=]+$/;
+  const img = (v, max = 1.6e6) => typeof v === 'string' && v.length < max && IMG.test(v) ? v : '';
+  function cleanQuestion(q, i) {
+    if (!q || typeof q !== 'object') return null;
+    const type = q.type === 'tf' ? 'tf' : 'mcq';
+    let options = (Array.isArray(q.options) ? q.options : []).map(o => str(String(o == null ? '' : o), 160)).filter(Boolean).slice(0, type === 'tf' ? 2 : 4);
+    if (type === 'tf' && options.length < 2) options = ['صح', 'خطأ'];
+    const text = str(q.text, 400);
+    if (!text || options.length < 2) return null;
+    const out = { id: str(q.id, 40) || ('q' + (i + 1) + '-' + Math.random().toString(36).slice(2, 7)), type, text, options, image: img(q.image) };
+    if (typeof q.k === 'string' && /^[0-9a-f]{16}$/.test(q.k)) out.k = q.k; else out.correct = num(q.correct, 0, options.length - 1, 0) | 0;
+    return out;
+  }
+  function validate(c) {
+    const d = defaults(), o = Object.assign({}, d);
+    if (!c || typeof c !== 'object') return o;
+    o.sample = c.sample === true;
+    for (const [k, n] of [['school', 150], ['teacher', 150], ['lesson', 150]]) o[k] = str(c[k], n, d[k]) || d[k];
+    o.grade = str(c.grade, 60); o.className = str(c.className, 60); o.student = str(c.student, 80); o.logo = img(c.logo, 1.2e6);
+    const qs = Array.isArray(c.questions) ? c.questions.map(cleanQuestion).filter(Boolean).slice(0, 80) : [];
+    o.questions = qs.length ? qs : d.questions; if (!qs.length) o.sample = true;
+    o.stages = Array.isArray(c.stages) ? STAGE_IDS.filter(s => c.stages.includes(s)) : d.stages; if (!o.stages.length) o.stages = d.stages.slice();
+    o.perStage = num(c.perStage, 1, 6, d.perStage) | 0;
+    o.defaultStage = pick(c.defaultStage, o.stages, o.stages[0]);
+    o.order = pick(c.order, ['ordered', 'shuffled'], d.order);
+    o.attempts = num(c.attempts, 1, 9, d.attempts) | 0; o.hearts = num(c.hearts, 1, 5, d.hearts) | 0;
+    o.onFail = pick(c.onFail, ['checkpoint', 'restart'], d.onFail);
+    o.timer = num(c.timer, 0, 180, 0) | 0; o.autorun = c.autorun === true; o.doubleJump = c.doubleJump === true;
+    o.difficulty = pick(c.difficulty, ['easy', 'normal', 'hard'], d.difficulty);
+    o.music = c.music !== false; o.musicVol = num(c.musicVol, 0, 1, d.musicVol); o.sfxVol = num(c.sfxVol, 0, 1, d.sfxVol);
+    o.startMsg = str(c.startMsg, 300, d.startMsg) || d.startMsg; o.endMsg = str(c.endMsg, 300, d.endMsg) || d.endMsg;
+    o.controls = pick(c.controls, ['auto', 'on', 'off'], d.controls); o.quality = pick(c.quality, ['auto', 'high', 'medium', 'low'], d.quality);
+    if (c.salt && typeof c.salt === 'string') o.salt = c.salt.slice(0, 40);
+    return o;
+  }
+  function load() {
+    if (root.__QH_EMBEDDED_CONFIG__) return validate(root.__QH_EMBEDDED_CONFIG__);        // student build
+    try { const raw = root.localStorage && root.localStorage.getItem(KEY); if (raw) return validate(JSON.parse(raw)); } catch (e) { /* storage blocked */ }
+    return defaults();
+  }
+  function save(c) {
+    const v = validate(c);
+    try { root.localStorage.setItem(KEY, JSON.stringify(v)); return { ok: true, config: v }; }
+    catch (e) { return { ok: false, config: v, error: 'تعذّر الحفظ: مساحة التخزين في المتصفح ممتلئة. قلّل عدد الصور أو أحجامها.' }; }
+  }
+  function reset() { try { root.localStorage.removeItem(KEY); } catch (e) { /* ignore */ } return defaults(); }
+
+  // ---------------------------------------------------------------- allocation: which questions go to which stage
+  // returns [{stage, questions:[qIndex…]}] — no question repeats within a run
+  function allocate(c, rnd = Math.random, slotsPerStage = {}) {
+    const idx = c.questions.map((_, i) => i);
+    if (c.order === 'shuffled') for (let i = idx.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [idx[i], idx[j]] = [idx[j], idx[i]]; }
+    let at = 0; const plan = [];
+    for (const s of c.stages) { const cap = Math.min(c.perStage, slotsPerStage[s] || 6); const q = idx.slice(at, at + cap); at += q.length; plan.push({ stage: s, questions: q }); }
+    return plan;
+  }
+  function needed(c, slotsPerStage = {}) { return c.stages.reduce((a, s) => a + Math.min(c.perStage, slotsPerStage[s] || 6), 0); }
+
+  // ---------------------------------------------------------------- answer presentation
+  // positions planned for the whole run: balanced and never the same place twice in a row
+  function planPositions(counts, rnd = Math.random) {
+    const out = []; let last = -1;
+    const bags = {};
+    for (const n of counts) {
+      if (!bags[n] || !bags[n].length) { bags[n] = Array.from({ length: n }, (_, i) => i); for (let i = n - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [bags[n][i], bags[n][j]] = [bags[n][j], bags[n][i]]; } }
+      let k = bags[n].findIndex(p => p !== last); if (k < 0) k = 0;
+      const p = bags[n].splice(k, 1)[0]; out.push(p); last = p;
+    }
+    return out;
+  }
+  // order the options so the correct one lands at `pos`; distractors shuffled (Fisher–Yates)
+  function correctIndex(q, salt) { if (q.correct != null) return q.correct; for (let i = 0; i < q.options.length; i++) if (keyOf(salt || '', q.id, q.options[i]) === q.k) return i; return -1; }
+  function present(q, pos, rnd = Math.random, salt = '') {
+    const n = q.options.length, ci = correctIndex(q, salt);
+    if (q.type === 'tf' || ci < 0) return { options: q.options.slice(), correctPos: ci }; // صح / خطأ keep their natural order
+    const others = q.options.map((o, i) => i).filter(i => i !== ci);
+    for (let i = others.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [others[i], others[j]] = [others[j], others[i]]; }
+    const p = Math.max(0, Math.min(n - 1, pos)); others.splice(p, 0, ci);
+    return { options: others.map(i => q.options[i]), correctPos: p };
+  }
+  // ---------------------------------------------------------------- answer-key hashing (student build)
+  function fnv(s, seed) { let h = seed >>> 0; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; } return h; }
+  function keyOf(salt, id, text) { const s = salt + '|' + id + '|' + text.normalize('NFC'); return (fnv(s, 2166136261).toString(16).padStart(8, '0') + fnv(s, 0x9747b28c).toString(16).padStart(8, '0')); }
+  function isCorrect(q, chosenText, salt) { if (q.k) return keyOf(salt || '', q.id, chosenText) === q.k; return q.options[q.correct] === chosenText; }
+  function studentConfig(c) { // strip answers → hashes, drop teacher-only data
+    const salt = Math.random().toString(36).slice(2, 12) + Date.now().toString(36);
+    const v = validate(c); const out = Object.assign({}, v, { salt, sample: v.sample });
+    out.questions = v.questions.map(q => { const o = { id: q.id, type: q.type, text: q.text, options: q.options.slice(), image: q.image }; o.k = keyOf(salt, q.id, q.options[q.correct]); return o; });
+    return out;
+  }
+  root.QHConfig = { correctIndex, KEY, STAGE_IDS, SAMPLE, defaults, validate, load, save, reset, allocate, needed, planPositions, present, keyOf, isCorrect, studentConfig };
+})(typeof window !== 'undefined' ? window : globalThis);
+</script>
+<script data-src="js/zip.js">/* مغامرات بطل قطر — minimal ZIP writer (STORE, CRC-32, UTF-8 file names) for in-browser exports, and the
+ * matching reader used by the backup importer.  No dependencies, works offline.
+ */
+(function (root) {
+  'use strict';
+  const table = (() => { const t = new Uint32Array(256); for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } return t; })();
+  function crc32(u8) { let c = 0xffffffff; for (let i = 0; i < u8.length; i++) c = table[(c ^ u8[i]) & 0xff] ^ (c >>> 8); return (c ^ 0xffffffff) >>> 0; }
+  const enc = s => new TextEncoder().encode(s);
+  function dosTime(d) { return { time: (d.getHours() << 11) | (d.getMinutes() << 5) | (d.getSeconds() >> 1), date: ((d.getFullYear() - 1980) << 9) | ((d.getMonth() + 1) << 5) | d.getDate() }; }
+  // files: [{ name, data: string | Uint8Array }]
+  function zipParts(files) {
+    const parts = [], central = []; let offset = 0; const { time, date } = dosTime(new Date());
+    for (const f of files) {
+      const name = enc(f.name), data = typeof f.data === 'string' ? enc(f.data) : new Uint8Array(f.data.buffer || f.data, f.data.byteOffset || 0, f.data.byteLength != null ? f.data.byteLength : f.data.length), crc = crc32(data);
+      const h = new DataView(new ArrayBuffer(30));
+      h.setUint32(0, 0x04034b50, true); h.setUint16(4, 20, true); h.setUint16(6, 0x0800, true); h.setUint16(8, 0, true); h.setUint16(10, time, true); h.setUint16(12, date, true);
+      h.setUint32(14, crc, true); h.setUint32(18, data.length, true); h.setUint32(22, data.length, true); h.setUint16(26, name.length, true); h.setUint16(28, 0, true);
+      parts.push(new Uint8Array(h.buffer), name, data);
+      const c = new DataView(new ArrayBuffer(46));
+      c.setUint32(0, 0x02014b50, true); c.setUint16(4, 20, true); c.setUint16(6, 20, true); c.setUint16(8, 0x0800, true); c.setUint16(10, 0, true); c.setUint16(12, time, true); c.setUint16(14, date, true);
+      c.setUint32(16, crc, true); c.setUint32(20, data.length, true); c.setUint32(24, data.length, true); c.setUint16(28, name.length, true); c.setUint16(30, 0, true); c.setUint16(32, 0, true); c.setUint16(34, 0, true); c.setUint16(36, 0, true); c.setUint32(38, 0, true); c.setUint32(42, offset, true);
+      central.push(new Uint8Array(c.buffer), name);
+      offset += 30 + name.length + data.length;
+    }
+    const csize = central.reduce((a, p) => a + p.length, 0);
+    const e = new DataView(new ArrayBuffer(22)); e.setUint32(0, 0x06054b50, true); e.setUint16(8, files.length, true); e.setUint16(10, files.length, true); e.setUint32(12, csize, true); e.setUint32(16, offset, true);
+    return [...parts, ...central, new Uint8Array(e.buffer)];
+  }
+  function zip(files) { return new Blob(zipParts(files), { type: 'application/zip' }); }
+  function zipNode(files) { return Buffer.concat(zipParts(files).map(u => Buffer.from(u.buffer, u.byteOffset, u.byteLength))); }
+  // read STORE-only archives (what zip() writes) → [{name, data:Uint8Array}]
+  function unzip(buf) {
+    const u8 = new Uint8Array(buf), dv = new DataView(buf); const out = []; let i = 0;
+    while (i + 30 <= u8.length && dv.getUint32(i, true) === 0x04034b50) {
+      const method = dv.getUint16(i + 8, true), size = dv.getUint32(i + 18, true), nl = dv.getUint16(i + 26, true), xl = dv.getUint16(i + 28, true);
+      const name = new TextDecoder().decode(u8.subarray(i + 30, i + 30 + nl)); const start = i + 30 + nl + xl;
+      if (method !== 0) throw new Error('compressed zip entries are not supported'); out.push({ name, data: u8.slice(start, start + size) }); i = start + size;
+    }
+    return out;
+  }
+  root.QHZip = { zip, zipNode, unzip, crc32 };
+})(typeof window !== 'undefined' ? window : globalThis);
+</script>
+<script data-src="js/game.js">/* مغامرات بطل قطر — game flow.
+ *   boot → menu → stageIntro → PLAY ⇄ QUESTION … → goal → stageClear → (next stage | final)
+ *                               PLAY → dying → (respawn at checkpoint | gameOver → retry)
+ * QUESTION is entered only when the hero hits a question block from below (engine event).  The stage is frozen
+ * while it is open.  A wrong answer marks that choice, gives feedback and keeps the question open; nothing
+ * ends or freezes.  Only a correct answer calls engine.solveSlot(), which removes that block's progress gate.
+ * All timing runs inside the update loop (no stray timeouts), so no stale timer can fire into a later phase.
+ *
+ * Platform contract (key "qatar-hero", same shape as the platform's other games):
+ *   game → host : school-qatar-hero-ready | -question {index, retry} | -outcome | -stage {stage, index, of} | -next | -finish | -fullscreen
+ *   host → game : school-qatar-hero-config {token,count,title,school,teacher,student,stages?} | -result {token,index,correct,pending,feedback,allowPass}
+ *                 | -advance | -retry
+ * In platform mode the host shows and grades every question; the game never receives answer keys.
+ */
+(function (root) {
+  'use strict';
+  const T = root.THREE, doc = root.document, $ = id => doc.getElementById(id);
+  const params = new URLSearchParams(root.location.search || '');
+  const KEY = 'qatar-hero', PREFIX = 'school-' + KEY + '-';
+  const embedded = root.parent !== root && params.get('school') !== '0' && !root.__QH_ARTIFACT__;
+  const QA = params.has('qa');
+  const STUDENT = !!root.__QH_STUDENT__ || params.get('student') === '1';
+  const AR = n => String(n).replace(/\d/g, d => '٠١٢٣٤٥٦٧٨٩'[d]);
+  const clamp = (x, a, b) => Math.max(a, Math.min(b, x)), lerp = (a, b, t) => a + (b - a) * t;
+  const Cfg = root.QHConfig, Lv = root.QHLevels, En = root.QHEngine;
+
+  let cfg = Cfg.load();
+  if (params.get('reset') === '1' && !STUDENT) cfg = Cfg.reset();
+  if (embedded) { cfg = Cfg.defaults(); cfg.sample = false; }
+
+  // ------------------------------------------------------------------ state
+  const S = {
+    phase: 'boot', pt: 0, time: 0, paused: false, stageIdx: 0, order: [], plan: [], positions: [], posIdx: 0,
+    lives: 3, score: 0, coins: 0, coinsForLife: 0, solvedTotal: 0, firstTry: 0, wrongTotal: 0, qTotal: 0, results: [], stageResults: [],
+    stage: null, engine: null, q: null, closeAt: -1, goalRaise: 0, hintShown: false, lastHint: -99,
+    platform: { on: embedded, token: '', configured: !embedded, title: '', round: 0, awaiting: false, count: 0, stages: null },
+    perf: { dpr: 1, downgrades: 0, slow: 0, fpsAvg: 60, frames: 0 }, started: false, solvedSlots: {}
+  };
+  root.__QH_STATE__ = S;
+
+  // ------------------------------------------------------------------ renderer / view / audio
+  const canvas = $('view');
+  const mobile = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent) || (navigator.maxTouchPoints > 1 && /Mac/.test(navigator.platform));
+  const quality = (() => { const q = params.get('quality') || cfg.quality; if (q !== 'auto') return q; return mobile ? 'medium' : 'high'; })();
+  let renderer;
+  try { renderer = new T.WebGLRenderer({ canvas, antialias: quality !== 'low', powerPreference: 'high-performance', preserveDrawingBuffer: QA }); }
+  catch (e) { fatal('هذا المتصفح أو الجهاز لا يدعم الرسوميات ثلاثية الأبعاد (WebGL). جرّب متصفحًا حديثًا مثل Chrome أو Edge أو Safari.'); return; }
+  renderer.outputEncoding = T.sRGBEncoding; renderer.toneMapping = T.ACESFilmicToneMapping; renderer.toneMappingExposure = 0.9;
+  renderer.shadowMap.enabled = quality !== 'low'; renderer.shadowMap.type = quality === 'high' ? T.PCFSoftShadowMap : T.PCFShadowMap;
+  const maxDPR = { high: 2, medium: 1.5, low: 1 }[quality] || 1.5; S.perf.dpr = QA ? 1 : Math.min(root.devicePixelRatio || 1, maxDPR);
+  renderer.setPixelRatio(S.perf.dpr);
+  const camera = new T.PerspectiveCamera(36, 16 / 9, 0.2, 900);
+  const view = new root.QHView.View(renderer, { quality });
+  const audio = new root.QHAudio({ music: cfg.musicVol, sfx: cfg.sfxVol, enabled: cfg.music, muted: (() => { try { return localStorage.getItem('qatarHero.muted') === '1'; } catch (e) { return false; } })() });
+  const cam = { x: 3, y: 2.4, tx: 3, ty: 2.4, look: 0, baseY: 0, vx: 0, vy: 0 };
+  const CAM_Z = 10.8, CAM_H = 1.9;
+
+  function resize() {
+    const w = root.innerWidth, h = root.innerHeight; renderer.setSize(w, h, false); camera.aspect = w / h;
+    camera.fov = w / h < 1.2 ? 52 : w / h < 1.6 ? 40 : 36; camera.updateProjectionMatrix();
+    $('rotate').hidden = !(mobile && h > w * 1.05 && !S.rotateOk && S.phase !== 'boot');
+  }
+  root.addEventListener('resize', resize); resize();
+
+  // ------------------------------------------------------------------ UI helpers
+  function show(id) { $(id).hidden = false; } function hide(id) { $(id).hidden = true; }
+  function phase(p) { if (S.phase === p) return; S.phase = p; S.pt = 0; doc.body.dataset.phase = p; }
+  function fatal(msg) { const f = $('fatal'); if (f) { $('fatalMsg').textContent = msg; f.hidden = false; } const l = $('loading'); if (l) l.hidden = true; }
+  let toastUntil = 0; function toast(text, secs = 1.6) { const t = $('toast'); t.textContent = text; t.hidden = false; t.style.animation = 'none'; void t.offsetWidth; t.style.animation = ''; toastUntil = S.time + secs; }
+  function popup(x, y, text, cls = '') {
+    const v = new T.Vector3(x, y, 0).project(camera); if (v.z > 1) return;
+    const el = doc.createElement('div'); el.className = 'pop ' + cls; el.textContent = text;
+    el.style.left = ((v.x * 0.5 + 0.5) * root.innerWidth) + 'px'; el.style.top = ((-v.y * 0.5 + 0.5) * root.innerHeight) + 'px';
+    $('popups').appendChild(el); setTimeout(() => el.remove(), 950);
+  }
+  function setLoad(p, msg) { $('loadFill').style.width = (p * 100).toFixed(0) + '%'; if (msg) $('loadMsg').textContent = msg; }
+  function stageName(id) { const d = Lv.byId(id); return d ? d.name : id; }
+
+  // ------------------------------------------------------------------ menu
+  function menuInfo() {
+    $('schoolName').textContent = cfg.school || ''; const tl = [cfg.teacher && ('المعلم/ة: ' + cfg.teacher), cfg.grade && ('الصف: ' + cfg.grade), cfg.className && ('الشعبة: ' + cfg.className)].filter(Boolean).join(' · '); $('teacherLine').textContent = tl;
+    const lg = $('schoolLogo'); if (cfg.logo) { lg.src = cfg.logo; lg.hidden = false; } else { lg.hidden = true; lg.removeAttribute('src'); }
+    $('lessonLine').textContent = cfg.lesson ? 'درس: ' + cfg.lesson : ''; $('startMsg').textContent = cfg.startMsg || '';
+    $('sampleNote').hidden = !cfg.sample || STUDENT || S.platform.on;
+    $('btnTeacher').hidden = STUDENT || S.platform.on || !root.QHTeacher;
+    const pick = $('stagePick'); pick.innerHTML = '';
+    const stages = S.platform.on ? platformStages() : cfg.stages;
+    if (stages.length > 1) stages.forEach(id => { const b = doc.createElement('button'); b.type = 'button'; b.textContent = stageName(id); b.dataset.id = id; b.className = id === (S.startStage || cfg.defaultStage) ? 'on' : ''; b.addEventListener('click', () => { S.startStage = id; pick.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); audio.init(); audio.select(); }); pick.appendChild(b); });
+    $('btnStart').disabled = S.platform.on && !S.platform.configured;
+  }
+  function openMenu() {
+    hideAll(); show('menu'); phase('menu'); menuInfo(); audio.setMode('menu'); S.started = false;
+    // idle showcase: first selected stage in the background
+    if (!S.engine || S.showcase !== true) { loadStage(-1); S.showcase = true; }
+  }
+  function hideAll() { for (const id of ['menu', 'how', 'stageCard', 'question', 'pause', 'stageClear', 'gameOver', 'final', 'platformWait']) hide(id); $('hintBubble').hidden = true; }
+
+  // ------------------------------------------------------------------ run / stage setup
+  function slotCount(id) { const d = Lv.byId(id); return d ? (d._slots || (d._slots = d.build().slots.length)) : 6; }
+  function platformStages() { const n = S.platform.count || 1, list = (S.platform.stages || Cfg.STAGE_IDS).filter(id => Lv.byId(id)); const used = clamp(Math.ceil(n / 3), 1, list.length); return list.slice(0, used); }
+  function newRun() {
+    if (S.platform.on) {
+      const stages = platformStages(); const n = S.platform.count; const per = Math.ceil(n / stages.length); let at = 0;
+      S.order = stages; S.plan = stages.map(s => { const k = Math.min(per, n - at, slotCount(s)); const q = Array.from({ length: Math.max(0, k) }, (_, i) => at + i); at += q.length; return { stage: s, questions: q }; });
+      S.qTotal = n;
+    } else {
+      const avail = cfg.stages.filter(id => Lv.byId(id)); const start = Math.max(0, avail.indexOf(S.startStage || cfg.defaultStage));
+      const order = avail.slice(start); S.order = order.length ? order : ['corniche'];
+      const spc = {}; for (const s of S.order) spc[s] = slotCount(s);
+      S.plan = Cfg.allocate(Object.assign({}, cfg, { stages: S.order }), Math.random, spc);
+      S.qTotal = S.plan.reduce((a, p) => a + p.questions.length, 0);
+      const counts = []; for (const p of S.plan) for (const qi of p.questions) counts.push(cfg.questions[qi].options.length);
+      S.positions = Cfg.planPositions(counts); S.posIdx = 0;
+    }
+    Object.assign(S, { stageIdx: 0, lives: cfg.attempts, score: 0, coins: 0, coinsForLife: 0, solvedTotal: 0, firstTry: 0, wrongTotal: 0, results: [], stageResults: [], solvedSlots: {} });
+    S.started = true; S.showcase = false;
+  }
+  function difficultyMods(level) {
+    const d = cfg.difficulty, sp = d === 'easy' ? 0.75 : d === 'hard' ? 1.3 : 1;
+    level.enemies = level.enemies.filter((e, i) => d !== 'easy' || i % 3 !== 2).map(e => Object.assign({}, e, { speed: (e.speed || (En.ENEMY[e.type] || {}).speed || 1) * sp }));
+    return level;
+  }
+  function loadStage(i) {
+    const showcase = i < 0;
+    const id = showcase ? (cfg.stages[0] || 'corniche') : S.order[i];
+    const def = Lv.byId(id) || Lv.byId('corniche'); const level = difficultyMods(def.build()); if (showcase) level.enemies = [];
+    const qs = showcase ? [] : S.plan[i].questions;
+    const slots = Lv.pickSlots(level.slots.length, qs.length), map = {};
+    slots.forEach((s, k) => { map[s] = qs[k]; });
+    const hearts = cfg.difficulty === 'easy' ? cfg.hearts + 1 : cfg.hearts;
+    const E = new En.Engine(level, { hearts, doubleJump: cfg.doubleJump, autorun: cfg.autorun && !showcase, onEvent: onEngineEvent });
+    E.assignQuestions(map);
+    const solved = S.solvedSlots[id] || [];
+    for (const si of solved) if (E.slots[si] && E.slots[si].active) { E.slotsPre = true; E.solveSlot(si); }
+    E.frozen = false;
+    S.engine = E; S.stage = { id, idx: i, level, name: level.name, qCount: qs.length, solved: solved.length, first: 0, wrong: 0, livesLost: 0, coins0: S.coins, score0: S.score, t: 0 };
+    const theme = root.QHThemes.get(level.theme); view.buildStage(level, E, theme);
+    audio.setSong(level.music); audio.theme = theme.id;
+    cam.x = cam.tx = E.player.x + 2; cam.baseY = E.player.y; cam.y = cam.ty = cam.baseY + CAM_H + 0.6; cam.look = 1.5; S.goalRaise = 0;
+    if (!showcase) { E.player.facing = 1; }
+    return E;
+  }
+  function beginStage(i) {
+    if (!S.plan.length || !S.plan[i]) { newRun(); i = Math.min(i, S.plan.length - 1); }
+    hideAll(); show('hud'); loadStage(i); S.stageIdx = i;
+    $('stageNum').textContent = 'المرحلة ' + AR(i + 1) + (S.order.length > 1 ? ' من ' + AR(S.order.length) : '');
+    $('stageTitle').textContent = S.stage.name; $('stageIntro').textContent = S.stage.level.intro || ''; show('stageCard');
+    $('hudStage').textContent = S.stage.name; phase('stageIntro'); audio.setMode('run'); hud(true);
+    post('stage', { stage: S.stage.id, of: S.order.length, stageIndex: i });
+  }
+  function start() {
+    if (S.phase !== 'menu') return; if (S.platform.on && !S.platform.configured) return;
+    audio.init(); audio.resume(); newRun(); beginStage(0); controlsVisibility();
+  }
+
+  // ------------------------------------------------------------------ input
+  const input = { left: false, right: false, jump: false }, keyState = {};
+  const KEYS = { ArrowLeft: 'left', KeyA: 'left', ArrowRight: 'right', KeyD: 'right', ArrowUp: 'jump', KeyW: 'jump', Space: 'jump', KeyZ: 'jump', KeyK: 'jump' };
+  doc.addEventListener('keydown', e => {
+    if (e.target && /INPUT|TEXTAREA|SELECT/.test(e.target.tagName || '') && !e.target.closest('#question')) return;
+    if (root.QHTeacher && root.QHTeacher.isOpen && root.QHTeacher.isOpen()) return;
+    if (S.phase === 'question' && /^(Digit|Numpad)[1-4]$/.test(e.code)) { answer(Number(e.code.slice(-1)) - 1); return; }
+    if (e.code === 'Escape' || e.code === 'KeyP') { togglePause(); return; }
+    if (e.code === 'KeyM') { toggleMute(); return; }
+    if (e.code === 'KeyF' && !e.repeat) { toggleFull(); return; }
+    if (e.code === 'Enter' && S.phase === 'menu') { start(); return; }
+    const k = KEYS[e.code]; if (k) { e.preventDefault(); keyState[e.code] = true; audio.init(); }
+  });
+  doc.addEventListener('keyup', e => { if (KEYS[e.code]) keyState[e.code] = false; });
+  root.addEventListener('blur', () => { for (const k in keyState) keyState[k] = false; });
+  const touch = { left: false, right: false, jump: false };
+  doc.querySelectorAll('[data-ctl]').forEach(b => {
+    const k = b.dataset.ctl; const on = e => { e.preventDefault(); try { b.setPointerCapture(e.pointerId); } catch (x) { /* */ } touch[k] = true; b.classList.add('on'); audio.init(); };
+    const off = e => { e.preventDefault(); touch[k] = false; b.classList.remove('on'); };
+    b.addEventListener('pointerdown', on); b.addEventListener('pointerup', off); b.addEventListener('pointercancel', off); b.addEventListener('lostpointercapture', off);
+  });
+  function readInput() {
+    const k = c => !!keyState[c];
+    let left = k('ArrowLeft') || k('KeyA') || touch.left, right = k('ArrowRight') || k('KeyD') || touch.right, jump = k('ArrowUp') || k('KeyW') || k('Space') || k('KeyZ') || k('KeyK') || touch.jump;
+    const pads = navigator.getGamepads ? navigator.getGamepads() : [];
+    for (const g of pads || []) { if (!g) continue; const ax = g.axes[0] || 0; if (ax < -0.35 || (g.buttons[14] && g.buttons[14].pressed)) left = true; if (ax > 0.35 || (g.buttons[15] && g.buttons[15].pressed)) right = true; if ((g.buttons[0] && g.buttons[0].pressed) || (g.buttons[1] && g.buttons[1].pressed)) jump = true; if (g.buttons[9] && g.buttons[9].pressed && !S.padStart) { S.padStart = true; togglePause(); } else if (g.buttons[9] && !g.buttons[9].pressed) S.padStart = false; for (let i = 0; i < 4; i++) { const pr = !!(g.buttons[i] && g.buttons[i].pressed); if (S.phase === 'question' && S.pt > 0.4 && pr && !S['padA' + i]) answer(i); S['padA' + i] = pr; } }
+    if (S.qaInput) { left = left || S.qaInput.left; right = right || S.qaInput.right; jump = jump || S.qaInput.jump; }
+    input.left = left; input.right = right; input.jump = jump;
+  }
+  function controlsVisibility() { const t = matchMedia('(pointer: coarse)').matches || navigator.maxTouchPoints > 0; const on = S.ctlOverride != null ? S.ctlOverride : (cfg.controls === 'on' || (cfg.controls === 'auto' && t)); $('controls').hidden = !on || S.phase === 'menu'; $('chkControls').checked = on; }
+
+  // ------------------------------------------------------------------ engine events → audio / view / ui
+  function onEngineEvent(type, d) {
+    const E = S.engine; if (!E) return; const showcase = !S.started;
+    view.fx(type, d);
+    if (showcase && type !== 'jump' && type !== 'land') return;
+    switch (type) {
+      case 'jump': audio.jump(d.double); break;
+      case 'land': audio.land(0.4 + 0.6 * d.k); break;
+      case 'headbonk': if (!d.block) audio.bump(); break;
+      case 'bump': audio.bump(); break;
+      case 'brick': audio.brick(); popup(d.x, d.y, '+' + AR(50)); break;
+      case 'coin': audio.coin(S.coins % 6); S.coins++; S.coinsForLife++; if (d.popped) popup(d.x, d.y + 1.2, '+' + AR(10), 'gold'); if (S.coinsForLife >= 50) { S.coinsForLife -= 50; S.lives++; audio.collect('life'); toast('+١ محاولة إضافية!'); } break;
+      case 'item': audio.itemAppear(); break;
+      case 'collect': audio.collect(d.kind); if (d.kind === 'life') { S.lives++; toast('+١ محاولة إضافية!'); } else toast('+١ قلب'); popup(d.x, d.y + 1, '+' + AR(500), 'gold'); break;
+      case 'stomp': audio.stomp(d.chain); popup(d.x, d.y + 0.6, '+' + AR(100 * d.chain)); break;
+      case 'hurt': audio.hurt(); break;
+      case 'die': S.dieCause = d.cause; S.dieX = d.x; S.splashed = false; phase('dying'); audio.lifeLost(); break;
+      case 'checkpoint': audio.checkpoint(); toast('نقطة حفظ ✓', 1.3); break;
+      case 'question': audio.qbump(); openQuestion(d); break;
+      case 'gate-open': if (!E.slotsPre) audio.gateOpen(); break;
+      case 'goal': reachGoal(); break;
+      case 'plank': audio.plank(); break;
+      case 'respawn': break;
+    }
+  }
+
+  // ------------------------------------------------------------------ questions
+  function openQuestion(d) {
+    const E = S.engine, s = E.slots[d.slot]; if (!s || s.solved || S.q) return;
+    S.q = { slot: d.slot, qIndex: d.qIndex, x: d.x, y: d.y, tries: 0, locked: false, wrong: new Set(), first: s.tries <= 1 };
+    phase('question'); audio.setMode('question'); audio.questionOpen(); $('hintBubble').hidden = true;
+    for (const k in touch) touch[k] = false; doc.querySelectorAll('.pad.on').forEach(p => p.classList.remove('on'));
+    if (S.platform.on) { S.platform.awaiting = true; post('question', { retry: s.tries > 1 }); show('platformWait'); return; }
+    const q = cfg.questions[d.qIndex];
+    if (!S.q.pres) S.q.pres = Cfg.present(q, S.positions[S.posIdx++ % Math.max(1, S.positions.length)] || 0, Math.random, cfg.salt);
+    S.q.q = q; S.qTimer = cfg.timer; renderQuestion();
+  }
+  function renderQuestion() {
+    const { q, pres } = S.q, card = doc.querySelector('.q-card');
+    $('qBadge').textContent = 'السؤال ' + AR(Math.min(S.qTotal, S.solvedTotal + 1)) + ' من ' + AR(S.qTotal);
+    $('qStage').textContent = S.stage.name; $('qTries').textContent = '';
+    $('qText').textContent = q.text;
+    const img = $('qImage'); if (q.image) { img.src = q.image; img.hidden = false; } else { img.hidden = true; img.removeAttribute('src'); }
+    const letters = ['أ', 'ب', 'ج', 'د'], list = $('qOptions'); list.innerHTML = ''; list.className = 'q-options' + (pres.options.length === 2 ? ' two' : '');
+    pres.options.forEach((o, i) => {
+      const b = doc.createElement('button'); b.type = 'button'; b.className = 'opt' + (q.type === 'tf' ? ' tf' : ''); b.dataset.i = i;
+      b.innerHTML = q.type === 'tf' ? '<span class="opt-t"></span>' : `<span class="opt-l">${letters[i]}</span><span class="opt-t"></span>`; b.querySelector('.opt-t').textContent = o;
+      b.addEventListener('click', () => answer(i)); list.appendChild(b);
+    });
+    $('qFeedback').textContent = ''; $('qFeedback').className = 'q-feedback';
+    $('qTimer').hidden = !cfg.timer; card.classList.remove('good', 'shake');
+    show('question'); card.style.animation = 'none'; void card.offsetWidth; card.style.animation = '';
+    const first = list.querySelector('button'); if (first && !QA) first.focus({ preventScroll: true });
+  }
+  const WRONG_MSG = ['ليست هذه الإجابة، حاول مرة أخرى 💪', 'فكّر جيدًا، وجرّب خيارًا آخر', 'قريب! اقرأ السؤال مرة أخرى', 'لا بأس، المحاولة طريق النجاح'];
+  function answer(i) {
+    if (S.phase !== 'question' || !S.q || S.q.locked || S.platform.on) return;
+    const { q, pres } = S.q; if (i < 0 || i >= pres.options.length || S.q.wrong.has(i)) return;
+    S.q.tries++; audio.select();
+    const ok = Cfg.isCorrect(q, pres.options[i], cfg.salt);
+    const btns = $('qOptions').querySelectorAll('.opt'), card = doc.querySelector('.q-card');
+    S.results.push({ q: S.q.qIndex, stage: S.stage.id, try: S.q.tries, correct: ok });
+    if (ok) {
+      S.q.locked = true; btns.forEach(b => { b.disabled = true; if (Number(b.dataset.i) === i) b.classList.add('right'); });
+      const pts = S.q.tries === 1 ? 1000 : S.q.tries === 2 ? 600 : 300; S.score += pts; S.stage.solved++;
+      if (S.q.tries === 1) { S.firstTry++; S.stage.first++; }
+      $('qFeedback').textContent = ['أحسنت! ', 'ممتاز! ', 'رائع يا بطل! ', 'إجابة صحيحة! '][S.solvedTotal % 4] + '+' + AR(pts); $('qFeedback').className = 'q-feedback good';
+      card.classList.add('good'); audio.success(); S.closeAt = S.time + 1.0; S.q.pts = pts;
+    } else {
+      S.q.wrong.add(i); S.wrongTotal++; S.stage.wrong++;
+      btns.forEach(b => { if (Number(b.dataset.i) === i) { b.classList.add('wrong'); b.disabled = true; } });
+      $('qFeedback').textContent = WRONG_MSG[(S.q.tries - 1) % WRONG_MSG.length]; $('qFeedback').className = 'q-feedback bad';
+      $('qTries').textContent = 'المحاولة ' + AR(S.q.tries + 1);
+      card.classList.remove('shake'); void card.offsetWidth; card.classList.add('shake'); audio.wrong();
+      S.qTimer = cfg.timer; // fresh time for the next try
+    }
+    hud();
+  }
+  function closeQuestion() { // after a correct answer: open the way, resume from the same spot
+    const d = S.q; hide('question'); hide('platformWait'); S.closeAt = -1;
+    const E = S.engine; E.solveSlot(d.slot);
+    const ss = (S.solvedSlots[S.stage.id] = S.solvedSlots[S.stage.id] || []); if (!ss.includes(d.slot)) ss.push(d.slot); S.solvedTotal = Object.values(S.solvedSlots).reduce((a, l) => a + l.length, 0);
+    view.fx('correct', { x: d.x, y: d.y }); if (d.pts) popup(d.x, d.y + 1.5, '+' + AR(d.pts), 'green');
+    S.q = null; phase('play'); audio.setMode('run'); post('outcome', { correct: true }); hud();
+  }
+
+  // ------------------------------------------------------------------ platform bridge
+  const FILE = root.location.protocol === 'file:', ORIGIN = FILE || !root.location.origin || root.location.origin === 'null' ? '*' : root.location.origin; // file:// pages have an opaque origin
+  const sameOrigin = o => o === root.location.origin || (FILE && (o === 'null' || o === 'file://'));
+  function post(suffix, extra = {}) { if (!S.platform.on) return; try { root.parent.postMessage(Object.assign({ type: PREFIX + suffix, token: S.platform.token, index: S.platform.round }, extra), ORIGIN); } catch (e) { /* ignore */ } }
+  root.addEventListener('message', e => {
+    if (!S.platform.on || e.source !== root.parent || !sameOrigin(e.origin) || !e.data || typeof e.data !== 'object') return;
+    const b = e.data;
+    if (b.type === PREFIX + 'config') {
+      if (S.platform.configured || typeof b.token !== 'string' || !b.token) return;
+      const n = Number(b.count); if (!Number.isSafeInteger(n) || n < 1 || n > 36) return;
+      S.platform.token = b.token; S.platform.count = n; S.platform.title = String(b.title || '').slice(0, 150);
+      if (Array.isArray(b.stages)) S.platform.stages = b.stages.filter(s => typeof s === 'string' && Cfg.STAGE_IDS.includes(s));
+      for (const k of ['school', 'teacher', 'student']) if (typeof b[k] === 'string') cfg[k] = b[k].slice(0, 150);
+      cfg.lesson = S.platform.title || cfg.lesson; S.platform.configured = true; menuInfo(); return;
+    }
+    if (b.token !== S.platform.token || b.index !== S.platform.round) return;
+    if (b.type === PREFIX + 'result') {
+      if (S.phase !== 'question' || !S.platform.awaiting || !S.q) return;
+      S.platform.awaiting = false; hide('platformWait');
+      const ok = b.correct === true || b.pending === true || b.allowPass === true;
+      S.results.push({ q: S.platform.round, stage: S.stage.id, try: S.engine.slots[S.q.slot].tries, correct: b.correct === true, pending: b.pending === true });
+      if (b.feedback) toast(String(b.feedback).slice(0, 140), 2.4);
+      if (ok) { S.stage.solved++; if (b.correct === true) { S.score += 800; if (S.engine.slots[S.q.slot].tries === 1) { S.firstTry++; S.stage.first++; } audio.success(); } S.platform.round++; closeQuestion(); post('next'); }
+      else { // wrong: the question stays — the hero can hit the block again to ask for another try
+        S.wrongTotal++; audio.wrong(); S.q = null; phase('play'); audio.setMode('run'); S.engine.frozen = false; toast(b.feedback ? String(b.feedback).slice(0, 80) : 'حاول مرة أخرى — اضرب المكعب من جديد', 2.2);
+      }
+      return;
+    }
+    if (b.type === PREFIX + 'advance') { if (S.phase === 'question' && S.q && S.platform.awaiting) { S.platform.awaiting = false; S.platform.round++; closeQuestion(); } return; }
+    if (b.type === PREFIX + 'retry') { return; }
+  });
+
+  // ------------------------------------------------------------------ goal / death / game over
+  function reachGoal() {
+    phase('goal'); audio.setMode('silent'); audio.stageClear(); S.goalT = 0; toast('أكملت المرحلة! 🎉', 2.4);
+    S.score += 1500 + S.engine.player.hearts * 300; post('outcome', { stageDone: S.stage.id });
+  }
+  function stageClear() {
+    hideAll(); show('hud'); const st = S.stage, E = S.engine;
+    const firstOk = st.qCount ? st.first / st.qCount : 1, stars = 1 + (firstOk >= 0.6 ? 1 : 0) + (st.livesLost === 0 ? 1 : 0);
+    st.stars = stars; S.stageResults.push({ id: st.id, name: st.name, stars, first: st.first, q: st.qCount, coins: S.coins - st.coins0, score: S.score - st.score0, time: st.t });
+    $('scStars').innerHTML = [0, 1, 2].map(i => `<span class="${i < stars ? '' : 'off'}">★</span>`).join('');
+    $('scTitle').textContent = 'أكملت ' + st.name + '!';
+    $('scStats').innerHTML = stat('الأسئلة', AR(st.solved) + '/' + AR(st.qCount)) + stat('من أول محاولة', AR(st.first)) + stat('العملات', AR(S.coins - st.coins0)) + stat('النقاط', AR(S.score - st.score0));
+    const last = S.stageIdx + 1 >= S.order.length; $('btnNext').textContent = last ? 'إنهاء المغامرة' : 'المرحلة التالية: ' + stageName(S.order[S.stageIdx + 1]);
+    show('stageClear'); phase('stageClear'); void E;
+  }
+  const stat = (k, v) => `<div class="stat"><b>${v}</b><small>${k}</small></div>`;
+  function nextStage() { if (S.stageIdx + 1 < S.order.length) beginStage(S.stageIdx + 1); else finalScreen(); }
+  function finalScreen() {
+    hideAll(); phase('final'); audio.setMode('finish');
+    $('finalSchool').textContent = [cfg.school, cfg.lesson && ('درس: ' + cfg.lesson)].filter(Boolean).join(' — ');
+    const lg = $('finalLogo'); if (cfg.logo) { lg.src = cfg.logo; lg.hidden = false; } else lg.hidden = true;
+    $('finalMsg').textContent = cfg.endMsg || '';
+    $('finalStats').innerHTML = stat('المراحل', AR(S.stageResults.length)) + stat('الأسئلة الصحيحة', AR(S.solvedTotal) + '/' + AR(S.qTotal)) + stat('من أول محاولة', AR(S.firstTry)) + stat('العملات', AR(S.coins)) + stat('النقاط', AR(S.score));
+    show('final'); post('finish', { score: S.score, firstTry: S.firstTry, total: S.qTotal }); post('next');
+  }
+  function afterDeath() {
+    S.lives--; S.stage.livesLost++;
+    if (S.lives > 0) { S.engine.respawnPlayer(); snapCam(); phase('play'); toast('حاول مرة أخرى!', 1.2); }
+    else { phase('gameOver'); hideAll(); show('hud'); show('gameOver'); audio.gameOver(); audio.setMode('silent'); }
+    hud();
+  }
+  function retryAfterGameOver() {
+    hide('gameOver'); S.lives = cfg.attempts;
+    if (cfg.onFail === 'restart') { beginStage(S.stageIdx); return; }
+    S.engine.respawnPlayer(); snapCam(); phase('play'); audio.setMode('run'); hud();
+  }
+  function snapCam() { const p = S.engine.player; cam.x = cam.tx = p.x + 1.5; cam.baseY = p.y; cam.y = cam.ty = p.y + CAM_H + 0.6; }
+
+  // ------------------------------------------------------------------ pause / sound / fullscreen
+  function togglePause(force) {
+    const can = ['play', 'stageIntro', 'question', 'goal', 'dying'].includes(S.phase); if (!can && !S.paused) return;
+    S.paused = force == null ? !S.paused : !!force;
+    if (S.paused) { show('pause'); $('volMusic').value = audio.prefs.music; $('volSfx').value = audio.prefs.sfx; $('chkMute').checked = audio.prefs.muted; $('selQuality').value = quality; audio.suspend(); for (const k in keyState) keyState[k] = false; }
+    else { hide('pause'); audio.resume(); }
+  }
+  function toggleMute() { const m = audio.toggleMute(); try { localStorage.setItem('qatarHero.muted', m ? '1' : '0'); } catch (e) { /* */ } $('muteIcon').setAttribute('d', m ? 'M4 9v6h4l5 4V5L8 9zm12.6.2-1.4 1.4L17.6 13l-2.4 2.4 1.4 1.4 2.4-2.4 2.4 2.4 1.4-1.4L20.4 13l2.4-2.4-1.4-1.4L19 11.6z' : 'M4 9v6h4l5 4V5L8 9zm12.5 3a4.5 4.5 0 0 0-2.5-4v8a4.5 4.5 0 0 0 2.5-4z'); $('chkMute').checked = m; }
+  function isFull() { return !!(doc.fullscreenElement || doc.webkitFullscreenElement); }
+  function toggleFull() {
+    const el = doc.documentElement;
+    try {
+      if (isFull()) { (doc.exitFullscreen || doc.webkitExitFullscreen).call(doc); }
+      else if (el.requestFullscreen || el.webkitRequestFullscreen) { const r = (el.requestFullscreen || el.webkitRequestFullscreen).call(el, { navigationUI: 'hide' }); if (r && r.then) r.then(() => { try { screen.orientation && screen.orientation.lock && screen.orientation.lock('landscape').catch(() => {}); } catch (e) { /* */ } }).catch(() => toast('الشاشة الكاملة غير متاحة هنا', 1.6)); }
+      else { toast('على iPhone: أضف اللعبة إلى الشاشة الرئيسية للعب بشاشة كاملة', 2.6); }
+      post('fullscreen');
+    } catch (e) { toast('الشاشة الكاملة غير متاحة هنا', 1.6); }
+  }
+  doc.addEventListener('fullscreenchange', () => setTimeout(resize, 50)); doc.addEventListener('webkitfullscreenchange', () => setTimeout(resize, 50));
+  doc.addEventListener('visibilitychange', () => { if (doc.hidden && ['play', 'question', 'goal'].includes(S.phase) && !S.paused && !QA) togglePause(true); });
+
+  // ------------------------------------------------------------------ HUD
+  const hudCache = {};
+  function setText(id, v) { if (hudCache[id] !== v) { hudCache[id] = v; $(id).textContent = v; } }
+  function hud(force) {
+    if (force) for (const k in hudCache) delete hudCache[k];
+    const E = S.engine; if (!E) return; const p = E.player, maxH = E.opts.hearts;
+    const hk = p.hearts + '/' + maxH; if (hudCache.hearts !== hk) { hudCache.hearts = hk; $('hudHearts').innerHTML = Array.from({ length: Math.max(maxH, p.hearts) }, (_, i) => `<span class="${i < p.hearts ? '' : 'off'}">♥</span>`).join(''); }
+    setText('hudLives', AR(S.lives)); setText('hudCoins', AR(S.coins)); setText('hudScore', AR(S.score));
+    setText('hudQ', AR(S.solvedTotal) + '/' + AR(S.qTotal)); const w = (S.qTotal ? S.solvedTotal / S.qTotal * 100 : 0).toFixed(0) + '%'; if (hudCache.qw !== w) { hudCache.qw = w; $('hudQFill').style.width = w; }
+  }
+
+  // ------------------------------------------------------------------ camera (critically-damped follow, no shake)
+  function updateCamera(dt) {
+    const E = S.engine; if (!E) return; const p = E.player;
+    const px = p.x, py = p.y;
+    const moving = Math.abs(p.vx) > 1.2; const lookT = moving ? Math.sign(p.vx) * 1.6 : cam.look * 0.98;
+    cam.look += (lookT - cam.look) * (1 - Math.exp(-dt * 1.4));
+    if (p.onGround) cam.baseY += (py - cam.baseY) * (1 - Math.exp(-dt * 3.5));
+    else if (py > cam.baseY + 3.2) cam.baseY += (py - 3.2 - cam.baseY) * (1 - Math.exp(-dt * 5));
+    else if (py < cam.baseY - 0.4) cam.baseY += (py + 0.4 - cam.baseY) * (1 - Math.exp(-dt * 6));
+    const halfW = Math.tan(camera.fov * Math.PI / 360) * CAM_Z * camera.aspect;
+    cam.tx = clamp(px + cam.look, halfW - 0.5, E.W - halfW + 0.5); cam.ty = Math.max(cam.baseY, -1) + CAM_H + 0.6;
+    const k = 1 - Math.exp(-dt * 6.5); cam.x += (cam.tx - cam.x) * k; cam.y += (cam.ty - cam.y) * k;
+    camera.position.set(cam.x, cam.y + 1.2, CAM_Z); camera.lookAt(cam.x, cam.y - 0.25, 0);
+  }
+
+  // ------------------------------------------------------------------ main update
+  function animState(E) {
+    const p = E.player;
+    if (S.phase === 'goal' || S.phase === 'stageClear' || S.phase === 'final') return { state: 'victory', speed: 0, vy: 0, facing: 1 };
+    if (p.dead) return { state: S.dieCause === 'pit' ? 'pitfall' : 'hurt', speed: Math.abs(p.vx), vy: p.vy, hurtT: 0.1, facing: p.facing };
+    if (p.hurtT > 0) return { state: 'hurt', speed: Math.abs(p.vx), vy: p.vy, hurtT: 0.42 - p.hurtT, facing: p.facing };
+    if (!p.onGround) return { state: 'air', speed: Math.abs(p.vx), vy: p.vy, tuck: p.tuck, facing: p.facing };
+    if (p.skidT > 0.03) return { state: 'skid', speed: Math.abs(p.vx), skidT: clamp(p.skidT / 0.3, 0, 1), facing: -Math.sign(p.vx) || p.facing };
+    if (p.landT < 0.22 && p.landK > 0.3) return { state: 'land', speed: Math.abs(p.vx), landT: p.landT, landK: p.landK, facing: p.facing };
+    const lookUp = E.nearSlot && Math.abs(E.nearSlot.dist) < 1.4 && E.nearSlot.under ? 1 : 0;
+    if (Math.abs(p.vx) < 0.05) { const ledge = edgeNear(E, p); return { state: ledge ? 'balance' : 'idle', speed: 0, lookUp, facing: p.facing }; }
+    return { state: 'run', speed: Math.abs(p.vx), accel: p.accel, lookUp, facing: p.facing };
+  }
+  function edgeNear(E, p) { const fx = p.x + p.facing * (p.w / 2 + 0.05), iy = Math.floor(p.y - 0.5); return !p.ground && !E.solid(Math.floor(fx), iy) && !E.oneWay(Math.floor(fx), iy) && E.solid(Math.floor(p.x), iy); }
+  function update(dt) {
+    S.time += dt; S.pt += dt; const E = S.engine;
+    if (toastUntil && S.time > toastUntil) { $('toast').hidden = true; toastUntil = 0; }
+    if (S.paused) return;
+    readInput();
+    const ph = S.phase;
+    if (E) {
+      if (ph === 'stageIntro') { E.input = { left: false, right: false, jump: false }; if (S.pt > 2.0) { hide('stageCard'); phase('play'); } }
+      if (ph === 'play') { E.input = Object.assign({}, input); }
+      if (ph === 'goal' || ph === 'dying' || ph === 'gameOver' || ph === 'stageClear') E.input = { left: false, right: false, jump: false };
+      if (ph === 'menu') { showcaseAI(E, dt); }
+      if (['play', 'stageIntro', 'menu', 'goal', 'dying'].includes(ph)) E.update(dt);
+      if (S.stage) S.stage.t += ph === 'play' ? dt : 0;
+      // dying: splash when the hero meets the water, then lose a life
+      if (ph === 'dying') {
+        const p = E.player; if (S.dieCause === 'pit' && !S.splashed && p.y < -0.65) { S.splashed = true; view.fx('splash', { x: p.x, y: -0.6 }); audio.splash(); }
+        if (S.dieCause === 'pit') { p.y = Math.max(p.y - 6 * dt, -3.2); } else { p.vy -= 24 * dt; p.y += p.vy * dt; }
+        if (S.pt > 1.6) afterDeath();
+      }
+      if (ph === 'goal') { S.goalRaise = Math.min(1, S.goalRaise + dt / 2.4); if (S.pt > 4.4) stageClear(); }
+      if (ph === 'question') {
+        if (S.closeAt > 0 && S.time >= S.closeAt) closeQuestion();
+        else if (cfg.timer && S.q && !S.q.locked && !S.platform.on) {
+          S.qTimer -= dt; const pct = clamp(S.qTimer / cfg.timer, 0, 1); $('qTimerFill').style.width = (pct * 100).toFixed(1) + '%'; $('qTimer').classList.toggle('urgent', S.qTimer < 5.5); $('qTimerTxt').textContent = AR(Math.max(0, Math.ceil(S.qTimer)));
+          if (S.qTimer <= 0) { S.q.tries++; S.wrongTotal++; S.results.push({ q: S.q.qIndex, stage: S.stage.id, try: S.q.tries, correct: false, timeout: true }); $('qFeedback').textContent = 'انتهى الوقت — حاول مرة أخرى'; $('qFeedback').className = 'q-feedback info'; audio.wrong(); S.qTimer = cfg.timer; const card = doc.querySelector('.q-card'); card.classList.remove('shake'); void card.offsetWidth; card.classList.add('shake'); }
+        }
+      }
+      // guidance bubble at a closed gate
+      if (ph === 'play') {
+        const need = E.gatePushT > 0.35 || (E.nearSlot && E.nearSlot.dist < 3 && E.nearSlot.dist > -1.5 && S.stage.t > 2 && E.player.onGround && Math.abs(E.player.vx) < 0.3);
+        if (need && $('hintBubble').hidden) { $('hintBubble').hidden = false; if (S.time - S.lastHint > 4) { audio.hint(); S.lastHint = S.time; } }
+        else if (!need && !$('hintBubble').hidden && (!E.nearSlot || E.nearSlot.dist > 4)) $('hintBubble').hidden = true;
+      } else if (!$('hintBubble').hidden) $('hintBubble').hidden = true;
+      view.sync(dt, E, S);
+      if (view.boy) { const st = animState(E); if (S.phase === 'menu' || ph === 'stageIntro') st.state = st.state === 'run' ? 'run' : st.state; view.syncBoy(dt, E, st); }
+      // skid dust
+      if (E.player.skidT > 0.03 && E.player.onGround && (S.time * 30 | 0) % 2 === 0) view.fx('skid', { x: E.player.x, y: E.player.y });
+      updateCamera(dt);
+      audio.update(dt, { speed: Math.abs(E.player.vx), theme: view.theme ? view.theme.id : 'corniche', paused: ph === 'question' });
+      if (ph === 'play' || ph === 'goal') hud();
+    }
+  }
+  // menu showcase: the hero strolls back and forth and hops now and then
+  function showcaseAI(E, dt) {
+    const p = E.player; S.sc = S.sc || { t: 0, dir: 1 }; S.sc.t += dt;
+    if (p.x > 15) S.sc.dir = -1; if (p.x < 4) S.sc.dir = 1;
+    const walk = (S.sc.t % 9) > 3.5; E.input = { left: walk && S.sc.dir < 0, right: walk && S.sc.dir > 0, jump: walk && (S.sc.t % 9) > 7.4 && (S.sc.t % 9) < 7.7 };
+  }
+
+  // ------------------------------------------------------------------ frame loop with auto-quality for slow devices / smart boards
+  let last = performance.now();
+  function frame(now) {
+    const dt = Math.min(0.05, (now - last) / 1000); last = now;
+    update(dt); view.render(camera);
+    // auto-quality: sustained low frame rate → lower resolution, then post-processing, then shadows
+    const pf = S.perf; pf.frames++; pf.fpsAvg = lerp(pf.fpsAvg, 1 / Math.max(dt, 1e-3), 0.05);
+    if (pf.frames > 120 && S.phase === 'play') { if (pf.fpsAvg < 34) pf.slow += dt; else pf.slow = Math.max(0, pf.slow - dt * 0.5); if (pf.slow > 3 && pf.downgrades < 4) { pf.slow = 0; pf.downgrades++; degrade(pf.downgrades); } }
+    requestAnimationFrame(frame);
+  }
+  function degrade(level) {
+    const pf = S.perf;
+    if (level === 1 || level === 3) { pf.dpr = Math.max(0.6, pf.dpr * 0.75); renderer.setPixelRatio(pf.dpr); resize(); }
+    if (level === 2) view.world.postOK = false;
+    if (level === 4) { renderer.shadowMap.enabled = false; view.world.sun.castShadow = false; view.boy && (view.boy.quality = 0); }
+  }
+
+  // ------------------------------------------------------------------ buttons
+  $('btnStart').addEventListener('click', start);
+  $('btnHow').addEventListener('click', () => { audio.init(); show('how'); });
+  doc.querySelectorAll('[data-close]').forEach(b => b.addEventListener('click', () => hide(b.dataset.close)));
+  $('btnTeacher').addEventListener('click', () => { if (root.QHTeacher) root.QHTeacher.open(); });
+  $('btnPause').addEventListener('click', () => togglePause());
+  $('btnResume').addEventListener('click', () => togglePause(false));
+  $('btnRestartStage').addEventListener('click', () => { togglePause(false); S.lives = Math.max(S.lives, 1); if (S.q) { hide('question'); S.q = null; S.closeAt = -1; } beginStage(S.stageIdx); });
+  $('btnMenu').addEventListener('click', () => { togglePause(false); if (S.q) { hide('question'); S.q = null; } openMenu(); });
+  $('btnFull').addEventListener('click', toggleFull);
+  $('btnMute').addEventListener('click', () => { audio.init(); toggleMute(); });
+  $('volMusic').addEventListener('input', e => audio.set('music', Number(e.target.value)));
+  $('volSfx').addEventListener('input', e => audio.set('sfx', Number(e.target.value)));
+  $('chkMute').addEventListener('change', e => { if (e.target.checked !== audio.prefs.muted) toggleMute(); });
+  $('chkControls').addEventListener('change', e => { S.ctlOverride = e.target.checked; controlsVisibility(); });
+  $('selQuality').addEventListener('change', e => { try { const u = new URL(root.location.href); u.searchParams.set('quality', e.target.value); toast('تُطبَّق الجودة الجديدة عند إعادة التحميل', 2); S.pendingQuality = u.toString(); } catch (x) { /* */ } });
+  $('btnNext').addEventListener('click', nextStage);
+  $('btnRetry').addEventListener('click', retryAfterGameOver);
+  $('btnGoMenu').addEventListener('click', () => { hide('gameOver'); openMenu(); });
+  $('btnAgain').addEventListener('click', () => { hide('final'); openMenu(); });
+  $('btnPrint').addEventListener('click', () => root.print());
+  $('btnRotateOk').addEventListener('click', () => { S.rotateOk = true; resize(); });
+
+  // ------------------------------------------------------------------ boot
+  async function boot() {
+    try {
+      setLoad(0.1, 'الخطوط والخامات'); if (doc.fonts && doc.fonts.ready) await Promise.race([doc.fonts.ready, new Promise(r => setTimeout(r, 2500))]);
+      await root.QRTex.ready(); setLoad(0.45, 'بطل قطر');
+      await view.initBoy(); setLoad(0.8, 'كورنيش الدوحة');
+      loadStage(-1); S.showcase = true;
+      setLoad(1, ''); hide('loading'); openMenu(); resize();
+      if (S.platform.on) { post('ready'); $('btnStart').disabled = !S.platform.configured; }
+      if (!QA) requestAnimationFrame(t => { last = t; frame(t); });
+      S.booted = true;
+    } catch (e) { console.error(e); fatal('حدث خطأ أثناء التحميل: ' + (e && e.message || e)); }
+  }
+
+  // ------------------------------------------------------------------ QA / test hooks (deterministic stepping)
+  const ready = boot();
+  root.QHGame = {
+    state: S, ready, view, audio, camera, renderer,
+    cfg: () => cfg, setConfig: c => { cfg = Cfg.validate(c); menuInfo(); return cfg; }, reloadConfig: () => { cfg = Cfg.load(); menuInfo(); audio.setEnabled(cfg.music); return cfg; },
+    engine: () => S.engine, start, beginStage, openMenu, answer, togglePause, toggleMute, nextStage, retry: retryAfterGameOver,
+    input: v => { S.qaInput = Object.assign({ left: false, right: false, jump: false }, v || {}); },
+    step(seconds, dt = 1 / 60, render = false) { const n = Math.round(seconds / dt); for (let i = 0; i < n; i++) update(dt); if (render) view.render(camera); return S.phase; },
+    render() { view.render(camera); },
+    correctPos() { if (!S.q || !S.q.pres) return -1; return S.q.pres.options.findIndex(o => Cfg.isCorrect(S.q.q, o, cfg.salt)); },
+    hud
+  };
+})(window);
+</script>
+</body>
+</html>
