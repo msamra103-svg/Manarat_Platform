@@ -225,7 +225,7 @@ body[data-phase=question] #controls, body[data-phase=menu] #controls { display: 
   <div class="panel">
     <h2>طريقة اللعب</h2>
     <ul class="how">
-      <li><b>الحركة:</b> الأسهم ← → أو A / D، أو أزرار الشاشة.</li>
+      <li><b>الحركة:</b> الجري تلقائي، المس الشاشة للقفز، والمس يسار الشاشة للرجوع، والضغط المطوّل يُوقِف البطل حتى ترفع إصبعك. تعمل الأسهم أيضًا.</li>
       <li><b>القفز:</b> ↑ أو W أو المسافة. اضغط مطوّلًا لقفزة أعلى.</li>
       <li><b>مكعب السؤال <span class="qchip">؟</span>:</b> قف تحته واقفز لتضربه برأسك، ثم اختر الإجابة الصحيحة ليُفتح الطريق.</li>
       <li><b>الأعداء:</b> اقفز فوق السلطعون والنورس لتتخطاهما، وابتعد عن قنفذ البحر الشائك.</li>
@@ -260,7 +260,7 @@ body[data-phase=question] #controls, body[data-phase=menu] #controls { display: 
     </div>
   </div>
   <div id="hudStage" class="hud-stage"></div>
-  <div id="hintBubble" class="hint-bubble" hidden><span class="qchip sm">؟</span> الجري تلقائي — المس الشاشة للقفز وضرب مكعب السؤال</div>
+  <div id="hintBubble" class="hint-bubble" hidden><span class="qchip sm">؟</span> الجري تلقائي: المس للقفز، يسار الشاشة للرجوع، واضغط مطوّلًا للتوقّف</div>
   <div id="toast" class="toast" hidden></div>
 </div>
 
