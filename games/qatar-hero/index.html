@@ -1,7 +1,7 @@
 <!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>مغامرات بطل قطر</title><style>body{background:#1e1227;color:white;font:18px Tahoma,Arial;text-align:center;padding:10vh 12px}#status{max-width:700px;margin:auto}</style></head><body><p id="status">جارٍ تجهيز مغامرات بطل قطر…</p><script>
 (async()=>{
  const urls=Array.from({length:28},(_,i)=>'parts/part-'+String(i).padStart(3,'0')+'.txt');
- const texts=await Promise.all(urls.map(async u=>{const r=await fetch(u+'?v=20261029-smartboard',{cache:'no-store'});if(!r.ok)throw Error('Missing '+u+' '+r.status);return r.text();}));
+ const texts=await Promise.all(urls.map(async u=>{const r=await fetch(u+'?v=20261029-smartboard-retry-back-stop',{cache:'no-store'});if(!r.ok)throw Error('Missing '+u+' '+r.status);return r.text();}));
  const source=texts.slice(0,19).join('')+'\n'+texts.slice(19).join('');
  document.open();document.write(source);document.close();
 })().catch(e=>{console.error(e);document.getElementById('status').textContent='تعذّر تحميل اللعبة، يرجى إعادة تحميل الصفحة.';});
