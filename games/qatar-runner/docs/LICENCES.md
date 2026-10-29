@@ -4,6 +4,9 @@
 |---|---|---|
 | Three.js r128 (`vendor/three.min.js`) | نسخة المنصة نفسها `games/vendor/three.min.js` | MIT (`vendor/THREE-LICENSE.txt`) |
 | جسم الولد وهيكله وأوزانه وعيناه | بيانات MakeHuman 1.x (مستودع makehumancommunity/makehuman، الإيداع a8bc2d5): الشبكة hm08، أهداف الماكرو للطفل، الهيكل الافتراضي، العين عالية الدقة وخامة القزحية (أُعيد تلوينها) | CC0 1.0 (`tools/makehuman/LICENSE.ASSETS-MakeHuman-CC0.md`) — لم يُستخدم برنامج MakeHuman ذو ترخيص AGPL ولم يُضمَّن |
+| أهداف ملامح الوجه (head/eyes/nose/mouth/cheek/chin/neck) | بيانات MakeHuman 1.x نفسها | CC0 1.0 |
+| قناع موضع الأظافر في خامة البشرة | MPFB2 (makehumancommunity/mpfb2، الإيداع 6ff1eb3) `mpfb_fingernails.jpg` | CC0 1.0 (`tools/makehuman/masks/LICENSE.ASSETS-MPFB-CC0.md`) |
+| خامات المدينة (الأسفلت، البلاط، العشب، الحجر، اللياسة، النخيل، الواجهات، الماء، القماش) | مولّدة إجرائيًا بكود أصلي (`tools/textures/build_env.py`) — ليست صورًا فوتوغرافية | ملك المشروع |
 | خط Tajawal | مضمّن مسبقًا في ألعاب المنصة | SIL OFL 1.1 (`assets/fonts/Tajawal-OFL.txt`) |
 | الثوب، الغترة، العقال، الحذاء، الحركة، القماش | كود أصلي لهذا المشروع | ملك المشروع |
 | المدينة، الأبراج، السوق، العوائق، السيارات، البوابة، الخامات | مولّدة برمجيًا بكود أصلي؛ الأبراج «مستوحاة» من أشكال معالم الدوحة وليست نماذج معمارية منقولة | ملك المشروع |

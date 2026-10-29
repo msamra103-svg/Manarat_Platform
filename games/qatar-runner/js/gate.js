@@ -39,9 +39,9 @@
       const baseMat = new T.MeshStandardMaterial({ color: C('#e9e4da'), roughness: 0.6 });
       for (const s of [-1, 1]) { const b = new T.Mesh(new T.BoxGeometry(1.5, 0.5, 1.4), baseMat); b.position.set(s * (W + 0.45), 0.25, 0); b.castShadow = true; g.add(b); const sp = sprite(0xff6fd0, 2.2, 0.55); sp.position.set(s * (W + 0.45), Hp + 0.4, 0.6); g.add(sp); }
       // wings (doors): lattice light panels hinged at the inner pillar faces
-      this.wingMat = new T.MeshStandardMaterial({ map: X.lattice('#ffffff', 8), color: C('#d8f6ff'), emissive: C('#6fe2ff'), emissiveIntensity: 1.15, transparent: true, opacity: 0.92, side: T.DoubleSide, depthWrite: false, alphaTest: 0.05, roughness: 0.3 });
+      this.wingMat = new T.MeshStandardMaterial({ map: X.lattice('#ffffff', 8), color: C('#d8f6ff'), emissive: C('#6fe2ff'), emissiveIntensity: 0.55, transparent: true, opacity: 0.92, side: T.DoubleSide, depthWrite: false, alphaTest: 0.05, roughness: 0.3 });
       this.wingMat.map.repeat.set(1.6, 1.6);
-      this.wingGlassMat = new T.MeshBasicMaterial({ color: C('#7fe7ff'), transparent: true, opacity: 0.16, side: T.DoubleSide, depthWrite: false, blending: T.AdditiveBlending });
+      this.wingGlassMat = new T.MeshBasicMaterial({ color: C('#7fe7ff'), transparent: true, opacity: 0.09, side: T.DoubleSide, depthWrite: false, blending: T.AdditiveBlending });
       this.wings = [];
       for (const s of [-1, 1]) {
         const pivot = new T.Group(); pivot.position.set(s * W, 0, 0.0); g.add(pivot);
@@ -87,7 +87,7 @@
       this.t += dt;
       this.qm.rotation.y = Math.sin(time * 1.4) * 0.32; this.qm.position.y = 5.35 + Math.sin(time * 2.0) * 0.12;
       const pulse = this.state === 'active' ? 0.5 + 0.5 * Math.sin(time * 6) : 0.5 + 0.5 * Math.sin(time * 2.4);
-      this.qm.userData.mat.emissiveIntensity = 1.2 + 0.9 * pulse; this.qmGlow.material.opacity = 0.45 + 0.35 * pulse; this.neonMat.emissiveIntensity = 1.6 + 0.8 * pulse; this.lineMat.opacity = 0.5 + 0.45 * pulse;
+      this.qm.userData.mat.emissiveIntensity = 0.9 + 0.6 * pulse; this.qmGlow.material.opacity = 0.25 + 0.2 * pulse; this.neonMat.emissiveIntensity = 1.1 + 0.5 * pulse; this.lineMat.opacity = 0.5 + 0.45 * pulse;
       this.arrows.material.map.offset.y = (-time * 0.8) % 1;
       if (this.state === 'opening') { this.open = Math.min(1, this.open + dt / 0.9); const e = 1 - Math.pow(1 - this.open, 3); this.wings.forEach(w => w.rotation.y = w.userData.side * -1.85 * e); this.wingMat.opacity = 0.92 - 0.35 * e; }
       if (this.state === 'reject') { this.flash = Math.max(0, this.flash - dt * 1.6); const shake = Math.sin(this.t * 70) * 0.04 * this.flash; this.wings.forEach(w => w.rotation.y = shake * w.userData.side); if (this.t > 1.2) { this.state = 'active'; this.setTint('active'); } }

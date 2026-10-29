@@ -27,9 +27,10 @@ for (const [name, m] of Object.entries(data.meshes)) {
 }
 (async () => {
   const tex = {};
-  const sizes = { skin: 1024, thobe: 1024, sirwal: 512, eyes: 256 };
+  const sizes = { skin: 2048, skin_n: 1024, skin_r: 512, thobe: 1024, thobe_n: 1024, sirwal: 512, eyes: 256, lashes: 512 };
   for (const name of Object.keys(sizes)) {
-    const buf = await sharp(path.join(dir, name + '.png')).resize(sizes[name], sizes[name]).webp({ quality: name === 'skin' ? 90 : 86, alphaQuality: 100 }).toBuffer();
+    if (!fs.existsSync(path.join(dir, name + '.png'))) continue;
+    const buf = await sharp(path.join(dir, name + '.png')).resize(sizes[name], name === 'lashes' ? 128 : sizes[name]).webp({ quality: name === 'skin' ? 88 : name.endsWith('_n') ? 90 : 86, alphaQuality: 100 }).toBuffer();
     tex[name] = 'data:image/webp;base64,' + buf.toString('base64');
   }
   const meta = { height: data.height, hem: data.hem, feet: data.feet, cap: data.cap, lm: data.lm, bones: data.bones, meshes, source: data.source };

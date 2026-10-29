@@ -475,7 +475,7 @@
     phase('loading'); show('loading');
     $('loadMsg').textContent = 'جارٍ تجهيز الدوحة والولد العدّاء…';
     try {
-      boy = await new root.QRBoy.Boy().build(); boy.quality = quality === 'low' ? 0 : 1;
+      await root.QRTex.ready(); boy = await new root.QRBoy.Boy().build(); boy.quality = quality === 'low' ? 0 : 1;
       boy.group.rotation.y = Math.PI; world.scene.add(boy.group);
       anim = new root.QRBoy.Animator(boy); anim.onFootstep = (side, sp) => { if (['run', 'approach', 'retry', 'intro', 'finish', 'success'].includes(S.phase) || S.recoilT >= 0) audio.footstep(side, sp, surf); };
       anim.update(1 / 60, { state: 'idle', speed: 0, lateral: 0, t: 0 }); boy.settle(160);

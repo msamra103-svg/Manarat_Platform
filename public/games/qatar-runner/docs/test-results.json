@@ -1,5 +1,5 @@
 {
-  "date": "2026-10-28T18:40:01.805Z",
+  "date": "2026-10-29T03:03:32.546Z",
   "browser": "Chromium (Playwright) + SwiftShader WebGL, headless",
   "pass": 16,
   "total": 16,
@@ -7,31 +7,31 @@
     {
       "name": "01 boot: menu reached, Arabic RTL, Tajawal font, no runtime errors, no network",
       "pass": true,
-      "ms": 13,
-      "info": "dir=rtl, fonts ok, 17 local files"
+      "ms": 20,
+      "info": "dir=rtl, fonts ok, 18 local files"
     },
     {
       "name": "02 three lanes: smooth lane switching, exactly three lanes",
       "pass": true,
-      "ms": 1825,
+      "ms": 1640,
       "info": "lane change 0.37 s, max step 0.235 m/frame"
     },
     {
       "name": "03 jump: consistent height and duration, landing detected, no double-jump",
       "pass": true,
-      "ms": 901,
+      "ms": 1154,
       "info": "peak 1.28 m, airtime 0.68 s, second press mid-air ignored (peak 1.28 m)"
     },
     {
       "name": "04 slide: fixed duration, returns to running",
       "pass": true,
-      "ms": 275,
+      "ms": 467,
       "info": "slide 0.83 s"
     },
     {
       "name": "05 collisions: hit when ignoring a hazard, clear when jumping / sliding / dodging; no getting stuck",
       "pass": true,
-      "ms": 10749,
+      "ms": 9374,
       "info": {
         "jerseyIgnore": 1,
         "jerseyJump": 0,
@@ -49,7 +49,7 @@
     {
       "name": "06 fair generation: every row keeps a reachable passable lane (3 difficulties × 6 km), no hazards near gates",
       "pass": true,
-      "ms": 583,
+      "ms": 532,
       "info": {
         "easy": {
           "rows": 224,
@@ -74,9 +74,9 @@
     {
       "name": "07 question gate: stop before gate → question; wrong = recoil + exactly one heart; retry; correct opens; no repeats",
       "pass": true,
-      "ms": 14966,
+      "ms": 14964,
       "info": {
-        "recoil_m": 6.53,
+        "recoil_m": 6.52,
         "phases": "evaluate→reject→recover→retry→approach→question",
         "results": "0✗ 0✓ 1✓"
       }
@@ -84,7 +84,7 @@
     {
       "name": "08 input protection: repeated answer clicks evaluate once; a closed gate cannot be crossed",
       "pass": true,
-      "ms": 19499,
+      "ms": 16159,
       "info": {
         "evals": 1,
         "d": 1205.1,
@@ -94,37 +94,37 @@
     {
       "name": "09 answer randomisation: correct answer spread over all positions (2/3/4 answers)",
       "pass": true,
-      "ms": 242,
+      "ms": 220,
       "info": {
         "2": [
-          2970,
-          3030
+          3063,
+          2937
         ],
         "3": [
-          2043,
-          1966,
-          1991
+          2031,
+          2059,
+          1910
         ],
         "4": [
-          1492,
-          1413,
-          1517,
-          1578
+          1507,
+          1513,
+          1497,
+          1483
         ]
       }
     },
     {
       "name": "10 sounds fire at the right moments (wrong → wave → recoil; correct → success → gate opens)",
       "pass": true,
-      "ms": 7248,
-      "info": "gate-appear → jump → jump-start → land → jump → jump-start → land → hit:soft → question-open → select → wrong → wave → recoil → question-open"
+      "ms": 7629,
+      "info": "gate-appear → jump → jump-start → land → slide → hit:soft → question-open → select → wrong → wave → recoil → question-open → select → success"
     },
     {
       "name": "11 character lock + cloth + knees + planted feet + no jitter",
       "pass": true,
-      "ms": 1867,
+      "ms": 1983,
       "info": {
-        "meshes": 35,
+        "meshes": 37,
         "plantedFeet": "45/52",
         "hipJerk": 0.0015
       }
@@ -132,36 +132,36 @@
     {
       "name": "12 restart from pause, question timer timeout, game over → retry from gate",
       "pass": true,
-      "ms": 14842,
+      "ms": 14102,
       "info": "pause→restart, 15 s timer, game over → retry gate"
     },
     {
       "name": "13 performance counters (low quality, headless)",
       "pass": true,
-      "ms": 7699,
+      "ms": 45402,
       "info": {
-        "stepMs": 3.57,
-        "calls": 133,
-        "triangles": 201270
+        "stepMs": 3.86,
+        "calls": 153,
+        "triangles": 222832
       }
     },
     {
       "name": "14 teacher: new lesson replaces sample data; correct-answer selector; image upload; settings persist",
       "pass": true,
-      "ms": 11908,
+      "ms": 7911,
       "info": "saved 2 questions, image, 2 hearts, Souq route"
     },
     {
       "name": "15 phone portrait: swipe controls (left / right / up / down) and on-screen buttons",
       "pass": true,
-      "ms": 2296,
+      "ms": 1720,
       "info": "swipes + buttons ok"
     },
     {
       "name": "16 offline single file: runs from file:// with all network blocked; student export hides the teacher panel",
       "pass": true,
-      "ms": 28520,
-      "info": "offline OK, export 1.73 MB"
+      "ms": 17017,
+      "info": "offline OK, export 4.44 MB"
     }
   ]
 }

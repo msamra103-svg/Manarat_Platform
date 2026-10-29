@@ -59,6 +59,39 @@
     return t;
   }
 
+  // skin: wrapped, red-shifted diffuse (cheap subsurface scattering look — light bleeds softly past the terminator)
+  function skinShading(m) {
+    m.onBeforeCompile = sh => {
+      const chunk = T.ShaderChunk.lights_physical_pars_fragment.replace(
+        'reflectedLight.directDiffuse += ( 1.0 - clearcoatDHR ) * irradiance * BRDF_Diffuse_Lambert( material.diffuseColor );',
+        `float wNL = dot( geometry.normal, directLight.direction );
+         vec3 wrapNL = clamp( ( vec3( wNL ) + vec3( 0.30, 0.17, 0.13 ) ) / vec3( 1.30, 1.17, 1.13 ), 0.0, 1.0 );
+         vec3 wIrr = wrapNL * directLight.color;
+         #ifndef PHYSICALLY_CORRECT_LIGHTS
+           wIrr *= PI;
+         #endif
+         reflectedLight.directDiffuse += ( 1.0 - clearcoatDHR ) * wIrr * BRDF_Diffuse_Lambert( material.diffuseColor );`);
+      sh.fragmentShader = sh.fragmentShader.replace('#include <lights_physical_pars_fragment>', chunk);
+    };
+    m.customProgramCacheKey = () => 'qr-skin';
+    return m;
+  }
+  // woven cotton: physical material with a soft sheen lobe instead of a plastic highlight
+  function cottonMat(o) {
+    const m = new T.MeshPhysicalMaterial(Object.assign({ roughness: 0.92, metalness: 0, sheen: new T.Color(0.32, 0.32, 0.32) }, o));
+    return m;
+  }
+  // agal cord: twisted black goat-hair rope (normal map drawn as diagonal strands)
+  function ropeNormal() {
+    const W = 64, H = 64, c = document.createElement('canvas'); c.width = W; c.height = H; const x = c.getContext('2d'), im = x.createImageData(W, H), d = im.data;
+    for (let j = 0; j < H; j++) for (let i = 0; i < W; i++) {
+      const ph = (i / W * 4 + j / H) * TAU, hs = Math.sin(ph), hc = Math.cos(ph);
+      const nx = hc * 0.55 * 4 / W * 16, ny = hc * 0.55 / H * 16, k = (j * W + i) * 4, l = Math.hypot(nx, ny, 1);
+      d[k] = (nx / l * 0.5 + 0.5) * 255; d[k + 1] = (ny / l * 0.5 + 0.5) * 255; d[k + 2] = (1 / l * 0.5 + 0.5) * 255; d[k + 3] = 255; void hs;
+    }
+    x.putImageData(im, 0, 0); const t = new T.CanvasTexture(c); t.wrapS = t.wrapT = T.RepeatWrapping; return t;
+  }
+
   // ------------------------------------------------------------------ Verlet cloth
   class Cloth {
     constructor(n) {
@@ -159,26 +192,32 @@
       const imgs = {}; for (const [k, src] of Object.entries(root.QR_BOY_TEX)) imgs[k] = await loadImage(src);
       const tex = k => { const t = new T.Texture(imgs[k]); t.encoding = T.sRGBEncoding; t.anisotropy = 4; t.needsUpdate = true; return t; };
       const thobeTex = tex('thobe');
+      const X = root.QRTex, ph = (n, o) => (X && X.photo) ? X.photo(n, o) : null;
+      const has = k => !!imgs[k], lin = k => { const t = tex(k); t.encoding = T.LinearEncoding; return t; };
+      const clothN = ph('cloth_n', { srgb: false, repeat: [1, 1] }), clothN2 = ph('cloth_n', { srgb: false, repeat: [1, 1] });
       this.mats = {
-        skin: new T.MeshStandardMaterial({ map: tex('skin'), roughness: 0.52, metalness: 0, name: 'boy-skin' }),
-        thobe: new T.MeshStandardMaterial({ map: thobeTex, color: 0xe6e6e1, roughness: 0.9, alphaTest: 0.5, side: T.DoubleSide, name: 'boy-thobe' }),
-        sirwal: new T.MeshStandardMaterial({ map: tex('sirwal'), color: 0xdedeD8, roughness: 0.9, alphaTest: 0.5, side: T.DoubleSide, name: 'boy-sirwal' }),
-        eyes: new T.MeshStandardMaterial({ map: tex('eyes'), roughness: 0.25, name: 'boy-eyes' }),
-        cornea: new T.MeshStandardMaterial({ color: 0xffffff, roughness: 0.03, transparent: true, opacity: 0.14, depthWrite: false, name: 'boy-cornea' }),
-        cloth: new T.MeshStandardMaterial({ map: fabricTexture(256, '#f6f6f2', { seed: 11 }), color: 0xe4e4df, roughness: 0.9, side: T.DoubleSide, name: 'boy-thobe-skirt' }),
-        ghutra: new T.MeshStandardMaterial({ map: fabricTexture(256, '#fbfbf8', { seed: 5, hem: 10 }), color: 0xececE8, roughness: 0.88, side: T.DoubleSide, name: 'boy-ghutra' }),
-        agal: new T.MeshStandardMaterial({ color: 0x0d0d0f, roughness: 0.62, metalness: 0.0, name: 'boy-agal' }),
+        skin: skinShading(new T.MeshStandardMaterial({ map: tex('skin'), normalMap: has('skin_n') ? lin('skin_n') : null, normalScale: new T.Vector2(0.22, 0.22), roughnessMap: has('skin_r') ? lin('skin_r') : null, roughness: 1, metalness: 0, envMapIntensity: 0.8, name: 'boy-skin' })),
+        thobe: cottonMat({ map: thobeTex, normalMap: has('thobe_n') ? lin('thobe_n') : null, normalScale: new T.Vector2(1.0, 1.0), color: 0xdcdcd6, alphaTest: 0.5, side: T.DoubleSide, name: 'boy-thobe' }),
+        sirwal: cottonMat({ map: tex('sirwal'), color: 0xd4d4ce, alphaTest: 0.5, side: T.DoubleSide, name: 'boy-sirwal' }),
+        eyes: new T.MeshStandardMaterial({ map: tex('eyes'), roughness: 0.3, envMapIntensity: 0.6, name: 'boy-eyes' }),
+        cornea: new T.MeshPhysicalMaterial({ color: 0xffffff, roughness: 0.02, metalness: 0, transparent: true, opacity: 0.12, depthWrite: false, envMapIntensity: 2.2, clearcoat: 1, clearcoatRoughness: 0.02, name: 'boy-cornea' }),
+        lashes: new T.MeshStandardMaterial({ map: has('lashes') ? tex('lashes') : null, alphaTest: 0.5, side: T.DoubleSide, roughness: 0.7, envMapIntensity: 0.3, name: 'boy-lashes' }),
+        cloth: cottonMat({ map: fabricTexture(256, '#f6f6f2', { seed: 11 }), normalMap: clothN, normalScale: new T.Vector2(0.6, 0.6), color: 0xdadad4, side: T.DoubleSide, name: 'boy-thobe-skirt' }),
+        ghutra: cottonMat({ map: fabricTexture(256, '#fbfbf8', { seed: 5, hem: 10 }), normalMap: clothN2, normalScale: new T.Vector2(0.5, 0.5), color: 0xe4e4df, side: T.DoubleSide, name: 'boy-ghutra' }),
+        agal: new T.MeshStandardMaterial({ color: 0x060606, roughness: 0.9, metalness: 0.0, envMapIntensity: 0.25, normalMap: ropeNormal(), normalScale: new T.Vector2(1.2, 1.2), name: 'boy-agal' }),
       };
       this.meshes = {};
-      for (const name of ['skin', 'sirwal', 'thobe', 'eyes', 'cornea']) {
+      for (const name of ['skin', 'sirwal', 'thobe', 'eyes', 'cornea', 'lashes']) {
+        if (!D.meshes[name]) continue;
         const mesh = new T.SkinnedMesh(meshGeometry(D.meshes[name], buf), this.mats[name]); mesh.name = 'boy-' + name;
-        this.mats[name].skinning = true; mesh.castShadow = !['eyes', 'cornea'].includes(name); mesh.receiveShadow = true; mesh.frustumCulled = false;
+        this.mats[name].skinning = true; mesh.castShadow = !['eyes', 'cornea', 'lashes'].includes(name); mesh.receiveShadow = true; mesh.frustumCulled = false;
         model.add(mesh); mesh.bind(skeleton); this.meshes[name] = mesh;
       }
       this.buildShoes();
       this.buildSkirt();
       this.buildGhutra();
       this.buildAgal();
+      this.buildCollar();
       this.cacheRig();
       this.prevGroupPos = new V3(); this.groupVel = new V3(); this.groupAcc = new V3(); this._accSm = new V3();
       this.wind = 0; this.time = 0; this.clothAccum = 0; this.quality = 1;
@@ -283,23 +322,28 @@
       const prof = cleanProfile(cap.profile), torso = cleanProfile(cap.torso);
       this.headProf = prof; this.torsoProf = torso;
       const hc = cap.center, top = cap.top, brow = cap.brow, yJaw = lm.chin[1] + 0.035;
-      const NC = 40, NH = 17, rows = [];
-      for (let k = 0; k < NH; k++) rows.push(lerp(top - 0.005, yJaw, Math.pow(k / (NH - 1), 1.05)));
+      const NC = 52, NH = 21, rows = [];
+      for (let k = 0; k < NH; k++) rows.push(lerp(top - 0.004, yJaw, Math.pow(k / (NH - 1), 1.15)));
       const hemY = th => { const b = (1 - Math.cos(th)) / 2; return lerp(1.085, 0.95, Math.pow(b, 1.4)); };
-      for (let y = yJaw - 0.018; y > 0.94; y -= 0.018) rows.push(y);
+      for (let y = yJaw - 0.015; y > 0.94; y -= 0.015) rows.push(y);
       const yAg = top - 0.052;
       const grid = rows.map(() => new Int32Array(NC).fill(-1));
-      const P = [], pinned = [];
-      const thetaCut = y => y >= brow ? 0 : 0.98 * Math.sqrt(clamp((brow - y) / 0.014, 0, 1));
+      const P = [], pinned = [], EDGE = [];
+      const thetaCut = y => { const t = brow - y; if (t <= 0) return 0; if (t < 0.02) return 0.6 * Math.pow(t / 0.02, 0.7); return 0.6 + 0.38 * (1 - Math.exp(-(t - 0.02) / 0.035)); }; // peaked Qatari front, arching down the temples
       const nc = [0, lm.neck[2] + 0.004];
       for (let i = 0; i < rows.length; i++) {
         const y = rows[i], isHead = i < NH;
         for (let j = 0; j < NC; j++) {
           let th = j / NC * TAU; const ths = th > Math.PI ? th - TAU : th;           // signed angle, 0 = front
-          if (Math.abs(ths) < thetaCut(y)) continue;
+          const cut = thetaCut(y);
+          // head rows: the face opening is cut per pixel (signed edge distance, discarded in the shader) so the framing is a
+          // smooth peaked curve at any mesh resolution; only vertices well inside the opening are dropped
+          const f = y >= brow ? Math.abs(ths) + (y - brow) * 20 : Math.abs(ths) - cut;
+          if (f < -1.6 * TAU / NC) continue;
           if (!isHead && y < hemY(th)) continue;
           const dx = Math.sin(th), dz = Math.cos(th);
           let x, z, yy = y;
+          if (!isHead && y - 0.015 < hemY(th)) yy = hemY(th);              // last row above the hem → on the hem line
           if (isHead) {
             const back = smooth(0.4, 2.6, Math.abs(ths));
             let r = profileR(prof, y, th) + 0.009 + 0.006 * back * smooth(yAg, yJaw, y) - 0.003 * Math.exp(-(((y - yAg) / 0.008) ** 2));
@@ -310,15 +354,16 @@
             const t = clamp((yJaw - y) / 0.12, 0, 1);
             const jr = profileR(prof, yJaw, th) + 0.012;
             const jx = hc[0] + dx * jr, jz = hc[2] + dz * jr;
-            const rn = Math.hypot(jx - nc[0], jz - nc[1]);
-            const tr = y <= lm.neck[1] + 0.005 ? profileR(torso, y, th) + 0.026 : 0;
-            const r = Math.max(lerp(rn, 0.07, t * 0.5), tr, 0.065);
-            x = nc[0] + dx * r; z = nc[1] + dz * r;
+            const rn = Math.hypot(jx - nc[0], jz - nc[1]), ux = (jx - nc[0]) / rn, uz = (jz - nc[1]) / rn;   // radial direction through the jaw point
+            const tr = y <= lm.neck[1] + 0.005 ? profileR(torso, y, Math.atan2(ux, uz)) + 0.026 : 0;
+            const frontish = smooth(2.3, 1.3, Math.abs(ths));                 // beside the face the cloth falls straight from the cheeks
+            const r = Math.max(lerp(rn, 0.07, t * 0.5 * (1 - frontish)), tr, 0.065);
+            x = nc[0] + ux * r; z = nc[1] + uz * r;
           }
-          grid[i][j] = P.length; P.push([x, yy, z]); pinned.push(isHead);
+          grid[i][j] = P.length; P.push([x, yy, z]); pinned.push(isHead); EDGE.push(f);
         }
       }
-      const apex = P.length; P.push([hc[0], top + 0.004, hc[2] - 0.004]); pinned.push(true);
+      const apex = P.length; P.push([hc[0], top + 0.004, hc[2] - 0.004]); pinned.push(true); EDGE.push(1);
       const cl = this.ghutra = new Cloth(P.length);
       P.forEach((p, i) => { cl.p.set(p, i * 3); if (pinned[i]) cl.w[i] = 0; });
       const at = (i, j) => (i >= 0 && i < rows.length) ? grid[i][((j % NC) + NC) % NC] : -1;
@@ -347,7 +392,11 @@
       }
       for (let j = 0; j < NC; j++) { const a = at(0, j), b = at(0, j + 1); if (a >= 0 && b >= 0) idx.push(apex, b, a); }
       const g = new T.BufferGeometry(); g.setAttribute('position', new T.BufferAttribute(new Float32Array(cl.n * 3), 3)); g.setAttribute('uv', new T.BufferAttribute(uv, 2)); g.setIndex(idx);
+      g.setAttribute('aEdge', new T.Float32BufferAttribute(EDGE, 1));
+      const edgeCut = m => { m.onBeforeCompile = sh => { sh.vertexShader = 'attribute float aEdge;\nvarying float vEdge;\n' + sh.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\nvEdge = aEdge;'); sh.fragmentShader = 'varying float vEdge;\n' + sh.fragmentShader.replace('void main() {', 'void main() {\nif (vEdge < 0.0) discard;'); }; m.customProgramCacheKey = () => 'qr-ghutra-edge'; return m; };
+      edgeCut(this.mats.ghutra);
       const mesh = this.ghutraMesh = new T.Mesh(g, this.mats.ghutra); mesh.castShadow = true; mesh.receiveShadow = true; mesh.frustumCulled = false; mesh.name = 'boy-ghutra';
+      mesh.customDepthMaterial = edgeCut(new T.MeshDepthMaterial({ depthPacking: T.RGBADepthPacking }));
       this.model.add(mesh);
       this.ghutraInfo = { yAg, hc, rows, NH, grid, NC };
     }
@@ -355,8 +404,8 @@
     // -------------------------------------------------------------- agal (rigid, on the head bone) + two hanging tassels
     buildAgal() {
       const B = this.B = this.bones, { yAg, hc } = this.ghutraInfo, prof = this.headProf, head = B.head, hh = head.userData.head;
-      const ringPts = dy => { const pts = []; for (let k = 0; k < 48; k++) { const th = k / 48 * TAU, dx = Math.sin(th), dz = Math.cos(th); const y = yAg + dy + 0.011 * Math.cos(th); const r = profileR(prof, y, th) + 0.0175; pts.push(new V3(hc[0] + dx * r - hh.x, y - hh.y, hc[2] + dz * r - hh.z)); } return new T.CatmullRomCurve3(pts, true); };
-      for (const dy of [0.0, -0.0155]) { const m = new T.Mesh(new T.TubeGeometry(ringPts(dy), 96, 0.0068, 10, true), this.mats.agal); m.castShadow = true; m.name = 'boy-agal-ring'; head.add(m); }
+      const ringPts = dy => { const pts = []; for (let k = 0; k < 48; k++) { const th = k / 48 * TAU, dx = Math.sin(th), dz = Math.cos(th); const y = yAg + dy + 0.011 * Math.cos(th); const r = profileR(prof, y, th) + 0.0128; pts.push(new V3(hc[0] + dx * r - hh.x, y - hh.y, hc[2] + dz * r - hh.z)); } return new T.CatmullRomCurve3(pts, true); };
+      this.mats.agal.normalMap.repeat.set(150, 1); for (const dy of [0.0, -0.0094]) { const m = new T.Mesh(new T.TubeGeometry(ringPts(dy), 128, 0.0047, 10, true), this.mats.agal); m.castShadow = true; m.name = 'boy-agal-ring'; head.add(m); }
       // tassel cords: short Verlet chains hanging from the back of the agal
       const th = Math.PI, r = profileR(prof, yAg - 0.008, th) + 0.02;
       this.tassels = [];
@@ -369,6 +418,40 @@
         const parts = []; for (let i = 0; i < n - 1; i++) { const m = new T.Mesh(new T.CylinderGeometry(i === n - 2 ? 0.0065 : 0.0032, i === n - 2 ? 0.0045 : 0.0032, 1, 6), this.mats.agal); m.castShadow = true; this.model.add(m); parts.push(m); }
         this.tassels.push({ chain, anchor: anchor.clone().sub(hh), parts });
       }
+    }
+
+    // -------------------------------------------------------------- Qatari thobe collar: stiff band + folded points (rigid on the neck base)
+    buildCollar() {
+      const pos = this.meshes.thobe.geometry.attributes.position, lm = this.D.lm, nz = lm.neck[2], ny = lm.neck[1];
+      // collar line of the thobe (same formula as the build script: neck + 1 cm, dipping ~1.8 cm at the throat)
+      const NA = 56, top = []; const yT = th => ny + 0.0084 - 0.0184 * Math.exp(-((th / 0.55) ** 2));
+      for (let k = 0; k < NA; k++) top.push(null);
+      for (let i = 0; i < pos.count; i++) {
+        const x = pos.getX(i), y = pos.getY(i), z = pos.getZ(i); const r = Math.hypot(x, z - nz); if (r > 0.1) continue;
+        const th = Math.atan2(x, z - nz), k = ((Math.round(th / TAU * NA) % NA) + NA) % NA;
+        if (y < yT(th) - 0.002 || y > yT(th) + 0.01) continue;
+        if (!top[k] || r > top[k][3]) top[k] = [x, yT(th), z, r, th];
+      }
+      for (let k = 0; k < NA; k++) if (!top[k]) { const th = k / NA * TAU; top[k] = [0, yT(th), 0, 0.055, th]; }
+      const ys = top.map((t, k) => (top[(k + NA - 1) % NA][1] + 2 * t[1] + top[(k + 1) % NA][1]) / 4), rs = top.map((t, k) => (top[(k + NA - 1) % NA][3] + 2 * t[3] + top[(k + 1) % NA][3]) / 4);
+      const bone = this.bones.neck01, bh = bone.userData.head;
+      const P = [], UV = [], I = [];
+      const ring = [], gap = 0.16;                      // collar opening at the throat (radians each side)
+      for (let k = 0; k <= NA; k++) { const th = -Math.PI + k / NA * TAU; if (Math.abs(th) < gap) continue; ring.push(th); }
+      ring.sort((a, b) => ((a + TAU) % TAU) - ((b + TAU) % TAU));
+      const at = th => { const f = (((th / TAU) * NA) % NA + NA) % NA, k0 = Math.floor(f) % NA, k1 = (k0 + 1) % NA, u = f - Math.floor(f); return [ys[k0] * (1 - u) + ys[k1] * u, rs[k0] * (1 - u) + rs[k1] * u]; };
+      // rows: 0 band bottom, 1 band top, 2 fold edge (outer), 3 fall tip
+      const rowsN = 4, cols = ring.length;
+      for (let c = 0; c < cols; c++) {
+        const th = ring[c], [y0, r0] = at(th), dx = Math.sin(th), dz = Math.cos(th);
+        const front = Math.exp(-(((Math.abs(th) - gap) / 0.5) ** 2));          // collar points at the front
+        const bandH = 0.019 - 0.003 * front, fall = 0.016 + 0.013 * front;
+        const pts = [[r0 + 0.003, y0 - 0.004], [r0 - 0.002, y0 + bandH], [r0 + 0.005, y0 + bandH + 0.002], [r0 + 0.01 + 0.005 * front, y0 + bandH - fall]];
+        pts.forEach(([r, y], j) => { P.push(dx * r - bh.x, y - bh.y, nz + dz * r - bh.z); UV.push(c / (cols - 1) * 6, j / (rowsN - 1)); });
+      }
+      for (let c = 0; c < cols - 1; c++) for (let j = 0; j < rowsN - 1; j++) { const a = c * rowsN + j, b = a + rowsN; I.push(a, b, a + 1, a + 1, b, b + 1); }
+      const g = new T.BufferGeometry(); g.setAttribute('position', new T.Float32BufferAttribute(P, 3)); g.setAttribute('uv', new T.Float32BufferAttribute(UV, 2)); g.setIndex(I); g.computeVertexNormals();
+      const m = new T.Mesh(g, this.mats.cloth); m.castShadow = true; m.receiveShadow = true; m.name = 'boy-thobe-collar'; bone.add(m); this.collar = m;
     }
 
     // -------------------------------------------------------------- rig cache

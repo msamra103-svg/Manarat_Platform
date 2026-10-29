@@ -1,4 +1,5 @@
-/* عدّاء قطر — procedural textures (canvas, generated offline at start-up; no image files, no network). */
+/* عدّاء قطر — textures: photo-like PBR maps generated offline (tools/textures/build_env.py → js/tex-data.js, loaded from
+ * data URIs, no network) plus small canvas textures drawn at start-up (signs, flag, lattice, glows). */
 (function (root) {
   'use strict';
   const T = root.THREE;
@@ -121,5 +122,29 @@
     const r = 32; for (let yy = 0; yy <= S; yy += r) for (let xx = 0; xx <= S; xx += r) { x.beginPath(); for (let i = 0; i < 8; i++) { const a = i / 8 * Math.PI * 2; const px = xx + Math.cos(a) * r * 0.48, py = yy + Math.sin(a) * r * 0.48; i ? x.lineTo(px, py) : x.moveTo(px, py); } x.closePath(); x.stroke(); }
     return tex(c);
   }
-  root.QRTex = { road, curb, pavers, stone, plaster, bark, frond, facade, lattice, glow, qatarFlag, sign, waterNormal, sand, grass, diagrid, mashrabiyaSkin, reseed, rnd: () => rnd() };
+  // ------------------------------------------------------------------ packed PBR maps (js/tex-data.js)
+  const imgCache = {}, pending = [];
+  function image(name) {
+    if (imgCache[name]) return imgCache[name];
+    const src = (root.QR_TEX_DATA || {})[name]; if (!src) return null;
+    const img = new Image(); const rec = imgCache[name] = { img, ok: false, wait: [] };
+    pending.push(new Promise(res => { img.onload = () => { rec.ok = true; rec.wait.forEach(t => { t.image = img; t.needsUpdate = true; }); rec.wait = []; res(); }; img.onerror = () => res(); }));
+    img.src = src; return rec;
+  }
+  function photo(name, { srgb = true, repeat = null, aniso = 8, wrap = true } = {}) {
+    const rec = image(name); if (!rec) return null;
+    const t = new T.Texture(); t.encoding = srgb ? T.sRGBEncoding : T.LinearEncoding; if (wrap) t.wrapS = t.wrapT = T.RepeatWrapping; t.anisotropy = aniso;
+    if (repeat) t.repeat.set(repeat[0], repeat[1]);
+    if (rec.ok) { t.image = rec.img; t.needsUpdate = true; } else rec.wait.push(t);
+    return t;
+  }
+  function pbr(name, o = {}) { // {map, normalMap, roughnessMap, emissiveMap} for name_c/_n/_r/_e
+    const r = o.repeat; const m = { map: photo(name + '_c', { repeat: r }) };
+    const n = photo(name + '_n', { srgb: false, repeat: r }); if (n) m.normalMap = n;
+    const ro = photo(name + '_r', { srgb: false, repeat: r }); if (ro) m.roughnessMap = ro;
+    if (o.emissive) { const e = photo(name + '_e', { repeat: r }); if (e) m.emissiveMap = e; }
+    return m;
+  }
+  const ready = () => Promise.all(pending);
+  root.QRTex = { photo, pbr, ready, road, curb, pavers, stone, plaster, bark, frond, facade, lattice, glow, qatarFlag, sign, waterNormal, sand, grass, diagrid, mashrabiyaSkin, reseed, rnd: () => rnd() };
 })(typeof window !== 'undefined' ? window : globalThis);

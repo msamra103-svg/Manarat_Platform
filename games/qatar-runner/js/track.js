@@ -22,7 +22,7 @@
     cart: { build: () => P.cart(), action: 'block', box: [1.95, 2.1, 2.7], zones: ['souq'] },
     rug: { build: () => P.carpetBanner(), action: 'slide', box: [2.4, 1.3, 0.25], yMin: 1.24, zones: ['souq'] }
   };
-  const PAINTS = ['#f4f4f2', '#f4f4f2', '#c9ccd0', '#1c1d20', '#2c3e57', '#7d1230', '#3cb7ae', '#d6d0c4'];
+  const PAINTS = ['#e4e4e1', '#e4e4e1', '#b9bdc2', '#1c1d20', '#2c3e57', '#6e1029', '#7a7f85', '#cfc8ba'];
 
   class Track {
     constructor(scene, track, opts = {}) {
@@ -97,7 +97,7 @@
       if (K.triple) { for (const dx of [-0.75, 0, 0.75]) { const g = this.obj(kind); g.position.set(x + dx, 0, -row.s); row.objs.push({ kind, g, lane, action, box: { x0: x + dx - 0.25, x1: x + dx + 0.25, y0: 0, y1: K.box[1], s0: row.s - 0.25, s1: row.s + 0.25 } }); } return; }
       const g = this.obj(kind); g.position.set(x, 0, -row.s);
       if (K.paint) { const col = new T.Color(PAINTS[(rnd() * PAINTS.length) | 0]).convertSRGBToLinear(); g.children.forEach(m => { if (m.name === 'body') { if (!m.userData.own) { m.material = m.material.clone(); m.userData.own = true; } m.material.color.copy(col); } }); }
-      if (action === 'block') g.rotation.y = rnd() < 0.5 ? 0 : Math.PI; // parked either way
+      if (action === 'block') { rnd(); g.rotation.y = Math.PI; } // parked facing the direction of travel of this carriageway (right-hand traffic)
       const half = K.box[2] / 2, sOff = action === 'block' ? half - 0.4 : 0; // vehicles start at the row and extend ahead
       if (action === 'block') g.position.z = -(row.s + sOff);
       row.objs.push({ kind, g, lane, action, box: { x0: x - K.box[0] / 2, x1: x + K.box[0] / 2, y0: K.yMin || 0, y1: (K.yMin || 0) + K.box[1], s0: row.s + sOff - half, s1: row.s + sOff + half } });

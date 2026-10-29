@@ -58,8 +58,8 @@
   }
   // facade material: UVs in world units taken from the instance scale (one texture tile = panel × floor),
   // per-window random night lighting
-  function facadeMat(map, emap, panel, floor, o = {}) {
-    const m = new T.MeshStandardMaterial({ map, emissiveMap: emap, emissive: new T.Color(1, 1, 1), emissiveIntensity: 0, roughness: o.rough == null ? 0.55 : o.rough, metalness: o.metal || 0, envMapIntensity: o.env || 1 });
+  function facadeMat(maps, panel, floor, o = {}) {
+    const m = new T.MeshStandardMaterial(Object.assign({}, maps, { emissive: new T.Color(1, 1, 1), emissiveIntensity: 0, roughness: 1, metalness: o.metal || 0, envMapIntensity: o.env || 1, normalScale: new T.Vector2(1, 1) }));
     m.onBeforeCompile = s => {
       s.uniforms.uNight = U.night;
       s.vertexShader = s.vertexShader.replace('#include <uv_vertex>', `#include <uv_vertex>
@@ -80,10 +80,10 @@
 
   // ------------------------------------------------------------------ time of day presets
   const TOD = [
-    { sunEl: 52, sunAz: 140, sun: '#fff1dc', sunI: 2.8, hemiS: '#cfe6ff', hemiG: '#ad9472', hemiI: 0.8, top: '#1b5fc0', hor: '#9cc9ea', fog: '#b9d6ea', exp: 0.86, night: 0 },
-    { sunEl: 17, sunAz: 205, sun: '#ffcf8c', sunI: 2.3, hemiS: '#f0d9bd', hemiG: '#8a6c52', hemiI: 0.62, top: '#4777b2', hor: '#f4c891', fog: '#e9d0ac', exp: 0.98, night: 0.08 },
-    { sunEl: 3.5, sunAz: 215, sun: '#ff8d4f', sunI: 1.5, hemiS: '#e6a681', hemiG: '#4b3a3c', hemiI: 0.5, top: '#26386a', hor: '#ff9b5c', fog: '#c88f73', exp: 1.05, night: 0.55 },
-    { sunEl: 38, sunAz: 120, sun: '#9db5e3', sunI: 0.42, hemiS: '#3b4c74', hemiG: '#16161d', hemiI: 0.45, top: '#040a1b', hor: '#1b2a4a', fog: '#1c2944', exp: 1.25, night: 1 }
+    { skyEl: 52, sunEl: 52, sunAz: 140, sun: '#fff0d8', sunI: 3.3, hemiS: '#cfe6ff', hemiG: '#ad9472', hemiI: 0.28, top: '#1b5fc0', hor: '#9cc9ea', fog: '#b9d6ea', exp: 0.66, night: 0 },
+    { skyEl: 17, sunEl: 17, sunAz: 205, sun: '#ffcf8c', sunI: 2.3, hemiS: '#f0d9bd', hemiG: '#8a6c52', hemiI: 0.62, top: '#4777b2', hor: '#f4c891', fog: '#e9d0ac', exp: 0.98, night: 0.08 },
+    { skyEl: 2.5, sunEl: 3.5, sunAz: 215, sun: '#ff8d4f', sunI: 1.5, hemiS: '#e6a681', hemiG: '#4b3a3c', hemiI: 0.5, top: '#26386a', hor: '#ff9b5c', fog: '#c88f73', exp: 1.05, night: 0.55 },
+    { skyEl: -9, sunEl: 38, sunAz: 120, sun: '#9db5e3', sunI: 0.42, hemiS: '#3b4c74', hemiG: '#16161d', hemiI: 0.45, top: '#040a1b', hor: '#1b2a4a', fog: '#1c2944', exp: 1.25, night: 1 }
   ];
   function lerpTod(t) { const i = clamp(Math.floor(t), 0, TOD.length - 2), f = clamp(t - i, 0, 1), a = TOD[i], b = TOD[i + 1], o = {}; for (const k in a) o[k] = typeof a[k] === 'number' ? lerp(a[k], b[k], f) : new T.Color(a[k]).lerp(new T.Color(b[k]), f); return o; }
 
@@ -100,19 +100,45 @@
     }
     // ---------------------------------------------------------------- sky, lights, fog, environment map
     buildSkyAndLights() {
+      // physically based daylight sky (Preetham / Hosek-style analytic model, as in three.js examples/Sky.js, MIT)
+      // with Doha haze (high turbidity), blended into a starry night gradient after sunset
       const skyMat = this.skyMat = new T.ShaderMaterial({
         side: T.BackSide, depthWrite: false, fog: false,
-        uniforms: { top: { value: new T.Color() }, hor: { value: new T.Color() }, sunDir: { value: new T.Vector3(0, 1, 0) }, sunCol: { value: new T.Color() }, night: { value: 0 } },
-        vertexShader: 'varying vec3 vDir; void main(){ vDir = normalize(position); vec4 p = projectionMatrix * modelViewMatrix * vec4(position,1.0); gl_Position = p.xyww; }',
-        fragmentShader: `uniform vec3 top, hor, sunDir, sunCol; uniform float night; varying vec3 vDir;
+        uniforms: { top: { value: new T.Color() }, hor: { value: new T.Color() }, sunDir: { value: new T.Vector3(0, 1, 0) }, sunCol: { value: new T.Color() }, night: { value: 0 },
+          turbidity: { value: 3.2 }, rayleigh: { value: 1.25 }, mieC: { value: 0.005 }, mieG: { value: 0.8 }, gain: { value: 0.62 }, sat: { value: 1.75 } },
+        vertexShader: `uniform vec3 sunDir; uniform float turbidity, rayleigh, mieC;
+          varying vec3 vDir; varying vec3 vBetaR, vBetaM; varying float vSunE;
+          const vec3 totalRayleigh = vec3(5.804542996261093E-6, 1.3562911419845635E-5, 3.0265902468824876E-5);
+          const vec3 MieConst = vec3(1.8399918514433978E14, 2.7798023919660528E14, 4.0790479543861094E14);
+          float sunIntensity(float c) { c = clamp(c, -1.0, 1.0); return 1000.0 * max(0.0, 1.0 - exp(-((1.6110731556870734 - acos(c)) / 1.5))); }
+          void main(){ vDir = normalize(position); vec4 p = projectionMatrix * modelViewMatrix * vec4(position, 1.0); gl_Position = p.xyww;
+            vSunE = sunIntensity(normalize(sunDir).y);
+            vBetaR = totalRayleigh * rayleigh;
+            vBetaM = 0.434 * (0.2 * turbidity) * 10E-18 * MieConst * mieC; }`,
+        fragmentShader: `uniform vec3 top, hor, sunDir, sunCol; uniform float night, mieG, gain, sat; varying vec3 vDir; varying vec3 vBetaR, vBetaM; varying float vSunE;
+          const float pi = 3.141592653589793;
           float h21(vec3 p){ return fract(sin(dot(p, vec3(12.9898,78.233,37.719))) * 43758.5453); }
-          void main(){ vec3 d = normalize(vDir); float h = d.y;
-            vec3 col = mix(hor, top, pow(clamp(h, 0.0, 1.0), 0.48));
-            col = mix(col, hor * 0.82, smoothstep(0.0, -0.12, h));
-            float s = max(dot(d, normalize(sunDir)), 0.0);
-            col += sunCol * (pow(s, 900.0) * 6.0 * (1.0 - night * 0.7) + pow(s, 14.0) * 0.28 + pow(s, 3.0) * 0.06);
-            col += hor * 0.18 * exp(-abs(h) * 14.0);
-            if (night > 0.3 && h > 0.04) { vec3 q = floor(d * 380.0); float st = step(0.9965, h21(q)); col += vec3(st) * (night - 0.3) * 1.2 * (0.6 + 0.4 * sin(h21(q + 1.0) * 30.0)); }
+          float rPhase(float c){ return 0.05968310365946075 * (1.0 + c * c); }
+          float hgPhase(float c, float g){ float g2 = g * g; return 0.07957747154594767 * (1.0 - g2) / pow(1.0 - 2.0 * g * c + g2, 1.5); }
+          void main(){ vec3 d = normalize(vDir); vec3 sd = normalize(sunDir); vec3 up = vec3(0.0, 1.0, 0.0);
+            float dy = max(d.y, 0.0);
+            float zen = acos(dy);
+            float inv = 1.0 / (cos(zen) + 0.15 * pow(93.885 - zen * 180.0 / pi, -1.253));
+            vec3 Fex = exp(-(vBetaR * 8.4E3 * inv + vBetaM * 1.25E3 * inv));
+            float ct = dot(d, sd);
+            vec3 bR = vBetaR * rPhase(ct * 0.5 + 0.5), bM = vBetaM * hgPhase(ct, mieG);
+            vec3 Lin = pow(vSunE * ((bR + bM) / (vBetaR + vBetaM)) * (1.0 - Fex), vec3(1.5));
+            Lin *= mix(vec3(1.0), pow(vSunE * ((bR + bM) / (vBetaR + vBetaM)) * Fex, vec3(0.5)), clamp(pow(1.0 - dot(up, sd), 5.0), 0.0, 1.0));
+            vec3 L0 = vec3(0.1) * Fex + vSunE * 19000.0 * Fex * smoothstep(0.99995, 0.99997, ct);
+            vec3 day = pow((Lin + L0) * 0.04 + vec3(0.0, 0.0003, 0.00075), vec3(1.0 / 2.4)) * gain;
+            { float l = dot(day, vec3(0.2126, 0.7152, 0.0722)); day = max(vec3(l) + (day - l) * sat, 0.0) * mix(0.82, 1.0, smoothstep(0.0, 0.5, 1.0 - d.y)); } // polariser-like depth of the Gulf sky
+            // below the horizon: hazy ground glow so the far bay never shows a hard line
+            day = mix(day, hor * 0.85, smoothstep(0.0, -0.08, d.y));
+            vec3 nightCol = mix(hor, top, pow(clamp(d.y, 0.0, 1.0), 0.5));
+            nightCol = mix(nightCol, hor * 0.8, smoothstep(0.0, -0.12, d.y));
+            if (d.y > 0.04) { vec3 q = floor(d * 380.0); float st = step(0.9965, h21(q)); nightCol += vec3(st) * 1.2 * (0.6 + 0.4 * sin(h21(q + 1.0) * 30.0)) * smoothstep(0.3, 1.0, night); }
+            float s = max(dot(d, normalize(vec3(-0.3, 0.6, -0.7))), 0.0); nightCol += vec3(0.75, 0.8, 0.9) * pow(s, 2500.0) * 4.0 * smoothstep(0.6, 1.0, night);
+            vec3 col = mix(day, nightCol, smoothstep(0.55, 1.0, night));
             gl_FragColor = vec4(col, 1.0);
             #include <tonemapping_fragment>
             #include <encodings_fragment>
@@ -121,7 +147,7 @@
       this.sky = new T.Mesh(new T.SphereGeometry(4000, 32, 16), skyMat); this.sky.renderOrder = -10; this.bg.add(this.sky);
       this.envScene = new T.Scene(); this.envSky = new T.Mesh(new T.SphereGeometry(100, 32, 16), skyMat); this.envScene.add(this.envSky);
       this.pmrem = new T.PMREMGenerator(this.renderer);
-      this.scene.fog = new T.Fog(0xcfe4f0, 110, 360); this.bg.fog = new T.Fog(0xcfe4f0, 500, 5200);
+      this.scene.fog = new T.Fog(0xcfe4f0, 110, 360); this.bg.fog = new T.Fog(0xcfe4f0, 120, 3400);
       this.hemi = new T.HemisphereLight(0xffffff, 0x888888, 0.8); this.scene.add(this.hemi); this.bgHemi = new T.HemisphereLight(0xffffff, 0x888888, 0.8); this.bg.add(this.bgHemi);
       const sun = this.sun = new T.DirectionalLight(0xffffff, 2.5); this.scene.add(sun); this.scene.add(sun.target);
       this.bgSun = new T.DirectionalLight(0xffffff, 2.0); this.bg.add(this.bgSun);
@@ -136,7 +162,7 @@
       const el = o.sunEl * Math.PI / 180, az = o.sunAz * Math.PI / 180;
       this.sunDir = new T.Vector3(Math.cos(el) * Math.sin(az), Math.sin(el), Math.cos(el) * Math.cos(az)).normalize();
       this.skyMat.uniforms.top.value.copy(o.top); this.skyMat.uniforms.hor.value.copy(o.hor); this.skyMat.uniforms.sunCol.value.copy(o.sun).multiplyScalar(Math.min(1, o.sunI / 2)); this.skyMat.uniforms.night.value = o.night;
-      this.skyMat.uniforms.sunDir.value.copy(o.night > 0.8 ? new T.Vector3(-0.3, 0.6, -0.7).normalize() : this.sunDir);
+      { const se = o.skyEl * Math.PI / 180; this.skyMat.uniforms.sunDir.value.set(Math.cos(se) * Math.sin(az), Math.sin(se), Math.cos(se) * Math.cos(az)).normalize(); }
       this.sun.color.copy(o.sun); this.sun.intensity = o.sunI; this.bgSun.color.copy(o.sun); this.bgSun.intensity = o.sunI * 0.9; this.bgSun.position.copy(this.sunDir).multiplyScalar(100);
       this.hemi.color.copy(o.hemiS); this.hemi.groundColor.copy(o.hemiG); this.hemi.intensity = o.hemiI; this.bgHemi.color.copy(o.hemiS); this.bgHemi.groundColor.copy(o.hemiG); this.bgHemi.intensity = o.hemiI;
       this.scene.fog.color.copy(o.fog); this.bg.fog.color.copy(o.fog).lerp(o.hor, 0.5);
@@ -146,21 +172,22 @@
       if (this.points) this.points.material.opacity = Math.max(0, o.night - 0.15);
       for (const tw of this.towerNight || []) tw.emissiveIntensity = o.night * tw.userData.k;
       // environment reflections: regenerate when the light has changed enough
-      if (force || Math.abs(t - (this.envT == null ? -9 : this.envT)) > 0.18) { this.envT = t; const rt = this.pmrem.fromScene(this.envScene, 0.02); if (this.envRT) this.envRT.dispose(); this.envRT = rt; this.scene.environment = rt.texture; this.bg.environment = rt.texture; }
+      if (force || Math.abs(t - (this.envT == null ? -9 : this.envT)) > 0.18) { this.envT = t; this.skyMat.uniforms.sat.value = 1.2; const rt = this.pmrem.fromScene(this.envScene, 0.02); this.skyMat.uniforms.sat.value = 1.75; if (this.envRT) this.envRT.dispose(); this.envRT = rt; this.scene.environment = rt.texture; this.bg.environment = rt.texture; }
     }
     // ---------------------------------------------------------------- shared materials
     buildMaterials() {
-      const road = X.road(); this.mRoad = new T.MeshStandardMaterial({ map: road, roughness: 0.88, metalness: 0 });
-      const curb = X.curb(); this.mCurb = new T.MeshStandardMaterial({ map: curb, roughness: 0.6 });
-      const pav = X.pavers(); this.mPaver = new T.MeshStandardMaterial({ map: pav, roughness: 0.85 });
-      const st = X.stone(); this.mStone = new T.MeshStandardMaterial({ map: st, roughness: 0.78, metalness: 0.02 });
-      const gr = X.grass(); this.mGrass = new T.MeshStandardMaterial({ map: gr, roughness: 0.95 });
-      this.mSeawall = new T.MeshStandardMaterial({ color: C('#b8ad98'), roughness: 0.9 });
+      // photo-like PBR maps (tools/textures/build_env.py): colour + normal + roughness
+      this.mRoad = new T.MeshStandardMaterial(Object.assign(X.pbr('road'), { roughness: 1, metalness: 0, normalScale: new T.Vector2(0.7, 0.7) }));
+      this.mCurb = new T.MeshStandardMaterial({ map: X.photo('curb_c'), roughness: 0.75 });
+      this.mPaver = new T.MeshStandardMaterial(Object.assign(X.pbr('paver'), { color: C('#c4bcb0'), roughness: 1, normalScale: new T.Vector2(0.8, 0.8) }));
+      this.mStone = new T.MeshStandardMaterial(Object.assign(X.pbr('souqfloor'), { color: C('#9d9b97'), roughness: 1, metalness: 0, normalScale: new T.Vector2(0.7, 0.7) }));
+      this.mGrass = new T.MeshStandardMaterial({ map: X.photo('grass_c'), normalMap: X.photo('grass_n', { srgb: false }), normalScale: new T.Vector2(0.9, 0.9), roughness: 0.97 });
+      this.mSeawall = new T.MeshStandardMaterial({ map: X.photo('souqfloor_c', { repeat: [0.4, 0.4] }), color: C('#e6dccb'), roughness: 0.9 });
       this.mRail = new T.MeshStandardMaterial({ color: C('#f2f2ef'), roughness: 0.4, metalness: 0.3 });
-      const pl = X.plaster(); pl.repeat.set(0.25, 0.25); this.mPlaster = new T.MeshStandardMaterial({ map: pl, roughness: 0.95 });
-      this.mWoodDark = new T.MeshStandardMaterial({ color: C('#4b3321'), roughness: 0.85 });
+      this.mPlaster = new T.MeshStandardMaterial({ map: X.photo('plaster_c', { repeat: [0.34, 0.34] }), normalMap: X.photo('plaster_n', { srgb: false, repeat: [0.34, 0.34] }), normalScale: new T.Vector2(1.1, 1.1), roughness: 0.96 });
+      this.mWoodDark = new T.MeshStandardMaterial({ map: X.photo('wood_c'), normalMap: X.photo('wood_n', { srgb: false }), color: C('#9a8a7a'), roughness: 0.85 });
       this.mIron = new T.MeshStandardMaterial({ color: C('#151515'), roughness: 0.5, metalness: 0.6 });
-      this.mShop = new T.MeshStandardMaterial({ map: shopTexture(), emissive: new T.Color(1, 0.8, 0.55), emissiveMap: shopTexture(true), emissiveIntensity: 0.55, roughness: 0.9 });
+      this.mShop = new T.MeshStandardMaterial({ map: shopTexture(), emissive: new T.Color(1, 0.8, 0.55), emissiveMap: shopTexture(true), emissiveIntensity: 0.35, roughness: 0.9 });
       this.glowMats = [];
       this.glowMat = (m, base, night) => { if (!m || this.glowMats.includes(m)) return; m.userData.base = base; m.userData.night = night; this.glowMats.push(m); };
     }
@@ -171,9 +198,9 @@
       const N = AHEAD + BEHIND + 3, sh = this.q === 'high';
       this.pRoad = new Pool(tr, plane(7.8, SEG, 1, 1), this.mRoad, N * 2, { shadow: false, name: 'road' });
       this.pCurb = new Pool(tr, curbGeometry(0.3, 0.17, SEG), this.mCurb, N * 5, { shadow: false, name: 'curb' });
-      this.pPromenade = new Pool(tr, box(9, 0.16, SEG, 4.5, 10), this.mPaver, N, { shadow: false, name: 'promenade' });
-      this.pSidewalk = new Pool(tr, box(4.6, 0.16, SEG, 2.3, 10), this.mPaver, N, { shadow: false, name: 'sidewalk' });
-      this.pMedian = new Pool(tr, box(3.1, 0.2, SEG, 1.5, 10), this.mGrass, N, { shadow: false, name: 'median' });
+      this.pPromenade = new Pool(tr, box(9, 0.16, SEG, 9 / 2.4, SEG / 2.4), this.mPaver, N, { shadow: false, name: 'promenade' });
+      this.pSidewalk = new Pool(tr, box(4.6, 0.16, SEG, 4.6 / 2.4, SEG / 2.4), this.mPaver, N, { shadow: false, name: 'sidewalk' });
+      this.pMedian = new Pool(tr, box(3.1, 0.2, SEG, 3.1 / 2, SEG / 2), this.mGrass, N, { shadow: false, name: 'median' });
       this.pSeawall = new Pool(tr, box(0.7, 1.3, SEG), this.mSeawall, N, { shadow: false, name: 'seawall' });
       this.pRail = new Pool(tr, box(0.05, 0.05, SEG), this.mRail, N * 2, { shadow: false, name: 'rail' });
       this.pPost = new PropType(tr, P.railPost(), N * 9, { name: 'post', shadow: false });
@@ -192,13 +219,14 @@
       this.pDhow = new PropType(tr, P.dhow(), 10, { name: 'dhow', shadow: false });
       this.glowMat(P.materials.lampGlow, 0.15, 2.6); this.glowMat(P.materials.lanternGlow, 0.5, 2.2); this.glowMat(P.materials.headL, 0.3, 2.0); this.glowMat(P.materials.tailL, 0.4, 1.6); this.glowMat(this.mShop, 0.35, 1.1);
       // buildings (city side of the Corniche)
-      const [stoneMap, stoneE] = X.facade('stone'), [glassMap, glassE] = X.facade('glass'), [mashMap, mashE] = X.facade('mashrabiya');
+      const fac = n => X.pbr(n, { emissive: true });
       const bgeo = new T.BoxGeometry(1, 1, 1); bgeo.translate(0, 0.5, 0);
       this.pBld = {
-        stone: new Pool(tr, bgeo, facadeMat(stoneMap, stoneE, 2.6, 3.8), N * 2, { shadow: sh, colors: true, name: 'bld-stone' }),
-        glass: new Pool(tr, bgeo, facadeMat(glassMap, glassE, 3.0, 3.8, { rough: 0.12, metal: 0.65, env: 1.3 }), N * 2, { shadow: sh, colors: true, name: 'bld-glass' }),
-        mash: new Pool(tr, bgeo, facadeMat(mashMap, mashE, 3.4, 4.2), N * 2, { shadow: sh, colors: true, name: 'bld-mash' })
+        stone: new Pool(tr, bgeo, facadeMat(fac('stonefac'), 2.6, 3.8), N * 2, { shadow: sh, colors: true, name: 'bld-stone' }),
+        glass: new Pool(tr, bgeo, facadeMat(fac('glassfac'), 3.0, 3.8, { metal: 0.85, env: 1.5 }), N * 2, { shadow: sh, colors: true, name: 'bld-glass' }),
+        mash: new Pool(tr, bgeo, facadeMat(fac('mashfac'), 3.4, 4.2), N * 2, { shadow: sh, colors: true, name: 'bld-mash' })
       };
+      this.pPodium = new Pool(tr, bgeo, facadeMat(fac('shopfac'), 4.0, 4.5, { env: 1.2 }), N * 2, { shadow: sh, colors: true, name: 'bld-podium' });
       this.pRoof = new Pool(tr, new T.BoxGeometry(1, 1, 1).translate(0, 0.5, 0), new T.MeshStandardMaterial({ color: C('#d9d1c2'), roughness: 0.8 }), N * 4, { shadow: false, colors: true, name: 'roof' });
       // souq facade modules (two variants) and the heritage gate
       this.souqMods = [this.souqModule(0), this.souqModule(1)].map((def, k) => new PropType(tr, def, N * 7, { name: 'souq' + k, colorPart: 'wall', shadow: sh }));
@@ -264,18 +292,18 @@
     }
     // ---------------------------------------------------------------- far: water + ground (follow the camera)
     buildFar() {
-      const wn = X.waterNormal(); wn.repeat.set(220, 220);
-      this.mWater = new T.MeshStandardMaterial({ color: C('#135669'), roughness: 0.16, metalness: 0.3, normalMap: wn, normalScale: new T.Vector2(0.32, 0.32), envMapIntensity: 0.9 });
+      const wn = X.photo('water_n', { srgb: false, repeat: [260, 260] });
+      this.mWater = new T.MeshPhysicalMaterial({ color: C('#0f4d5c'), roughness: 0.07, metalness: 0.0, reflectivity: 0.5, normalMap: wn, normalScale: new T.Vector2(0.35, 0.35), envMapIntensity: 0.75 });
       this.water = new T.Mesh(new T.PlaneGeometry(4000, 4000), this.mWater); this.water.rotation.x = -Math.PI / 2; this.water.position.set(13.8 + 2000, -0.75, -1600); this.water.receiveShadow = false; this.scene.add(this.water);
-      const sand = X.sand(); sand.repeat.set(400, 400); this.ground = new T.Mesh(new T.PlaneGeometry(4000, 4000), new T.MeshStandardMaterial({ map: sand, roughness: 1 })); this.ground.rotation.x = -Math.PI / 2; this.ground.position.set(13.8 - 2000, -0.12, -1600); this.ground.receiveShadow = true; this.scene.add(this.ground);
+      const sand = X.photo('sand_c', { repeat: [900, 900] }); this.ground = new T.Mesh(new T.PlaneGeometry(4000, 4000), new T.MeshStandardMaterial({ map: sand, roughness: 1 })); this.ground.rotation.x = -Math.PI / 2; this.ground.position.set(13.8 - 2000, -0.12, -1600); this.ground.receiveShadow = true; this.scene.add(this.ground);
       // distant bay water in the background pass, so the skyline stands on water
-      this.bgWater = new T.Mesh(new T.PlaneGeometry(9000, 9000), new T.MeshStandardMaterial({ color: C('#1f6b82'), roughness: 0.2, metalness: 0.2 })); this.bgWater.rotation.x = -Math.PI / 2; this.bgWater.position.set(0, -1.0, -2000); this.bg.add(this.bgWater);
+      this.bgWater = new T.Mesh(new T.PlaneGeometry(9000, 9000), new T.MeshStandardMaterial({ color: C('#175e70'), roughness: 0.12, metalness: 0.1, envMapIntensity: 0.7 })); this.bgWater.rotation.x = -Math.PI / 2; this.bgWater.position.set(0, -1.0, -2000); this.bg.add(this.bgWater);
     }
     // ---------------------------------------------------------------- West Bay skyline + Fanar spiral minaret (background pass)
     buildSkyline() {
       const g = this.skyline = new T.Group(); this.bg.add(g); this.towerNight = []; this.skylineInner = g;
       const night = (m, col, k = 1) => { m.emissive = new T.Color(col); m.userData.k = k; this.towerNight.push(m); return m; };
-      const glass = (top, bottom, rep) => { const t = X.facade('glass', { top, bottom, seed: rep[0] | 0 }); t[0].repeat.set(rep[0], rep[1]); t[1].repeat.set(rep[0], rep[1]); return night(new T.MeshStandardMaterial({ map: t[0], emissiveMap: t[1], roughness: 0.12, metalness: 0.7, envMapIntensity: 1.3 }), '#fff1d0', 0.9); };
+      const glass = (top, bottom, rep) => { const light = new T.Color(top).getHSL({}).l > 0.45; const maps = X.pbr(light ? 'glassfac2' : 'glassfac', { repeat: [rep[0] / 2, rep[1]], emissive: true }); const tint = new T.Color(top).lerp(new T.Color('#ffffff'), 0.55); return night(new T.MeshStandardMaterial(Object.assign(maps, { color: tint, roughness: 1, metalness: 0.88, envMapIntensity: 1.6 })), '#fff1d0', 0.9); };
       const add = (mesh, x, z, ry = 0) => { mesh.position.set(x, 0, z); mesh.rotation.y = ry; g.add(mesh); return mesh; };
       // 1. hyperboloid "tornado" tower (glass diagrid; colour-changing at night)
       { const pts = []; for (let i = 0; i <= 30; i++) { const y = i / 30 * 195; pts.push(new T.Vector2(14 * Math.sqrt(1 + ((y - 118) / 72) ** 2) * 0.92, y)); } const geo = new T.LatheGeometry(pts, 48); const tx = X.diagrid(); tx.repeat.set(16, 22); const m = night(new T.MeshStandardMaterial({ map: tx, roughness: 0.15, metalness: 0.6, envMapIntensity: 1.2 }), '#c04cff', 0.7); this.tornado = m; add(new T.Mesh(geo, m), 420, -1200); }
@@ -288,7 +316,7 @@
       // 5. twin towers with pointed hexagonal tops
       for (const [x, z, h] of [[640, -1100, 205], [690, -1150, 188]]) { const grp = new T.Group(); const m = glass('#5c7d96', '#23394d', [8, 48]); const b = new T.Mesh(new T.CylinderGeometry(15, 16, h, 6), m); b.position.y = h / 2; grp.add(b); const tip = new T.Mesh(new T.ConeGeometry(15, 34, 6), m); tip.position.y = h + 17; grp.add(tip); add(grp, x, z); }
       // 6. beige stepped tower with a spire
-      { const grp = new T.Group(); const [sm, se] = X.facade('stone', { base: '#e2d2b4', seed: 3 }); sm.repeat.set(10, 40); se.repeat.set(10, 40); const m = night(new T.MeshStandardMaterial({ map: sm, emissiveMap: se, roughness: 0.6 }), '#ffd59a', 0.7); let y = 0; for (const [w, hh] of [[34, 90], [28, 40], [22, 25], [14, 18]]) { const b = new T.Mesh(new T.BoxGeometry(w, hh, w), m); b.position.y = y + hh / 2; y += hh; grp.add(b); } const sp = new T.Mesh(new T.ConeGeometry(4, 40, 4), m); sp.position.y = y + 20; grp.add(sp); add(grp, 250, -1350); }
+      { const grp = new T.Group(); const m = night(new T.MeshStandardMaterial(Object.assign(X.pbr('stonefac', { repeat: [10, 22], emissive: true }), { color: C('#efe4cf'), roughness: 1 })), '#ffd59a', 0.7); let y = 0; for (const [w, hh] of [[34, 90], [28, 40], [22, 25], [14, 18]]) { const b = new T.Mesh(new T.BoxGeometry(w, hh, w), m); b.position.y = y + hh / 2; y += hh; grp.add(b); } const sp = new T.Mesh(new T.ConeGeometry(4, 40, 4), m); sp.position.y = y + 20; grp.add(sp); add(grp, 250, -1350); }
       // 7. supporting glass towers to make the cluster
       const rnd = mulberry(77);
       for (let i = 0; i < 22; i++) { const h = 70 + rnd() * 130, w = 18 + rnd() * 16; const m = glass(['#6b9cc9', '#7aa6b9', '#5c87a8', '#8fb3c6'][i % 4], '#203a54', [w / 3 | 0, h / 3.8 | 0]); const b = new T.Mesh(new T.BoxGeometry(w, h, w * (0.7 + rnd() * 0.5)), m); b.position.y = h / 2; const mm = new T.Group(); mm.add(b); add(mm, 300 + rnd() * 520, -1000 - rnd() * 900, rnd()); }
@@ -346,7 +374,7 @@
       put(this.pSeawall, mtx(13.55, -0.49, zc)); put(this.pRail, mtx(13.25, 1.16, zc)); put(this.pRail, mtx(13.25, 0.72, zc));
       for (let k = 0; k < 8; k++) put(this.pPost, mtx(13.25, 0.16, -(s0 + k * 2.5 + 0.5)));
       // palms: promenade (white-painted bases), median, city sidewalk
-      for (const [x, off] of [[6.3, 5], [6.3, 15], [11.4, 10], [-5.8, 2], [-5.8, 12], [-17.6, 7]]) { const s = 0.88 + rnd() * 0.25; put(this.pPalm, mtx(x + (rnd() - 0.5) * 0.4, x > -10 && x < -4 ? 0.2 : 0.16, -(s0 + off + rnd() * 2), rnd() * 6.28, s)); }
+      for (const [x, off] of (this.q === 'low' ? [[6.3, 5], [6.3, 15], [-5.8, 7], [-17.6, 12]] : [[6.3, 5], [6.3, 15], [11.4, 10], [-5.8, 2], [-5.8, 12], [-17.6, 7]])) { const s = 0.88 + rnd() * 0.25; put(this.pPalm, mtx(x + (rnd() - 0.5) * 0.4, x > -10 && x < -4 ? 0.2 : 0.16, -(s0 + off + rnd() * 2), rnd() * 6.28, s)); }
       for (const off of [7, 17]) put(this.pShrub, mtx(-5.8 + (rnd() - 0.5), 0.2, -(s0 + off), rnd() * 6, 0.8 + rnd() * 0.5));
       // lamps (double-arm on the promenade edge, single-arm on the far sidewalk) + Qatar flags + night light pools
       const lz = -(s0 + 10); put(this.pLamp2, mtx(4.55, 0.16, lz)); seg.glows.push(this.addGlow(4.55 - 1.75, 8.75, lz), this.addGlow(4.55 + 1.75, 8.75, lz));
@@ -358,9 +386,14 @@
       // city buildings (left)
       const kinds = ['stone', 'glass', 'mash'], k = kinds[(rnd() * 3) | 0], h = k === 'glass' ? 30 + rnd() * 45 : 12 + rnd() * 20, d = 16 + rnd() * 12;
       const tint = new T.Color().setHSL(0.09 + rnd() * 0.04, 0.12 + rnd() * 0.15, 0.82 + rnd() * 0.12);
-      const bz = zc, bw = SEG - 2 - rnd() * 4; put(this.pBld[k], mtx(-21 - d / 2, 0, bz, 0, d, h, bw), k === 'glass' ? new T.Color(1, 1, 1) : tint);
-      put(this.pRoof, mtx(-21 - d / 2, h, bz, 0, d - 1.5, 1.4, bw - 1.5), tint);
-      if (rnd() < 0.4) put(this.pRoof, mtx(-21 - d / 2 - 2, h + 1.4, bz, 0, 4, 2.6, 5), tint);
+      // podium with shopfronts, the tower body above it, a cornice band and rooftop plant
+      const bz = zc, bw = SEG - 2.5 - rnd() * 5, bx = -21 - d / 2, pod = 4.5;
+      put(this.pPodium, mtx(bx + 0.35, 0, bz, 0, d + 0.7, pod, bw + 0.5), new T.Color(1, 1, 1));
+      put(this.pBld[k], mtx(bx, pod, bz, 0, d, h - pod, bw), k === 'glass' ? new T.Color(1, 1, 1) : tint);
+      put(this.pRoof, mtx(bx, h, bz, 0, d + 0.3, 0.55, bw + 0.3), tint);
+      put(this.pRoof, mtx(bx, pod, bz, 0, d + 0.9, 0.35, bw + 0.7), tint);
+      if (k === 'glass' && rnd() < 0.5) put(this.pBld.glass, mtx(bx - 1.5, h, bz, 0, d - 4, 8 + rnd() * 10, bw - 5), new T.Color(1, 1, 1));
+      else { put(this.pRoof, mtx(bx - 2, h + 0.55, bz + 2, 0, 4, 2.4, 4.5), tint); put(this.pRoof, mtx(bx + 3, h + 0.55, bz - 3, 0, 2.2, 1.4, 2.6), tint); }
       // a dhow on the bay now and then
       if (rnd() < 0.28) { const d0 = { s: s0 + rnd() * SEG, x: 30 + rnd() * 70, ry: rnd() * 6.28, ph: rnd() * 6 }; d0.ids = this.pDhow.add(mtx(d0.x, -0.45, -d0.s, d0.ry)); seg.items.push(...d0.ids.map((x, q) => [this.pDhow.pools[q], x])); seg.dhow = d0; this.dhows.push(d0); }
     }
@@ -389,7 +422,7 @@
       if (this.nextCar <= 0 && this.zoneAt(sAhead) === 'corniche' && this.zoneAt(distance) === 'corniche') {
         this.nextCar = 1.2 + Math.random() * 2.4;
         const suv = Math.random() < 0.6, pool = suv ? this.pTrafficSUV : this.pTrafficSedan;
-        const colors = ['#f4f4f2', '#f4f4f2', '#f4f4f2', '#c9ccd0', '#1c1d20', '#2c3e57', '#8a1538', '#3cb7ae'];
+        const colors = ['#e4e4e1', '#e4e4e1', '#e4e4e1', '#b9bdc2', '#1c1d20', '#2c3e57', '#6e1029', '#7a7f85'];
         const col = C(colors[(Math.random() * colors.length) | 0]);
         const lane = [-9.0, -11.5, -14.0][(Math.random() * 3) | 0];
         const car = { pool, s: sAhead, x: lane, v: 13 + Math.random() * 5, passed: false };
@@ -402,12 +435,61 @@
         c.pool.set(c.ids, this._carMtx(c, distance));
       }
     }
-    _carMtx(c, distance) { return mtx(c.x, 0, -(c.s - distance), Math.PI, 1); }
+    _carMtx(c, distance) { return mtx(c.x, 0, -(c.s - distance), 0, 1); } // models face +Z: oncoming cars drive towards the camera, headlights first
     clearTraffic() { for (const c of this.traffic) c.pool.remove(c.ids); this.traffic = []; }
-    render(camera) { // far pass with its own camera range (depth precision), then the near world
+    render(camera) { // far pass with its own camera range (depth precision), then the near world; optional photo grade
       const r = this.renderer, bc = this.bgCam || (this.bgCam = new T.PerspectiveCamera(60, 1, 2, 9000));
       bc.position.copy(camera.position); bc.quaternion.copy(camera.quaternion); if (bc.fov !== camera.fov || bc.aspect !== camera.aspect) { bc.fov = camera.fov; bc.aspect = camera.aspect; bc.updateProjectionMatrix(); }
+      const post = this.q !== 'low' && this.postOK !== false && this.ensurePost();
+      r.setRenderTarget(post ? this.post.rt : null);
       r.autoClear = false; r.clear(); r.render(this.bg, bc); r.clearDepth(); r.render(this.scene, camera);
+      if (!post) return;
+      const P = this.post;
+      if (P.bloom) { // bright pass → quarter res, separable blur
+        P.quad.material = P.mBright; P.mBright.uniforms.tex.value = P.rt.texture; r.setRenderTarget(P.q1); r.render(P.scene, P.cam);
+        P.quad.material = P.mBlur; P.mBlur.uniforms.tex.value = P.q1.texture; P.mBlur.uniforms.dir.value.set(1.6 / P.q1.width, 0); r.setRenderTarget(P.q2); r.render(P.scene, P.cam);
+        P.mBlur.uniforms.tex.value = P.q2.texture; P.mBlur.uniforms.dir.value.set(0, 1.6 / P.q1.height); r.setRenderTarget(P.q1); r.render(P.scene, P.cam);
+      }
+      P.quad.material = P.mGrade; P.mGrade.uniforms.tex.value = P.rt.texture; P.mGrade.uniforms.bloom.value = P.q1.texture; P.mGrade.uniforms.bloomK.value = P.bloom ? 0.22 : 0;
+      P.mGrade.uniforms.night.value = U.night.value; P.mGrade.uniforms.time.value = this.time;
+      r.setRenderTarget(null); r.render(P.scene, P.cam);
+    }
+    // display-referred photographic grade: gentle S-curve, warm/cool split toning, saturation, vignette, bloom, dither
+    ensurePost() {
+      const r = this.renderer, gl = r.getContext(), sz = r.getDrawingBufferSize(this._sz || (this._sz = new T.Vector2()));
+      if (!this.post) {
+        if (!r.capabilities.isWebGL2 && this.q !== 'high') { this.postOK = false; return false; }
+        const quadV = 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }';
+        const mk = (frag, uniforms) => new T.ShaderMaterial({ uniforms, vertexShader: quadV, fragmentShader: frag, depthTest: false, depthWrite: false });
+        const P = this.post = { scene: new T.Scene(), cam: new T.OrthographicCamera(-1, 1, 1, -1, 0, 1), bloom: this.q === 'high' };
+        P.quad = new T.Mesh(new T.PlaneGeometry(2, 2)); P.quad.frustumCulled = false; P.scene.add(P.quad);
+        P.mBright = mk('uniform sampler2D tex; varying vec2 vUv; void main(){ vec3 c = texture2D(tex, vUv).rgb; float l = dot(c, vec3(0.299, 0.587, 0.114)); gl_FragColor = vec4(c * smoothstep(0.86, 1.0, l), 1.0); }', { tex: { value: null } });
+        P.mBlur = mk(`uniform sampler2D tex; uniform vec2 dir; varying vec2 vUv;
+          void main(){ vec3 s = texture2D(tex, vUv).rgb * 0.227027;
+            s += (texture2D(tex, vUv + dir * 1.3846).rgb + texture2D(tex, vUv - dir * 1.3846).rgb) * 0.3162162;
+            s += (texture2D(tex, vUv + dir * 3.2308).rgb + texture2D(tex, vUv - dir * 3.2308).rgb) * 0.0702703;
+            gl_FragColor = vec4(s, 1.0); }`, { tex: { value: null }, dir: { value: new T.Vector2() } });
+        P.mGrade = mk(`uniform sampler2D tex, bloom; uniform float bloomK, night, time; varying vec2 vUv;
+          float h(vec2 p){ return fract(sin(dot(p, vec2(12.9898, 78.233)) + time) * 43758.5453); }
+          void main(){
+            vec3 c = texture2D(tex, vUv).rgb + texture2D(bloom, vUv).rgb * bloomK;
+            float l = dot(c, vec3(0.2126, 0.7152, 0.0722));
+            c = mix(vec3(l), c, mix(1.1, 1.02, night));                       // saturation
+            c = mix(c, c * c * (3.0 - 2.0 * c), 0.22);                         // soft S-curve (contrast)
+            vec3 warm = vec3(1.03, 1.0, 0.95), cool = vec3(0.96, 0.99, 1.05);
+            c *= mix(cool, warm, smoothstep(0.15, 0.75, l)) * 0.5 + 0.5;     // split toning
+            vec2 q = vUv - 0.5; c *= 1.0 - 0.28 * dot(q, q) * 2.0;              // vignette
+            c += (h(gl_FragCoord.xy) - 0.5) / 255.0;                           // dither (no banding in the sky)
+            gl_FragColor = vec4(c, 1.0); }`, { tex: { value: null }, bloom: { value: null }, bloomK: { value: 0 }, night: { value: 0 }, time: { value: 0 } });
+        const opt = { minFilter: T.LinearFilter, magFilter: T.LinearFilter, format: T.RGBAFormat, encoding: T.sRGBEncoding, depthBuffer: true, stencilBuffer: false };
+        P.rt = r.capabilities.isWebGL2 ? new T.WebGLMultisampleRenderTarget(sz.x, sz.y, opt) : new T.WebGLRenderTarget(sz.x, sz.y, opt);
+        if (P.rt.samples !== undefined) P.rt.samples = this.q === 'high' ? 4 : 2;
+        const qo = { minFilter: T.LinearFilter, magFilter: T.LinearFilter, format: T.RGBAFormat, depthBuffer: false, stencilBuffer: false };
+        P.q1 = new T.WebGLRenderTarget(4, 4, qo); P.q2 = new T.WebGLRenderTarget(4, 4, qo); P.w = 0; P.h = 0;
+      }
+      const P = this.post;
+      if (P.w !== sz.x || P.h !== sz.y) { P.w = sz.x; P.h = sz.y; P.rt.setSize(sz.x, sz.y); const qw = Math.max(4, sz.x >> 2), qh = Math.max(4, sz.y >> 2); P.q1.setSize(qw, qh); P.q2.setSize(qw, qh); }
+      return true;
     }
   }
   function curbGeometry(w, h, L) { // top + both vertical faces, v runs along the curb (1 m black / 1 m white)
@@ -418,11 +500,11 @@
     q([x0, 0, z0], [x0, 0, z1], [x0, h, z1], [x0, h, z0], [0, V], [0, 0], [1, 0], [1, V]);
     const g = new T.BufferGeometry(); g.setAttribute('position', new T.Float32BufferAttribute(pos, 3)); g.setAttribute('uv', new T.Float32BufferAttribute(uv, 2)); g.setIndex(idx); g.computeVertexNormals(); return g;
   }
-  function shopTexture(emissive) { // warm shop interior seen through the arcades: shelves, goods, light
+  function shopTexture(emissive) { // shop interior seen through the arcades: shelves with goods in deep shade, warm lamp light
     const c = document.createElement('canvas'); c.width = 256; c.height = 128; const x = c.getContext('2d');
-    x.fillStyle = emissive ? '#2a1a08' : '#5a3d22'; x.fillRect(0, 0, 256, 128);
-    const g = x.createRadialGradient(128, 40, 5, 128, 40, 150); g.addColorStop(0, emissive ? '#ffcf8a' : '#e8b878'); g.addColorStop(1, emissive ? '#2a1a08' : '#5a3d22'); x.fillStyle = g; x.fillRect(0, 0, 256, 128);
-    for (let r = 0; r < 4; r++) { x.fillStyle = emissive ? 'rgba(0,0,0,0.5)' : '#3b2614'; x.fillRect(0, 30 + r * 24, 256, 4); for (let k = 0; k < 18; k++) { x.fillStyle = ['#c0602a', '#d9a52a', '#7a2a1a', '#e8d4a0', '#4f6f2a'][(k + r) % 5]; x.globalAlpha = emissive ? 0.25 : 1; x.fillRect(6 + k * 14, 16 + r * 24, 10, 14); x.globalAlpha = 1; } }
+    x.fillStyle = emissive ? '#1c1206' : '#2e2216'; x.fillRect(0, 0, 256, 128);
+    const g = x.createRadialGradient(128, 30, 5, 128, 40, 160); g.addColorStop(0, emissive ? '#ffcf8a' : '#7a5a3a'); g.addColorStop(1, emissive ? '#1c1206' : '#2e2216'); x.fillStyle = g; x.fillRect(0, 0, 256, 128);
+    for (let r = 0; r < 4; r++) { x.fillStyle = emissive ? 'rgba(0,0,0,0.5)' : '#1e150c'; x.fillRect(0, 30 + r * 24, 256, 4); for (let k = 0; k < 22; k++) { x.fillStyle = ['#7a4a2a', '#8c6a3a', '#5a2a1a', '#9a8a68', '#4a5a2a', '#6a3a4a'][(k * 7 + r * 3) % 6]; x.globalAlpha = emissive ? 0.25 : 0.85; const w = 6 + ((k * 13 + r * 5) % 7); x.fillRect(4 + k * 11.5, 14 + r * 24 + ((k * 3) % 5), w, 14 - ((k * 3) % 5)); x.globalAlpha = 1; } }
     const t = new T.CanvasTexture(c); t.encoding = T.sRGBEncoding; return t;
   }
   root.QRWorld = { World, SEG, mtx, PropType, Pool };
