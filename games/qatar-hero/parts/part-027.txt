@@ -1333,7 +1333,7 @@ ches (shops): 2 per module
       const pts = S.q.tries === 1 ? 1000 : S.q.tries === 2 ? 600 : 300; S.score += pts; S.stage.solved++;
       if (S.q.tries === 1) { S.firstTry++; S.stage.first++; }
       $('qFeedback').textContent = ['أحسنت! ', 'ممتاز! ', 'رائع يا بطل! ', 'إجابة صحيحة! '][S.solvedTotal % 4] + '+' + AR(pts); $('qFeedback').className = 'q-feedback good';
-      card.classList.add('good'); audio.success(); S.closeAt = S.time + 1.0; S.q.pts = pts;
+      card.classList.add('good'); audio.success(); S.closeAt = S.time + (STUDENT ? 0.35 : 1.0); S.q.pts = pts;
     } else {
       S.q.wrong.add(i); S.wrongTotal++; S.stage.wrong++;
       btns.forEach(b => { if (Number(b.dataset.i) === i) { b.classList.add('wrong'); b.disabled = true; } });
@@ -1350,7 +1350,7 @@ ches (shops): 2 per module
     const ss = (S.solvedSlots[S.stage.id] = S.solvedSlots[S.stage.id] || []); if (!ss.includes(d.slot)) ss.push(d.slot); S.solvedTotal = Object.values(S.solvedSlots).reduce((a, l) => a + l.length, 0);
     view.fx('correct', { x: d.x, y: d.y }); if (d.pts) popup(d.x, d.y + 1.5, '+' + AR(d.pts), 'green');
     S.q = null; phase('play'); audio.setMode('run'); post('outcome', { correct: true }); hud();
-    if (S.platform.on) {
+    if (S.platform.on || STUDENT) {
       const next = E.activeGate();
       if (next) {
         // Fast classroom progression on safe, flat ground before the next question.
@@ -1506,7 +1506,7 @@ ches (shops): 2 per module
     readInput();
     const ph = S.phase;
     if (E) {
-      if (ph === 'stageIntro') { E.input = { left: false, right: false, jump: false }; if (S.pt > (S.platform.on ? 0.45 : 2.0)) { hide('stageCard'); phase('play'); } }
+      if (ph === 'stageIntro') { E.input = { left: false, right: false, jump: false }; if (S.pt > ((S.platform.on || STUDENT) ? 0.45 : 2.0)) { hide('stageCard'); phase('play'); } }
       if (ph === 'play') { E.input = Object.assign({}, input); }
       if (ph === 'goal' || ph === 'dying' || ph === 'gameOver' || ph === 'stageClear') E.input = { left: false, right: false, jump: false };
       if (ph === 'menu') { showcaseAI(E, dt); }
@@ -1518,8 +1518,8 @@ ches (shops): 2 per module
         if (S.dieCause === 'pit') { p.y = Math.max(p.y - 6 * dt, -3.2); } else { p.vy -= 24 * dt; p.y += p.vy * dt; }
         if (S.pt > 1.6) afterDeath();
       }
-      if (ph === 'goal') { S.goalRaise = Math.min(1, S.goalRaise + dt / 2.4); if (S.pt > (S.platform.on ? 0.65 : 4.4)) stageClear(); }
-      if (ph === 'stageClear' && S.platform.on && S.pt > 0.65) nextStage();
+      if (ph === 'goal') { S.goalRaise = Math.min(1, S.goalRaise + dt / 2.4); if (S.pt > ((S.platform.on || STUDENT) ? 0.65 : 4.4)) stageClear(); }
+      if (ph === 'stageClear' && (S.platform.on || STUDENT) && S.pt > 0.65) nextStage();
       if (ph === 'question') {
         if (S.closeAt > 0 && S.time >= S.closeAt) closeQuestion();
         else if (cfg.timer && S.q && !S.q.locked && !S.platform.on) {
