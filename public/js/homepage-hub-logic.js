@@ -91,6 +91,7 @@
       cover: 'assets/game-covers/qatar-runner.svg',
       playableDemo: true
     },
+    'qatar-hero':{key:'qatar-hero',name:'مغامرات بطل قطر',badge:'مغامرة ثلاثية الأبعاد',eyebrow:'قفز ومهارة وأسئلة',headline:'اكتشف قطر بالقفز على مكعبات الأسئلة',pitch:'مغامرة وسط ست بيئات قطرية؛ اصطدم بمكعب السؤال، وأجب بشكل صحيح لتفتح الطريق وتتابع التقدم.',cover:'assets/game-covers/qatar-hero.svg',playableDemo:true},
     classic: {
       key: 'classic',
       name: 'تحدّي المعرفة',
@@ -317,7 +318,7 @@
     const opts = options || {};
     const settings = opts.settings || {};
     const puzzleAvailable = !!opts.puzzleAvailable;
-    const defaultOrder = ['football', 'volleyball', 'basketball', 'race', 'bowling', 'fishing', 'target-shooting', 'qatar-runner', 'classic', 'puzzle'];
+    const defaultOrder = ['football', 'volleyball', 'basketball', 'race', 'bowling', 'fishing', 'target-shooting', 'qatar-runner', 'qatar-hero', 'classic', 'puzzle'];
     const configuredOrder = Array.isArray(settings.heroGames) && settings.heroGames.length
       ? settings.heroGames.filter(k => GAME_CATALOG[k])
       : defaultOrder;
