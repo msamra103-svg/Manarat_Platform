@@ -260,7 +260,7 @@ body[data-phase=question] #controls, body[data-phase=menu] #controls { display: 
     </div>
   </div>
   <div id="hudStage" class="hud-stage"></div>
-  <div id="hintBubble" class="hint-bubble" hidden><span class="qchip sm">؟</span> قف تحت مكعب السؤال واقفز لتضربه برأسك</div>
+  <div id="hintBubble" class="hint-bubble" hidden><span class="qchip sm">؟</span> الجري تلقائي — المس الشاشة للقفز وضرب مكعب السؤال</div>
   <div id="toast" class="toast" hidden></div>
 </div>
 
