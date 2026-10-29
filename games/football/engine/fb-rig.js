@@ -6,11 +6,23 @@
   const T = THREE, V = T.Vector3, Q = T.Quaternion;
   const _v1 = new V(), _v2 = new V(), _v3 = new V(), _v4 = new V(), _q1 = new Q(), _q2 = new Q(), _q3 = new Q(), _s = new V(), _e = new T.Euler();
   const UP = new V(0, 1, 0), RIGHT = new V(1, 0, 0), FWD = new V(0, 0, 1);
+  const FOOT_LEN = 0.21, FOOT_REST = 0.31;                 // ankle -> boot tip (m); rest-pose toes-down angle of that line (rad)
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 
   function worldPos(bone, out) { bone.updateWorldMatrix(true, false); return out.setFromMatrixPosition(bone.matrixWorld); }
   const _dp = new V(), _dp2 = new V(); // private scratch: decompose() must never write into a vector a caller is using
   function worldQuat(bone, out) { bone.updateWorldMatrix(true, false); bone.matrixWorld.decompose(_dp, out, _s); return out; }
 
+  const _c1 = new V(), _c2 = new V(), _c3 = new V(), _c4 = new V(), _c5 = new V(), _c6 = new V(), _c7 = new V(), _c8 = new V();
+  /** closest points between segments p0p1 and q0q1: distance, parameter on the first segment, and the unit direction from the second segment to the first */
+  function segSeg(p0, p1, q0, q1) {
+    const d1 = _c7.copy(p1).sub(p0), d2 = _c8.copy(q1).sub(q0), r = new V().copy(p0).sub(q0), a = d1.dot(d1), e = d2.dot(d2), f = d2.dot(r), c = d1.dot(r), bb = d1.dot(d2), den = a * e - bb * bb;
+    let s = den > 1e-9 ? clamp((bb * f - c * e) / den, 0, 1) : 0, t = (bb * s + f) / e;
+    if (t < 0) { t = 0; s = clamp(-c / a, 0, 1); } else if (t > 1) { t = 1; s = clamp((bb - c) / a, 0, 1); }
+    const pa = new V().copy(p0).addScaledVector(d1, s), pb = new V().copy(q0).addScaledVector(d2, t), away = pa.clone().sub(pb); const d = away.length();
+    if (d > 1e-6) away.multiplyScalar(1 / d); else away.set(0, 1, 0);
+    return { d, s, away };
+  }
   class Rig {
     constructor(actor) {
       this.actor = actor; this.root = actor.root; this.b = actor.bones;
@@ -109,7 +121,10 @@
       const foot = this.b['foot' + S];
       // footYaw / footPitch / footRoll are given in the BODY frame (root), so the boot follows the character's facing.
       // (V21 applied them as world angles: a player facing -z had his boots pointing +z, i.e. backwards.)
-      const q = _q2.setFromEuler(_e.set(opts.footPitch || 0, opts.footYaw || 0, opts.footRoll || 0, 'YXZ'));
+      // the boot tip may never enter the grass: limit toes-down pitch so the tip stays >= 1 cm above the ground (V22.2)
+      let fp = opts.footPitch || 0;
+      if (opts.groundClamp !== false) { const ay = ankleWorld.y, lim = Math.asin(clamp((ay - 0.012) / FOOT_LEN, -1, 1)) - FOOT_REST; if (fp > lim) fp = lim; }
+      const q = _q2.setFromEuler(_e.set(fp, opts.footYaw || 0, opts.footRoll || 0, 'YXZ'));
       this.root.updateWorldMatrix(true, false); this.root.matrixWorld.decompose(_dp2, _q1, _s); q.premultiply(_q1);
       const pq = worldQuat(foot.parent, _q3).invert();
       foot.quaternion.copy(pq).multiply(q); foot.updateMatrixWorld(true);
@@ -123,6 +138,24 @@
       const bq = worldQuat(this.b.spine3, _q1);
       const pole = opts.pole ? new V().copy(opts.pole) : new V(sgn * 0.7, -0.2, -0.7).applyQuaternion(bq);
       return this._ik2('upperarm', 'lowerarm', S, wristWorld, pole, opts.twist || 0);
+    }
+    /** Arm IK that never passes through the torso: if the upper arm / forearm would cut into the torso capsule, the wrist target is
+     *  pushed outward from the torso axis and solved again (V22.2 — keeper dives reached through the chest). Returns the reach. */
+    armClear(S, wristWorld, opts = {}) {
+      const tgt = _c1.copy(wristWorld), R = opts.torsoR || 0.15, armR = 0.045; let reach = 0;
+      for (let it = 0; it < 9; it++) {
+        reach = this.arm(S, tgt, opts);
+        if (it === 8) break;
+        const a = worldPos(this.b.spine1, _c2), b = worldPos(this.b.neck, _c3), u = worldPos(this.b['upperarm' + S], _c4), e = worldPos(this.b['lowerarm' + S], _c5), h = worldPos(this.b['hand' + S], _c6);
+        let worst = 0, dir = null;
+        for (const [p0, p1, skip] of [[u, e, true], [e, h, false]]) {
+          const r = segSeg(p0, p1, a, b); const pen = (armR + R) - r.d;
+          if (pen > worst && !(skip && r.s < 0.35)) { worst = pen; dir = r.away; }
+        }
+        if (worst <= 0.005 || !dir) break;
+        tgt.addScaledVector(dir, worst + 0.02); if (opts.minY !== undefined && tgt.y < opts.minY) tgt.y = opts.minY;
+      }
+      return reach;
     }
     /** FK arm in the shoulder's parent frame (angles in radians): flex (forward +), abd (outward +), elbow flex (forward +). */
     armFK(S, flex = 0, abd = 0, elbow = 0, rot = 0) {

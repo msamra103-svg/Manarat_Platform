@@ -83,7 +83,10 @@
     const noise = { buzz: 0.001, crop: 0.002, short: 0.004, curly: 0.012, long: 0.006 }[style] || 0.002;
     const P = new Float32Array(n * 3), N = new Float32Array(n * 3), uvs = new Float32Array(n * 2);
     for (let i = 0; i < n; i++) {
-      const o = (bnd[i] ? 0.35 : 1) * (th + (r() - 0.5) * noise * 2);
+      // V23: smooth (position-based) noise instead of per-vertex random offsets, which made the hair a faceted, jagged shell
+      const px = pos.getX(i), py = pos.getY(i), pz = pos.getZ(i), fq = style === 'curly' ? 90 : 38, sd = (seed % 7) * 1.7;
+      const sn = Math.sin(px * fq + sd) * Math.sin(py * fq * 0.83 + 1.3 + sd) * Math.sin(pz * fq * 1.11 + 2.1) + 0.5 * Math.sin(px * fq * 2.1 - pz * fq * 1.7 + sd);
+      const o = (bnd[i] ? 0.3 : 1) * (th + sn * noise * 0.9);
       const ns = nor.normalized ? 1 / 127 : 1, nx = nor.getX(i) * ns, ny = nor.getY(i) * ns, nz = nor.getZ(i) * ns;
       P[i * 3] = pos.getX(i) + nx * o; P[i * 3 + 1] = pos.getY(i) + ny * o + (style === 'curly' || style === 'long' ? 0.004 : 0); P[i * 3 + 2] = pos.getZ(i) + nz * o;
       N[i * 3] = nx; N[i * 3 + 1] = ny; N[i * 3 + 2] = nz; uvs[i * 2] = pos.getX(i) * 9; uvs[i * 2 + 1] = pos.getY(i) * 9 + pos.getZ(i) * 5;
@@ -91,12 +94,18 @@
     g.setAttribute('position', new T.BufferAttribute(P, 3)); g.setAttribute('normal', new T.BufferAttribute(N, 3)); g.setAttribute('uv', new T.BufferAttribute(uvs, 2)); g.setIndex(new T.BufferAttribute(idx.slice(), 1));
     return g;
   }
-  function hairTexture(color) {
-    const c = document.createElement('canvas'); c.width = c.height = 256; const x = c.getContext('2d'); x.fillStyle = color; x.fillRect(0, 0, 256, 256);
-    for (let i = 0; i < 1400; i++) { x.strokeStyle = i % 3 ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.25)'; x.lineWidth = 1; const a = Math.random() * 256, b = Math.random() * 256; x.beginPath(); x.moveTo(a, b); x.lineTo(a + (Math.random() - 0.5) * 10, b + 6 + Math.random() * 14); x.stroke(); }
-    const t = new THREE.CanvasTexture(c); t.encoding = THREE.sRGBEncoding; t.wrapS = t.wrapT = THREE.RepeatWrapping; return t;
+  /** V23: strand texture (512 px): many fine strands in three tones, darker roots, plus a grey-scale copy used as a bump map. */
+  function hairTexture(color, bump) {
+    const N = 512, c = document.createElement('canvas'); c.width = c.height = N; const x = c.getContext('2d'), rnd = M.rng(97);
+    const base = new THREE.Color(color), hi = base.clone().lerp(new THREE.Color('#8a6a52'), 0.25), lo = base.clone().multiplyScalar(0.45);
+    x.fillStyle = bump ? '#7f7f7f' : '#' + base.getHexString(); x.fillRect(0, 0, N, N);
+    for (let i = 0; i < 9000; i++) {
+      const t = rnd(), col = bump ? (t < 0.5 ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.35)') : (t < 0.45 ? 'rgba(' + [lo.r, lo.g, lo.b].map(v => Math.round(v * 255)).join(',') + ',0.4)' : t < 0.8 ? 'rgba(' + [hi.r, hi.g, hi.b].map(v => Math.round(v * 255)).join(',') + ',0.12)' : 'rgba(0,0,0,0.22)');
+      x.strokeStyle = col; x.lineWidth = 0.6 + rnd() * 0.8; const a = rnd() * N, b = rnd() * N, L = 10 + rnd() * 26, bend = (rnd() - 0.5) * 8;
+      x.beginPath(); x.moveTo(a, b); x.quadraticCurveTo(a + bend, b + L * 0.5, a + bend * 0.4 + (rnd() - 0.5) * 4, b + L); x.stroke();
+    }
+    const t = new THREE.CanvasTexture(c); if (!bump) t.encoding = THREE.sRGBEncoding; t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 4; return t;
   }
-
   const shared = { skin: {}, eye: null, hair: {} };
   /** Create one player. asset = result of load(); opts: {kit, tone, stubble, hair:{style,color}, number, name, keeper, scale, textures:{skin_clean, skin_stubble, eye}} */
   function create(asset, o = {}) {
@@ -124,7 +133,7 @@
     const hs = (o.hair && o.hair.style) || 'crop';
     if (hs !== 'none') {
       const hk = hs + (o.hair && o.hair.color);
-      const hairMat = shared.hair[(o.hair && o.hair.color)] || (shared.hair[o.hair && o.hair.color] = new T.MeshStandardMaterial({ map: hairTexture((o.hair && o.hair.color) || '#1c1612'), roughness: 0.85, side: T.DoubleSide }));
+      const hairMat = shared.hair[(o.hair && o.hair.color)] || (shared.hair[o.hair && o.hair.color] = new T.MeshStandardMaterial({ map: hairTexture((o.hair && o.hair.color) || '#1c1612'), bumpMap: hairTexture('#808080', true), bumpScale: 0.006, roughness: 0.7, metalness: 0, side: T.DoubleSide }));
       const hair = new T.Mesh(hairGeometry(G.scalp, hs, o.seed || 1), hairMat); hair.castShadow = true; byName.head.add(hair); parts.hair = hair;
     }
     // number / crest decals (skinned, share the skeleton)

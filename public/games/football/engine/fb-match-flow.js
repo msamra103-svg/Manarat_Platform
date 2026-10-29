@@ -28,7 +28,7 @@
       out.length = n;
     },
     onGloveHit(b) {
-      const pl = this.plan; if (!pl || this.keeper.held || (pl.kind !== 'catch' && pl.kind !== 'parry')) return;
+      const pl = this.plan; if (!pl || this.keeper.held || (pl.kind !== 'catch' && pl.kind !== 'parry')) return; pl.touched = true;
       this.emit('glove', { strength: b.v.length() });
       if (pl.kind === 'catch') { this.keeper.held = true; this.keeper.holding = true; this.ball.held = this.keeper; b.v.set(0, 0, 0); b.w.set(0, 0, 0); this.holdT = 0; this.emit('catch'); }
       else if (pl.kind === 'parry') { const sp = Math.max(6, b.v.length() * 0.35); b.v.set(pl.side * (2.2 + 0.1 * sp), 2.4 + 0.08 * sp, 3.0 + 0.3 * sp); this.emit('parry'); }
@@ -120,6 +120,12 @@
     },
     stResolve(dt) {
       const pl = this.plan, ball = this.ball, k = this.keeper; this.resumeT += dt;
+      // safety net for a planned save: the ball is stopped when it passes within 25 cm of the diving keeper (the plan already aims the
+      // hands at it; this only absorbs centimetre-level differences, so a wrong answer can never turn into a goal)
+      if (pl && pl.outcome === 'save' && !pl.touched && !k.held && pl.diveStarted && ball.p.z > GZ - 0.2) {
+        const sp = k.colliderSpheres('keeper', this._ssp || (this._ssp = []));
+        for (const q of sp) if (Math.hypot(q.x - ball.p.x, q.y - ball.p.y, q.z - ball.p.z) < q.r + 0.11 + 0.25) { pl.touched = true; this.onGloveHit(ball); break; }
+      }
       if (pl && pl.dive && !pl.diveStarted && this.resumeT >= pl.delay) { pl.diveStarted = true; k.ballRef = ball.p; k.startDive(pl.dive); }
       if (k.holding && ball.held) { this.holdT += dt; if (this.holdT > 1.5 && !k.diving()) { k.holding = false; k.held = false; ball.held = null; ball.v.set(0, 0, 0); ball.resting = false; } }
       if (this.stateT > 0.9 && !this.reacted) this.react();
@@ -147,7 +153,12 @@
     },
     /** simulate a dive on a shadow keeper and measure how close the ball path (relative time from now) comes to its hands/body */
     simulateDive(spec, path, delay) {
-      const sk = this.headlessKeeper(), k = this.keeper; sk.teleport(k.pos.x, k.pos.z, 0); sk.crouch = 1; sk.armsReady = 1; sk.setIntent(0, 0, 0); for (let i = 0; i < 12; i++) sk.update(1 / 60);
+      // the shadow keeper starts from the real keeper's exact state (position, velocity, feet, gait phase) and lives through the same
+      // reaction delay, so the planned contact is the contact that will happen
+      const sk = this.headlessKeeper(), k = this.keeper; sk.teleport(k.pos.x, k.pos.z, k.yaw); sk.crouch = k.crouch; sk.armsReady = k.armsReady;
+      sk.vel.copy(k.vel); sk.speed = k.speed; sk.heading = k.heading; sk.gaitDir = k.gaitDir; sk.phase = k.phase; sk.cycleOn = k.cycleOn; sk.hipY = k.hipY;
+      for (let i = 0; i < 2; i++) { const a = sk.feet[i], b = k.feet[i]; for (const key of ['swing', 'u', 'dur', 'y', 'pitch', 'yaw', 'lift', 'kick', 'liftPh', 'fromY', 'fromPitch']) a[key] = b[key]; a.p.copy(b.p); a.from.copy(b.from); a.to.copy(b.to); a.ax = b.ax; a.ay = b.ay; a.az = b.az; }
+      sk.setIntent(0, 0, 0); for (let t = 0; t < delay - 1e-6; t += 1 / 120) sk.update(1 / 120);
       sk.ballRef = new V(path[0].x, path[0].y, path[0].z); sk.startDive(spec);
       let minC = 9, tMin = 0, pi = 0; const dt = 1 / 120, T1 = spec.tReach + (spec.hold || 0.28) + 0.9;
       for (let t = 0; t < T1; t += dt) {
@@ -170,30 +181,44 @@
         ball.w.multiplyScalar(0.1); plan.variant = 'neutral'; return plan; }
       let path = pathNow(); const aim = this.target;
       if (o === 'goal') {
-        const end = path[path.length - 1];
-        const inGoal = (() => { const s = ball.clone(); s.enableFrame = true; for (let i = 0; i < 1500 && s.p.z > GZ - 3; i++) s.step(FB.BALL_STEP); return s.inGoal; })();
-        if (!inGoal) { const sol = replan(clamp(aim.x, -HW + 0.4, HW - 0.4), clamp(aim.y, 0.3, GH - 0.35)); path = pathNow(); }
-        const tb = crossT(path).t, sx = aim.x >= 0 ? 1 : -1, strong = Math.abs(aim.x) > 0.9;
-        const cands = [];
-        const wrong = (Math.abs(aim.x) < 0.7 ? (r() < 0.5 ? 1 : -1) : -sx);
-        cands.push({ target: new V(wrong * 2.2, 0.95 + r() * 0.5, GZ + 0.55), tReach: Math.max(0.3, tb * 0.9) });
-        cands.push({ target: new V(sx * (Math.abs(aim.x) + 0.8), clamp(aim.y + 0.5, 0.5, 2.0), GZ + 0.5), tReach: tb + 0.2 });
-        cands.push({ target: new V(-sx * 1.9, 1.1, GZ + 0.55), tReach: Math.max(0.3, tb * 0.85) });
-        let best = null; for (const c of cands) { const spec = Object.assign({ hold: 0.3 }, c); const m = this.simulateDive(spec, path, delay); if (!best || m.minC > best.m.minC) best = { spec, m }; if (m.minC >= 0.14) break; }
+        // the finish must beat the keeper: try the aimed spot first, then move it progressively away from the keeper's body
+        // (e.g. a central penalty with the keeper standing on the line) until a simulated dive the wrong way leaves it clear
+        const kx = k.pos.x, away = Math.abs(aim.x - kx) > 0.05 ? Math.sign(aim.x - kx) : (r() < 0.5 ? 1 : -1);
+        let best = null;
+        for (const shift of [0, 0.6, 1.0, 1.4, 1.9, 2.4]) {
+          const tx = clamp(aim.x + away * shift, -HW + 0.4, HW - 0.4), ty = clamp(aim.y, 0.3, GH - 0.35);
+          const inGoal = (() => { const s = ball.clone(); s.enableFrame = true; for (let i = 0; i < 1500 && s.p.z > GZ - 3; i++) s.step(FB.BALL_STEP); return s.inGoal; })();
+          if (shift > 0 || !inGoal) replan(tx, ty);
+          path = pathNow(); const tb = crossT(path).t, sx = tx >= kx ? 1 : -1;
+          const cands = [{ target: new V(kx - sx * 2.2, 0.95 + r() * 0.5, GZ + 0.55), tReach: Math.max(0.3, tb * 0.9) },
+            { target: new V(kx - sx * 1.6, 1.2, GZ + 0.55), tReach: Math.max(0.3, tb * 0.85) }, { target: new V(tx + sx * 0.9, clamp(ty + 0.5, 0.5, 2.0), GZ + 0.5), tReach: tb + 0.2 }];
+          let local = null;
+          for (const c of cands) { const spec = Object.assign({ hold: 0.3 }, c), m = this.simulateDive(spec, path, delay); if (!local || m.minC > local.m.minC) local = { spec, m }; if (m.minC >= 0.14) break; }
+          const still = { minC: 9 }; { const sp = k.colliderSpheres('keeper', []); for (const q of path) { if (q.z > GZ + 6 || q.z < GZ - 0.5) continue; for (const c of sp) still.minC = Math.min(still.minC, Math.hypot(c.x - q.x, c.y - q.y, c.z - q.z) - c.r - 0.11); } } // or the keeper simply stays
+          if (still.minC > local.m.minC) local = { spec: null, m: still };
+          if (!best || local.m.minC > best.m.minC) best = local;
+          if (local.m.minC >= 0.14) { best = local; break; }
+        }
         plan.dive = best.spec; plan.kind = 'beaten'; plan.clearance = best.m.minC; plan.variant = 'goal';
-        if (best.m.minC < 0.1) plan.dive = null;                       // a clean miss is better than a dive that clips the ball
+        if (best.spec && best.m.minC < 0.1) plan.dive = null;
         return plan;
       }
       if (o === 'save') {
-        // keep the ball inside the keeper's reachable region (small corrections at the frozen moment are imperceptible)
-        const cx = k.pos.x; const tx = clamp(aim.x, cx - 2.2, cx + 2.2), ty = clamp(aim.y, 0.25, 1.9);
-        if (Math.abs(tx - aim.x) > 0.02 || Math.abs(ty - aim.y) > 0.02) replan(tx, ty);
-        path = pathNow(); const cross = crossT(path), spd = Math.hypot(ball.v.x, ball.v.y, ball.v.z);
+        // keep the ball inside the keeper's reachable region; verify with the simulated dive and, if the hands would miss, bring the
+        // shot progressively toward the keeper (small changes at the frozen moment are imperceptible). A wrong answer never scores.
+        const cx = k.pos.x, tx0 = clamp(aim.x, cx - 2.2, cx + 2.2), ty0 = clamp(aim.y, 0.25, 1.9);
+        let spec = null, m = null, cross = null, spd = 0;
+        for (const f of [1, 0.8, 0.62, 0.45, 0.3, 0.15]) {
+          const tx = cx + (tx0 - cx) * f, ty = lerp(1.0, ty0, Math.min(1, f + 0.2));
+          if (f < 1 || Math.abs(tx - aim.x) > 0.02 || Math.abs(ty - aim.y) > 0.02) replan(tx, ty);
+          path = pathNow(); cross = crossT(path); spd = Math.hypot(ball.v.x, ball.v.y, ball.v.z);
+          const tReach = Math.max(0.28, cross.t - delay - 0.02), target = new V(cross.x, cross.y, GZ + 0.55);
+          spec = { target, tReach, hold: 0.3, kind: 'dive' }; m = this.simulateDive(spec, path, delay);
+          if (m.minC > -0.03) { const s2 = path.find(q => q.t >= tReach + delay) || cross; spec.target = new V(s2.x, s2.y, Math.max(GZ + 0.45, s2.z)); m = this.simulateDive(spec, path, delay); }
+          if (m.minC <= -0.03) break;
+        }
         plan.side = cross.x >= cx ? 1 : -1; plan.kind = (spd < 23.5 || (Math.abs(cross.x - cx) < 0.7 && cross.y < 1.6)) ? 'catch' : 'parry'; plan.parry = plan.kind === 'parry'; plan.variant = plan.kind;
-        const tReach = Math.max(0.28, cross.t - delay - 0.02), target = new V(cross.x, cross.y, GZ + 0.55);
-        const spec = { target, tReach, hold: 0.3, kind: 'dive' }; const m = this.simulateDive(spec, path, delay);
-        if (m.minC > 0.02) { /* nudge the hands onto the ball path point at tReach */ const s2 = path.find(s => s.t >= tReach + delay) || cross; spec.target = new V(s2.x, s2.y, Math.max(GZ + 0.45, s2.z)); }
-        plan.dive = spec; return plan;
+        plan.dive = spec; plan.clearance = m.minC; return plan;
       }
       // wide
       const v = r(), sx = (Math.abs(aim.x) > 0.05 ? Math.sign(aim.x) : (r() < 0.5 ? 1 : -1));

@@ -11,13 +11,13 @@
   const wrap = a => Math.atan2(Math.sin(a), Math.cos(a));
   const BALL = 0.135, TOE_OUT = 0.07;
   const KICK_C = { back: 0.22, up: 0.1, pitch: 1.0 };
-  const ARM_T = { walkAmp: 0.3, runAmp: 0.7, sprintAmp: 0.25, walkBias: -0.12, runBias: -0.45, walkElbow: 0.15, runElbow: 1.6, walkElbowSw: 0.15, runElbowSw: 0.15, walkAbd: 0.17, runAbd: 0.3, runRot: -0.15, walkCurl: 0.42 };   // arm swing (rad), tuned to human hand paths
+  const ARM_T = { walkAmp: 0.3, runAmp: 0.7, sprintAmp: 0.25, walkBias: -0.12, runBias: -0.32, walkElbow: 0.15, runElbow: 1.5, walkElbowSw: 0.15, runElbowSw: 0.38, walkAbd: 0.17, runAbd: 0.3, runRot: -0.15, walkCurl: 0.42 };   // arm swing (rad), tuned to human hand paths
   /** piecewise-linear lookup [[x,y],...] */
   const tbl = (t, x) => { if (x <= t[0][0]) return t[0][1]; for (let i = 1; i < t.length; i++) if (x <= t[i][0]) { const a = t[i - 1], b = t[i]; return a[1] + (b[1] - a[1]) * (x - a[0]) / (b[0] - a[0]); } return t[t.length - 1][1]; };
   // human gait reference (speed m/s -> value). Cadence in steps/s, stance time in s, swing ankle lift in m.
   const FWD_CAD = [[0, 1.6], [1.4, 1.85], [2.1, 2.15], [3, 2.6], [5, 2.85], [7.5, 3.4]];
   const FWD_ST = [[0, 0.7], [1.4, 0.64], [2.1, 0.45], [3, 0.26], [5, 0.175], [7.5, 0.1]];
-  const FWD_LIFT = [[0, 0.05], [1.4, 0.07], [2.1, 0.12], [3, 0.2], [5, 0.3], [7.5, 0.4]];
+  const FWD_LIFT = [[0, 0.05], [1.4, 0.07], [2.1, 0.13], [3, 0.24], [5, 0.38], [7.5, 0.5]];   // V23: fuller heel recovery when running
   const SIDE_CAD = [[0, 2.4], [1, 3.0], [2.4, 4.0]], SIDE_ST = [[0, 0.3], [1, 0.22], [2.4, 0.15]];
   const BACK_CAD = [[0, 2.2], [1.2, 2.8], [3, 3.4]], BACK_ST = [[0, 0.35], [1.2, 0.26], [3, 0.18]];
 
@@ -199,7 +199,7 @@
         if (f.swing) {
           const u = f.u, e = u * u * (3 - 2 * u), hz = lerp(u, e, 0.75);    // horizontal: slow start (toe-off), fast mid swing, slow landing
           f.p.x = f.from.x + (f.to.x - f.from.x) * hz; f.p.z = f.from.z + (f.to.z - f.from.z) * hz;
-          const peakU = 0.38 - 0.1 * f.kick, bump = u < peakU ? Math.sin(0.5 * Math.PI * u / peakU) : Math.cos(0.5 * Math.PI * (u - peakU) / (1 - peakU));
+          const peakU = 0.38 - 0.14 * f.kick, bump = u < peakU ? Math.sin(0.5 * Math.PI * u / peakU) : Math.cos(0.5 * Math.PI * (u - peakU) / (1 - peakU));
           const base = lerp(f.fromY, r.ankleHeight, smooth(u * 1.6));
           f.y = base + f.lift * Math.pow(Math.max(0, bump), 1.15);
           // toes point down after push-off, level out, then lift slightly for a heel-first (walk) or flat (run) landing
@@ -238,7 +238,7 @@
       if (grounded.length) this.hipY = Math.min(this.hipY, reach);     // reach is a hard limit (no stretched leg at heel strike)
       // ---- upper body: lean with speed and acceleration, into turns; restrained hip/shoulder counter-rotation; stable head
       const acc = clamp((this.accelSm || 0) / 6, -1, 1), latA = clamp(sp * (this.yawRate || 0) / 9, -1, 1);
-      const leanT = (g === 'fwd' ? lerp(0.03, 0.17, clamp(sp / 6.5)) + 0.16 * Math.max(0, acc) - 0.08 * Math.max(0, -acc) : g === 'back' ? 0.1 : 0.12) + 0.22 * crouch;
+      const leanT = (g === 'fwd' ? lerp(0.03, 0.21, clamp(sp / 6.5)) + 0.16 * Math.max(0, acc) - 0.08 * Math.max(0, -acc) : g === 'back' ? 0.1 : 0.12) + 0.22 * crouch;
       this.leanSm = M.damp(this.leanSm || 0, leanT, 6, dt); const lean = this.leanSm;
       const sw = g === 'fwd' ? clamp(sp / 4) : 0.25 * clamp(sp / 2);
       const pyaw = clamp((zR - zL) * 0.26, -0.13, 0.13) * sw, roll = -latA * 0.07 - plantedSide * 0.025 * clamp(sp / 3);
@@ -258,7 +258,7 @@
       const bias = g === 'fwd' ? lerp(AT.walkBias, AT.runBias, run) : 0.05;
       const elb0 = lerp(AT.walkElbow, AT.runElbow, clamp((sp - 1.6) / 2.2)), elbSw = lerp(AT.walkElbowSw, AT.runElbowSw, run);
       const abd = lerp(AT.walkAbd, AT.runAbd, run), rot = AT.runRot * run, ar = this.armsReady || 0, rd = this.o.readyArm || { flex: 0.95, abd: 0.5, elbow: 1.2 };
-      const arm = (S, sw, ph) => { const sh = (bias + sw * amp) * mv + 0.03 * Math.sin(this.t * 1.2 + ph) * idle, el = elb0 * Math.max(mv, 0.35) + elbSw * Math.max(0, sw) * mv;
+      const arm = (S, sw, ph) => { const sh = (bias + sw * amp) * mv + 0.03 * Math.sin(this.t * 1.2 + ph) * idle, el = elb0 * Math.max(mv, 0.35) + elbSw * (sw > 0 ? sw : 0.45 * sw * run) * mv;   // V23: elbow closes on the forward swing, opens slightly behind
         r.armFK(S, lerp(sh, rd.flex + 0.06 * Math.sin(this.t * 2.1 + ph), ar), lerp(abd, rd.abd, ar), lerp(el, rd.elbow, ar), lerp(rot, 0, ar)); };
       arm('L', swingL, 0); arm('R', swingR, 1);
       const curl = lerp(AT.walkCurl, 0.55, run); r.hand('L', lerp(curl, 0.15, ar), 0.05, 0.45).hand('R', lerp(curl, 0.15, ar), 0.05, 0.45); r.clavicle('L', 0, 0).clavicle('R', 0, 0);

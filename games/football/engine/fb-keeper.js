@@ -5,6 +5,8 @@
   const FB = root.FB = root.FB || {};
   const T = THREE, V = T.Vector3, Q = T.Quaternion, M = FB.math, { clamp, lerp, smooth } = M;
   const _a = new V(), _b = new V(), _q = new Q(), _q2 = new Q(), UP = new V(0, 1, 0), ZAX = new V(0, 0, 1);
+  const LEGB = ['thighL', 'shinL', 'footL', 'toesL', 'thighR', 'shinR', 'footR', 'toesR'];
+  const GROUND_PTS = [['hips', 0.11], ['spine2', 0.12], ['spine3', 0.12], ['head', 0.1], ['neck', 0.07], ['shinL', 0.06], ['shinR', 0.06], ['footL', 0.045], ['footR', 0.045], ['toesL', 0.025], ['toesR', 0.025], ['handL', 0.03], ['handR', 0.03], ['lowerarmL', 0.04], ['lowerarmR', 0.04], ['upperarmL', 0.05], ['upperarmR', 0.05]];
 
   class Keeper extends FB.Player {
     constructor(actor, o = {}) {
@@ -35,7 +37,7 @@
     startDive(spec) {
       const pl = this.plan(spec.target, spec.tReach);
       this.dv = { t: 0, td: pl.td, side: pl.side, theta: pl.theta, p0: new V(this.pos.x, this.hipY, this.pos.z), hipEnd: pl.hipEnd, target: spec.target.clone(), hold: spec.hold === undefined ? 0.28 : spec.hold,
-        rest: spec.rest === undefined ? 0.7 : spec.rest, riseT: 0.95, phase: 'dive', hopGain: spec.hopGain === undefined ? 1 : spec.hopGain, y1: pl.hipEnd.y, slide: 0, vx: 0, reachable: pl.reachable, kind: spec.kind || 'dive',
+        rest: spec.rest === undefined ? 0.7 : spec.rest, riseT: 1.3, phase: 'dive', hopGain: spec.hopGain === undefined ? 1 : spec.hopGain, y1: pl.hipEnd.y, slide: 0, vx: 0, reachable: pl.reachable, kind: spec.kind || 'dive',
         launchLean: clamp(Math.abs(spec.target.x - this.pos.x) / 3, 0, 1), done: false, contactTime: null, held: false, handsAt: spec.target.clone() };
       this.dv.vx0 = pl.side * Math.min(3.4, Math.abs(pl.hipEnd.x - this.pos.x) / Math.max(0.2, pl.td) * 1.5);
       { const dv = this.dv, nearI = pl.side > 0 ? 0 : 1, farI = 1 - nearI, pushT = Math.min(0.16, 0.32 * pl.td);
@@ -48,7 +50,7 @@
     _gc(theta) { return 0.17 + 0.78 * Math.cos(theta); }       // lowest hip height for a body tilted by theta (lying on its side = 0.17)
 
     update(dt) {
-      if (this.mode === 'dive') { this.t += dt; this.modeT += dt; this._dive(dt); this._blend(dt); this.actor.root.updateMatrixWorld(true); return; }
+      if (this.mode === 'dive') { this.t += dt; this.modeT += dt; this._dive(dt); this._blend(dt); this.actor.root.updateMatrixWorld(true); if (this.dv) this._groundCheck(); return; }
       super.update(dt);
     }
 
@@ -85,8 +87,12 @@
         const u = clamp((t - d.tRise) / d.riseT), k = smooth(u);
         hx = lerp(d.landX, d.landX + d.side * -0.0, k); hz = d.hipEnd.z;
         const th0 = d.curTheta === undefined ? 1 : d.landTh2 || (d.landTh2 = d.curTheta);
-        theta = th0 * (1 - smooth(clamp(u * 1.15)));
-        hy = Math.max(this._gc(theta), lerp(this._gc(th0), r.hipsRest.y - 0.12, k));
+        // get up the way a keeper does: push on the lower hand and roll the torso upright into a deep crouch on planted feet
+        // (first ~55%), then stand up into the ready stance. Hip height is no longer tied to the straight-leg bound _gc().
+        theta = th0 * (1 - smooth(clamp(u / 0.55)));
+        const crouchY = 0.58, g0 = this._gc(th0);
+        hy = u < 0.55 ? lerp(g0, crouchY, smooth(u / 0.55)) : lerp(crouchY, r.hipsRest.y - 0.12, smooth((u - 0.55) / 0.45));
+        d.pushW = Math.sin(Math.PI * clamp(u / 0.6)) * clamp(th0 / 0.8);
         reachW = 0;
         if (u >= 1) { this._endDive(hx, hz); return; }
       }
@@ -111,7 +117,21 @@
         const nf = _a.lerpVectors(d.nearFrom, d.nearTo, u); nf.y = r.ankleHeight + 0.07 * Math.sin(Math.PI * u);
         r.leg(sNear, nf, { footYaw: 0, footPitch: 0, footRoll: d.side * theta, knee: 0.12 });
         r.leg(sFar, _b.set(d.farAt.x, r.ankleHeight, d.farAt.z), { footYaw: 0, footPitch: 0.25 * clamp(s / d.sp), footRoll: d.side * theta, knee: 0.12 });
-      } else r.legFK(d.side > 0 ? 'L' : 'R', -0.1 * lw, 0.12, 0.15 + bend * 0.4, 0.5).legFK(d.side > 0 ? 'R' : 'L', 0.25 * lw, 0.1, 0.35 + bend, 0.5);
+      } else {
+        r.legFK(d.side > 0 ? 'L' : 'R', -0.1 * lw, 0.12 - 0.3 * ex, 0.15 + bend * 0.4, 0.5).legFK(d.side > 0 ? 'R' : 'L', 0.25 * lw, 0.1, 0.35 + bend, 0.5);
+        if (d.phase === 'rise') {
+          // getting up: as the body comes upright the feet are planted on the grass under the hips (kneel -> crouch -> stand),
+          // blended from the lying FK pose by uprightness. V21/22 kept the lying FK legs, which pushed the boots ~30 cm into the ground.
+          const wIK = smooth(clamp((t - d.tRise) / (d.riseT * 0.3)));
+          if (wIK > 0) {
+            const keep = this._legSnap || (this._legSnap = {}); for (const n of LEGB) (keep[n] || (keep[n] = new Q())).copy(r.b[n].quaternion);
+            const back = -d.side * 0.5 * clamp(theta / 1.2);   // while still tilted the feet are planted where the legs lie, then come under the hips
+            for (const [S, sx] of [['L', 1], ['R', -1]]) r.leg(S, _a.set(hx + back + sx * 0.17, r.ankleHeight, hz + 0.08), { footYaw: 0, footPitch: 0, knee: 0.15 });
+            for (const n of LEGB) { const ik = _q2.copy(r.b[n].quaternion); r.b[n].quaternion.copy(keep[n]).slerp(ik, wIK); }
+            this.root.updateMatrixWorld(true);
+          }
+        }
+      }
       // arms: IK to the intercept point (both hands), blending from ready to reach, back to relaxed
       const tgt = d.handsAt, ax = new V(Math.cos(roll) * 1, Math.sin(roll) * 1, 0);
       for (const S of ['L', 'R']) {
@@ -119,11 +139,28 @@
         const rdy = _b.set(sg * 0.2, 0, 0.35).applyQuaternion(this.root.quaternion).add(r.joint('spine3', new V())).add(new V(0, -0.1, 0));
         const goal = new V(tgt.x + ax.x * sg * 0.075, tgt.y + ax.y * sg * 0.075, tgt.z);
         const w = new V().lerpVectors(rdy, goal, reachW);
-        r.arm(S, w, { pole: new V(sg * 0.9, -0.3, -0.6).applyQuaternion(this.root.quaternion) });
+        r.armClear(S, w, { pole: new V(sg * 0.9, -0.3, -0.6).applyQuaternion(this.root.quaternion) });       // never through the torso
       }
       r.hand('L', 0.05, 0, 0.1).hand('R', 0.05, 0, 0.1);
       if (reachW < 0.2) { for (const S of ['L', 'R']) { r.armFK(S, 0.3 * (1 - reachW) , 0.14, 0.25, 0); } }
+      if (d.phase === 'down') d.pushW = 1 - reachW;           // lying: the lower arm rests on the grass instead of hanging through it
+      if ((d.phase === 'rise' || d.phase === 'down') && d.pushW > 0.01) {
+        // the lower-side hand pushes on the grass beside the hips while the body rolls upright
+        const S = d.side > 0 ? 'L' : 'R', keep = this._armSnap || (this._armSnap = [new Q(), new Q()]);
+        keep[0].copy(r.b['upperarm' + S].quaternion); keep[1].copy(r.b['lowerarm' + S].quaternion);
+        r.armClear(S, _b.set(hx + d.side * 0.36, 0.06, hz + 0.38), { pole: new V(d.side * 0.4, 0.6, -0.6), minY: 0.05 });   // palm on the grass in front of the chest
+        for (const [i, n] of [[0, 'upperarm'], [1, 'lowerarm']]) { const ik = _q2.copy(r.b[n + S].quaternion); r.b[n + S].quaternion.copy(keep[i]).slerp(ik, d.pushW); }
+        this.root.updateMatrixWorld(true);
+      }
       d.reachW = reachW;
+    }
+    // final ground check (after the pose blend): no part of the body may be below the grass in any dive phase —
+    // raise the whole body by the deficit. Runs after _blend because blending from the loco pose can lower the legs.
+    _groundCheck() {
+      const r = this.rig; this.root.updateMatrixWorld(true); let low = 0;
+      for (const [n, rad] of GROUND_PTS) { const y = r.joint(n, _a).y - rad; if (y < low) low = y; }
+      if (low < 0) { this.root.position.y -= low; this.root.updateMatrixWorld(true); }
+      if (this.dv) this.dv.groundFix = -low; return -low;
     }
     _endDive(hx, hz) {
       const d = this.dv; d.done = true; this.dv = null;

@@ -27,9 +27,9 @@
   const reduced = () => params.get('reduced') === '1' ? true : params.get('reduced') === '0' ? false : (settings.reduced === null ? !!mqReduce.matches : !!settings.reduced);
 
   const TIERS = [
-    { name: 'light', pr: 1, shadow: 0, crowd: 1200, level: 0, aa: false },
-    { name: 'balanced', pr: 1.5, shadow: 1024, crowd: 3200, level: 1, aa: true },
-    { name: 'high', pr: 2, shadow: 2048, crowd: 6000, level: 2, aa: true }
+    { name: 'light', pr: 1, shadow: 0, crowd: 1200, crowdImp: 6000, level: 0, aa: false },
+    { name: 'balanced', pr: 1.5, shadow: 1024, crowd: 3200, crowdImp: 11000, level: 1, aa: true },
+    { name: 'high', pr: 2, shadow: 2048, crowd: 6000, crowdImp: 22000, level: 2, aa: true }
   ];
   function pickTier() {
     const q = params.get('q') !== null ? params.get('q') : settings.quality;
@@ -76,6 +76,7 @@
   const AR = n => String(n);
   function updateHud() {
     $('score').textContent = S.goals; $('round').textContent = Math.min(S.round + 1, S.total) + ' / ' + S.total;
+    if (stadium && stadium.setScore) stadium.setScore(S.goals, 0, 'الركلة ' + Math.min(S.round + 1, S.total) + ' / ' + S.total);
     const p = $('pips'); p.replaceChildren(...Array.from({ length: Math.min(S.total, 12) }, (_, i) => { const e = document.createElement('i'); const r = S.results[i]; e.className = r === 'goal' ? 'goal' : r === 'miss' ? 'miss' : r === 'pending' ? 'pending' : (i === S.round ? 'now' : ''); return e; }));
   }
   function instruction(t) { $('instruction').textContent = t; }
@@ -109,10 +110,13 @@
       setLoad(0.05, 'جارٍ تجهيز الملعب…'); await nextFrame();
       const base = '../football/assets/characters', builds = ['athlete', 'runner', 'keeper'], assets = {}, tex = {};
       const eye = FB.Char.loadTexture(base + '/textures/eye_brown.png');
+      if (FB.Kit.CREST_URL) await FB.Kit.loadCrest(FB.Kit.CREST_URL);   // optional authorised crest (null by default)
       await Promise.all(builds.map(async n => { assets[n] = await FB.Char.load(base, n); tex[n] = { skinClean: await FB.Char.loadTexture(`${base}/textures/skin_${n}_clean.jpg`), skinStubble: await FB.Char.loadTexture(`${base}/textures/skin_${n}_stubble.jpg`), eye: await eye }; setLoad(0.2 + 0.1 * builds.indexOf(n)); }));
       setLoad(0.45, 'جارٍ بناء المدرجات…'); await nextFrame();
       stadium = FB.Stadium.build(scene, { level: tier.level, shadow: tier.shadow }); setLoad(0.62); await nextFrame();
-      crowd = FB.Crowd.build(scene, stadium, { count: tier.crowd, reduced: reduced() }); crowd.setReduced(reduced()); setLoad(0.75, 'جارٍ إدخال اللاعبين…'); await nextFrame();
+      // V23: spectators are impostors baked from the game's own characters (falls back to the simple figures if baking fails)
+      let sprites = null; try { sprites = FB.Crowd.bake(renderer, { assets, tex, level: tier.level }); } catch (e) { console.warn('crowd bake', e); sprites = null; }
+      crowd = FB.Crowd.build(scene, stadium, { count: sprites ? tier.crowdImp : tier.crowd, reduced: reduced(), sprites }); crowd.sprites = sprites; crowd.setReduced(reduced()); setLoad(0.75, 'جارٍ إدخال اللاعبين…'); await nextFrame();
       ballView = FB.BallView.create(scene); fx = FB.Fx.create(scene, { reduced: reduced() });
       const seed = params.get('seed') ? (+params.get('seed') || 1) : (Math.floor(Math.random() * 1e9) + 1);
       const makeActor = spec => {
@@ -156,6 +160,7 @@
     } else { S.introDone = true; startRound(); }
   }
   function startRound(opts = {}) {
+    if (stadium && stadium.boards) stadium.boards.event('ads', 0.01);   // back to the regular LED artwork for the new kick
     timers = []; if (replay) { replay.stop(); replay.clear(); } resetUi(); S.correct = false; S.pending = false; S.feedback = ''; S.result = ''; S.variant = ''; S.aimTouched = false; S.aim.x = 0; S.aim.y = 0.5; S.aim.power = 0.7; S.passOptions = [];
     showControls(true); updateHud(); highlightAim();
     if (S.lite) { setPhase('ready'); instruction('اضغط «سدّد» لتبدأ التسديدة'); $('shoot').hidden = false; $('shoot').disabled = false; return; }
@@ -326,9 +331,9 @@
       case 'aimReady': if (S.phase === 'build') showAim(); break;
       case 'kick': if (e.kind === 'shot') { replay.mark(); director.kick(0.035); fx.puff(b.p.x, b.p.z, 1); crowd.pulse(0.5, 2); audioInst.setExcitement(0.5); } else fx.puff(b.p.x, b.p.z, 0.5); break;
       case 'freeze': ask(); break;
-      case 'goalLine': if (S.result === 'goal') { audioInst.cheer(); crowd.pulse(1, 6); audioInst.setExcitement(1); director.kick(0.05); fx.confetti(b.p.x * 0.3, GZ + 8); ticker('هدف!', 1800); } break;
+      case 'goalLine': if (S.result === 'goal') { audioInst.cheer(); crowd.pulse(1, 6); stadium.ledEvent && stadium.ledEvent('goal', 7); audioInst.setExcitement(1); director.kick(0.05); fx.confetti(b.p.x * 0.3, GZ + 8); ticker('هدف!', 1800); } break;
       case 'ballHit': if (e.kind === 'net') replay.noteImpact({ x: e.x, y: e.y, z: e.z, vx: b.v.x, vy: b.v.y, vz: b.v.z }); if (e.kind === 'post' || e.kind === 'bar') { crowd.pulse(0.5, 1.5); director.kick(0.03); } if (e.kind === 'bounce' && e.strength > 6) fx.puff(e.x, e.z, 0.6); break;
-      case 'glove': case 'parry': case 'catch': crowd.pulse(0.55, 1.6); break;
+      case 'glove': case 'parry': case 'catch': crowd.pulse(0.55, 1.6); stadium.ledEvent && stadium.ledEvent('save', 4); break;
       case 'dive': fx.puff(match.keeper.pos.x, match.keeper.pos.z, 0.9); break;
       case 'outcomeReady': outcomeShown(e.outcome); break;
       case 'turnover': { // lost possession: no question is used; the attack is rebuilt
@@ -487,7 +492,7 @@
   }
   function dispose() {
     if (disposed) return; disposed = true; cancelAnimationFrame(rafId); try { audioInst.close(); } catch (e) { }
-    try { crowd && crowd.dispose(); stadium && stadium.dispose(); ballView && ballView.dispose(); fx && fx.dispose(); for (const a of actors) a.dispose && a.dispose(); renderer && renderer.dispose(); } catch (e) { }
+    try { crowd && crowd.dispose(); crowd && crowd.sprites && crowd.sprites.dispose(); stadium && stadium.dispose(); ballView && ballView.dispose(); fx && fx.dispose(); for (const a of actors) a.dispose && a.dispose(); renderer && renderer.dispose(); } catch (e) { }
   }
 
   /* ------------------------------------------------------------------ public API (also used by the automated tests) */

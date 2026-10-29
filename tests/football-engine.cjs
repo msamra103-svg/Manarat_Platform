@@ -84,6 +84,20 @@ const makeActor=spec=>{const man=mans[spec.build],sk=FB.Char.buildSkeleton(man),
   k.startDive({target:new V(2.6,0.6,P.goalZ+0.75),tReach:0.5});let t=0;for(;t<5&&k.mode==='dive';t+=1/60)k.update(1/60);
   for(let i=0;i<60;i++){k.setIntent(0,0,0);k.update(1/60);}const hy=k.rig.joint('hips',new V()).y;
   assert(k.mode==='loco'&&t<4.5,'keeper recovers from the dive ('+t.toFixed(2)+' s)');assert(hy>0.75,'keeper is standing again (hips '+hy.toFixed(2)+' m)');for(const S of ['L','R'])assert(knee(k,S)>0.3,'keeper knees forward after recovery');}
+ // 7b) V23: no body part below the grass in any dive phase (V22 rise phase pushed the boots ~0.31 m into the ground) and the
+ //     reaching arms never pass through the torso (V22: up to 0.17 m). Capsule test on joint segments.
+ {const segD=(p1,q1,p2,q2)=>{const d1=q1.clone().sub(p1),d2=q2.clone().sub(p2),r=p1.clone().sub(p2),a=d1.dot(d1),e=d2.dot(d2),f=d2.dot(r),c=d1.dot(r),b=d1.dot(d2),den=a*e-b*b;let s=den>1e-9?Math.max(0,Math.min(1,(b*f-c*e)/den)):0,t=(b*s+f)/e;if(t<0){t=0;s=Math.max(0,Math.min(1,-c/a));}else if(t>1){t=1;s=Math.max(0,Math.min(1,(b-c)/a));}return p1.clone().addScaledVector(d1,s).distanceTo(p2.clone().addScaledVector(d2,t));};
+  const LOW=[['hips',0.11],['spine3',0.12],['head',0.1],['footL',0.045],['footR',0.045],['toesL',0.025],['toesR',0.025],['handL',0.03],['handR',0.03]];
+  let minY=9,maxPen=-9,where='';
+  for(const [tx,ty,td] of [[2.6,0.3,0.5],[2.8,2.0,0.6],[-2.2,0.15,0.45],[0.6,1.2,0.4],[3.3,1.5,0.6],[-3.4,0.4,0.6]]){
+   const sk=FB.Char.buildSkeleton(mans.keeper),g=new THREE.Group();g.add(sk.hips);const k=new FB.Keeper({root:g,bones:sk.byName,boneList:sk.bones,man:mans.keeper,parts:{}});k.teleport(0,P.goalZ+0.6,0);for(let i=0;i<30;i++){k.setIntent(0,0,0);k.update(1/60);}
+   k.startDive({target:new V(tx,ty,P.goalZ+0.75),tReach:td});const J=n=>k.rig.joint(n,new V());
+   for(let i=0;i<500&&k.mode==='dive';i++){k.update(1/120);for(const [n,r] of LOW){const y=J(n).y-r;if(y<minY){minY=y;where=n+' '+(k.dv?k.dv.phase:'');}}
+    for(const S of ['L','R']){const pen=(0.038+0.135)-segD(J('lowerarm'+S),J('hand'+S),J('spine1'),J('neck'));if(pen>maxPen)maxPen=pen;}}}
+  assert(minY>-0.01,'keeper never sinks into the grass during a dive (lowest '+minY.toFixed(3)+' m at '+where+')');
+  assert(maxPen<0.015,'keeper forearms never pass through the torso during a dive ('+maxPen.toFixed(3)+' m)');
+  for(const kind of ['celebrate','fist','cheer','jump']){const sk=FB.Char.buildSkeleton(mans.athlete),g=new THREE.Group();g.add(sk.hips);const p=new FB.Player({root:g,bones:sk.byName,boneList:sk.bones,man:mans.athlete,parts:{}});p.teleport(0,-8,0);p.startPose(kind,{dur:3});let lo=9;for(let i=0;i<150;i++){p.update(1/60);for(const n of ['toesL','toesR'])lo=Math.min(lo,p.rig.joint(n,new V()).y-0.025);}
+   assert(lo>-0.01,'pose '+kind+': toes stay above the grass ('+lo.toFixed(3)+')');}}
  console.log('PASS animation: knees/boots oriented from any position, 9 gaits (no slide, exact stance IK, cadence, no fast backward running), kick phases, keeper dive; 20-120 fps U-turn without NaN/teleport/knee inversion; geometric boot-ball contact; keeper stance and recovery; natural arm swing (past the hips, clear of the shorts)');}
 
 /* ---- match director ---- */

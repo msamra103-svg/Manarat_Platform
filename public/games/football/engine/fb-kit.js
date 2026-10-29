@@ -150,5 +150,5 @@
     const t = new THREE.CanvasTexture(c); t.encoding = THREE.sRGBEncoding; t.anisotropy = 4; return t;
   }
 
-  FB.Kit = { KITS, materials, numberTexture, clearCache() { cache.clear(); } };
+  FB.Kit = { KITS, materials, numberTexture, CREST_URL: crestURL, loadCrest, clearCache() { cache.clear(); } };
 })(typeof window !== 'undefined' ? window : globalThis);

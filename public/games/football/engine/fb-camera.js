@@ -45,13 +45,13 @@
         }
         case 'aim': { // striker's view: behind the ball, goal framed
           const b = ctx.shooterBall || ball; _u.set(-b.x, 0, GZ - b.z).normalize(); _s.set(_u.z, 0, -_u.x);
-          const back = 8.2 * pull;
-          w.pos.set(b.x - _u.x * back + _s.x * 1.0, 2.5 + 0.7 * (pull - 1), b.z - _u.z * back + _s.z * 1.0);
+          const back = (ctx.penalty ? 7.4 : 8.2) * pull, side = ctx.penalty ? -1.9 : 1.0;  // penalties: lens on the open side so the kicker never hides the ball
+          w.pos.set(b.x - _u.x * back + _s.x * side, (ctx.penalty ? 2.2 : 2.5) + 0.7 * (pull - 1), b.z - _u.z * back + _s.z * side);
           w.look.set(b.x * 0.3, 1.15, GZ + 0.5); w.fov = fovFor(46, a, 28, 62); w.kp = 2.4; w.kl = 3.2; break;
         }
         case 'runup': { // push in slightly and drop lower as the striker runs through the ball
           const b = ctx.shooterBall || ball; _u.set(-b.x, 0, GZ - b.z).normalize(); _s.set(_u.z, 0, -_u.x);
-          const k = red ? 0 : smooth(t / 1.6), back = lerp(8.2 * pull, 5.2 * pull, k), side = lerp(1.0, 1.6, k);
+          const k = red ? 0 : smooth(t / 1.6), back = lerp((ctx.penalty ? 7.4 : 8.2) * pull, 5.2 * pull, k), side = ctx.penalty ? lerp(-1.9, -2.2, k) : lerp(1.0, 1.6, k);
           w.pos.set(b.x - _u.x * back + _s.x * side, lerp(2.5, 1.5, k), b.z - _u.z * back + _s.z * side);
           w.look.set(b.x + _u.x * 6, 1.0, b.z + _u.z * 6); w.fov = fovFor(lerp(46, 40, k), a, 28, 62); w.kp = 3.2; w.kl = 5; break;
         }
@@ -72,6 +72,10 @@
         }
         case 'behindGoal': { // from behind the net: the shot arrives and the net bulges
           w.pos.set(clamp(ball.x * 0.5, -3.2, 3.2) + 1.2, 1.5, GZ - 5.2); w.look.set(ball.x * 0.35, 1.2, Math.max(GZ - 1.0, ball.z + 0.5)); w.fov = fovFor(56, a, 30, 66); w.kp = 6; w.kl = 4.5; break;
+        }
+        case 'play': { // interactive match: behind and above the controlled player, looking up the pitch; damped, never cuts while in control
+          const c = ctx.ctrl || ball, h = 9.2 + 1.6 * (pull - 1), back = 12.5 * pull;
+          w.pos.set(c.x * 0.75, h, c.z + back); w.look.set(c.x * 0.88, 0.6, c.z - 7.5); w.fov = fovFor(62, a, 34, 70); w.kp = 2.4; w.kl = 3.2; w.kf = 2; break;
         }
         case 'follow': { // gentle follow for wide / neutral outcomes
           w.pos.set(ball.x * 0.5 + 6, 3.2, Math.max(ball.z + 11 * pull, GZ + 11)); w.look.set(ball.x * 0.7, 0.8, ball.z - 2); w.fov = fovFor(58, a); w.kp = 2.5; w.kl = 4; break;
