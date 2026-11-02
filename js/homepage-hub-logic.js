@@ -18,7 +18,7 @@
       eyebrow: 'تحدّي الملاعب التفاعلي',
       headline: 'مرّر بذكاء، أجب بدقة، وسجّل هدف الفوز',
       pitch: 'واجه حارس المرمى في بيئة ثلاثية الأبعاد وحوّل كل إجابة صحيحة إلى هجمة متقنة.',
-      cover: 'assets/game-covers/football.svg',
+      cover: 'assets/game-covers/football.20261102.jpg',
       playableDemo: true
     },
     volleyball: {
@@ -28,7 +28,7 @@
       eyebrow: 'تحدّي الصالة الرياضية',
       headline: 'استقبل، أعدّ الكرة، واضرب ساحقًا بالمعرفة',
       pitch: 'تبادل الكرات فوق الشبكة مع فريقك وتقدّم في الأشواط عبر الإجابات المتتالية.',
-      cover: 'assets/game-covers/volleyball.svg',
+      cover: 'assets/game-covers/volleyball.20261102.jpg',
       playableDemo: true
     },
     basketball: {
@@ -38,7 +38,7 @@
       eyebrow: 'تحدّي الرميات الحاسمة',
       headline: 'صوّب رميتك الثلاثية نحو السلة بإجاباتك الصحيحة',
       pitch: 'تحكّم في زاوية التصويب والتوقيت بعد كل سؤال علمي أو مهاري تجيب عنه بنجاح.',
-      cover: 'assets/game-covers/basketball.svg',
+      cover: 'assets/game-covers/basketball.20261102.jpg',
       playableDemo: true
     },
     race: {
@@ -48,7 +48,7 @@
       eyebrow: 'حلبة السرعة والتركيز',
       headline: 'انطلق في المضمار وتجاوز الحواجز المعرفية',
       pitch: 'قد سيارتك على الحلبة وافتح بوابات العبور نحو خط النهاية مع كل إجابة متقنة.',
-      cover: 'assets/game-covers/race.svg',
+      cover: 'assets/game-covers/race.20261102.jpg',
       playableDemo: true
     },
     bowling: {
@@ -58,7 +58,7 @@
       eyebrow: 'دقة التصويب والتركيز',
       headline: 'اضبط الزاوية والدوران وأسقط القوارير العشر',
       pitch: 'محاكاة فيزيائية واقعية تكافئ إجابتك الصحيحة برمية مثالية على مضمار البولينج.',
-      cover: 'assets/game-covers/bowling.svg',
+      cover: 'assets/game-covers/bowling.20261102.jpg',
       playableDemo: true
     },
     fishing: {
@@ -68,7 +68,7 @@
       eyebrow: 'مغامرة الأعماق المعرفية',
       headline: 'راقب حركة الأسماك تحت الماء واصطد الإجابة الصحيحة',
       pitch: 'تجربة هادئة ومركّزة تجمع دقة الملاحظة واستحضار المعلومة في بيئة مائية تفاعلية.',
-      cover: 'assets/game-covers/fishing.svg',
+      cover: 'assets/game-covers/fishing.20261102.jpg',
       playableDemo: true
     },
     'target-shooting': {
@@ -78,7 +78,7 @@
       eyebrow: 'دقة التصويب وثبات الأداء',
       headline: 'صوّب بقوسك نحو الهدف وثبّت نقاطك بالإجابة الصحيحة',
       pitch: 'رامٍ واقعي وأربعة تحديات: رماية الأسهم، صيد الطيور الافتراضي، فرقعة البالونات، والطبق الطائر.',
-      cover: 'assets/game-covers/target-shooting.svg',
+      cover: 'assets/game-covers/target-shooting.20261102.jpg',
       playableDemo: true
     },
     'qatar-runner': {
@@ -88,10 +88,10 @@
       eyebrow: 'سرعة وتركيز وتعلّم',
       headline: 'اجرِ في كورنيش الدوحة وسوق واقف وافتح بوابات الأسئلة',
       pitch: 'ولد قطري يجري بين المسارات الثلاثة، يقفز وينزلق، وتفتح الإجابة الصحيحة بوابة السؤال المضيئة.',
-      cover: 'assets/game-covers/qatar-runner.svg',
+      cover: 'assets/game-covers/qatar-runner.20261102.jpg',
       playableDemo: true
     },
-    'qatar-hero':{key:'qatar-hero',name:'مغامرات بطل قطر',badge:'مغامرة ثلاثية الأبعاد',eyebrow:'قفز ومهارة وأسئلة',headline:'اكتشف قطر بالقفز على مكعبات الأسئلة',pitch:'مغامرة وسط ست بيئات قطرية؛ اصطدم بمكعب السؤال، وأجب بشكل صحيح لتفتح الطريق وتتابع التقدم.',cover:'assets/game-covers/qatar-hero.svg',playableDemo:true},
+    'qatar-hero':{key:'qatar-hero',name:'مغامرات بطل قطر',badge:'مغامرة ثلاثية الأبعاد',eyebrow:'قفز ومهارة وأسئلة',headline:'اكتشف قطر بالقفز على مكعبات الأسئلة',pitch:'مغامرة وسط ست بيئات قطرية؛ اصطدم بمكعب السؤال، وأجب بشكل صحيح لتفتح الطريق وتتابع التقدم.',cover:'assets/game-covers/qatar-hero.20261102.jpg',playableDemo:true},
     classic: {
       key: 'classic',
       name: 'تحدّي المعرفة',
@@ -99,7 +99,7 @@
       eyebrow: 'المسابقة المدرسية الشاملة',
       headline: 'اختبر سرعة البديهة والفهم العميق في جميع المواد',
       pitch: 'تحدٍّ معرفي مباشر يدعم الأسئلة الموضوعية والمقالية والمطابقة والترتيب والتصنيف.',
-      cover: 'assets/game-covers/classic.svg',
+      cover: 'assets/game-covers/classic.20261102.jpg',
       playableDemo: true
     },
     puzzle: {
@@ -109,7 +109,7 @@
       eyebrow: 'التفكير البصري والتحليل',
       headline: 'ركّب أجزاء الصورة التعليمية واكتشف المفهوم الكامل',
       pitch: 'تحدٍّ بصري تفاعلي لتجميع الخرائط والرسوم العلمية والصور التعليمية داخل المهمات.',
-      cover: 'assets/game-covers/puzzle.svg',
+      cover: 'assets/game-covers/puzzle.20261102.jpg',
       playableDemo: false
     }
   };
