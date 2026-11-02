@@ -4,6 +4,8 @@ await db.exec(fs.readFileSync(process.env.LIVE_SQL||require('path').join('supaba
 await db.exec(fs.readFileSync(require('path').join('supabase/migrations',fs.readdirSync('supabase/migrations').find(x=>x.endsWith('_live_avatars.sql'))),'utf8'));
 await db.exec(fs.readFileSync(require('path').join('supabase/migrations',fs.readdirSync('supabase/migrations').find(x=>x.endsWith('_live_award_control.sql'))),'utf8'));
 await db.exec(fs.readFileSync(require('path').join('supabase/migrations',fs.readdirSync('supabase/migrations').find(x=>x.endsWith('_live_round_celebration.sql'))),'utf8'));
+await db.exec("create schema storage;create table storage.objects(bucket_id text,name text);");
+await db.exec(fs.readFileSync('supabase/migrations/20261102052347_live_background.sql','utf8'));
 const teacher='11111111-1111-4111-8111-111111111111',other='22222222-2222-4222-8222-222222222222',as='33333333-3333-4333-8333-333333333333';
 await db.query('insert into profiles values ($1,\'teacher\',\'نشط\'),($2,\'teacher\',\'نشط\')',[teacher,other]);
 await db.query('insert into manarat_games values (\'g\',$1,$2)',[teacher,JSON.stringify({questions:[{text:'اختبار ١',type:'multiple_choice',options:['أ','ب'],correct:0,points:10},{text:'اختبار ٢',type:'true_false',options:['صح','خطأ'],correct:1,points:20},{text:'مقالي',type:'open_text'}]})]);
@@ -13,7 +15,20 @@ const made=await call('create',{assignment:as,duration:30},teacher);assert.equal
 await assert.rejects(()=>call('create',{assignment:as},other));
 let st=await call('join',{code,name:'طالب أول',avatar:'qatar-08'});const p=st.me;assert.equal(st.players.find(x=>x.id===p).avatar,'qatar-08');const again=await call('join',{code,name:'طالب أول',avatar:'qatar-02'});assert.equal(again.players.find(x=>x.id===p).avatar,'qatar-08');await call('join',{code,name:'طالب ثان',avatar:'javascript:alert(1)'},null,'b'.repeat(64));
 await assert.rejects(()=>call('start',{code,version:0}));await assert.rejects(()=>call('state',{code},other));
-st=await call('start',{code,version:0},teacher);assert.equal(st.phase,'question');assert.equal(st.question.correct,null);assert(!JSON.stringify(st).includes('explanation":"'));
+assert.equal(st.background_path,'');
+const background=teacher+'/live/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa.webp';
+await db.query("insert into storage.objects values ('manarat-brand-assets',$1)",[background]);
+await assert.rejects(()=>call('set_background',{code,background_path:background}));
+await assert.rejects(()=>call('set_background',{code,background_path:background},other));
+await assert.rejects(()=>call('set_background',{code,background_path:other+'/live/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa.webp'},teacher));
+await assert.rejects(()=>call('set_background',{code,background_path:teacher+'/live/bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb.png'},teacher));
+st=await call('set_background',{code,background_path:background},teacher);assert.equal(st.background_path,background);
+assert.equal((await call('state',{code})).background_path,background);
+st=await call('set_background',{code,background_path:''},teacher);assert.equal(st.background_path,'');
+assert.equal((await call('state',{code})).background_path,'');
+// Restore the original version so existing transition assertions remain meaningful.
+await db.query('update live_rooms set version=0 where code=$1',[code]);
+st=await call('start',{code,version:0},teacher);assert.equal(st.phase,'question');await assert.rejects(()=>call('set_background',{code,background_path:background},teacher));assert.equal(st.question.correct,null);assert(!JSON.stringify(st).includes('explanation":"'));
 await assert.rejects(()=>call('answer',{code,index:0,choice:0}));
 await db.query("update live_rooms set starts_at=now()-interval '1 second',deadline=now()+interval '29 seconds' where code=$1",[code]);
 st=await call('answer',{code,index:0,choice:0});assert.equal(st.answer.correct,null);assert.equal(st.players[0].points,0);

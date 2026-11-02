@@ -1,0 +1,22 @@
+const fs=require('fs'),vm=require('vm'),assert=require('node:assert/strict'),{transformSync}=require('esbuild'),{webcrypto}=require('crypto');
+const actor='11111111-1111-4111-8111-111111111111';let handler,calls=[],teacher=true,failUpload=false;
+const ctx={Deno:{env:{get:n=>n==='SUPABASE_URL'?'https://test.invalid':'server-secret'},serve:fn=>handler=fn},Request,Response,crypto:webcrypto,TextEncoder,Uint8Array,atob,fetch:async(url,opts)=>{
+ const body=typeof opts?.body==='string'?JSON.parse(opts.body):opts?.body;calls.push({url,body});
+ if(url.endsWith('/auth/v1/user'))return Response.json(opts.headers.Authorization==='Bearer valid'?{id:actor}:{},{status:opts.headers.Authorization==='Bearer valid'?200:401});
+ if(url.endsWith('/school_rate_limit'))return Response.json(true);
+ if(url.endsWith('/live_session'))return Response.json(teacher?{background_path:body.p_data.background_path}:{message:'الحساب غير متاح.'},{status:teacher?200:400});
+ return Response.json({},{status:failUpload?500:200});
+}};vm.createContext(ctx);vm.runInContext(transformSync(fs.readFileSync('supabase/functions/live-api/index.ts','utf8'),{loader:'ts',format:'iife'}).code,ctx);
+const call=(data,token='valid')=>handler(new Request('https://test.invalid',{method:'POST',headers:{...(token?{Authorization:'Bearer '+token}:{})},body:JSON.stringify(data)}));
+(async()=>{const upload={action:'upload_background',mime:'image/jpeg',base64:fs.readFileSync('assets/game-covers/football.20261102.jpg').toString('base64')};
+ assert.equal((await call(upload,null)).status,400);assert.equal((await call(upload,'bad')).status,400);
+ teacher=false;calls=[];assert.equal((await call(upload)).status,400);assert(!calls.some(x=>x.url.includes('/storage/')));teacher=true;
+ assert.equal((await call({...upload,mime:'image/svg+xml'})).status,400);
+ assert.equal((await call({...upload,mime:'image/png'})).status,400);
+ assert.equal((await call({...upload,base64:'a'.repeat(2000004)})).status,400);
+ let r=await call(upload);assert.equal(r.status,200);const {path}=await r.json();assert(path.startsWith(actor+'/live/'));assert(path.endsWith('.jpg'));
+ assert(calls.at(-1).body instanceof Uint8Array);failUpload=true;assert.equal((await call(upload)).status,400);failUpload=false;
+ r=await call({action:'set_background',code:'123456',background_path:path});assert.equal(r.status,200);assert.equal((await r.json()).background_path,path);
+ assert.equal((await call({action:'set_background',code:'123456',secret:'a'.repeat(64)},null)).status,400);
+ console.log('PASS upload auth, profile, file type, size, binary validation, storage failures and background forwarding');
+})().catch(e=>{console.error(e);process.exit(1)});

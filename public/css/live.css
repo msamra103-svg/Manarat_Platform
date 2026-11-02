@@ -26,3 +26,22 @@ body.session-screen .award-person .award-avatar{width:clamp(60px,12vh,120px);hei
 body.session-screen #awardHint,body.session-screen #skipCeremony,body.session-screen .stage-wait{flex-shrink:0}
 @media(max-width:650px){body.session-screen .question-panel{gap:6px}body.session-screen .question-panel .question{font-size:clamp(19px,5vw,26px)}body.session-screen .question-panel .answers{grid-auto-rows:minmax(44px,70px)}body.session-screen .award-person{flex-basis:100px;min-width:75px}body.session-screen .ranking-panel .board th:first-child{width:44px}}
 @media(max-height:500px){body.session-screen .question-panel{padding:8px;gap:4px}body.session-screen .question-panel .question{font-size:18px;min-height:22px}body.session-screen .question-panel .answers{grid-auto-rows:minmax(32px,44px)}body.session-screen .question-panel .actions{padding-top:3px}body.session-screen .stage-content{padding:6px;gap:2px}body.session-screen .award-person .award-avatar{width:44px;height:44px}}
+
+/* Teacher-selected background; default appearance stays untouched without an image. */
+.background-editor{border:1px solid var(--border);border-radius:14px;padding:12px 16px;margin:20px 0 0;min-width:0}
+.background-editor legend{font-weight:bold;color:var(--deep);padding:0 6px}
+.background-editor label{margin-top:0}.background-editor input{font-size:13px;padding:9px}
+.background-preview{display:block;width:100%;max-height:170px;object-fit:contain;background:#f5ede8;border-radius:10px;margin:10px 0}
+.background-preview[hidden],#backgroundRemove[hidden]{display:none}
+#backgroundRemove{font-size:12px;padding:8px 12px}
+#backgroundDialog{border:1px solid var(--border);border-radius:20px;padding:22px;width:min(94vw,540px);max-height:90dvh;overflow:auto;color:var(--ink);background:#fff}
+#backgroundDialog::backdrop{background:#240b1699}#backgroundDialog h2{margin:0}#backgroundDialog>.row{margin-top:16px}
+body.session-screen.has-live-background{background-image:var(--live-background);background-size:cover;background-position:center;background-repeat:no-repeat}
+.has-live-background.session-screen .panel{background:rgba(255,255,255,.86);box-shadow:0 4px 20px #240b1620}
+.has-live-background.session-screen .room-head{background:linear-gradient(125deg,#551025e8,#8a1538e8)}
+.has-live-background.session-screen .choice{background:#fffffff2}
+.has-live-background.session-screen .choice.selected{background:#f5e7ec}
+.has-live-background.session-screen .choice.correct{background:#edf7ef}
+.has-live-background.session-screen #connection{background:#ffffffe6;border-radius:6px;padding:0 6px}
+.has-live-background.session-screen .session-actions>.muted{background:#ffffffe6;border-radius:6px;padding:0 6px}
+.has-live-background.session-screen .round-stage,.has-live-background.session-screen .award-stage{background-image:linear-gradient(#210c18b8,#50132bcc),var(--live-background);background-size:cover;background-position:center}
