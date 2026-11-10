@@ -26,7 +26,7 @@ def write(p,s):
  p.parent.mkdir(parents=True,exist_ok=True);p.write_text(s,encoding='utf8')
 def jd(p,o):write(p,json.dumps(o,ensure_ascii=False,indent=2)+'\n')
 def digest(p):return hashlib.sha256(p.read_bytes()).hexdigest()
-def permitted(p):return p.is_file() and not p.is_symlink() and not any(x in BAD_NAMES for x in p.parts) and not p.name.startswith('.env') and p.suffix.lower() not in EXCLUDE
+def permitted(p):return not any(x in BAD_NAMES for x in p.parts) and not p.name.startswith('.env') and p.suffix.lower() not in EXCLUDE
 
 def copyrel(rel,dest,seen):
  p=SRC/rel
