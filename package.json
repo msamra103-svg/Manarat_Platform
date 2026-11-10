@@ -12,7 +12,7 @@
     "check:js": "node --check js/core.js && node --check js/home.js && node --check js/admin.js && node --check js/dashboard.js && node --check js/create-game.js && node --check js/player.js && node --check js/school.js && node --check js/student-analytics-logic.js && node --check js/student-analytics.js && node --check js/homepage-hub-logic.js",
     "smoke": "node scripts/smoke-check.js",
     "check": "node scripts/smoke-check.js",
-    "test:unit": "node --test tests/student-analytics.test.cjs tests/homepage-hub.test.cjs",
+    "test:unit": "node --test tests/student-analytics.test.cjs tests/homepage-hub.test.cjs tests/classroom-auth.test.cjs",
     "test:live": "node tests/live-db.cjs && node tests/live-api.cjs && node tests/live-background-api.cjs && node tests/live-background-display.cjs && node tests/live-browser.cjs",
     "test:db": "node tests/database.cjs && node tests/upgrade.cjs",
     "test:browser": "node tests/school-browser.cjs",
