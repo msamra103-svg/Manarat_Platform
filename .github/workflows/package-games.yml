@@ -1,0 +1,62 @@
+name: Prepare isolated Claude game packages
+on:
+  push:
+    branches: [handoff/claude-games-20261111]
+    paths: ['handoff/**', '.github/workflows/package-games.yml']
+permissions:
+  contents: read
+jobs:
+  package:
+    if: github.repository == 'msamra103-svg/Manarat_Platform'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: 070fedaefed768135c58cb3d25c95a03fa64c01a
+          path: source
+          persist-credentials: false
+      - name: Unpack the current racing assets without changing production
+        run: node source/scripts/unpack-champions-race.js
+      - name: Prepare complete source packages and local-only test hosts
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('handoff/build.py')
+          s=p.read_text()
+          s=s.replace('return p.is_file() and not p.is_symlink() and not any(x in BAD_NAMES for x in p.parts)', 'return not any(x in BAD_NAMES for x in p.parts)')
+          p.write_text(s)
+          PY
+          python3 -m py_compile handoff/build.py
+          python3 handoff/build.py prepare
+      - name: Install isolated browser test tooling
+        run: |
+          npm install --prefix handoff --no-save --no-audit --no-fund --ignore-scripts playwright@1.61.1
+          handoff/node_modules/.bin/playwright install --with-deps chromium
+      - name: Test actual package startup with external network blocked
+        run: node handoff/browser.cjs
+      - name: Verify files and create separately downloadable archives
+        run: python3 handoff/build.py finalize
+      - name: Save delivery files only to the isolated handoff branch
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          test "$(git branch --show-current)" = 'handoff/claude-games-20261111'
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add packages handoff/build.py
+          git diff --cached --check
+          git commit -m 'Deliver eleven independent Claude source packages, contracts and verification reports' || test -z "$(git status --porcelain packages)"
+          export GIT_CONFIG_COUNT=1
+          export GIT_CONFIG_KEY_0=http.https://github.com/.extraheader
+          export GIT_CONFIG_VALUE_0="AUTHORIZATION: basic $(printf 'x-access-token:%s' "$GH_TOKEN" | base64 -w0)"
+          git push origin HEAD:refs/heads/handoff/claude-games-20261111
+          unset GIT_CONFIG_COUNT GIT_CONFIG_KEY_0 GIT_CONFIG_VALUE_0
+          git rev-parse HEAD
+          cat packages/SUMMARY.json

@@ -1,1 +1,0 @@
--- Replaced by 01_UPGRADE_V17_1.sql. Do not run the old partial hardening patch.
