@@ -45,7 +45,12 @@ const server=http.createServer((req,res)=>{const pathname=decodeURIComponent(new
   assert.equal(starts.length,count+1);assert.equal(starts.at(-1).body.mode,mode);assert.equal(starts.at(-1).auth,'Bearer fixture-refreshed-token');
   await page.evaluate(async()=>{const s=Manarat.authSession();s.expires_at=1;localStorage.setItem(Manarat.AUTH_SESSION_KEY,JSON.stringify(s));await ManaratGameControls.restart();});
   assert.equal(starts.length,count+2);assert.equal(starts.at(-1).body.mode,mode);assert.equal(starts.at(-1).auth,'Bearer fixture-refreshed-token');
-  await page.locator('[data-action="answer"]').first().click();await page.locator('[data-action="next"]').click();await page.locator('.result-score').waitFor();
+  await page.locator('[data-action="answer"]').first().click();await page.locator('[data-action="next"]').click();
+  if(mode==='group'){
+   await page.getByRole('heading',{name:'اكتملت الجلسة الصفية',exact:true}).waitFor();
+   assert.equal(await page.locator('.result-score').count(),0,'Group mode must not record or show an individual student score');
+   assert((await page.locator('#app').innerText()).includes('دون درجات فردية للطلاب'));
+  }else await page.locator('.result-score').waitFor();
   assert((await page.locator('#app').innerText()).includes(assignment.title));console.log('PASS browser '+mode+' start, actual session refresh, restart, answer and finish');
  }
  await page.evaluate(()=>localStorage.removeItem(Manarat.AUTH_SESSION_KEY));const refreshBeforeHome=refreshes;
