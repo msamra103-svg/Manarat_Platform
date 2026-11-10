@@ -1,67 +1,46 @@
-name: Validate classroom session hotfix
+name: Verify published classroom session repair
 on:
   push:
     branches: [fix/classroom-session-auth-20261111]
-    paths:
-      - scripts/repair-classroom-auth.cjs
-      - tests/classroom-auth.test.cjs
-      - tests/classroom-auth-browser.cjs
-      - .github/workflows/classroom-auth-hotfix.yml
+    paths: [.github/workflows/classroom-auth-hotfix.yml]
 permissions:
   contents: read
 jobs:
-  verify:
+  verify-production:
     if: github.repository == 'msamra103-svg/Manarat_Platform'
     runs-on: ubuntu-latest
-    timeout-minutes: 12
-    permissions:
-      contents: write
+    timeout-minutes: 4
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
           persist-credentials: false
-      - name: Reproduce missing classroom authorization before repair
+      - name: Compare public production assets with the tested repair
         run: |
-          if node --test --test-name-pattern='group start sends' tests/classroom-auth.test.cjs; then
-            echo 'The original regression did not reproduce; stop for review.'
-            exit 1
-          fi
-      - name: Apply narrowly scoped source repair
-        run: node scripts/repair-classroom-auth.cjs
-      - name: Install locked dependencies and build production mirrors
-        run: |
-          npm ci --no-audit --no-fund
-          npm run build
-      - name: Syntax and authorization regression tests
-        run: |
-          node --check js/school.js
-          node --check public/js/school.js
-          node --test tests/classroom-auth.test.cjs
-      - name: Existing regression coverage
-        run: |
-          npm run check:js
-          npm run test:unit
-          node tests/admin-requests.cjs
-          node tests/game-session.cjs
-          node tests/game-modes.cjs
-          node tests/school-api.cjs
-      - name: Browser verification
-        run: |
-          npx --no-install playwright install --with-deps chromium
-          node tests/classroom-auth-browser.cjs
-      - name: Save tested files on the isolated repair branch
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add js/school.js public/js/school.js index.html public/index.html package.json
-          git diff --cached --check
-          git commit -m 'Fix classroom start authentication and retain anonymous homework'
-          export GIT_CONFIG_COUNT=1
-          export GIT_CONFIG_KEY_0=http.https://github.com/.extraheader
-          export GIT_CONFIG_VALUE_0="AUTHORIZATION: basic $(printf 'x-access-token:%s' "$GH_TOKEN" | base64 -w0)"
-          git push origin HEAD:refs/heads/fix/classroom-session-auth-20261111
-          unset GIT_CONFIG_VALUE_0
-          echo '## Tested classroom session repair' >> "$GITHUB_STEP_SUMMARY"
-          git rev-parse HEAD >> "$GITHUB_STEP_SUMMARY"
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import assert from 'node:assert/strict';
+          import {createHash} from 'node:crypto';
+          const origin='https://manarat-ten.vercel.app';
+          const expected=fs.readFileSync('js/school.js','utf8');
+          const hash=s=>createHash('sha256').update(s).digest('hex');
+          const marker='js/school.js?v=21.12-classroom-auth';
+          assert(expected.includes("const classroomStart=action==='start'"));
+          let verified=false;
+          for(let attempt=1;attempt<=6;attempt++){
+            try{
+              const page=await fetch(origin+'/index.html?verify=classroom-auth-'+Date.now(),{headers:{'Cache-Control':'no-cache'},signal:AbortSignal.timeout(15000)});
+              assert.equal(page.status,200,'Production HTML status');
+              const html=await page.text();
+              assert(html.includes('مدرسة أبو عبيدة الإعدادية للبنين'),'Correct school identity');
+              assert(html.includes(marker),'Production HTML loads the new cache version');
+              const script=await fetch(origin+'/'+marker,{headers:{'Cache-Control':'no-cache'},signal:AbortSignal.timeout(15000)});
+              assert.equal(script.status,200,'Production JavaScript status');
+              const actual=await script.text();
+              assert.equal(hash(actual),hash(expected),'Published JavaScript equals tested source');
+              console.log('PASS production school identity, HTTP 200, cache version 21.12-classroom-auth and exact tested source hash:',hash(actual));
+              console.log('Verified public production origin:',origin);
+              verified=true;break;
+            }catch(error){console.log('Production verification attempt',attempt,':',error.message);if(attempt<6)await new Promise(resolve=>setTimeout(resolve,10000));}
+          }
+          if(!verified)throw new Error('Production asset verification failed');
+          NODE
