@@ -28,15 +28,15 @@ jobs:
           fi
       - name: Apply narrowly scoped source repair
         run: node scripts/repair-classroom-auth.cjs
+      - name: Install locked dependencies and build production mirrors
+        run: |
+          npm ci --no-audit --no-fund
+          npm run build
       - name: Syntax and authorization regression tests
         run: |
           node --check js/school.js
           node --check public/js/school.js
           node --test tests/classroom-auth.test.cjs
-      - name: Install locked dependencies and build
-        run: |
-          npm ci --no-audit --no-fund
-          npm run build
       - name: Existing regression coverage
         run: |
           npm run check:js
