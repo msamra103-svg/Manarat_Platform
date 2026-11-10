@@ -21,26 +21,82 @@ jobs:
           ref: 070fedaefed768135c58cb3d25c95a03fa64c01a
           path: source
           persist-credentials: false
-      - name: Unpack the current racing assets without changing production
+      - name: Unpack current racing assets in the isolated workspace
         run: node source/scripts/unpack-champions-race.js
       - name: Prepare complete source packages and local-only test hosts
         run: |
-          python3 - <<'PY'
-          from pathlib import Path
-          p=Path('handoff/build.py')
-          s=p.read_text()
-          s=s.replace('return p.is_file() and not p.is_symlink() and not any(x in BAD_NAMES for x in p.parts)', 'return not any(x in BAD_NAMES for x in p.parts)')
-          p.write_text(s)
-          PY
           python3 -m py_compile handoff/build.py
           python3 handoff/build.py prepare
+      - name: Complete navigation dependencies and developer source maps
+        run: |
+          python3 - <<'PY'
+          import json,hashlib,re,shutil
+          from pathlib import Path
+          inventory=json.loads(Path('work/inventory.json').read_text())
+          def writejson(p,o):p.write_text(json.dumps(o,ensure_ascii=False,indent=2)+'\n')
+          def sha(p):return hashlib.sha256(p.read_bytes()).hexdigest()
+          for game in inventory:
+            root=Path(game['package_dir']);project=root/'project'
+            dest=project/'js/platform-nav.js';dest.parent.mkdir(exist_ok=True)
+            shutil.copy2('source/js/platform-nav.js',dest)
+            base=json.loads((root/'baseline.sha256.json').read_text())
+            base['js/platform-nav.js']=sha(dest)
+            writejson(root/'baseline.sha256.json',base)
+            manifest=json.loads((root/'handoff.json').read_text())
+            manifest['read_only_dependency_paths'].append('js/platform-nav.js')
+            writejson(root/'handoff.json',manifest)
+            entry=project/game['entry'].split('?')[0]
+            text=entry.read_text()
+            entrymap={'entry':game['entry'],'script_sources':re.findall(r'<script[^>]+src=[\"\x27]([^\"\x27]+)',text,re.I),'stylesheets':re.findall(r'<link[^>]+href=[\"\x27]([^\"\x27]+)',text,re.I),'note':'Follow these active entrypoint dependencies; other source files may be legacy or optional. Do not substitute a legacy game engine.'}
+            writejson(root/'ACTIVE_ENTRYPOINT.json',entrymap)
+            upstream={p:sha(Path('source')/p) for p in base if (Path('source')/p).is_file()}
+            writejson(root/'UPSTREAM_FILE_HASHES.json',upstream)
+            start=root/'START_HERE_AR.md'
+            start.write_text(start.read_text().replace('إلى مشروع مستقل في كلود','في محادثة تطوير مستقلة في كلود')+'\nراجع ACTIVE_ENTRYPOINT.json لمعرفة الملفات التي تبدأ منها اللعبة فعليًا. ملف التنقل المشترك مرفق للقراءة والتشغيل فقط.\n')
+            if game['id']=='qatar-hero':
+              parts=[(project/f'games/qatar-hero/parts/part-{i:03d}.txt').read_text() for i in range(28)]
+              (root/'reference/qatar-hero-assembled.READ_ONLY.html.txt').write_text(''.join(parts[:19])+'\n'+''.join(parts[19:]))
+              start.write_text(start.read_text()+'\nمغامرات بطل قطر: المصدر الحالي موزع على 28 جزءًا. أرفقت نسخة مجمعة مقروءة داخل reference للقراءة. يمكن لكلود تنظيم المصدر المطور داخل مجلد اللعبة نفسه مع إبقاء index.html نقطة الدخول وبروتوكول school-qatar-hero-* دون تغيير. لا يحرر النسخة المرجعية بدل المصدر الفعلي.\n')
+            export=root/'tools/export_return.py'
+            code=export.read_text().replace('import json, hashlib, zipfile, sys','import json, hashlib, zipfile, sys, re')
+            code=code.replace("if any(x in p.parts for x in ('.git','.env','node_modules','.vercel')):","if any(x in p.parts for x in ('.git','.env','node_modules','.vercel')) or p.name.startswith('.env'):")
+            code=code.replace('files.append((p,rel));h=sha(p)',"if p.suffix.lower() in ('.js','.mjs','.json','.html','.txt','.md'):\n  text=p.read_text(encoding='utf8',errors='replace')\n  if re.search(r'(?:sb_secret_[A-Za-z0-9_-]{10,}|ghp_[A-Za-z0-9]{25,}|github_pat_[A-Za-z0-9_]{20,}|AIza[A-Za-z0-9_-]{25,})',text):raise SystemExit('Possible credential in '+rel)\n files.append((p,rel));h=sha(p)")
+            export.write_text(code)
+            game['source_file_count']=len(base)
+            game['source_bytes']=sum(p.stat().st_size for p in project.rglob('*') if p.is_file())
+          writejson(Path('work/inventory.json'),inventory)
+          PY
       - name: Install isolated browser test tooling
         run: |
           npm install --prefix handoff --no-save --no-audit --no-fund --ignore-scripts playwright@1.61.1
           handoff/node_modules/.bin/playwright install --with-deps chromium
       - name: Test actual package startup with external network blocked
         run: node handoff/browser.cjs
-      - name: Verify files and create separately downloadable archives
+      - name: Require clean startup and verify return archives
+        run: |
+          python3 - <<'PY'
+          import json,subprocess,zipfile,sys
+          from pathlib import Path
+          qaout=Path('packages/qa');qaout.mkdir(parents=True,exist_ok=True)
+          for g in json.loads(Path('work/inventory.json').read_text()):
+            root=Path(g['package_dir']);qa=json.loads((root/'QA_REPORT.json').read_text())
+            assert qa['status']=='PASS',(g['id'],qa)
+            subprocess.run([sys.executable,str(root/'tools/export_return.py')],check=True)
+            archive=root/(g['id']+'-RETURN-FOR-REVIEW.zip')
+            with zipfile.ZipFile(archive) as z:
+              assert z.testzip() is None
+              assert 'CHANGES.json' in z.namelist()
+              changes=json.loads(z.read('CHANGES.json'))
+              assert changes['production_authorized'] is False
+              assert changes['changes']==[] and changes['removed']==[]
+            archive.unlink()
+            qa['return_export_tool_verified']=True
+            data=json.dumps(qa,ensure_ascii=False,indent=2)+'\n'
+            (root/'QA_REPORT.json').write_text(data)
+            (qaout/(g['id']+'.json')).write_text(data)
+          print('PASS all eleven local startup/handshake checks and all eleven return ZIP exporters')
+          PY
+      - name: Create separately downloadable archives
         run: python3 handoff/build.py finalize
       - name: Save delivery files only to the isolated handoff branch
         env:
@@ -50,9 +106,9 @@ jobs:
           test "$(git branch --show-current)" = 'handoff/claude-games-20261111'
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add packages handoff/build.py
+          git add packages
           git diff --cached --check
-          git commit -m 'Deliver eleven independent Claude source packages, contracts and verification reports' || test -z "$(git status --porcelain packages)"
+          git commit -m 'Deliver verified isolated Claude packages with complete dependencies and safe return exports' || test -z "$(git status --porcelain packages)"
           export GIT_CONFIG_COUNT=1
           export GIT_CONFIG_KEY_0=http.https://github.com/.extraheader
           export GIT_CONFIG_VALUE_0="AUTHORIZATION: basic $(printf 'x-access-token:%s' "$GH_TOKEN" | base64 -w0)"
