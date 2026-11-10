@@ -1,0 +1,14 @@
+{
+  "id": "classic",
+  "source_commit": "070fedaefed768135c58cb3d25c95a03fa64c01a",
+  "local_only": true,
+  "entry_loaded": true,
+  "ready_handshake_or_classic_ui": true,
+  "observed_messages": [],
+  "page_errors": [],
+  "missing_assets": [],
+  "external_requests_blocked": [],
+  "scope": "Package startup and bridge handshake; not a full gameplay or visual-realism acceptance test.",
+  "status": "PASS",
+  "return_export_tool_verified": true
+}
