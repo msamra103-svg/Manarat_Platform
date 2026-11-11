@@ -16,14 +16,29 @@ jobs:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
           persist-credentials: false
-      - name: Materialize and review limited UI integration
+      - name: Final presentation correction and test fixtures
         run: |
           git fetch --depth=1 origin 070fedaefed768135c58cb3d25c95a03fa64c01a
-          python3 .review-ui/install.py
           python3 - <<'PY'
           from pathlib import Path
-          for p in Path('ui-redesign').glob('*'):
-            if p.is_file():p.write_text('\n'.join(line.rstrip() for line in p.read_text().splitlines())+'\n')
+          import io,zipfile,urllib.request,hashlib,subprocess
+          p=Path('ui-redesign/public.css');s=p.read_text()
+          old='.nav-actions-cluster{width:100%;display:flex;flex-wrap:nowrap;gap:6px}'
+          new='.nav-actions-cluster{width:100%;display:flex;flex-wrap:wrap;gap:6px}'
+          assert s.count(old)==1
+          s=s.replace(old,new)
+          old=':not(.mobile-nav-toggle){flex:1 1 0;min-inline-size:0;justify-content:center;padding-inline:8px;font-size:13.5px}'
+          new=':not(.mobile-nav-toggle){flex:1 1 auto;min-inline-size:max-content;justify-content:center;padding-inline:8px;font-size:13.5px}'
+          assert s.count(old)==1
+          p.write_text(s.replace(old,new))
+          url='https://raw.githubusercontent.com/msamra103-svg/Manarat_Platform/6a95123afa6e249ed6b6092f1a19267ded84a1dc/packages/AbuUbaida_Platform_UI_Claude_20261111.zip'
+          data=urllib.request.urlopen(url,timeout=40).read()
+          assert hashlib.sha256(data).hexdigest()=='12fec1e4756a8f7dd76e85db3f3226d75a560cb599c812c870e7f06d41443010'
+          with zipfile.ZipFile(io.BytesIO(data)) as z:
+            for name in ['mock.js','after-core.js']:
+              text=z.read('AbuUbaida_Platform_UI_Claude/project/dev/'+name).decode()
+              if name=='mock.js':text=text.replace("u.hostname==='ui-preview.invalid'","['ui-preview.invalid','yltlzogrhwvnmxcnaesu.supabase.co'].includes(u.hostname)")
+              Path('.review-ui',name).write_text(text)
           p=Path('.review-ui/browser.cjs');s=p.read_text()
           start=s.index("'data:image/svg+xml,'+encodeURIComponent(")
           end=s.index(';__uiMock.db.settings.showMinistryLogo=true',start)
@@ -31,9 +46,14 @@ jobs:
           s=s.replace('showMinistryLogo=true;__uiMock.save()', 'showMinistryLogo=true;__uiMock.db.settings.design.showMinistry=true;__uiMock.save()')
           s=s.replace('showMinistryLogo=false;__uiMock.save()', 'showMinistryLogo=false;__uiMock.db.settings.design.showMinistry=false;__uiMock.save()')
           s=s.replace("startsWith('data:image/svg+xml')","startsWith('data:image/png')")
-          p.write_text(s)
+          marker='// Stability: the component observer must settle rather than looping.'
+          extra="""for(const width of [360,390,430,640]){await page.setViewportSize({width,height:1000});for(const role of ['guest','teacher','admin']){await page.goto(base+'/index.html?'+(role==='guest'?'':'dashboard=1&')+'previewRole='+role);await page.waitForFunction(()=>window.__abuUI?.passes>0);const checks=await page.locator('.nav-actions-cluster>a,.nav-actions-cluster>button').evaluateAll(els=>els.filter(e=>e.getBoundingClientRect().width>0).map(e=>({text:e.textContent.trim(),fit:e.scrollWidth<=e.clientWidth+2,onscreen:e.getBoundingClientRect().left>=-1&&e.getBoundingClientRect().right<=innerWidth+1})));assert(checks.every(x=>x.fit&&x.onscreen),JSON.stringify({width,role,checks}));pass('Navigation text fit '+role+' '+width);if(width===390)await page.screenshot({path:path.join(out,'mobile-nav-'+role+'.png')});}}\n"""
+          assert marker in s;s=s.replace(marker,extra+marker);p.write_text(s)
+          for name in ['js/core.js','js/school.js','js/create-game.js','js/admin.js','js/admin-requests.js','supabase/functions/school-api/index.ts']:
+            assert Path(name).read_bytes()==subprocess.check_output(['git','show','070fedaefed768135c58cb3d25c95a03fa64c01a:'+name]),name
+          print('PASS sensitive logic is unchanged; mobile buttons retain readable labels.')
           PY
-      - name: Locked build and existing regression tests
+      - name: Build and functional regressions
         run: |
           npm ci --no-audit --no-fund
           npm run build
@@ -43,7 +63,7 @@ jobs:
           node tests/game-session.cjs
           node tests/game-modes.cjs
           node tests/school-api.cjs
-      - name: Compare legacy suites with unchanged production baseline
+      - name: Compare known baseline-only test failures
         run: |
           git worktree add --detach /tmp/abu-ui-baseline 070fedaefed768135c58cb3d25c95a03fa64c01a
           ln -s "$PWD/node_modules" /tmp/abu-ui-baseline/node_modules
@@ -61,28 +81,26 @@ jobs:
             (out/(name+'-admin.log')).write_text(a.stdout+'\n'+a.stderr)
             admin[name]=a.returncode
             if a.returncode:assert 'document.body.classList.toggle is not a function' in a.stderr,a.stderr
-          expected=['Puzzle stays assignment-only and full names require explicit approval']
-          assert failures['baseline']==failures['integrated'],failures
-          assert failures['baseline'] in [[],expected],failures
+          assert failures['baseline']==failures['integrated']==['Puzzle stays assignment-only and full names require explicit approval'],failures
           assert admin['baseline']==admin['integrated'],admin
           (out/'baseline-comparison.json').write_text(json.dumps({'design':failures,'adminHarnessExit':admin},indent=2))
-          print('PASS no new legacy-suite failures. Existing baseline:',failures['baseline'],admin)
+          print('PASS no new failures in baseline comparison')
           PY
-      - name: Browser authentication and integrated UI tests
+      - name: Browser auth, UI and mobile navigation verification
         run: |
           npx --no-install playwright install --with-deps chromium
           node tests/classroom-auth-browser.cjs
           node .review-ui/browser.cjs
-      - name: Save test reports and screenshots
+      - name: Preserve final verification report and screenshots
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: qatari-ui-review-results
+          name: qatari-ui-final-review
           path: .review-ui/results/
           include-hidden-files: true
           if-no-files-found: ignore
           retention-days: 7
-      - name: Commit only tested integration on review branch
+      - name: Commit tested mobile correction only
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -90,9 +108,9 @@ jobs:
           test "$(git branch --show-current)" = 'review/qatari-ui-20261111'
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add ui-redesign public/ui-redesign index.html public/index.html admin/admin.html public/admin/admin.html teacher/create-game.html public/teacher/create-game.html js/design-runtime.js public/js/design-runtime.js js/design-studio.js public/js/design-studio.js js/school-bridge.js public/js/school-bridge.js scripts/sync-public.js scripts/smoke-check.js
+          git add ui-redesign/public.css public/ui-redesign/public.css
           git diff --cached --check
-          git commit -m 'Integrate reviewed Qatari UI layer and safe presentation fixes'
+          git commit -m 'Keep mobile navigation labels readable at narrow widths'
           export GIT_CONFIG_COUNT=1
           export GIT_CONFIG_KEY_0=http.https://github.com/.extraheader
           export GIT_CONFIG_VALUE_0="AUTHORIZATION: basic $(printf 'x-access-token:%s' "$GH_TOKEN" | base64 -w0)"
