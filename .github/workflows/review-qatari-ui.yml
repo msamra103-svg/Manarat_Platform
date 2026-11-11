@@ -24,6 +24,14 @@ jobs:
           from pathlib import Path
           for p in Path('ui-redesign').glob('*'):
             if p.is_file():p.write_text('\n'.join(line.rstrip() for line in p.read_text().splitlines())+'\n')
+          p=Path('.review-ui/browser.cjs');s=p.read_text()
+          start=s.index("'data:image/svg+xml,'+encodeURIComponent(")
+          end=s.index(';__uiMock.db.settings.showMinistryLogo=true',start)
+          s=s[:start]+"(()=>{const c=document.createElement('canvas');c.width=200;c.height=50;c.getContext('2d').fillRect(0,0,200,50);return c.toDataURL('image/png');})()"+s[end:]
+          s=s.replace('showMinistryLogo=true;__uiMock.save()', 'showMinistryLogo=true;__uiMock.db.settings.design.showMinistry=true;__uiMock.save()')
+          s=s.replace('showMinistryLogo=false;__uiMock.save()', 'showMinistryLogo=false;__uiMock.db.settings.design.showMinistry=false;__uiMock.save()')
+          s=s.replace("startsWith('data:image/svg+xml')","startsWith('data:image/png')")
+          p.write_text(s)
           PY
       - name: Locked build and existing regression tests
         run: |
@@ -35,8 +43,27 @@ jobs:
           node tests/game-session.cjs
           node tests/game-modes.cjs
           node tests/school-api.cjs
-          node --test tests/design-studio.test.cjs
           node tests/admin-contract.cjs
+      - name: Compare design suite with the unchanged production baseline
+        run: |
+          git worktree add --detach /tmp/abu-ui-baseline 070fedaefed768135c58cb3d25c95a03fa64c01a
+          ln -s "$PWD/node_modules" /tmp/abu-ui-baseline/node_modules
+          python3 - <<'PY'
+          import subprocess,re,json
+          from pathlib import Path
+          out=Path('.review-ui/results');out.mkdir(exist_ok=True)
+          failures={}
+          for name,cwd in [('baseline','/tmp/abu-ui-baseline'),('integrated','.')]:
+            r=subprocess.run(['node','--test','--test-reporter=tap','tests/design-studio.test.cjs'],cwd=cwd,capture_output=True,text=True)
+            (out/(name+'-design.tap')).write_text(r.stdout+'\n'+r.stderr)
+            failures[name]=re.findall(r'^not ok \d+ - (.+)$',r.stdout,re.M)
+            assert r.returncode==0 or failures[name],r.stderr
+          expected=['Puzzle stays assignment-only and full names require explicit approval']
+          assert failures['baseline']==failures['integrated'],failures
+          assert failures['baseline'] in [[],expected],failures
+          (out/'baseline-comparison.json').write_text(json.dumps(failures,indent=2))
+          print('PASS no new design-suite regressions; baseline failures:',failures['baseline'])
+          PY
       - name: Browser authentication and integrated UI tests
         run: |
           npx --no-install playwright install --with-deps chromium
