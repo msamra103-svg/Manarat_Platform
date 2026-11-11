@@ -1,0 +1,193 @@
+/* ==========================================================================
+   مدرسة أبو عبيدة الإعدادية للبنين — نظام التصميم الموحد (Abu Ubaida UI 1.0)
+   Design tokens shared by the homepage, teacher workspace, admin shell,
+   embedded admin panels, design studio and question builder.
+
+   Rules of this layer
+   - Every brand colour reads the live Design Studio variables first
+     (--primary, --secondary, --accent, --bg, --surface, --ink, --muted, --line,
+     --ui-radius, --v-*). The Qatari defaults below are fallbacks only, so the
+     administrator keeps control of the places the studio controlled before.
+   - Nothing here targets body.playing-game, game iframes or game engines.
+   - Icons and patterns are original inline SVG data (no CDN, no font files).
+   ========================================================================== */
+:root{
+  /* ---- Identity ------------------------------------------------------- */
+  --abu-brand:var(--primary,#8a1538);
+  --abu-brand-deep:var(--secondary,#551025);
+  --abu-brand-hover:var(--v-hover,#6d1230);
+  --abu-brand-press:var(--v-active,#551025);
+  --abu-brand-50:color-mix(in srgb,var(--abu-brand) 5%,#fff);
+  --abu-brand-100:color-mix(in srgb,var(--abu-brand) 10%,#fff);
+  --abu-brand-200:color-mix(in srgb,var(--abu-brand) 20%,#fff);
+  --abu-brand-300:color-mix(in srgb,var(--abu-brand) 38%,#fff);
+  --abu-on-brand:#fff;
+  --abu-gold:var(--accent,#c9a45c);            /* decoration only (medals, rules) */
+  --abu-gold-ink:#7a5716;                     /* gold text on light surfaces: 5.9:1 */
+  --abu-gold-50:#fbf6ea;
+
+  /* ---- Neutrals (warm greys) ------------------------------------------ */
+  --abu-bg:var(--bg,#f8f5f3);
+  --abu-surface:var(--surface,#fff);
+  --abu-surface-2:color-mix(in srgb,var(--abu-surface) 94%,var(--abu-brand-deep) 2%);
+  --abu-sunken:color-mix(in srgb,var(--abu-bg) 80%,#efe7e3);
+  --abu-ink:var(--ink,#2b1d24);
+  --abu-ink-2:color-mix(in srgb,var(--abu-ink) 82%,var(--abu-surface));
+  --abu-muted:var(--muted,#6b5a62);
+  --abu-line:var(--line,#e8dde1);
+  --abu-line-strong:color-mix(in srgb,var(--abu-line) 70%,var(--abu-ink) 18%);
+
+  /* ---- Status (never colour alone: always paired with icon/text) ------- */
+  --abu-success:#1c6b45; --abu-success-bg:#eaf5ee; --abu-success-line:#b9dcc7;
+  --abu-warning:#8a4f00; --abu-warning-bg:#fdf3e2; --abu-warning-line:#efd2a2;
+  --abu-danger:#b0201a;  --abu-danger-bg:#fdeceb;  --abu-danger-line:#f1c3bf;
+  --abu-info:#22597d;    --abu-info-bg:#e9f2f8;    --abu-info-line:#bed6e6;
+
+  /* ---- Play modes (teacher): board / individual / homework ------------- */
+  --abu-mode-group:var(--abu-brand);
+  --abu-mode-individual:#1f5f6b;
+  --abu-mode-homework:#7a5716;
+
+  /* ---- Spacing scale (4px base) ---------------------------------------- */
+  --abu-s1:4px;--abu-s2:8px;--abu-s3:12px;--abu-s4:16px;--abu-s5:20px;
+  --abu-s6:24px;--abu-s8:32px;--abu-s10:40px;--abu-s12:48px;--abu-s16:64px;
+  --abu-gutter:clamp(16px,3.2vw,32px);
+  --abu-page:var(--v-width,1280px);
+  --abu-section-gap:var(--v-gap,64px);
+  --abu-card-pad:var(--v-padding,24px);
+
+  /* ---- Type scale ------------------------------------------------------ */
+  --abu-fs-xs:12.5px;--abu-fs-sm:14px;--abu-fs-base:var(--v-body,16px);
+  --abu-fs-md:18px;--abu-fs-lg:21px;--abu-fs-xl:26px;--abu-fs-2xl:32px;
+  --abu-fs-display:clamp(30px,4.2vw,var(--v-heading,52px));
+  --abu-lh:1.75;--abu-lh-tight:1.35;
+  --abu-fw-head:var(--v-weight,800);
+  --abu-font-ui:var(--v-font,"Segoe UI","Noto Sans Arabic","SF Arabic","Geeza Pro",Tahoma,Arial,system-ui,sans-serif);
+  --abu-font-num:"Segoe UI",Tahoma,Arial,system-ui,sans-serif;
+
+  /* ---- Shape ----------------------------------------------------------- */
+  --abu-r-xs:6px;--abu-r-sm:10px;--abu-r-md:14px;
+  --abu-r-card:var(--ui-radius,18px);
+  --abu-r-pill:999px;
+  --abu-border:var(--v-border,1px);
+
+  /* ---- Elevation (warm, low) ------------------------------------------- */
+  --abu-shadow-1:0 1px 2px rgb(43 29 36/.06),0 1px 1px rgb(43 29 36/.03);
+  --abu-shadow-2:0 1px 2px rgb(43 29 36/.05),0 8px 22px -12px rgb(85 16 37/.22);
+  --abu-shadow-3:0 2px 6px rgb(43 29 36/.06),0 22px 44px -22px rgb(85 16 37/.34);
+  --abu-shadow-pop:0 24px 64px -20px rgb(43 29 36/.38);
+
+  /* ---- Focus & motion -------------------------------------------------- */
+  --abu-focus-ring:0 0 0 2px var(--abu-surface),0 0 0 4.5px var(--abu-brand);
+  --abu-ease:cubic-bezier(.2,.7,.2,1);
+  --abu-t-fast:120ms;--abu-t:180ms;--abu-t-slow:280ms;
+  --abu-touch:44px;
+
+  /* ---- Qatari geometric motifs (masks: coloured by background-color) --- */
+  --abu-sadu:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='12' viewBox='0 0 28 12'%3E%3Cpath d='M0 12 7 5l7 7zM14 12l7-7 7 7z'/%3E%3Cpath d='M14 0l3.5 3.5L14 7l-3.5-3.5z'/%3E%3Cpath d='M0 0h3L0 3zM28 0h-3l3 3z'/%3E%3C/svg%3E");
+  --abu-lattice:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 40 40' fill='none' stroke='black' stroke-width='1'%3E%3Cpath d='M20 2 38 20 20 38 2 20z'/%3E%3Cpath d='M20 10 30 20 20 30 10 20z'/%3E%3Cpath d='M0 0l4 4M40 0l-4 4M0 40l4-4M40 40l-4-4'/%3E%3C/svg%3E");
+
+  /* ---- Original stroke icon set (masks) -------------------------------- */
+  --abu-i-home:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 10.5 12 3l9 7.5'/%3E%3Cpath d='M5 9.5V21h14V9.5'/%3E%3Cpath d='M10 21v-6h4v6'/%3E%3C/svg%3E");
+  --abu-i-game:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='2.5' y='7' width='19' height='11' rx='4'/%3E%3Cpath d='M7 12.5h4M9 10.5v4'/%3E%3Ccircle cx='15.5' cy='11.5' r='.6' fill='black'/%3E%3Ccircle cx='17.5' cy='13.5' r='.6' fill='black'/%3E%3C/svg%3E");
+  --abu-i-trophy:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M8 4h8v5a4 4 0 0 1-8 0z'/%3E%3Cpath d='M8 6H4.5a3 3 0 0 0 3.5 4M16 6h3.5a3 3 0 0 1-3.5 4'/%3E%3Cpath d='M12 13v4M8 21h8M9.5 17h5'/%3E%3C/svg%3E");
+  --abu-i-chart:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 20h16'/%3E%3Cpath d='M7 16v-5M12 16V6M17 16v-8'/%3E%3C/svg%3E");
+  --abu-i-video:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='5' width='18' height='14' rx='3'/%3E%3Cpath d='m10.5 9.5 4 2.5-4 2.5z' fill='black'/%3E%3C/svg%3E");
+  --abu-i-users:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='9' cy='8' r='3.5'/%3E%3Cpath d='M2.5 20a6.5 6.5 0 0 1 13 0'/%3E%3Cpath d='M16 4.6a3.5 3.5 0 0 1 0 6.8M18 14.2A6.5 6.5 0 0 1 21.5 20'/%3E%3C/svg%3E");
+  --abu-i-user:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='8' r='4'/%3E%3Cpath d='M4.5 21a7.5 7.5 0 0 1 15 0'/%3E%3C/svg%3E");
+  --abu-i-board:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='4' width='18' height='12' rx='2'/%3E%3Cpath d='M8 20l4-4 4 4M7 8h6M7 11h9'/%3E%3C/svg%3E");
+  --abu-i-link:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1'/%3E%3Cpath d='M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1'/%3E%3C/svg%3E");
+  --abu-i-house:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 11 12 4l8 7v9H4z'/%3E%3Cpath d='M9 20v-5h6v5'/%3E%3Cpath d='M15 8.5V5h2.5v5.5'/%3E%3C/svg%3E");
+  --abu-i-live:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='2.5'/%3E%3Cpath d='M7.8 7.8a6 6 0 0 0 0 8.4M16.2 7.8a6 6 0 0 1 0 8.4M5 5a10 10 0 0 0 0 14M19 5a10 10 0 0 1 0 14'/%3E%3C/svg%3E");
+  --abu-i-plus:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 5v14M5 12h14'/%3E%3C/svg%3E");
+  --abu-i-edit:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 20h4L19 9l-4-4L4 16z'/%3E%3Cpath d='m13.5 6.5 4 4'/%3E%3C/svg%3E");
+  --abu-i-trash:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 7h16M10 11v6M14 11v6'/%3E%3Cpath d='M6 7l1 13h10l1-13M9 7V4h6v3'/%3E%3C/svg%3E");
+  --abu-i-pause:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='6' y='5' width='4' height='14' rx='1'/%3E%3Crect x='14' y='5' width='4' height='14' rx='1'/%3E%3C/svg%3E");
+  --abu-i-play:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M7 4.5v15l12-7.5z'/%3E%3C/svg%3E");
+  --abu-i-settings:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='3'/%3E%3Cpath d='M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1'/%3E%3C/svg%3E");
+  --abu-i-palette:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 3a9 9 0 1 0 0 18c1.3 0 2-.8 2-1.8 0-1.4-1.2-1.7-1.2-3 0-1 .8-1.7 1.8-1.7H17a4 4 0 0 0 4-4C21 6.4 17 3 12 3z'/%3E%3Ccircle cx='7.5' cy='11' r='1' fill='black'/%3E%3Ccircle cx='10' cy='7' r='1' fill='black'/%3E%3Ccircle cx='15' cy='7' r='1' fill='black'/%3E%3C/svg%3E");
+  --abu-i-book:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 5.5A2.5 2.5 0 0 1 6.5 3H20v15H6.5A2.5 2.5 0 0 0 4 20.5z'/%3E%3Cpath d='M4 20.5A2.5 2.5 0 0 0 6.5 23H20v-5'/%3E%3C/svg%3E");
+  --abu-i-list:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 6h11M9 12h11M9 18h11'/%3E%3Ccircle cx='4.5' cy='6' r='1' fill='black'/%3E%3Ccircle cx='4.5' cy='12' r='1' fill='black'/%3E%3Ccircle cx='4.5' cy='18' r='1' fill='black'/%3E%3C/svg%3E");
+  --abu-i-clipboard:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='5' y='4' width='14' height='17' rx='2'/%3E%3Cpath d='M9 4V3h6v1M9 11l2 2 4-4M9 17h6'/%3E%3C/svg%3E");
+  --abu-i-shield:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 3 4.5 6v6c0 4.5 3.2 7.8 7.5 9 4.3-1.2 7.5-4.5 7.5-9V6z'/%3E%3Cpath d='m9 12 2 2 4-4'/%3E%3C/svg%3E");
+  --abu-i-tool:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M14.5 6.5a4 4 0 0 0 5 5L21 13l-8 8-4-4 8-8z' /%3E%3Cpath d='M14.5 6.5 9 1 7 3l5.5 5.5'/%3E%3C/svg%3E");
+  --abu-i-search:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='6.5'/%3E%3Cpath d='m20 20-4.2-4.2'/%3E%3C/svg%3E");
+  --abu-i-check:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m5 12.5 4.5 4.5L19 7.5'/%3E%3C/svg%3E");
+  --abu-i-alert:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 3 2 20h20z'/%3E%3Cpath d='M12 9.5v5M12 17.5v.5'/%3E%3C/svg%3E");
+  --abu-i-spark:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5 18 18M6 18l2.5-2.5M15.5 8.5 18 6'/%3E%3C/svg%3E");
+  --abu-i-mail:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='5' width='18' height='14' rx='2'/%3E%3Cpath d='m3.5 6.5 8.5 7 8.5-7'/%3E%3C/svg%3E");
+  --abu-i-cloud:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M7 18h10a4 4 0 0 0 .6-8A6 6 0 0 0 6 9.5 4.3 4.3 0 0 0 7 18z'/%3E%3C/svg%3E");
+  --abu-i-pulse:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 12h4l2-5 4 10 2-5h6'/%3E%3C/svg%3E");
+  --abu-i-archive:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='4' width='18' height='5' rx='1'/%3E%3Cpath d='M5 9v11h14V9M10 13h4'/%3E%3C/svg%3E");
+  --abu-i-copy:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='8' y='8' width='12' height='12' rx='2'/%3E%3Cpath d='M16 8V5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3'/%3E%3C/svg%3E");
+  --abu-i-eye:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z'/%3E%3Ccircle cx='12' cy='12' r='3'/%3E%3C/svg%3E");
+  --abu-i-upload:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 16V4M7 9l5-5 5 5'/%3E%3Cpath d='M4 16v4h16v-4'/%3E%3C/svg%3E");
+  --abu-i-download:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 4v12M7 11l5 5 5-5'/%3E%3Cpath d='M4 16v4h16v-4'/%3E%3C/svg%3E");
+  --abu-i-menu:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 7h16M4 12h16M4 17h16'/%3E%3C/svg%3E");
+  --abu-i-monitor:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='2.5' y='4' width='19' height='13' rx='2'/%3E%3Cpath d='M8 21h8M12 17v4'/%3E%3C/svg%3E");
+  --abu-i-tablet:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='5' y='2.5' width='14' height='19' rx='2'/%3E%3Cpath d='M11 18.5h2'/%3E%3C/svg%3E");
+  --abu-i-phone:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='7' y='2.5' width='10' height='19' rx='2'/%3E%3Cpath d='M11 18.5h2'/%3E%3C/svg%3E");
+  --abu-i-history:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 12a9 9 0 1 0 3-6.7L3 8'/%3E%3Cpath d='M3 3v5h5M12 7v5l3 2'/%3E%3C/svg%3E");
+  --abu-i-undo:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 14 4 9l5-5'/%3E%3Cpath d='M4 9h10a6 6 0 0 1 0 12h-3'/%3E%3C/svg%3E");
+  --abu-i-save:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 3h11l3 3v15H5z'/%3E%3Cpath d='M8 3v5h7V3M8 21v-7h8v7'/%3E%3C/svg%3E");
+  --abu-i-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='4' width='18' height='16' rx='2'/%3E%3Ccircle cx='9' cy='10' r='2'/%3E%3Cpath d='m21 16-5-5-9 9'/%3E%3C/svg%3E");
+  --abu-i-ai:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 3l1.8 4.6L18.5 9.5l-4.7 1.9L12 16l-1.8-4.6L5.5 9.5l4.7-1.9z'/%3E%3Cpath d='M18 15l.9 2.1L21 18l-2.1.9L18 21l-.9-2.1L15 18l2.1-.9z'/%3E%3C/svg%3E");
+  --abu-i-grip:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='9' cy='6' r='1' fill='black'/%3E%3Ccircle cx='15' cy='6' r='1' fill='black'/%3E%3Ccircle cx='9' cy='12' r='1' fill='black'/%3E%3Ccircle cx='15' cy='12' r='1' fill='black'/%3E%3Ccircle cx='9' cy='18' r='1' fill='black'/%3E%3Ccircle cx='15' cy='18' r='1' fill='black'/%3E%3C/svg%3E");
+  --abu-i-arrow:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M19 12H5M11 6l-6 6 6 6'/%3E%3C/svg%3E");
+  --abu-i-chevron:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.9' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m9 6 6 6-6 6'/%3E%3C/svg%3E");
+}
+
+/* Dark preset from the studio: keep status tints readable */
+body[data-preset=dark]{
+  --abu-success-bg:#163526;--abu-success:#8fd3ae;--abu-success-line:#2c5a42;
+  --abu-warning-bg:#3a2a12;--abu-warning:#f2c27a;--abu-warning-line:#6b4d1d;
+  --abu-danger-bg:#3d1716;--abu-danger:#f3a29b;--abu-danger-line:#6e2a26;
+  --abu-info-bg:#14293a;--abu-info:#9ccbec;--abu-info-line:#2a4b63;
+  --abu-gold-ink:#e7c987;--abu-gold-50:#3a2d16;
+  --abu-brand-50:color-mix(in srgb,var(--abu-brand) 12%,var(--abu-surface));
+  --abu-brand-100:color-mix(in srgb,var(--abu-brand) 20%,var(--abu-surface));
+  --abu-brand-200:color-mix(in srgb,var(--abu-brand) 32%,var(--abu-surface));
+  --abu-surface-2:color-mix(in srgb,var(--abu-surface) 90%,#fff 4%);
+  --abu-sunken:color-mix(in srgb,var(--abu-bg) 85%,#000);
+}
+
+/* ==========================================================================
+   Shared primitives (used by components.js and every page layer).
+   All selectors are opt-in classes prefixed .abu- so they cannot leak into
+   game screens.
+   ========================================================================== */
+.abu-icon{display:inline-block;inline-size:1.15em;block-size:1.15em;flex:none;background:currentColor;
+  -webkit-mask:var(--abu-icon,var(--abu-i-spark)) center/contain no-repeat;mask:var(--abu-icon,var(--abu-i-spark)) center/contain no-repeat;vertical-align:-.18em}
+
+.abu-sadu-band{display:block;block-size:10px;background:var(--abu-brand);opacity:.9;
+  -webkit-mask:var(--abu-sadu) 0 100%/28px 12px repeat-x;mask:var(--abu-sadu) 0 100%/28px 12px repeat-x}
+
+/* Visible field label generated from a field's placeholder (builder/admin) */
+.abu-field{display:flex;flex-direction:column;gap:6px;min-inline-size:0}
+.abu-field>.abu-label{font-size:var(--abu-fs-sm);font-weight:700;color:var(--abu-ink-2);line-height:1.5}
+.abu-field>.abu-label .abu-opt{font-weight:500;color:var(--abu-muted);margin-inline-start:6px}
+.abu-field:has(>:is(input,textarea,select)[style*="display: none"]),
+.abu-field:has(>:is(input,textarea,select)[style*="display:none"]),
+.abu-field:has(>:is(input,textarea,select)[hidden]){display:none}
+
+/* Group headings inserted in the admin sidebar */
+.abu-side-group{margin:14px 6px 6px;font-size:12px;font-weight:800;letter-spacing:0;color:var(--abu-muted);
+  display:flex;align-items:center;gap:8px}
+.abu-side-group::after{content:"";flex:1;block-size:1px;background:var(--abu-line)}
+
+/* Status pill (studio save state, task state) */
+.abu-pill{display:inline-flex;align-items:center;gap:6px;min-block-size:28px;padding:2px 12px;border-radius:var(--abu-r-pill);
+  font-size:var(--abu-fs-sm);font-weight:700;border:1px solid var(--abu-line);background:var(--abu-surface);color:var(--abu-ink-2)}
+.abu-pill::before{content:"";inline-size:8px;block-size:8px;border-radius:50%;background:currentColor}
+
+/* Screen-reader only helper */
+.abu-sr{position:absolute!important;inline-size:1px;block-size:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+/* Reduced motion: honour the OS preference on every UI page this layer styles
+   (never on game screens). */
+@media (prefers-reduced-motion:reduce){
+  body:is(.school-app,.admin-page,.builder-page):not(.playing-game) *,
+  body:is(.school-app,.admin-page,.builder-page):not(.playing-game) *::before,
+  body:is(.school-app,.admin-page,.builder-page):not(.playing-game) *::after{
+    animation-duration:1ms!important;animation-iteration-count:1!important;transition-duration:1ms!important;scroll-behavior:auto!important}
+}

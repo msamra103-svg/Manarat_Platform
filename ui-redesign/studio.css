@@ -1,0 +1,189 @@
+/* ==========================================================================
+   مدرسة أبو عبيدة الإعدادية للبنين — استوديو التصميم والتحكم (Abu Ubaida UI 1.0)
+   Scope: body.admin-embedded .design-studio  (index.html?adminPanel=settings)
+   Layout: sticky command bar (title · save state · history/undo/save) →
+           tools column (search, module list, fields) | preview column.
+   Preserved: live preview iframe + its postMessage channel, device sizes
+   (the studio script computes the preview scale from .ds-preview-scroll's
+   width, so that box keeps zero padding), section ordering/drag, uploads,
+   save, undo, history dialog.
+   ========================================================================== */
+body.school-app:not(.playing-game) .design-studio{font:inherit!important;font-size:15px!important;line-height:1.7!important;color:var(--abu-ink)}
+
+/* ---------- Command bar ------------------------------------------------- */
+body.school-app:not(.playing-game) .design-studio>.ds-heading{
+  position:sticky;top:0;z-index:30;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:14px 24px;margin:0 0 18px!important;
+  padding:18px 22px;border-radius:var(--abu-r-card);background:color-mix(in srgb,var(--abu-surface) 96%,transparent);
+  -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);border:1px solid var(--abu-line);box-shadow:var(--abu-shadow-2)}
+body.school-app:not(.playing-game) .design-studio>.ds-heading .eyebrow{
+  display:inline-flex;align-items:center;gap:8px;font-size:13px!important;font-weight:800;color:var(--abu-brand)!important;letter-spacing:0}
+body.school-app:not(.playing-game) .design-studio>.ds-heading .eyebrow::before{content:"";inline-size:16px;block-size:16px;background:currentColor;-webkit-mask:var(--abu-i-palette) center/contain no-repeat;mask:var(--abu-i-palette) center/contain no-repeat}
+body.school-app:not(.playing-game) .design-studio>.ds-heading h2{font-size:clamp(20px,2vw,26px)!important;margin:4px 0 2px!important;color:var(--abu-ink)!important;border:0!important;padding:0!important}
+body.school-app:not(.playing-game) .design-studio>.ds-heading p{font-size:14px!important;color:var(--abu-muted);margin:0}
+body.school-app:not(.playing-game) .design-studio .ds-save{
+  display:grid!important;grid-template-columns:auto auto auto;grid-template-areas:"status status status" "history undo save" "note note note";
+  align-items:center;gap:8px;max-width:none!important}
+body.school-app:not(.playing-game) .design-studio .ds-save [data-studio-cmd=history]{grid-area:history}
+body.school-app:not(.playing-game) .design-studio .ds-save [data-studio-cmd=undo]{grid-area:undo}
+body.school-app:not(.playing-game) .design-studio .ds-save [data-studio-cmd=save]{grid-area:save}
+body.school-app:not(.playing-game) .design-studio .ds-save .abu-local-note{grid-area:note;font-size:12.5px;color:var(--abu-muted);text-align:end;display:flex;align-items:center;justify-content:flex-end;gap:6px}
+body.school-app:not(.playing-game) .design-studio .ds-save .abu-local-note::before{content:"";inline-size:14px;block-size:14px;background:var(--abu-info);-webkit-mask:var(--abu-i-shield) center/contain no-repeat;mask:var(--abu-i-shield) center/contain no-repeat}
+
+/* Save state pill: text from the studio itself + icon + colour */
+body.school-app:not(.playing-game) .design-studio #dsStatus{
+  grid-area:status;justify-self:end;display:inline-flex!important;align-items:center;gap:8px;width:auto!important;min-height:30px;padding:3px 12px;border-radius:var(--abu-r-pill);
+  font-size:13.5px!important;font-weight:800;color:var(--abu-success)!important;background:var(--abu-success-bg);border:1px solid var(--abu-success-line)}
+body.school-app:not(.playing-game) .design-studio #dsStatus::before{content:"";inline-size:14px;block-size:14px;background:currentColor;-webkit-mask:var(--abu-i-check) center/contain no-repeat;mask:var(--abu-i-check) center/contain no-repeat}
+body.school-app:not(.playing-game) .design-studio #dsStatus[data-state=dirty]{color:var(--abu-warning)!important;background:var(--abu-warning-bg);border-color:var(--abu-warning-line)}
+body.school-app:not(.playing-game) .design-studio #dsStatus[data-state=dirty]::before{-webkit-mask-image:var(--abu-i-edit);mask-image:var(--abu-i-edit)}
+body.school-app:not(.playing-game) .design-studio #dsStatus[data-state=saving]{color:var(--abu-info)!important;background:var(--abu-info-bg);border-color:var(--abu-info-line)}
+body.school-app:not(.playing-game) .design-studio #dsStatus[data-state=saving]::before{-webkit-mask-image:var(--abu-i-history);mask-image:var(--abu-i-history);animation:abu-spin 1s linear infinite}
+body.school-app:not(.playing-game) .design-studio #dsStatus[data-state=error]{color:var(--abu-danger)!important;background:var(--abu-danger-bg);border-color:var(--abu-danger-line)}
+body.school-app:not(.playing-game) .design-studio #dsStatus[data-state=error]::before{-webkit-mask-image:var(--abu-i-alert);mask-image:var(--abu-i-alert)}
+body.school-app:not(.playing-game) .design-studio:has(#dsStatus[data-state=dirty])>.ds-heading{border-color:var(--abu-warning-line);box-shadow:0 0 0 3px var(--abu-warning-bg),var(--abu-shadow-2)}
+
+/* Studio buttons */
+body.school-app:not(.playing-game) .design-studio button{
+  display:inline-flex!important;align-items:center;justify-content:center;gap:7px;min-height:42px!important;padding:8px 14px!important;border-radius:var(--abu-r-sm)!important;
+  font-size:14px!important;font-weight:700!important;background:var(--abu-surface)!important;color:var(--abu-brand)!important;border:1px solid var(--abu-brand-200)!important;box-shadow:none!important;cursor:pointer;
+  transition:background-color var(--abu-t) var(--abu-ease),border-color var(--abu-t) var(--abu-ease),color var(--abu-t) var(--abu-ease)}
+body.school-app:not(.playing-game) .design-studio button:hover{background:var(--abu-brand-50)!important;border-color:var(--abu-brand)!important}
+body.school-app:not(.playing-game) .design-studio button.ds-primary{background:var(--abu-brand)!important;color:#fff!important;border-color:var(--abu-brand)!important;padding-inline:18px!important}
+body.school-app:not(.playing-game) .design-studio button.ds-primary:hover{background:var(--abu-brand-hover)!important}
+body.school-app:not(.playing-game) .design-studio button:is([data-studio-cmd=history],[data-studio-cmd=undo],[data-studio-cmd=save])::before{
+  content:"";inline-size:16px;block-size:16px;flex:none;background:currentColor;-webkit-mask:var(--abu-ds-ic) center/contain no-repeat;mask:var(--abu-ds-ic) center/contain no-repeat}
+body.school-app:not(.playing-game) .design-studio [data-studio-cmd=history]{--abu-ds-ic:var(--abu-i-history)}
+body.school-app:not(.playing-game) .design-studio [data-studio-cmd=undo]{--abu-ds-ic:var(--abu-i-undo);color:var(--abu-ink-2)!important;border-color:var(--abu-line-strong)!important}
+body.school-app:not(.playing-game) .design-studio [data-studio-cmd=save]{--abu-ds-ic:var(--abu-i-save)}
+body.school-app:not(.playing-game) .design-studio :is([data-studio-cmd=deleteSocial],[data-studio-cmd=deleteVideo],[data-studio-cmd=removeAsset]){color:var(--abu-danger)!important;border-color:var(--abu-danger-line)!important}
+body.school-app:not(.playing-game) .design-studio :is([data-studio-cmd=deleteSocial],[data-studio-cmd=deleteVideo],[data-studio-cmd=removeAsset]):hover{background:var(--abu-danger-bg)!important}
+body.school-app:not(.playing-game) .design-studio [data-studio-cmd=presetReset]{color:var(--abu-warning)!important;border-color:var(--abu-warning-line)!important}
+body.school-app:not(.playing-game) .design-studio button:disabled{opacity:.5;cursor:not-allowed}
+
+/* ---------- Two-pane layout -------------------------------------------- */
+body.school-app:not(.playing-game) .design-studio .ds-layout{grid-template-columns:minmax(300px,360px) minmax(0,1fr)!important;gap:20px!important}
+body.school-app:not(.playing-game) .design-studio .ds-tools{
+  border-radius:var(--abu-r-card)!important;background:var(--abu-surface)!important;border:1px solid var(--abu-line)!important;box-shadow:var(--abu-shadow-1);overflow:visible!important}
+body.school-app:not(.playing-game) .design-studio .ds-search{
+  display:flex!important;flex-direction:column;gap:6px;padding:16px 16px 12px!important;font-size:13.5px;font-weight:800;color:var(--abu-ink-2);
+  position:sticky;top:var(--abu-ds-sticky,0px);z-index:3;background:var(--abu-surface);border-radius:var(--abu-r-card) var(--abu-r-card) 0 0}
+body.school-app:not(.playing-game) .design-studio #dsSearch{
+  min-height:44px;padding:8px 40px 8px 14px;border-radius:var(--abu-r-sm);border:1.5px solid var(--abu-line-strong);background:var(--abu-surface-2);font-size:15px;color:var(--abu-ink);font-weight:500}
+body.school-app:not(.playing-game) .design-studio #dsSearch:focus{border-color:var(--abu-brand);background:var(--abu-surface)}
+
+/* Module list: vertical, scannable, with icons */
+body.school-app:not(.playing-game) .design-studio .ds-tabs{display:grid!important;grid-template-columns:1fr 1fr;gap:4px!important;padding:0 12px 14px!important;border-bottom:1px solid var(--abu-line)!important}
+body.school-app:not(.playing-game) .design-studio .ds-tabs button{
+  justify-content:flex-start!important;min-height:42px!important;padding:6px 10px!important;font-size:13.5px!important;text-align:start;
+  background:transparent!important;color:var(--abu-ink-2)!important;border:1px solid transparent!important}
+body.school-app:not(.playing-game) .design-studio .ds-tabs button::before{
+  content:"";inline-size:17px;block-size:17px;flex:none;background:currentColor;opacity:.85;-webkit-mask:var(--abu-mod-ic,var(--abu-i-settings)) center/contain no-repeat;mask:var(--abu-mod-ic,var(--abu-i-settings)) center/contain no-repeat}
+body.school-app:not(.playing-game) .design-studio .ds-tabs button:hover{background:var(--abu-brand-50)!important;color:var(--abu-brand)!important}
+body.school-app:not(.playing-game) .design-studio .ds-tabs button[aria-pressed=true]{background:var(--abu-brand)!important;color:#fff!important;border-color:var(--abu-brand)!important}
+body.school-app:not(.playing-game) .design-studio .ds-tabs [data-module=theme]{--abu-mod-ic:var(--abu-i-palette)}
+body.school-app:not(.playing-game) .design-studio .ds-tabs [data-module=branding]{--abu-mod-ic:var(--abu-i-image)}
+body.school-app:not(.playing-game) .design-studio .ds-tabs [data-module=sections]{--abu-mod-ic:var(--abu-i-list)}
+body.school-app:not(.playing-game) .design-studio .ds-tabs [data-module=navigation]{--abu-mod-ic:var(--abu-i-menu)}
+body.school-app:not(.playing-game) .design-studio .ds-tabs [data-module=hero]{--abu-mod-ic:var(--abu-i-play)}
+body.school-app:not(.playing-game) .design-studio .ds-tabs [data-module=gallery]{--abu-mod-ic:var(--abu-i-game)}
+body.school-app:not(.playing-game) .design-studio .ds-tabs [data-module=recognition]{--abu-mod-ic:var(--abu-i-trophy)}
+body.school-app:not(.playing-game) .design-studio .ds-tabs [data-module=analytics]{--abu-mod-ic:var(--abu-i-chart)}
+body.school-app:not(.playing-game) .design-studio .ds-tabs [data-module=video]{--abu-mod-ic:var(--abu-i-video)}
+body.school-app:not(.playing-game) .design-studio .ds-tabs [data-module=contact]{--abu-mod-ic:var(--abu-i-mail)}
+body.school-app:not(.playing-game) .design-studio .ds-tabs [data-module=assets]{--abu-mod-ic:var(--abu-i-archive)}
+
+/* Fields */
+body.school-app:not(.playing-game) .design-studio #dsControls{padding:16px}
+body.school-app:not(.playing-game) .design-studio #dsControls>h3{display:flex;align-items:center;gap:8px;font-size:18px!important;margin:0 0 14px!important;color:var(--abu-ink)!important}
+body.school-app:not(.playing-game) .design-studio .ds-fields{gap:12px!important;grid-template-columns:1fr!important}
+@media (max-width:860px) and (min-width:560px){body.school-app:not(.playing-game) .design-studio .ds-fields{grid-template-columns:1fr 1fr!important}}
+body.school-app:not(.playing-game) .design-studio .ds-field{gap:6px!important;font-size:14px!important;font-weight:700;color:var(--abu-ink-2)!important}
+body.school-app:not(.playing-game) .design-studio .ds-field :is(input:not([type=checkbox]):not([type=color]),select){
+  min-height:44px;padding:8px 12px;border-radius:var(--abu-r-sm);border:1.5px solid var(--abu-line-strong);background:var(--abu-surface);color:var(--abu-ink);font-size:15px;font-weight:500;inline-size:100%;box-sizing:border-box}
+body.school-app:not(.playing-game) .design-studio .ds-field :is(input,select):focus{border-color:var(--abu-brand)}
+body.school-app:not(.playing-game) .design-studio .ds-field input[type=url]{direction:ltr;text-align:left}
+body.school-app:not(.playing-game) .design-studio .ds-field input[type=number]{font-family:var(--abu-font-num)}
+/* colour fields: swatch + label side by side for quicker scanning */
+body.school-app:not(.playing-game) .design-studio .ds-field:has(input[type=color]){
+  display:grid!important;grid-template-columns:minmax(0,1fr) 64px;align-items:center;padding:6px 6px 6px 12px;border-radius:var(--abu-r-sm);border:1px solid var(--abu-line);background:var(--abu-surface-2)}
+body.school-app:not(.playing-game) .design-studio .ds-field input[type=color]{inline-size:64px!important;block-size:36px!important;height:36px!important;padding:2px!important;border-radius:8px;border:1px solid var(--abu-line-strong);background:var(--abu-surface);cursor:pointer}
+body.school-app:not(.playing-game) .design-studio .ds-field:has(input[type=checkbox]){
+  display:flex!important;padding:10px 12px!important;border-radius:var(--abu-r-sm);border:1px solid var(--abu-line)!important;background:var(--abu-surface);min-height:48px;cursor:pointer}
+body.school-app:not(.playing-game) .design-studio .ds-field:has(input[type=checkbox]:checked){background:var(--abu-brand-50);border-color:var(--abu-brand-200)!important}
+body.school-app:not(.playing-game) .design-studio .ds-field input[type=checkbox]{inline-size:20px!important;block-size:20px!important;accent-color:var(--abu-brand)}
+body.school-app:not(.playing-game) .design-studio #dsSavedThemes{min-height:44px;border-radius:var(--abu-r-sm);border:1.5px solid var(--abu-line-strong);padding:8px 12px;background:var(--abu-surface)}
+body.school-app:not(.playing-game) .design-studio .ds-fields>button{inline-size:100%}
+
+/* Sortable rows (sections / navigation / games) */
+body.school-app:not(.playing-game) .design-studio .ds-sort-row{
+  border-radius:var(--abu-r-md)!important;background:var(--abu-surface)!important;border:1px solid var(--abu-line)!important;padding:0!important;overflow:hidden;
+  transition:border-color var(--abu-t) var(--abu-ease),box-shadow var(--abu-t) var(--abu-ease)}
+body.school-app:not(.playing-game) .design-studio div.ds-sort-row{padding:12px!important;display:grid!important;gap:10px}
+body.school-app:not(.playing-game) .design-studio .ds-sort-row:hover{border-color:var(--abu-brand-200)!important}
+body.school-app:not(.playing-game) .design-studio .ds-sort-row[open]{box-shadow:var(--abu-shadow-2);border-color:var(--abu-brand-300)!important}
+body.school-app:not(.playing-game) .design-studio .ds-sort-row>summary{
+  display:flex;align-items:center;gap:10px;min-height:48px;padding:8px 12px;font-size:14.5px!important;font-weight:800!important;list-style:none;cursor:grab;background:var(--abu-surface-2)}
+body.school-app:not(.playing-game) .design-studio .ds-sort-row>summary::-webkit-details-marker{display:none}
+body.school-app:not(.playing-game) .design-studio .ds-sort-row>summary::before{content:"";inline-size:16px;block-size:16px;flex:none;background:var(--abu-muted);-webkit-mask:var(--abu-i-grip) center/contain no-repeat;mask:var(--abu-i-grip) center/contain no-repeat}
+body.school-app:not(.playing-game) .design-studio .ds-sort-row>summary::after{content:"";margin-inline-start:auto;inline-size:16px;block-size:16px;background:var(--abu-muted);transform:rotate(90deg);transition:transform var(--abu-t) var(--abu-ease);-webkit-mask:var(--abu-i-chevron) center/contain no-repeat;mask:var(--abu-i-chevron) center/contain no-repeat}
+body.school-app:not(.playing-game) .design-studio .ds-sort-row[open]>summary::after{transform:rotate(-90deg)}
+body.school-app:not(.playing-game) .design-studio details.ds-sort-row>:not(summary){margin-inline:12px!important}
+body.school-app:not(.playing-game) .design-studio details.ds-sort-row[open]>:last-child{margin-bottom:12px!important}
+body.school-app:not(.playing-game) .design-studio .ds-sort-row:has(input[data-design-path$=".visible"]:not(:checked))>summary{color:var(--abu-muted);text-decoration:line-through;text-decoration-thickness:1px}
+body.school-app:not(.playing-game) .design-studio .ds-move{display:flex;gap:6px}
+body.school-app:not(.playing-game) .design-studio .ds-move button{inline-size:44px!important;min-height:40px!important;padding:0!important;font-size:16px!important}
+body.school-app:not(.playing-game) .design-studio .ds-asset-field{border-radius:var(--abu-r-md)!important;border:1.5px dashed var(--abu-line-strong)!important;background:var(--abu-surface-2);padding:14px!important}
+body.school-app:not(.playing-game) .design-studio .ds-asset-field>strong{font-size:14px}
+body.school-app:not(.playing-game) .design-studio .ds-upload{
+  padding:12px;border-radius:var(--abu-r-sm);border:1.5px dashed var(--abu-brand-300);background:var(--abu-brand-50);color:var(--abu-brand);font-size:13.5px!important;font-weight:800;cursor:pointer}
+body.school-app:not(.playing-game) .design-studio .ds-upload input{font-size:12.5px!important;color:var(--abu-ink-2)}
+body.school-app:not(.playing-game) .design-studio .ds-asset-field select{min-height:42px;border-radius:var(--abu-r-sm);border:1.5px solid var(--abu-line-strong);padding:6px 10px;background:var(--abu-surface)}
+body.school-app:not(.playing-game) .design-studio .help{font-size:13px!important;color:var(--abu-muted)!important;line-height:1.75}
+/* Search: hidden fields stay hidden (studio toggles [hidden]) */
+body.school-app:not(.playing-game) .design-studio :is(.ds-field,.ds-sort-row,.ds-asset-field)[hidden]{display:none!important}
+
+/* ---------- Preview column -------------------------------------------- */
+body.school-app:not(.playing-game) .design-studio .ds-preview-panel{position:sticky;top:var(--abu-ds-preview-top,128px)}
+body.school-app:not(.playing-game) .design-studio .ds-preview-toolbar{
+  padding:10px 12px 10px 14px!important;border-radius:var(--abu-r-card) var(--abu-r-card) 0 0!important;background:var(--abu-surface)!important;border:1px solid var(--abu-line)!important;font-size:14px!important;font-weight:800;color:var(--abu-ink-2)}
+body.school-app:not(.playing-game) .design-studio .ds-preview-toolbar>span{display:inline-flex;align-items:center;gap:8px}
+body.school-app:not(.playing-game) .design-studio .ds-preview-toolbar>span::before{content:"";inline-size:8px;block-size:8px;border-radius:50%;background:var(--abu-success);box-shadow:0 0 0 3px var(--abu-success-bg)}
+body.school-app:not(.playing-game) .design-studio .ds-preview-toolbar>div{gap:2px!important;padding:3px;border-radius:var(--abu-r-sm);background:var(--abu-surface-2);border:1px solid var(--abu-line)}
+body.school-app:not(.playing-game) .design-studio .ds-preview-toolbar button{min-height:36px!important;padding:4px 12px!important;border:0!important;background:transparent!important;color:var(--abu-ink-2)!important;font-size:13.5px!important}
+body.school-app:not(.playing-game) .design-studio .ds-preview-toolbar button::before{content:"";inline-size:16px;block-size:16px;background:currentColor;-webkit-mask:var(--abu-dev-ic) center/contain no-repeat;mask:var(--abu-dev-ic) center/contain no-repeat}
+body.school-app:not(.playing-game) .design-studio .ds-preview-toolbar [data-device=desktop]{--abu-dev-ic:var(--abu-i-monitor)}
+body.school-app:not(.playing-game) .design-studio .ds-preview-toolbar [data-device=tablet]{--abu-dev-ic:var(--abu-i-tablet)}
+body.school-app:not(.playing-game) .design-studio .ds-preview-toolbar [data-device=mobile]{--abu-dev-ic:var(--abu-i-phone)}
+body.school-app:not(.playing-game) .design-studio .ds-preview-toolbar button[aria-pressed=true]{background:var(--abu-surface)!important;color:var(--abu-brand)!important;box-shadow:var(--abu-shadow-1)!important}
+body.school-app:not(.playing-game) .design-studio .ds-preview-scroll{
+  background:repeating-linear-gradient(45deg,var(--abu-sunken) 0 10px,color-mix(in srgb,var(--abu-sunken) 85%,#fff) 10px 20px)!important;
+  border:1px solid var(--abu-line)!important;border-top:0!important;border-radius:0 0 var(--abu-r-card) var(--abu-r-card)!important}
+body.school-app:not(.playing-game) .design-studio .ds-preview-panel>.help{display:flex;align-items:center;gap:8px;margin-top:10px}
+body.school-app:not(.playing-game) .design-studio .ds-preview-panel>.help::before{content:"";inline-size:16px;block-size:16px;flex:none;background:var(--abu-info);-webkit-mask:var(--abu-i-shield) center/contain no-repeat;mask:var(--abu-i-shield) center/contain no-repeat}
+
+@media (max-width:860px){
+  body.school-app:not(.playing-game) .design-studio .ds-layout{grid-template-columns:1fr!important}
+  body.school-app:not(.playing-game) .design-studio .ds-preview-panel{position:static;order:-1}
+  body.school-app:not(.playing-game) .design-studio .ds-tabs{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
+  body.school-app:not(.playing-game) .design-studio .ds-search{position:static}
+}
+@media (max-width:640px){
+  body.school-app:not(.playing-game) .design-studio>.ds-heading{position:static;padding:16px}
+  body.school-app:not(.playing-game) .design-studio .ds-save{inline-size:100%;grid-template-columns:1fr 1fr;grid-template-areas:"status status" "history undo" "save save" "note note"}
+  body.school-app:not(.playing-game) .design-studio .ds-save #dsStatus{justify-self:start}
+  body.school-app:not(.playing-game) .design-studio .ds-save .abu-local-note{justify-content:flex-start;text-align:start}
+  body.school-app:not(.playing-game) .design-studio .ds-tabs{grid-template-columns:1fr 1fr}
+}
+
+/* ---------- History dialog (created by the studio on <body>) ----------- */
+body.school-app:not(.playing-game) dialog.ds-history{
+  inline-size:min(100% - 24px,520px);padding:22px!important;border:0;border-radius:calc(var(--abu-r-card) + 2px);background:var(--abu-surface)!important;color:var(--abu-ink)!important;box-shadow:var(--abu-shadow-pop)}
+body.school-app:not(.playing-game) dialog.ds-history::backdrop{background:rgb(33 12 22/.45)}
+body.school-app:not(.playing-game) dialog.ds-history h3{display:flex;align-items:center;gap:8px;font-size:19px;margin:0 0 12px;padding-bottom:12px;border-bottom:1px solid var(--abu-line)}
+body.school-app:not(.playing-game) dialog.ds-history h3::before{content:"";inline-size:20px;block-size:20px;background:var(--abu-brand);-webkit-mask:var(--abu-i-history) center/contain no-repeat;mask:var(--abu-i-history) center/contain no-repeat}
+body.school-app:not(.playing-game) dialog.ds-history button{
+  display:flex!important;align-items:center;justify-content:space-between;inline-size:100%;min-height:48px;margin:6px 0!important;padding:8px 14px;border-radius:var(--abu-r-sm);
+  background:var(--abu-surface-2);color:var(--abu-ink);border:1px solid var(--abu-line);font:inherit;font-weight:700;font-family:var(--abu-font-num);cursor:pointer}
+body.school-app:not(.playing-game) dialog.ds-history button[data-history-index]::after{content:"فتح كمسودة";font-family:var(--abu-font-ui);font-size:13px;color:var(--abu-brand)}
+body.school-app:not(.playing-game) dialog.ds-history button:hover{border-color:var(--abu-brand-300);background:var(--abu-brand-50)}
+body.school-app:not(.playing-game) dialog.ds-history button[data-close-history]{justify-content:center;background:var(--abu-surface);margin-top:12px!important}

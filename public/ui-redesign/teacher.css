@@ -1,0 +1,432 @@
+/* ==========================================================================
+   مدرسة أبو عبيدة الإعدادية للبنين — مساحة المعلم (Abu Ubaida UI 1.0)
+   Teacher workspace (index.html?dashboard=1) + the shared "panel" content
+   (cards, tags, tables, reports, analytics) that is ALSO rendered inside the
+   embedded admin panels (index.html?adminPanel=…).
+   Scope: body.school-app:not(.playing-game) .teacher-workspace  and  #panel
+   No gameplay, scoring or session logic is touched: only presentation.
+   ========================================================================== */
+
+/* ---------- Workspace frame --------------------------------------------- */
+body.school-app:not(.playing-game) .teacher-workspace{display:flex;flex-direction:column;gap:20px;padding-block:24px 8px}
+
+/* Greeting / command header */
+body.school-app:not(.playing-game) .teacher-workspace>.workspace-heading{
+  position:relative;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:18px 24px;margin:0;
+  padding:clamp(20px,3vw,30px) clamp(20px,3vw,32px);border-radius:calc(var(--abu-r-card) + 4px);
+  background:var(--abu-surface);border:1px solid var(--abu-line)!important;box-shadow:var(--abu-shadow-2);overflow:hidden}
+body.school-app:not(.playing-game) .teacher-workspace>.workspace-heading::before{
+  content:"";position:absolute;inset-block:0;inset-inline-start:0;inline-size:6px;background:var(--abu-brand)}
+body.school-app:not(.playing-game) .teacher-workspace>.workspace-heading::after{
+  content:"";position:absolute;inset-block:0;inset-inline-end:0;inline-size:min(40%,420px);background:var(--abu-brand);opacity:.045;pointer-events:none;
+  -webkit-mask:var(--abu-lattice) 0 0/48px 48px repeat;mask:var(--abu-lattice) 0 0/48px 48px repeat}
+body.school-app:not(.playing-game) .teacher-workspace>.workspace-heading>div:first-child{position:relative;z-index:1;min-inline-size:0}
+body.school-app:not(.playing-game) .teacher-workspace>.workspace-heading .eyebrow{
+  display:inline-flex;align-items:center;gap:8px;font-size:13.5px!important;font-weight:800;color:var(--abu-brand)!important;letter-spacing:0}
+body.school-app:not(.playing-game) .teacher-workspace>.workspace-heading .eyebrow::before{
+  content:"";inline-size:16px;block-size:16px;background:currentColor;-webkit-mask:var(--abu-i-board) center/contain no-repeat;mask:var(--abu-i-board) center/contain no-repeat}
+body.school-app:not(.playing-game) .teacher-workspace>.workspace-heading h1{font-size:clamp(24px,2.6vw,34px)!important;line-height:1.35;color:var(--abu-ink)!important;margin:6px 0 4px!important}
+body.school-app:not(.playing-game) .teacher-workspace>.workspace-heading p{font-size:15.5px;color:var(--abu-muted);margin:0}
+body.school-app:not(.playing-game) .teacher-workspace .workspace-actions{position:relative;z-index:1;display:flex;flex-wrap:wrap;gap:10px}
+body.school-app:not(.playing-game) .teacher-workspace .workspace-actions>a{min-block-size:48px!important;padding-inline:20px!important;font-size:15px!important}
+body.school-app:not(.playing-game) .teacher-workspace .workspace-actions>a[href*="create-game"]{box-shadow:0 10px 22px -12px color-mix(in srgb,var(--abu-brand) 80%,transparent)!important}
+body.school-app:not(.playing-game) .teacher-workspace .workspace-actions>a[href*="live.html"]::before{
+  content:"";inline-size:18px;block-size:18px;background:currentColor;-webkit-mask:var(--abu-i-live) center/contain no-repeat;mask:var(--abu-i-live) center/contain no-repeat}
+body.school-app:not(.playing-game) .teacher-workspace .workspace-actions>a[href*="admin.html"]::before{
+  content:"";inline-size:18px;block-size:18px;background:currentColor;-webkit-mask:var(--abu-i-shield) center/contain no-repeat;mask:var(--abu-i-shield) center/contain no-repeat}
+
+/* KPI tiles */
+body.school-app:not(.playing-game) .teacher-workspace>.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin:0}
+body.school-app:not(.playing-game) .teacher-workspace>.stats>.stat{
+  display:grid;grid-template-columns:auto minmax(0,1fr);grid-template-areas:"icon num" "icon label";align-items:center;gap:0 14px;
+  padding:16px 18px!important;border-radius:var(--abu-r-card);background:var(--abu-surface);border:1px solid var(--abu-line);box-shadow:var(--abu-shadow-1);text-align:start}
+body.school-app:not(.playing-game) .teacher-workspace>.stats>.stat::before{
+  content:"";grid-area:icon;inline-size:46px;block-size:46px;border-radius:14px;
+  background:var(--abu-brand-50) var(--abu-stat-icon,none) center/22px no-repeat;box-shadow:inset 0 0 0 1px var(--abu-brand-100)}
+body.school-app:not(.playing-game) .teacher-workspace>.stats>.stat::after{
+  content:"";grid-area:icon;justify-self:center;inline-size:22px;block-size:22px;background:var(--abu-brand);
+  -webkit-mask:var(--abu-stat-mask,var(--abu-i-game)) center/contain no-repeat;mask:var(--abu-stat-mask,var(--abu-i-game)) center/contain no-repeat}
+body.school-app:not(.playing-game) .teacher-workspace>.stats>.stat:nth-child(1){--abu-stat-mask:var(--abu-i-game)}
+body.school-app:not(.playing-game) .teacher-workspace>.stats>.stat:nth-child(2){--abu-stat-mask:var(--abu-i-clipboard)}
+body.school-app:not(.playing-game) .teacher-workspace>.stats>.stat:nth-child(3){--abu-stat-mask:var(--abu-i-board)}
+body.school-app:not(.playing-game) .teacher-workspace>.stats>.stat:nth-child(4){--abu-stat-mask:var(--abu-i-user)}
+body.school-app:not(.playing-game) .teacher-workspace>.stats>.stat b{grid-area:num;font:800 28px/1.15 var(--abu-font-num)!important;color:var(--abu-ink)!important}
+body.school-app:not(.playing-game) .teacher-workspace>.stats>.stat span{grid-area:label;font-size:14px!important;color:var(--abu-muted)!important;line-height:1.5}
+
+/* Section tabs: segmented control with icons */
+body.school-app:not(.playing-game) .teacher-workspace>.tabs{
+  position:sticky;inset-block-start:calc(var(--abu-header-h,0px) + 8px);z-index:20;
+  display:flex;gap:4px;padding:5px;margin:0;border-radius:var(--abu-r-md);background:color-mix(in srgb,var(--abu-surface) 92%,transparent);
+  -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);border:1px solid var(--abu-line)!important;box-shadow:var(--abu-shadow-1);overflow-x:auto;scrollbar-width:thin}
+body.school-app:not(.playing-game) .teacher-workspace>.tabs>button{
+  flex:1 0 auto;display:inline-flex;align-items:center;justify-content:center;gap:8px;min-block-size:44px;padding:8px 16px;border-radius:10px;
+  font-size:14.5px;font-weight:700;white-space:nowrap;background:transparent!important;color:var(--abu-ink-2)!important;border:0!important;box-shadow:none!important;
+  transition:background-color var(--abu-t) var(--abu-ease),color var(--abu-t) var(--abu-ease)}
+body.school-app:not(.playing-game) #app .teacher-workspace>.tabs>button::before{
+  content:"";inline-size:18px;block-size:18px;flex:none;background:currentColor;opacity:.85;
+  -webkit-mask:var(--abu-tab-icon,var(--abu-i-list)) center/contain no-repeat;mask:var(--abu-tab-icon,var(--abu-i-list)) center/contain no-repeat}
+body.school-app:not(.playing-game) .teacher-workspace>.tabs>button[data-id=games]{--abu-tab-icon:var(--abu-i-game)}
+body.school-app:not(.playing-game) .teacher-workspace>.tabs>button[data-id=assignments]{--abu-tab-icon:var(--abu-i-clipboard)}
+body.school-app:not(.playing-game) .teacher-workspace>.tabs>button[data-id=videos]{--abu-tab-icon:var(--abu-i-video)}
+body.school-app:not(.playing-game) .teacher-workspace>.tabs>button[data-id=reports]{--abu-tab-icon:var(--abu-i-list)}
+body.school-app:not(.playing-game) .teacher-workspace>.tabs>button[data-id=analytics]{--abu-tab-icon:var(--abu-i-chart)}
+body.school-app:not(.playing-game) .teacher-workspace>.tabs>button[data-id=teachers]{--abu-tab-icon:var(--abu-i-users)}
+body.school-app:not(.playing-game) .teacher-workspace>.tabs>button[data-id=settings]{--abu-tab-icon:var(--abu-i-palette)}
+body.school-app:not(.playing-game) .teacher-workspace>.tabs>button:hover{background:var(--abu-brand-50)!important;color:var(--abu-brand)!important}
+body.school-app:not(.playing-game) .teacher-workspace>.tabs>button.active{background:var(--abu-brand)!important;color:#fff!important;box-shadow:var(--abu-shadow-1)!important}
+
+@media (max-width:900px){
+  body.school-app:not(.playing-game) .teacher-workspace>.stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+  body.school-app:not(.playing-game) .teacher-workspace>.tabs{position:static}
+  body.school-app:not(.playing-game) .teacher-workspace>.tabs>button{flex:0 0 auto}
+}
+@media (max-width:640px){
+  body.school-app:not(.playing-game) .teacher-workspace{gap:14px;padding-block-start:14px}
+  body.school-app:not(.playing-game) .teacher-workspace .workspace-actions{inline-size:100%}
+  body.school-app:not(.playing-game) .teacher-workspace .workspace-actions>a{flex:1 1 0;white-space:nowrap;padding-inline:12px!important;font-size:14px!important}
+  body.school-app:not(.playing-game) .teacher-workspace>.stats{gap:10px}
+  body.school-app:not(.playing-game) .teacher-workspace>.stats>.stat{grid-template-columns:1fr;grid-template-areas:"num" "label";padding:14px!important}
+  body.school-app:not(.playing-game) .teacher-workspace>.stats>.stat::before,
+  body.school-app:not(.playing-game) .teacher-workspace>.stats>.stat::after{display:none}
+  body.school-app:not(.playing-game) .teacher-workspace>.stats>.stat b{font-size:24px!important}
+  body.school-app:not(.playing-game) .teacher-workspace>.stats>.stat span{font-size:13px!important}
+}
+
+/* ==========================================================================
+   Shared panel content (#panel): teacher tabs + embedded admin panels
+   ========================================================================== */
+body.school-app:not(.playing-game) #panel{display:block}
+body.school-app:not(.playing-game) #panel>h2,
+body.school-app:not(.playing-game) #panel>.section-head h2{font-size:clamp(21px,2vw,26px)!important;line-height:1.4;color:var(--abu-ink)!important;margin:0 0 6px;border:0!important;padding:0!important}
+body.school-app:not(.playing-game) #panel>p.muted,
+body.school-app:not(.playing-game) #panel>.section-head p{font-size:15px;color:var(--abu-muted);line-height:1.8;max-inline-size:75ch;margin:0 0 18px}
+body.school-app:not(.playing-game) #panel>.section-head{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:14px 20px;margin:0 0 18px}
+body.school-app:not(.playing-game) #panel>.section-head p{margin:0}
+
+/* Card grid */
+body.school-app:not(.playing-game) #panel>.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr));gap:16px}
+body.school-app:not(.playing-game) #panel>.grid>article.card{
+  position:relative;display:flex;flex-direction:column;gap:8px;padding:18px 20px 18px!important;border-radius:var(--abu-r-card);
+  background:var(--abu-surface);border:1px solid var(--abu-line);box-shadow:var(--abu-shadow-1);
+  transition:box-shadow var(--abu-t) var(--abu-ease),border-color var(--abu-t) var(--abu-ease)}
+body.school-app:not(.playing-game) #panel>.grid>article.card:hover{box-shadow:var(--abu-shadow-2);border-color:var(--abu-brand-200)}
+body.school-app:not(.playing-game) #panel>.grid>article.card>h3{font-size:18px!important;line-height:1.5;color:var(--abu-ink)!important;margin:2px 0 0}
+body.school-app:not(.playing-game) #panel>.grid>article.card>p.muted{font-size:14px;color:var(--abu-muted);margin:0;line-height:1.7}
+body.school-app:not(.playing-game) #panel>.grid>article.card>.row,
+body.school-app:not(.playing-game) #panel>.grid>article.card>.stack{margin-block-start:auto;padding-block-start:12px;border-block-start:1px solid var(--abu-line)}
+body.school-app:not(.playing-game) #panel>.grid>article.card .row{display:flex;flex-wrap:wrap;gap:8px}
+body.school-app:not(.playing-game) #panel>.grid>article.card .stack{display:flex;flex-direction:column;gap:10px}
+body.school-app:not(.playing-game) #panel>.grid>article.card .row>:is(button,.button){flex:1 1 auto}
+
+/* Tags */
+body.school-app:not(.playing-game) #panel .tag{
+  align-self:flex-start;display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:var(--abu-r-pill);
+  font-size:12.5px!important;font-weight:800;color:var(--abu-brand)!important;background:var(--abu-brand-50)!important;border:1px solid var(--abu-brand-100)!important}
+
+/* Assignment status (data-abu-status set by components.js from the card's own text) */
+body.school-app:not(.playing-game) #panel article.card[data-abu-status]{padding-block-start:22px!important}
+body.school-app:not(.playing-game) #panel article.card[data-abu-status]::before{
+  content:"";position:absolute;inset-inline:0;inset-block-start:0;block-size:4px;border-radius:var(--abu-r-card) var(--abu-r-card) 0 0;background:var(--abu-success)}
+body.school-app:not(.playing-game) #panel article.card[data-abu-status=paused]::before{background:repeating-linear-gradient(-45deg,var(--abu-warning) 0 6px,transparent 6px 10px)}
+body.school-app:not(.playing-game) #panel article.card[data-abu-status=paused]{background:var(--abu-surface-2)}
+body.school-app:not(.playing-game) #panel article.card[data-abu-status=paused]>h3{color:var(--abu-ink-2)!important}
+body.school-app:not(.playing-game) #panel .abu-state{
+  display:inline-flex;align-items:center;gap:6px;padding:2px 10px;border-radius:var(--abu-r-pill);font-size:12.5px;font-weight:800;
+  color:var(--abu-success);background:var(--abu-success-bg);border:1px solid var(--abu-success-line)}
+body.school-app:not(.playing-game) #panel .abu-state::before{content:"";inline-size:12px;block-size:12px;background:currentColor;-webkit-mask:var(--abu-i-check) center/contain no-repeat;mask:var(--abu-i-check) center/contain no-repeat}
+body.school-app:not(.playing-game) #panel .abu-state[data-state=paused]{color:var(--abu-warning);background:var(--abu-warning-bg);border-color:var(--abu-warning-line)}
+body.school-app:not(.playing-game) #panel .abu-state[data-state=paused]::before{-webkit-mask-image:var(--abu-i-pause);mask-image:var(--abu-i-pause)}
+body.school-app:not(.playing-game) #panel .abu-card-top{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px}
+
+/* ---------- Action buttons with meaning ----------------------------------
+   Primary/secondary/danger are distinguished by shape + colour + icon,
+   so state never relies on colour alone.                                   */
+body.school-app:not(.playing-game) #app :is(button,a.button)[data-action]::before,
+body.school-app:not(.playing-game) #app #panel a.button[href*="create-game"]::before,
+body.school-app:not(.playing-game) #app #panel a.button[href*="live.html"]::before{
+  content:none;inline-size:17px;block-size:17px;flex:none;background:currentColor;
+  -webkit-mask:var(--abu-btn-icon) center/contain no-repeat;mask:var(--abu-btn-icon) center/contain no-repeat}
+body.school-app:not(.playing-game) #app :is(button,a.button):is(
+  [data-action=assign],[data-action=copy],[data-action=class],[data-action=toggle],[data-action=watch],[data-action=deleteVideo],
+  [data-action=addVideo],[data-action=classGroup],[data-action=classIndividual],[data-action=export],[data-action=student],[data-action=review],
+  [data-action=role],[data-action=teacherStatus],[data-action=reset])::before,
+body.school-app:not(.playing-game) #app #panel a.button[href*="create-game"]::before,
+body.school-app:not(.playing-game) #app #panel a.button[href*="live.html"]::before{content:""}
+body.school-app:not(.playing-game) #app [data-action=assign]{--abu-btn-icon:var(--abu-i-play)}
+body.school-app:not(.playing-game) #app #panel a.button[href*="create-game"]{--abu-btn-icon:var(--abu-i-edit)}
+body.school-app:not(.playing-game) #app #panel a.button[href*="live.html"]{--abu-btn-icon:var(--abu-i-live)}
+body.school-app:not(.playing-game) #app [data-action=watch]{--abu-btn-icon:var(--abu-i-eye)}
+body.school-app:not(.playing-game) #app [data-action=addVideo]{--abu-btn-icon:var(--abu-i-plus)}
+body.school-app:not(.playing-game) #app [data-action=export]{--abu-btn-icon:var(--abu-i-download)}
+body.school-app:not(.playing-game) #app [data-action=student]{--abu-btn-icon:var(--abu-i-user)}
+body.school-app:not(.playing-game) #app [data-action=review]{--abu-btn-icon:var(--abu-i-list)}
+body.school-app:not(.playing-game) #app [data-action=reset]{--abu-btn-icon:var(--abu-i-history)}
+body.school-app:not(.playing-game) #app [data-action=role]{--abu-btn-icon:var(--abu-i-shield)}
+body.school-app:not(.playing-game) #app [data-action=teacherStatus]{--abu-btn-icon:var(--abu-i-pause)}
+body.school-app:not(.playing-game) #app [data-action=teacherStatus][data-abu-tone=positive]{--abu-btn-icon:var(--abu-i-check)}
+
+/* Three play modes, three distinct identities (same logic, clearer choice) */
+body.school-app:not(.playing-game) #app [data-action=copy]{--abu-btn-icon:var(--abu-i-house)}
+body.school-app:not(.playing-game) #app [data-action=class]{--abu-btn-icon:var(--abu-i-board)}
+body.school-app:not(.playing-game) #app [data-action=classGroup]{--abu-btn-icon:var(--abu-i-board)}
+body.school-app:not(.playing-game) #app [data-action=classIndividual]{--abu-btn-icon:var(--abu-i-user)}
+body.school-app:not(.playing-game) #panel article.card [data-action=copy]{
+  background:var(--abu-gold-50)!important;color:var(--abu-mode-homework)!important;border:1px solid color-mix(in srgb,var(--abu-gold) 55%,var(--abu-line))!important;box-shadow:none!important}
+body.school-app:not(.playing-game) #panel article.card [data-action=copy]:hover{background:color-mix(in srgb,var(--abu-gold) 22%,#fff)!important}
+
+/* Danger & caution actions: outlined, red/amber, never solid like "save" */
+body.school-app:not(.playing-game) #app :is([data-action=deleteVideo],[data-action^=delete],[data-action=teacherStatus]:not([data-abu-tone=positive])){
+  background:var(--abu-surface)!important;color:var(--abu-danger)!important;border:1px solid var(--abu-danger-line)!important;box-shadow:none!important}
+body.school-app:not(.playing-game) #app :is([data-action=deleteVideo],[data-action^=delete],[data-action=teacherStatus]:not([data-abu-tone=positive])):hover{background:var(--abu-danger-bg)!important;border-color:var(--abu-danger)!important}
+body.school-app:not(.playing-game) #app [data-action=deleteVideo]{--abu-btn-icon:var(--abu-i-trash)}
+body.school-app:not(.playing-game) #app [data-action=toggle]{
+  --abu-btn-icon:var(--abu-i-pause);background:transparent!important;color:var(--abu-warning)!important;border:1px dashed var(--abu-warning-line)!important;box-shadow:none!important;min-block-size:40px!important}
+body.school-app:not(.playing-game) #app [data-action=toggle]:hover{background:var(--abu-warning-bg)!important;border-style:solid!important}
+body.school-app:not(.playing-game) #app [data-action=toggle][data-abu-tone=positive]{--abu-btn-icon:var(--abu-i-play);color:var(--abu-success)!important;border-color:var(--abu-success-line)!important}
+body.school-app:not(.playing-game) #app [data-action=toggle][data-abu-tone=positive]:hover{background:var(--abu-success-bg)!important}
+body.school-app:not(.playing-game) #app [data-action=role]{background:var(--abu-surface)!important;color:var(--abu-warning)!important;border:1px solid var(--abu-warning-line)!important}
+body.school-app:not(.playing-game) #app [data-action=role]:hover{background:var(--abu-warning-bg)!important}
+body.school-app:not(.playing-game) #app [data-action=teacherStatus][data-abu-tone=positive]{background:var(--abu-surface)!important;color:var(--abu-success)!important;border:1px solid var(--abu-success-line)!important}
+
+/* Class-run dialog: two large mode cards (group on board / individual) */
+body.school-app:not(.playing-game) dialog#modal #modalContent .row:has(>[data-action=classGroup]){display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-block-start:14px}
+body.school-app:not(.playing-game) dialog#modal #modalContent :is([data-action=classGroup],[data-action=classIndividual]){
+  display:grid!important;grid-template-columns:auto 1fr;grid-template-rows:auto auto;align-items:center;justify-items:start;text-align:start;gap:2px 12px;
+  min-block-size:96px!important;padding:16px 18px!important;border-radius:var(--abu-r-md)!important;font-size:17px!important;font-weight:800!important;white-space:normal}
+body.school-app:not(.playing-game) dialog#modal #modalContent :is([data-action=classGroup],[data-action=classIndividual])::before{
+  grid-row:1/3;inline-size:40px!important;block-size:40px!important}
+body.school-app:not(.playing-game) dialog#modal #modalContent [data-action=classGroup]{background:var(--abu-mode-group)!important;color:#fff!important;border:1px solid var(--abu-mode-group)!important}
+body.school-app:not(.playing-game) dialog#modal #modalContent [data-action=classIndividual]{background:color-mix(in srgb,var(--abu-mode-individual) 7%,#fff)!important;color:var(--abu-mode-individual)!important;border:1.5px solid color-mix(in srgb,var(--abu-mode-individual) 45%,#fff)!important}
+body.school-app:not(.playing-game) dialog#modal #modalContent [data-action=classIndividual]:hover{background:color-mix(in srgb,var(--abu-mode-individual) 13%,#fff)!important}
+body.school-app:not(.playing-game) dialog#modal #modalContent .abu-mode-hint{grid-column:2;font-size:13px;font-weight:600;line-height:1.55;opacity:.92}
+@media (max-width:520px){body.school-app:not(.playing-game) dialog#modal #modalContent .row:has(>[data-action=classGroup]){grid-template-columns:1fr}}
+
+/* Mode legend inserted above the assignments grid by components.js */
+body.school-app:not(.playing-game) #panel .abu-mode-legend{
+  display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:0 0 16px;padding:0;list-style:none}
+body.school-app:not(.playing-game) #panel .abu-mode-legend li{
+  display:grid;grid-template-columns:auto 1fr;gap:2px 10px;align-items:center;padding:12px 14px;border-radius:var(--abu-r-md);background:var(--abu-surface);border:1px solid var(--abu-line)}
+body.school-app:not(.playing-game) #panel .abu-mode-legend li::before{
+  content:"";grid-row:1/3;inline-size:26px;block-size:26px;background:currentColor;-webkit-mask:var(--abu-mode-icon) center/contain no-repeat;mask:var(--abu-mode-icon) center/contain no-repeat}
+body.school-app:not(.playing-game) #panel .abu-mode-legend b{font-size:14.5px;color:var(--abu-ink)}
+body.school-app:not(.playing-game) #panel .abu-mode-legend span{font-size:13px;color:var(--abu-muted);line-height:1.55}
+body.school-app:not(.playing-game) #panel .abu-mode-legend [data-mode=group]{--abu-mode-icon:var(--abu-i-board);color:var(--abu-mode-group)}
+body.school-app:not(.playing-game) #panel .abu-mode-legend [data-mode=individual]{--abu-mode-icon:var(--abu-i-user);color:var(--abu-mode-individual)}
+body.school-app:not(.playing-game) #panel .abu-mode-legend [data-mode=homework]{--abu-mode-icon:var(--abu-i-house);color:var(--abu-mode-homework)}
+@media (max-width:760px){body.school-app:not(.playing-game) #panel .abu-mode-legend{grid-template-columns:1fr}}
+
+/* ---------- Forms inside #panel (reports filter etc.) -------------------- */
+body.school-app:not(.playing-game) #panel>label{display:block;font-size:14px;font-weight:700;color:var(--abu-ink-2);margin:4px 0 6px}
+body.school-app:not(.playing-game) #panel>select,
+body.school-app:not(.playing-game) #panel :is(.analytics-controls-bar) select{
+  min-block-size:46px;padding:8px 14px;border-radius:var(--abu-r-sm);border:1.5px solid var(--abu-line-strong)!important;background-color:var(--abu-surface)!important;color:var(--abu-ink)!important;font-size:15px;max-inline-size:100%}
+body.school-app:not(.playing-game) #panel>select{inline-size:min(100%,420px)}
+body.school-app:not(.playing-game) #panel>.help{font-size:13.5px;color:var(--abu-muted);margin-block:12px 0}
+
+/* ---------- Tables ------------------------------------------------------- */
+body.school-app:not(.playing-game) #panel .table-wrap{
+  position:relative;overflow-x:auto;overscroll-behavior-x:contain;border-radius:var(--abu-r-card);background:var(--abu-surface);
+  border:1px solid var(--abu-line);box-shadow:var(--abu-shadow-1);scrollbar-width:thin;
+  /* scroll shadows: show that more columns exist off-screen */
+  background:
+    linear-gradient(90deg,var(--abu-surface) 30%,transparent) left center/40px 100% no-repeat local,
+    linear-gradient(270deg,var(--abu-surface) 30%,transparent) right center/40px 100% no-repeat local,
+    radial-gradient(farthest-side at 0 50%,rgb(43 29 36/.16),transparent) left center/14px 100% no-repeat scroll,
+    radial-gradient(farthest-side at 100% 50%,rgb(43 29 36/.16),transparent) right center/14px 100% no-repeat scroll,
+    var(--abu-surface)}
+body.school-app:not(.playing-game) #panel .table-wrap:focus-visible{outline-offset:-3px!important}
+body.school-app:not(.playing-game) #panel table{inline-size:100%;min-inline-size:640px;border-collapse:separate;border-spacing:0;font-size:15px;background:transparent;box-shadow:none;border:0;border-radius:0}
+body.school-app:not(.playing-game) #panel thead th{
+  position:sticky;inset-block-start:0;z-index:1;padding:12px 16px;text-align:start;font-size:13px;font-weight:800;color:var(--abu-muted)!important;
+  background:var(--abu-surface-2)!important;border-block-end:1px solid var(--abu-line);white-space:nowrap}
+body.school-app:not(.playing-game) #panel tbody td{padding:12px 16px;border-block-end:1px solid var(--abu-line);vertical-align:middle;color:var(--abu-ink);line-height:1.6;background:transparent}
+body.school-app:not(.playing-game) #panel tbody tr:last-child td{border-block-end:0}
+body.school-app:not(.playing-game) #panel tbody tr{transition:background-color var(--abu-t-fast) linear}
+body.school-app:not(.playing-game) #panel tbody tr:hover td{background:var(--abu-brand-50)}
+body.school-app:not(.playing-game) #panel tbody td b{font-weight:800}
+body.school-app:not(.playing-game) #panel tbody td small{display:inline-block;margin-block-start:2px;font-size:13px;color:var(--abu-muted);direction:ltr;unicode-bidi:isolate}
+body.school-app:not(.playing-game) #panel tbody td:last-child{white-space:nowrap}
+body.school-app:not(.playing-game) #panel tbody td:last-child>:is(button,.button){min-block-size:38px!important;padding:6px 12px!important;font-size:13.5px!important;margin-block:2px}
+body.school-app:not(.playing-game) #panel td[data-abu-num]{font-family:var(--abu-font-num);font-variant-numeric:tabular-nums;font-weight:700}
+/* Status chips in table cells (data-abu-chip set from the cell's own text) */
+body.school-app:not(.playing-game) #panel td>.abu-chip{
+  display:inline-flex;align-items:center;gap:6px;padding:2px 10px;border-radius:var(--abu-r-pill);font-size:13px;font-weight:800;white-space:nowrap;
+  color:var(--abu-ink-2);background:var(--abu-surface-2);border:1px solid var(--abu-line)}
+body.school-app:not(.playing-game) #panel td>.abu-chip::before{content:"";inline-size:12px;block-size:12px;background:currentColor;-webkit-mask:var(--abu-chip-icon,var(--abu-i-spark)) center/contain no-repeat;mask:var(--abu-chip-icon,var(--abu-i-spark)) center/contain no-repeat}
+body.school-app:not(.playing-game) #panel td>.abu-chip[data-tone=success]{--abu-chip-icon:var(--abu-i-check);color:var(--abu-success);background:var(--abu-success-bg);border-color:var(--abu-success-line)}
+body.school-app:not(.playing-game) #panel td>.abu-chip[data-tone=warning]{--abu-chip-icon:var(--abu-i-history);color:var(--abu-warning);background:var(--abu-warning-bg);border-color:var(--abu-warning-line)}
+body.school-app:not(.playing-game) #panel td>.abu-chip[data-tone=danger]{--abu-chip-icon:var(--abu-i-pause);color:var(--abu-danger);background:var(--abu-danger-bg);border-color:var(--abu-danger-line)}
+body.school-app:not(.playing-game) #panel td>.abu-chip[data-tone=info]{--abu-chip-icon:var(--abu-i-play);color:var(--abu-info);background:var(--abu-info-bg);border-color:var(--abu-info-line)}
+body.school-app:not(.playing-game) #panel td>.abu-chip[data-tone=class]{--abu-chip-icon:var(--abu-i-board);color:var(--abu-brand);background:var(--abu-brand-50);border-color:var(--abu-brand-100)}
+body.school-app:not(.playing-game) #panel td>.abu-chip[data-tone=home]{--abu-chip-icon:var(--abu-i-house);color:var(--abu-mode-homework);background:var(--abu-gold-50);border-color:color-mix(in srgb,var(--abu-gold) 45%,var(--abu-line))}
+body.school-app:not(.playing-game) #panel td>.abu-chip[data-tone=admin]{--abu-chip-icon:var(--abu-i-shield);color:var(--abu-brand);background:var(--abu-brand-50);border-color:var(--abu-brand-100)}
+body.school-app:not(.playing-game) #panel td>.abu-chip[data-tone=teacher]{--abu-chip-icon:var(--abu-i-user)}
+body.school-app:not(.playing-game) #panel td>.abu-protected{display:inline-flex;align-items:center;gap:6px;font-size:13.5px;font-weight:700;color:var(--abu-muted)}
+body.school-app:not(.playing-game) #panel td>.abu-protected::before{content:"";inline-size:14px;block-size:14px;background:currentColor;-webkit-mask:var(--abu-i-shield) center/contain no-repeat;mask:var(--abu-i-shield) center/contain no-repeat}
+
+/* Visible-rows filter (components.js) — explicitly limited to loaded rows */
+body.school-app:not(.playing-game) #panel .abu-table-tools{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;margin:0 0 12px}
+body.school-app:not(.playing-game) #panel .abu-table-tools label{display:flex;align-items:center;gap:8px;flex:1 1 280px;max-inline-size:440px;margin:0;font-size:14px;font-weight:700;color:var(--abu-ink-2)}
+body.school-app:not(.playing-game) #panel .abu-table-tools input{
+  flex:1;min-inline-size:0;min-block-size:42px;padding:8px 14px;font-weight:500;border-radius:var(--abu-r-sm);border:1.5px solid var(--abu-line-strong);background:var(--abu-surface);color:var(--abu-ink);font-size:15px}
+body.school-app:not(.playing-game) #panel .abu-table-tools input:focus{border-color:var(--abu-brand)}
+body.school-app:not(.playing-game) #panel .abu-table-tools output{font-size:13px;color:var(--abu-muted)}
+body.school-app:not(.playing-game) #panel tr[data-abu-filtered]{display:none}
+body.school-app:not(.playing-game) #panel .abu-table-empty td{padding:22px!important;text-align:center;color:var(--abu-muted)}
+
+/* ==========================================================================
+   Student analytics card (Recharts mount) — teacher and reports panel
+   ========================================================================== */
+body.school-app:not(.playing-game) .student-analytics-card{
+  padding:clamp(18px,2.4vw,26px)!important;border-radius:calc(var(--abu-r-card) + 2px)!important;background:var(--abu-surface)!important;
+  border:1px solid var(--abu-line)!important;box-shadow:var(--abu-shadow-2)!important;margin:0 0 4px}
+body.school-app:not(.playing-game) .student-analytics-card>.section-head{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px;margin:0 0 18px}
+body.school-app:not(.playing-game) .student-analytics-card>.section-head h2{font-size:clamp(19px,1.8vw,23px)!important;margin:8px 0 4px!important;color:var(--abu-ink)!important;padding-inline-start:0!important;border:0!important}
+body.school-app:not(.playing-game) .student-analytics-card>.section-head p{font-size:14.5px;color:var(--abu-muted)!important;margin:0}
+body.school-app:not(.playing-game) .student-analytics-card .tag{
+  display:inline-flex;padding:3px 10px;border-radius:var(--abu-r-pill);font-size:12.5px!important;font-weight:800;color:var(--abu-success)!important;background:var(--abu-success-bg)!important;border:1px solid var(--abu-success-line)!important}
+body.school-app:not(.playing-game) .student-analytics-card .analytics-kpi-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:0 0 18px}
+body.school-app:not(.playing-game) .student-analytics-card .analytics-kpi-grid>.stat{
+  display:flex;flex-direction:column;gap:6px;padding:14px 16px!important;border-radius:var(--abu-r-md)!important;background:var(--abu-surface-2)!important;border:1px solid var(--abu-line)!important;box-shadow:none!important}
+body.school-app:not(.playing-game) .student-analytics-card .analytics-kpi-grid>.stat span{font-size:13.5px!important;color:var(--abu-muted)!important;font-weight:700}
+body.school-app:not(.playing-game) .student-analytics-card .analytics-kpi-grid>.stat b{font:800 26px/1.15 var(--abu-font-num)!important}
+body.school-app:not(.playing-game) .student-analytics-card .analytics-controls-bar{
+  display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;padding:0 0 14px;margin:0 0 14px;border-block-end:1px solid var(--abu-line)}
+body.school-app:not(.playing-game) .student-analytics-card .analytics-controls-bar [role=tablist]{display:inline-flex;flex-wrap:wrap;gap:4px;padding:4px;border-radius:var(--abu-r-md);background:var(--abu-surface-2);border:1px solid var(--abu-line)}
+body.school-app:not(.playing-game) .student-analytics-card .analytics-controls-bar [role=tab]{
+  min-block-size:40px!important;padding:6px 14px!important;border-radius:10px!important;font-size:14px!important;font-weight:700;background:transparent!important;color:var(--abu-ink-2)!important;border:0!important;box-shadow:none!important}
+body.school-app:not(.playing-game) .student-analytics-card .analytics-controls-bar [role=tab]:hover{background:var(--abu-surface)!important;color:var(--abu-brand)!important}
+body.school-app:not(.playing-game) .student-analytics-card .analytics-controls-bar [role=tab][aria-selected=true],
+body.school-app:not(.playing-game) .student-analytics-card .analytics-controls-bar [role=tab].active{background:var(--abu-surface)!important;color:var(--abu-brand)!important;box-shadow:var(--abu-shadow-1),inset 0 -2px 0 var(--abu-brand)!important}
+body.school-app:not(.playing-game) .student-analytics-card .analytics-controls-bar>div:last-child{display:flex;flex-wrap:wrap;gap:8px}
+body.school-app:not(.playing-game) .student-analytics-card .recharts-viewport-box{border-radius:var(--abu-r-md);background:var(--abu-surface);padding-block:6px}
+body.school-app:not(.playing-game) .student-analytics-card .recharts-cartesian-axis-tick text{font-size:12.5px;fill:var(--abu-muted)}
+body.school-app:not(.playing-game) .student-analytics-card .recharts-legend-item-text{font-size:13.5px;font-weight:700;color:var(--abu-ink-2)!important}
+body.school-app:not(.playing-game) .student-analytics-card .recharts-cartesian-grid line{stroke:var(--abu-line)}
+body.school-app:not(.playing-game) .student-analytics-card .recharts-default-tooltip{border-radius:10px!important;border:1px solid var(--abu-line)!important;box-shadow:var(--abu-shadow-2)}
+body.school-app:not(.playing-game) .student-analytics-card>div:last-child{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding-block-start:14px;margin-block-start:10px;border-block-start:1px solid var(--abu-line)}
+body.school-app:not(.playing-game) .student-analytics-card>div:last-child>small{font-size:13.5px;font-weight:800;color:var(--abu-ink-2)}
+body.school-app:not(.playing-game) .student-analytics-card>div:last-child>span{
+  display:inline-flex;align-items:center;gap:6px;padding:4px 10px!important;border-radius:var(--abu-r-pill)!important;font-size:13px!important;background:var(--abu-surface-2)!important;border:1px solid var(--abu-line)!important}
+@media (max-width:900px){body.school-app:not(.playing-game) .student-analytics-card .analytics-kpi-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:640px){
+  body.school-app:not(.playing-game) .student-analytics-card .analytics-controls-bar [role=tablist]{inline-size:100%}
+  body.school-app:not(.playing-game) .student-analytics-card .analytics-controls-bar [role=tab]{flex:1 1 auto}
+  body.school-app:not(.playing-game) .student-analytics-card .analytics-controls-bar>div:last-child{inline-size:100%}
+  body.school-app:not(.playing-game) .student-analytics-card .analytics-controls-bar select{flex:1 1 140px}
+}
+
+/* ==========================================================================
+   منشئ الألعاب والأسئلة — teacher/create-game.html (body.builder-page)
+   Order made explicit: 1 بيانات اللعبة → 2 الأسئلة → 3 توليد ذكي → 4 إعدادات.
+   Tabs keep their buttons/[data-tab] and the original show/hide script;
+   question JSON, field names, import/export and grading are untouched.
+   ========================================================================== */
+body.builder-page .page>.wrap{display:flex;flex-direction:column;gap:18px;padding-bottom:24px}
+body.builder-page .page>.wrap>.toolbar{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin:6px 0 -4px!important;padding:0!important;background:none!important;border:0!important;box-shadow:none!important}
+body.builder-page .page>.wrap>.toolbar .kicker{display:none!important}
+body.builder-page .page>.wrap>.toolbar h1{font-size:clamp(20px,2vw,24px)!important;margin:0!important;color:var(--abu-ink)!important}
+body.builder-page .page>.wrap>.toolbar p{font-size:14.5px!important;color:var(--abu-muted)!important;margin:2px 0 0!important}
+
+/* Stepper */
+body.builder-page .tabs-row{
+  position:sticky;top:84px;z-index:40;counter-reset:abu-step;display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px!important;padding:6px!important;margin:0!important;
+  border-radius:var(--abu-r-md)!important;background:color-mix(in srgb,var(--abu-surface) 94%,transparent)!important;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);
+  border:1px solid var(--abu-line)!important;box-shadow:var(--abu-shadow-1)!important}
+body.builder-page .tabs-row .tab-btn{
+  counter-increment:abu-step;display:flex!important;align-items:center!important;justify-content:flex-start!important;gap:10px!important;min-height:52px!important;padding:8px 12px!important;
+  border-radius:10px!important;font-size:15px!important;font-weight:800!important;text-align:start;background:transparent!important;color:var(--abu-ink-2)!important;border:1px solid transparent!important;box-shadow:none!important;cursor:pointer}
+body.builder-page .tabs-row .tab-btn::before{
+  content:counter(abu-step);display:inline-grid;place-items:center;inline-size:30px;block-size:30px;flex:none;border-radius:50%;
+  font:800 14px/1 var(--abu-font-num);color:var(--abu-brand);background:var(--abu-brand-50);box-shadow:inset 0 0 0 1.5px var(--abu-brand-200)}
+body.builder-page .tabs-row .tab-btn:hover{background:var(--abu-brand-50)!important;color:var(--abu-brand)!important}
+body.builder-page .tabs-row .tab-btn.active{background:var(--abu-brand)!important;color:#fff!important;border-color:var(--abu-brand)!important}
+body.builder-page .tabs-row .tab-btn.active::before{background:#fff;color:var(--abu-brand);box-shadow:none}
+body.builder-page .tabs-row .tab-btn[data-tab=ai]::after{content:"اختياري";font-size:11.5px;font-weight:700;padding:1px 8px;border-radius:var(--abu-r-pill);background:var(--abu-surface-2);color:var(--abu-muted);border:1px solid var(--abu-line)}
+body.builder-page .tabs-row .tab-btn.active[data-tab=ai]::after{background:rgb(255 255 255/.18);color:#fff;border-color:rgb(255 255 255/.35)}
+@media (max-width:760px){
+  body.builder-page .tabs-row{grid-template-columns:repeat(4,minmax(110px,1fr));overflow-x:auto;top:0;position:static}
+  body.builder-page .tabs-row .tab-btn{font-size:13.5px!important;padding:6px 8px!important;gap:6px!important}
+  body.builder-page .tabs-row .tab-btn::before{inline-size:24px;block-size:24px;font-size:12px}
+  body.builder-page .tabs-row .tab-btn[data-tab=ai]::after{display:none}
+}
+
+/* Tab panels */
+body.builder-page .builder-tab.control-card>h2,
+body.builder-page #tab-questions>.toolbar h2{font-size:clamp(19px,1.8vw,22px)!important;margin:0 0 4px!important}
+body.builder-page #tab-questions>.toolbar{display:flex!important;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:14px!important;padding:0 0 16px!important;margin:0 0 14px!important;border-bottom:1px solid var(--abu-line)!important;background:none!important;box-shadow:none!important;border-radius:0!important}
+body.builder-page #tab-questions>.toolbar .q-actions .btn:first-child{min-height:48px!important;padding-inline:20px!important;font-size:15px!important}
+body.builder-page #tab-questions>.toolbar .q-actions .btn:first-child::before{content:"";inline-size:18px;block-size:18px;background:currentColor;-webkit-mask:var(--abu-i-plus) center/contain no-repeat;mask:var(--abu-i-plus) center/contain no-repeat}
+body.builder-page #tab-questions .export-actions{padding:10px 12px!important;border-radius:var(--abu-r-md)!important;background:var(--abu-surface-2)!important;border:1px solid var(--abu-line)!important;margin-bottom:14px}
+body.builder-page #tab-questions .export-actions::before{content:"تصدير ومشاركة";font-size:13px;font-weight:800;color:var(--abu-muted);margin-inline-end:6px}
+
+/* Question list */
+body.builder-page .q-list{display:flex!important;flex-direction:column;gap:10px!important;counter-reset:none}
+body.builder-page .q-list>p.muted{display:flex;flex-direction:column;align-items:center;gap:8px;padding:34px 16px;margin:0;border-radius:var(--abu-r-md);border:1.5px dashed var(--abu-line-strong);background:var(--abu-surface-2);text-align:center;font-size:15px!important}
+body.builder-page .q-list>p.muted::before{content:"";inline-size:40px;block-size:40px;background:var(--abu-brand-300);-webkit-mask:var(--abu-i-list) center/contain no-repeat;mask:var(--abu-i-list) center/contain no-repeat}
+body.builder-page .q-admin-card{
+  display:grid!important;grid-template-columns:minmax(0,1fr) auto!important;align-items:center!important;gap:12px 16px!important;padding:14px 16px!important;
+  border-radius:var(--abu-r-md)!important;border:1px solid var(--abu-line)!important;border-inline-start:4px solid var(--abu-brand-300)!important;background:var(--abu-surface)!important;box-shadow:none!important}
+body.builder-page .q-admin-card:hover{border-color:var(--abu-brand-200)!important;border-inline-start-color:var(--abu-brand)!important}
+body.builder-page .q-admin-card b{font-size:16px!important;line-height:1.7!important}
+body.builder-page .q-admin-card p.muted{font-size:13.5px!important;margin:2px 0 0!important}
+body.builder-page .q-admin-card .q-actions{gap:6px!important;flex-wrap:nowrap!important}
+body.builder-page .q-admin-card .q-actions .btn{min-height:40px!important;min-width:40px;padding:4px 12px!important}
+body.builder-page .q-admin-card .q-actions .btn:not(.bad){background:var(--abu-surface)!important;color:var(--abu-ink-2)!important;border:1px solid var(--abu-line-strong)!important;box-shadow:none!important}
+body.builder-page .q-admin-card .q-actions .btn:not(.bad):hover{color:var(--abu-brand)!important;border-color:var(--abu-brand)!important;background:var(--abu-brand-50)!important}
+@media (max-width:640px){body.builder-page .q-admin-card{grid-template-columns:1fr!important}body.builder-page .q-admin-card .q-actions{flex-wrap:wrap!important}}
+
+/* AI box & settings */
+body.builder-page .ai-box{padding:18px!important;background:var(--abu-surface-2)!important;box-shadow:none!important;display:flex;flex-direction:column;gap:12px}
+body.builder-page #aiStatus:not(:empty){padding:10px 14px;border-radius:var(--abu-r-sm);background:var(--abu-info-bg);border:1px solid var(--abu-info-line);color:var(--abu-info)!important;font-weight:700}
+body.builder-page #tab-settings .control-card label small{font-weight:500;color:var(--abu-muted)!important}
+body.builder-page #students_text{min-height:160px!important}
+
+/* Question modal */
+body.builder-page #qModal.modal-backdrop{background:rgb(33 12 22/.5)!important;-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);padding:12px!important;align-items:flex-start!important;overflow:auto}
+body.builder-page #qModal .modal{
+  inline-size:min(100%,860px)!important;max-height:none!important;overflow:visible!important;margin:min(4vh,32px) auto!important;padding:0!important;
+  border-radius:calc(var(--abu-r-card) + 2px)!important;background:var(--abu-surface)!important;border:0!important;box-shadow:var(--abu-shadow-pop)!important;
+  display:flex;flex-direction:column;gap:14px;padding-bottom:0!important}
+body.builder-page #qModal .modal>*:not(.toolbar):not(button.btn:last-child){margin-inline:clamp(16px,3vw,28px)!important}
+body.builder-page #qModal .modal>.toolbar{
+  position:sticky;top:-12px;z-index:3;display:flex!important;align-items:center;justify-content:space-between;gap:12px;margin:0!important;padding:16px clamp(16px,3vw,28px)!important;
+  background:var(--abu-surface)!important;border-bottom:1px solid var(--abu-line)!important;border-radius:calc(var(--abu-r-card) + 2px) calc(var(--abu-r-card) + 2px) 0 0!important}
+body.builder-page #qModal .modal>.toolbar h2{font-size:20px!important;margin:0!important}
+body.builder-page #qModal .modal>.toolbar .btn{min-width:44px}
+body.builder-page #qModal #qType{font-weight:800!important;background:var(--abu-brand-50)!important;border-color:var(--abu-brand-200)!important;color:var(--abu-brand)!important}
+body.builder-page #qModal #qText{min-height:96px!important;font-size:17px!important;font-weight:600}
+body.builder-page #qModal .modal>button.btn:last-child{
+  position:sticky;bottom:0;z-index:3;margin:6px 0 0!important;min-height:56px!important;border-radius:0 0 calc(var(--abu-r-card) + 2px) calc(var(--abu-r-card) + 2px)!important;font-size:16px!important}
+body.builder-page #qModal .modal>button.btn:last-child::before{content:"";inline-size:18px;block-size:18px;background:currentColor;-webkit-mask:var(--abu-i-save) center/contain no-repeat;mask:var(--abu-i-save) center/contain no-repeat}
+
+/* Structured editors (options, true/false, pairs, order, open answers, classification) */
+body.builder-page :is(.structured-editor-card,.puzzle-builder){
+  padding:16px!important;border-radius:var(--abu-r-md)!important;background:var(--abu-surface-2)!important;border:1px solid var(--abu-line)!important;box-shadow:none!important;display:flex;flex-direction:column;gap:10px}
+body.builder-page .structured-head{display:flex!important;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px}
+body.builder-page .structured-head h3{font-size:16px!important;margin:0!important}
+body.builder-page .structured-row{
+  display:grid!important;align-items:center;gap:8px!important;padding:8px!important;border-radius:var(--abu-r-sm)!important;background:var(--abu-surface)!important;border:1px solid var(--abu-line)!important}
+body.builder-page .option-row{grid-template-columns:auto minmax(0,1fr) auto!important}
+body.builder-page :is(.pair-editor-row){grid-template-columns:36px minmax(0,1fr) minmax(0,1fr) auto!important}
+body.builder-page .pair-editor-head{display:grid!important;grid-template-columns:36px minmax(0,1fr) minmax(0,1fr) 72px!important;gap:8px;padding:0 8px;font-size:13px;font-weight:800;color:var(--abu-muted)}
+body.builder-page :is(.order-editor-row,.answer-editor-row){grid-template-columns:36px minmax(0,1fr) auto!important}
+body.builder-page .row-number{display:grid!important;place-items:center;inline-size:32px;block-size:32px;border-radius:50%;font:800 13px/1 var(--abu-font-num);color:var(--abu-brand);background:var(--abu-brand-50);box-shadow:inset 0 0 0 1px var(--abu-brand-100)}
+body.builder-page .correct-radio{
+  display:inline-flex!important;align-items:center;gap:6px;min-height:40px;padding:4px 10px;border-radius:var(--abu-r-sm);border:1px solid var(--abu-line);font-size:13px!important;font-weight:700;color:var(--abu-muted)!important;cursor:pointer;white-space:nowrap}
+body.builder-page .correct-radio:has(input:checked){color:var(--abu-success)!important;background:var(--abu-success-bg);border-color:var(--abu-success-line)}
+body.builder-page .option-row:has(.correct-radio input:checked){border-color:var(--abu-success-line)!important;box-shadow:inset 3px 0 0 var(--abu-success)}
+body.builder-page .tf-editor{display:grid!important;grid-template-columns:1fr 1fr;gap:10px}
+body.builder-page .tf-choice{
+  display:flex!important;align-items:center;justify-content:center;gap:10px;min-height:56px;border-radius:var(--abu-r-md);border:1.5px solid var(--abu-line-strong);background:var(--abu-surface);font-size:17px!important;font-weight:800;cursor:pointer}
+body.builder-page .tf-choice:has(input:checked){border-color:var(--abu-success);background:var(--abu-success-bg);color:var(--abu-success)!important}
+body.builder-page .classification-editor-grid{display:grid!important;grid-template-columns:repeat(var(--classCols,2),minmax(0,1fr))!important;gap:10px}
+body.builder-page .classification-editor-col{padding:12px!important;border-radius:var(--abu-r-md)!important;background:var(--abu-surface)!important;border:1px solid var(--abu-line)!important;display:flex;flex-direction:column;gap:8px}
+@media (max-width:640px){
+  body.builder-page .classification-editor-grid{grid-template-columns:1fr!important}
+  body.builder-page :is(.pair-editor-row){grid-template-columns:30px minmax(0,1fr)!important}
+  body.builder-page :is(.pair-editor-row)>.btn{grid-column:1/-1}
+  body.builder-page .pair-editor-head{display:none!important}
+  body.builder-page .option-row{grid-template-columns:minmax(0,1fr) auto!important}
+  body.builder-page .option-row .correct-radio{grid-column:1/-1;justify-self:start}
+}
