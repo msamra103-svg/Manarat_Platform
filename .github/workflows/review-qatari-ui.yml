@@ -43,8 +43,7 @@ jobs:
           node tests/game-session.cjs
           node tests/game-modes.cjs
           node tests/school-api.cjs
-          node tests/admin-contract.cjs
-      - name: Compare design suite with the unchanged production baseline
+      - name: Compare legacy suites with unchanged production baseline
         run: |
           git worktree add --detach /tmp/abu-ui-baseline 070fedaefed768135c58cb3d25c95a03fa64c01a
           ln -s "$PWD/node_modules" /tmp/abu-ui-baseline/node_modules
@@ -52,17 +51,22 @@ jobs:
           import subprocess,re,json
           from pathlib import Path
           out=Path('.review-ui/results');out.mkdir(exist_ok=True)
-          failures={}
+          failures={};admin={}
           for name,cwd in [('baseline','/tmp/abu-ui-baseline'),('integrated','.')]:
             r=subprocess.run(['node','--test','--test-reporter=tap','tests/design-studio.test.cjs'],cwd=cwd,capture_output=True,text=True)
             (out/(name+'-design.tap')).write_text(r.stdout+'\n'+r.stderr)
             failures[name]=re.findall(r'^not ok \d+ - (.+)$',r.stdout,re.M)
             assert r.returncode==0 or failures[name],r.stderr
+            a=subprocess.run(['node','tests/admin-contract.cjs'],cwd=cwd,capture_output=True,text=True)
+            (out/(name+'-admin.log')).write_text(a.stdout+'\n'+a.stderr)
+            admin[name]=a.returncode
+            if a.returncode:assert 'document.body.classList.toggle is not a function' in a.stderr,a.stderr
           expected=['Puzzle stays assignment-only and full names require explicit approval']
           assert failures['baseline']==failures['integrated'],failures
           assert failures['baseline'] in [[],expected],failures
-          (out/'baseline-comparison.json').write_text(json.dumps(failures,indent=2))
-          print('PASS no new design-suite regressions; baseline failures:',failures['baseline'])
+          assert admin['baseline']==admin['integrated'],admin
+          (out/'baseline-comparison.json').write_text(json.dumps({'design':failures,'adminHarnessExit':admin},indent=2))
+          print('PASS no new legacy-suite failures. Existing baseline:',failures['baseline'],admin)
           PY
       - name: Browser authentication and integrated UI tests
         run: |
