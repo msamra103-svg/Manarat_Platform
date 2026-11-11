@@ -1,0 +1,63 @@
+name: Review and integrate Qatar UI safely
+on:
+  push:
+    branches: [review/qatari-ui-20261111]
+    paths: ['.review-ui/**', '.github/workflows/review-qatari-ui.yml']
+permissions:
+  contents: read
+jobs:
+  verify:
+    if: github.repository == 'msamra103-svg/Manarat_Platform'
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Materialize and review limited UI integration
+        run: python3 .review-ui/install.py
+      - name: Locked build and existing regression tests
+        run: |
+          npm ci --no-audit --no-fund
+          npm run build
+          npm run check:js
+          npm run test:unit
+          node tests/admin-requests.cjs
+          node tests/game-session.cjs
+          node tests/game-modes.cjs
+          node tests/school-api.cjs
+          node --test tests/design-studio.test.cjs
+          node tests/admin-contract.cjs
+      - name: Browser authentication and integrated UI tests
+        run: |
+          npx --no-install playwright install --with-deps chromium
+          node tests/classroom-auth-browser.cjs
+          node .review-ui/browser.cjs
+      - name: Save test reports and screenshots
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: qatari-ui-review-results
+          path: .review-ui/results/
+          include-hidden-files: true
+          if-no-files-found: ignore
+          retention-days: 7
+      - name: Commit only tested integration on review branch
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          test "$(git branch --show-current)" = 'review/qatari-ui-20261111'
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add ui-redesign public/ui-redesign index.html public/index.html admin/admin.html public/admin/admin.html teacher/create-game.html public/teacher/create-game.html js/design-runtime.js public/js/design-runtime.js js/design-studio.js public/js/design-studio.js js/school-bridge.js public/js/school-bridge.js scripts/sync-public.js scripts/smoke-check.js
+          git diff --cached --check
+          git commit -m 'Integrate reviewed Qatari UI layer and safe presentation fixes'
+          export GIT_CONFIG_COUNT=1
+          export GIT_CONFIG_KEY_0=http.https://github.com/.extraheader
+          export GIT_CONFIG_VALUE_0="AUTHORIZATION: basic $(printf 'x-access-token:%s' "$GH_TOKEN" | base64 -w0)"
+          git push origin HEAD:refs/heads/review/qatari-ui-20261111
+          unset GIT_CONFIG_COUNT GIT_CONFIG_KEY_0 GIT_CONFIG_VALUE_0
+          git rev-parse HEAD
