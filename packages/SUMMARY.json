@@ -1,0 +1,13 @@
+{
+  "file": "AbuUbaida_Platform_UI_Claude_20261111.zip",
+  "bytes": 4519013,
+  "sha256": "12fec1e4756a8f7dd76e85db3f3226d75a560cb599c812c870e7f06d41443010",
+  "source_commit": "070fedaefed768135c58cb3d25c95a03fa64c01a",
+  "qa_status": "PASS",
+  "routes": 17,
+  "production_modified": false,
+  "claude_access_granted": false,
+  "source_files": 68,
+  "scope": "Platform public interface, teacher workspace and admin/dashboard appearance only",
+  "read_qa_before_editing": true
+}

@@ -1,0 +1,115 @@
+{
+  "scope": "Current UI startup, local fixtures, design save, export boundary, selected responsive routes; not production backend validation or final redesigned UX acceptance.",
+  "routes": [
+    {
+      "name": "homepage",
+      "url": "/index.html?previewRole=guest",
+      "status": "PASS",
+      "error": ""
+    },
+    {
+      "name": "login",
+      "url": "/index.html?login=1&previewRole=guest",
+      "status": "PASS",
+      "error": ""
+    },
+    {
+      "name": "teacher",
+      "url": "/index.html?dashboard=1&previewRole=teacher",
+      "status": "PASS",
+      "error": ""
+    },
+    {
+      "name": "editor",
+      "url": "/teacher/create-game.html?previewRole=teacher",
+      "status": "PASS",
+      "error": ""
+    },
+    {
+      "name": "admin",
+      "url": "/admin/admin.html?previewRole=admin",
+      "status": "PASS",
+      "error": ""
+    },
+    {
+      "name": "admin-settings",
+      "url": "/index.html?adminPanel=settings&previewRole=admin",
+      "status": "PASS",
+      "error": ""
+    },
+    {
+      "name": "admin-teachers",
+      "url": "/index.html?adminPanel=teachers&previewRole=admin",
+      "status": "PASS",
+      "error": ""
+    },
+    {
+      "name": "admin-students",
+      "url": "/index.html?adminPanel=students&previewRole=admin",
+      "status": "PASS",
+      "error": ""
+    },
+    {
+      "name": "admin-assignments",
+      "url": "/index.html?adminPanel=assignments&previewRole=admin",
+      "status": "PASS",
+      "error": ""
+    },
+    {
+      "name": "admin-videos",
+      "url": "/index.html?adminPanel=videos&previewRole=admin",
+      "status": "PASS",
+      "error": ""
+    },
+    {
+      "name": "admin-reports",
+      "url": "/index.html?adminPanel=reports&previewRole=admin",
+      "status": "PASS",
+      "error": ""
+    },
+    {
+      "name": "homepage-390",
+      "status": "OBSERVED",
+      "horizontal_overflow": false,
+      "note": "Existing layout observation for Claude; not a change made to production"
+    },
+    {
+      "name": "teacher-390",
+      "status": "OBSERVED",
+      "horizontal_overflow": false,
+      "note": "Existing layout observation for Claude; not a change made to production"
+    },
+    {
+      "name": "admin-390",
+      "status": "OBSERVED",
+      "horizontal_overflow": false,
+      "note": "Existing layout observation for Claude; not a change made to production"
+    },
+    {
+      "name": "homepage-768",
+      "status": "OBSERVED",
+      "horizontal_overflow": false,
+      "note": "Existing layout observation for Claude; not a change made to production"
+    },
+    {
+      "name": "teacher-768",
+      "status": "OBSERVED",
+      "horizontal_overflow": false,
+      "note": "Existing layout observation for Claude; not a change made to production"
+    },
+    {
+      "name": "admin-768",
+      "status": "OBSERVED",
+      "horizontal_overflow": false,
+      "note": "Existing layout observation for Claude; not a change made to production"
+    }
+  ],
+  "external_requests": [],
+  "missing": [],
+  "errors": [],
+  "design_save_verified": true,
+  "production_network_calls": 0,
+  "status": "PASS",
+  "export_boundaries_verified": true,
+  "fixture_auth_mutation_rejected": true
+}

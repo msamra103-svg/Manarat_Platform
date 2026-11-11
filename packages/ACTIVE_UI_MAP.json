@@ -1,0 +1,42 @@
+{
+  "homepage": [
+    "index.html",
+    "js/school.js",
+    "js/homepage-hub-logic.js",
+    "js/game-covers.js",
+    "js/design-runtime.js"
+  ],
+  "teacher": [
+    "index.html?dashboard=1",
+    "js/school.js",
+    "js/student-analytics.js"
+  ],
+  "admin": [
+    "admin/admin.html",
+    "js/admin.js",
+    "js/admin-unified.js",
+    "js/admin-requests.js"
+  ],
+  "embedded_panels": [
+    "index.html?adminPanel=settings",
+    "index.html?adminPanel=teachers",
+    "index.html?adminPanel=students",
+    "index.html?adminPanel=assignments",
+    "index.html?adminPanel=videos",
+    "index.html?adminPanel=reports"
+  ],
+  "studio": [
+    "js/design-schema.js",
+    "js/design-studio.js",
+    "js/design-runtime.js"
+  ],
+  "editor": [
+    "teacher/create-game.html",
+    "js/create-game.js"
+  ],
+  "readonly_core": [
+    "js/core.js",
+    "js/admin-requests.js"
+  ],
+  "warning": "Legacy home.js/dashboard.js may remain in source but current homepage and teacher workspace use school.js. Do not redesign only an inactive legacy route."
+}
