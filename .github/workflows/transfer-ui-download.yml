@@ -1,0 +1,39 @@
+name: Transfer existing UI handoff for direct download
+on:
+  push:
+    branches: [handoff/claude-platform-ui-20261111]
+    paths: [.github/workflows/transfer-ui-download.yml]
+permissions:
+  contents: read
+jobs:
+  transfer:
+    if: github.repository == 'msamra103-svg/Manarat_Platform'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: 6a95123afa6e249ed6b6092f1a19267ded84a1dc
+          persist-credentials: false
+      - name: Verify the original package without rebuilding or changing it
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import hashlib, zipfile
+          p=Path('packages/AbuUbaida_Platform_UI_Claude_20261111.zip')
+          assert p.stat().st_size==4519013
+          assert hashlib.sha256(p.read_bytes()).hexdigest()=='12fec1e4756a8f7dd76e85db3f3226d75a560cb599c812c870e7f06d41443010'
+          with zipfile.ZipFile(p) as z:
+              assert z.testzip() is None
+              assert not any(Path(n).suffix.lower() in {'.woff','.woff2','.ttf','.otf','.eot'} for n in z.namelist())
+              assert any(n.endswith('/CLAUDE_PROMPT_AR.md') for n in z.namelist())
+              assert any(n.endswith('/tools/export_return.py') for n in z.namelist())
+              print('PASS original size, SHA256, ZIP CRC and required contents; members:',len(z.namelist()))
+          PY
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: abu-ubaida-ui-direct-download
+          path: packages/AbuUbaida_Platform_UI_Claude_20261111.zip
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 7
