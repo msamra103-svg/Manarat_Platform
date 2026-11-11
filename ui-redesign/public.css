@@ -1,0 +1,579 @@
+/* ==========================================================================
+   مدرسة أبو عبيدة الإعدادية للبنين — الواجهة العامة (Abu Ubaida UI 1.0)
+   Homepage, teacher login, shared header/footer and dialogs.
+   Scope: body.school-app:not(.admin-embedded):not(.playing-game)
+   - Studio-controlled variants (data-nav-active, data-login-style,
+     data-hero-backdrop, data-gallery-*, data-title-style …) are respected:
+     rules that touch a property a variant controls are guarded by the
+     studio's default value, so the other variants keep working.
+   - No rule reaches body.playing-game, game iframes or engine screens.
+   ========================================================================== */
+
+/* ---------- Page canvas -------------------------------------------------- */
+body.school-app:not(.admin-embedded):not(.playing-game){
+  background:var(--abu-bg);
+  color:var(--abu-ink);
+  -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;
+}
+body.school-app:not(.admin-embedded):not(.playing-game) :is(h1,h2,h3){letter-spacing:0;text-wrap:balance}
+body.school-app:not(.admin-embedded):not(.playing-game) p{text-wrap:pretty}
+
+/* Keyboard focus: visible everywhere on the public UI */
+body.school-app:not(.playing-game) :is(a,button,input,select,textarea,summary,[tabindex]):focus-visible{
+  outline:2.5px solid var(--abu-brand)!important;outline-offset:2px!important;box-shadow:0 0 0 5px color-mix(in srgb,var(--abu-brand) 16%,transparent)!important;
+}
+body.school-app:not(.playing-game) .skip{
+  position:fixed;inset-inline-start:16px;inset-block-start:-80px;z-index:1000;padding:10px 16px;border-radius:var(--abu-r-sm);
+  background:var(--abu-brand);color:#fff;font-weight:700;transition:inset-block-start var(--abu-t) var(--abu-ease)}
+body.school-app:not(.playing-game) .skip:focus{inset-block-start:12px}
+
+/* ---------- Buttons (shared language) ------------------------------------
+   primary  = solid brand          (default <button>, .button)
+   secondary= white + brand border  (.quiet / .outline in neutral contexts)
+   danger   = red text + red border (data-action delete*, .bad)
+   ------------------------------------------------------------------------- */
+body.school-app:not(.admin-embedded):not(.playing-game) main :is(button,.button):not(.hero-arrow-btn):not(.hero-chip):not(.gallery-filter-btn):not(.close):not([role=tab]){
+  min-block-size:var(--abu-touch);padding:10px 18px;border-radius:var(--abu-r-sm);font-weight:700;font-size:var(--abu-fs-sm);
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;line-height:1.3;
+  transition:background-color var(--abu-t) var(--abu-ease),color var(--abu-t) var(--abu-ease),border-color var(--abu-t) var(--abu-ease),box-shadow var(--abu-t) var(--abu-ease),transform var(--abu-t-fast) var(--abu-ease);
+}
+body.school-app:not(.admin-embedded):not(.playing-game) main :is(button,.button):not(.quiet):not(.outline):not(.hero-arrow-btn):not(.hero-chip):not(.gallery-filter-btn):not(.close):not([role=tab]){
+  background:var(--abu-brand);color:var(--abu-on-brand);border:1px solid var(--abu-brand);box-shadow:0 1px 0 rgb(255 255 255/.15) inset,var(--abu-shadow-1)}
+body.school-app:not(.admin-embedded):not(.playing-game) main :is(button,.button):not(.quiet):not(.outline):not(.hero-arrow-btn):not(.hero-chip):not(.gallery-filter-btn):not(.close):not([role=tab]):hover{
+  background:var(--abu-brand-hover);border-color:var(--abu-brand-hover)}
+body.school-app:not(.admin-embedded):not(.playing-game) main :is(button,.button):is(.quiet,.outline):not(.hero-chip):not(.gallery-filter-btn){
+  background:var(--abu-surface);color:var(--abu-brand);border:1px solid var(--abu-brand-300)}
+body.school-app:not(.admin-embedded):not(.playing-game) main :is(button,.button):is(.quiet,.outline):not(.hero-chip):not(.gallery-filter-btn):hover{
+  background:var(--abu-brand-50);border-color:var(--abu-brand)}
+body.school-app:not(.admin-embedded):not(.playing-game) main :is(button,.button):active:not(:disabled){transform:translateY(1px)}
+body.school-app:not(.admin-embedded):not(.playing-game) main :is(button,.button):disabled{opacity:.55;cursor:not-allowed;box-shadow:none}
+body.school-app:not(.playing-game) main button[aria-busy=true]{position:relative;color:transparent!important}
+body.school-app:not(.playing-game) main button[aria-busy=true]::after{content:"";position:absolute;inset:0;margin:auto;inline-size:18px;block-size:18px;border-radius:50%;
+  border:2.5px solid rgb(255 255 255/.45);border-top-color:#fff;animation:abu-spin .8s linear infinite}
+@keyframes abu-spin{to{transform:rotate(360deg)}}
+
+/* ==========================================================================
+   1. HEADER
+   ========================================================================== */
+body.school-app:not(.admin-embedded):not(.playing-game)>#platformHeader{
+  background:color-mix(in srgb,var(--v-nav,#fff) 94%,transparent);
+  -webkit-backdrop-filter:saturate(1.4) blur(10px);backdrop-filter:saturate(1.4) blur(10px);
+  border-block-end:1px solid var(--abu-line);
+  box-shadow:0 1px 0 rgb(255 255 255/.6) inset;
+  padding-block:14px 0;
+  gap:12px;
+  z-index:60;
+}
+/* Sadu band: a quiet woven edge under the header */
+body.school-app:not(.admin-embedded):not(.playing-game)>#platformHeader::after{
+  content:"";position:absolute;inset-inline:0;inset-block-end:-1px;block-size:5px;background:var(--abu-brand);opacity:.85;
+  -webkit-mask:var(--abu-sadu) 0 100%/20px 9px repeat-x;mask:var(--abu-sadu) 0 100%/20px 9px repeat-x;pointer-events:none}
+body.school-app:not(.admin-embedded):not(.playing-game) .header-brand-cluster{min-block-size:56px}
+body.school-app:not(.admin-embedded):not(.playing-game) .header-brand-cluster .brand{gap:14px;text-decoration:none;border-radius:var(--abu-r-sm)}
+body.school-app:not(.admin-embedded):not(.playing-game) .header-brand-cluster .mark{
+  inline-size:var(--v-logo-w,52px);block-size:var(--v-logo-h,52px);border-radius:14px;overflow:hidden;flex:none;
+  box-shadow:0 0 0 1px var(--abu-line),var(--abu-shadow-1);background:var(--abu-surface)}
+body.school-app:not(.admin-embedded):not(.playing-game) .header-brand-cluster .mark img{inline-size:100%;block-size:100%;object-fit:contain}
+body.school-app:not(.admin-embedded):not(.playing-game) .brand-text-stack{display:flex;flex-direction:column;gap:2px;min-inline-size:0}
+body.school-app:not(.admin-embedded):not(.playing-game) .brand-text-stack b{max-inline-size:none!important;font-size:19px!important;font-weight:800;line-height:1.35!important;color:var(--abu-ink)!important}
+body.school-app:not(.admin-embedded):not(.playing-game) .brand-text-stack small{font-size:13px!important;color:var(--abu-muted)!important;line-height:1.5}
+/* Ministry logo + school name: one identity block.
+   The ministry logo sits right beside the school name (desktop) and above it
+   (mobile), separated by a hairline. Order follows the studio setting
+   «موضع شعار الوزارة» (start = before the name, end = after it); size follows
+   «عرض/ارتفاع شعار الوزارة». The studio-uploaded file always wins; the
+   packaged official file (.abu-ministry--packaged) is a fallback only. */
+body.school-app:not(.admin-embedded):not(.playing-game):not([data-brand-align=center]) .header-brand-cluster{justify-content:flex-start!important}
+body.school-app:not(.admin-embedded):not(.playing-game) .header-brand-cluster{gap:0!important;flex-wrap:nowrap;align-items:center}
+body.school-app:not(.admin-embedded):not(.playing-game) :is(#ministryBrandSlot:not([hidden]),.abu-ministry--packaged){
+  display:flex!important;align-items:center;flex:none;min-block-size:56px;
+  margin:0;padding:0 var(--v-brand-gap,20px)!important;background:transparent!important;border:0!important;border-radius:0!important;box-shadow:none!important;
+  order:2;border-inline-start:1px solid var(--abu-line-strong)!important}
+body.school-app:not(.admin-embedded):not(.playing-game) .header-brand-cluster>.brand{order:1;padding-inline-end:var(--v-brand-gap,20px)}
+body.school-app:not(.admin-embedded):not(.playing-game)[data-brand-placement=start] :is(#ministryBrandSlot:not([hidden]),.abu-ministry--packaged){
+  order:0;padding-inline-start:0!important;border-inline-start:0!important;border-inline-end:1px solid var(--abu-line-strong)!important}
+body.school-app:not(.admin-embedded):not(.playing-game)[data-brand-placement=start] .header-brand-cluster>.brand{padding-inline:var(--v-brand-gap,20px) 0}
+body.school-app:not(.admin-embedded):not(.playing-game) .header-brand-cluster #v21PlatformLogo{order:3}
+body.school-app:not(.admin-embedded):not(.playing-game).v21-skin :is(#ministryLogoImg,.abu-ministry--packaged img){
+  display:block;inline-size:auto!important;block-size:var(--v-ministry-h,52px)!important;max-inline-size:var(--v-ministry-w,180px)!important;
+  object-fit:contain;object-position:center;filter:none!important}
+/* the studio logo wins over the packaged fallback */
+body.school-app:not(.admin-embedded):not(.playing-game) .header-brand-cluster:has(#ministryLogoImg[src]:not([src=""])) .abu-ministry--packaged,
+body.school-app:not(.admin-embedded):not(.playing-game) .header-brand-cluster:has(#ministryBrandSlot:not([hidden])) .abu-ministry--packaged{display:none!important}
+/* Studio live preview only: show where the ministry logo will appear */
+html.abu-design-preview body.school-app .header-brand-cluster:not(:has(.abu-ministry--packaged)) #ministryBrandSlot[hidden]:not(:has(img[src])){
+  display:flex!important;order:2;align-items:center;justify-content:center;min-inline-size:150px;min-block-size:52px;margin-inline-start:var(--v-brand-gap,20px);padding:6px 12px!important;
+  border:1.5px dashed var(--abu-brand-300)!important;border-radius:10px!important;background:var(--abu-brand-50)!important}
+html.abu-design-preview body.school-app[data-brand-placement=start] .header-brand-cluster #ministryBrandSlot[hidden]:not(:has(img[src])){order:0;margin-inline:0 var(--v-brand-gap,20px)}
+html.abu-design-preview body.school-app .header-brand-cluster #ministryBrandSlot[hidden]:not(:has(img[src]))::before{
+  content:"موضع شعار الوزارة — يُرفع من «الهوية والصور»";font-size:12px;font-weight:700;color:var(--abu-brand);text-align:center;line-height:1.5}
+html.abu-design-preview body.school-app .header-brand-cluster #ministryBrandSlot[hidden]:not(:has(img[src])) img{display:none}
+
+/* Nav row */
+body.school-app:not(.admin-embedded):not(.playing-game) .gaming-top-nav{
+  border:0!important;border-block-start:1px solid color-mix(in srgb,var(--abu-line) 70%,transparent)!important;padding-block:10px 12px;background:transparent!important;box-shadow:none!important;border-radius:0!important}
+body.school-app:not(.admin-embedded):not(.playing-game) .nav-tabs-track{background:transparent;border:0;box-shadow:none;padding:0;gap:max(4px,var(--v-nav-gap,6px))}
+body.school-app:not(.admin-embedded):not(.playing-game) .nav-tab-btn{
+  min-block-size:42px;padding:8px 14px;border-radius:var(--abu-r-pill);font-size:14px!important;font-weight:700;color:var(--abu-ink-2);
+  background:transparent;border:1px solid transparent;text-decoration:none}
+body.school-app:not(.admin-embedded):not(.playing-game) .nav-tab-btn .nav-tab-icon{display:inline-grid;place-items:center;inline-size:18px;block-size:18px;color:var(--abu-brand)}
+body.school-app:not(.admin-embedded):not(.playing-game) .nav-tab-btn .nav-tab-icon svg{inline-size:18px;block-size:18px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+body.school-app:not(.admin-embedded):not(.playing-game) .nav-tab-btn:hover{background:var(--abu-brand-50);color:var(--abu-brand);border-color:var(--abu-brand-100);box-shadow:none}
+body.school-app:not(.admin-embedded):not(.playing-game)[data-nav-active=pill] .nav-tab-btn.active{
+  background:var(--abu-brand);color:#fff;border-color:var(--abu-brand);box-shadow:var(--abu-shadow-1)}
+body.school-app:not(.admin-embedded):not(.playing-game)[data-nav-active=pill] .nav-tab-btn.active .nav-tab-icon{color:#fff}
+body.school-app:not(.admin-embedded):not(.playing-game)[data-nav-active=underline] .nav-tab-btn.active{border-radius:0;color:var(--abu-brand);border-bottom:3px solid var(--abu-brand)}
+body.school-app:not(.admin-embedded):not(.playing-game)[data-nav-active=outline] .nav-tab-btn.active{color:var(--abu-brand);border-color:var(--abu-brand);background:var(--abu-surface)}
+
+/* Nav actions: live = secondary, workspace = secondary, admin = tinted, login = primary */
+body.school-app:not(.admin-embedded):not(.playing-game) .nav-actions-cluster{gap:8px}
+body.school-app:not(.admin-embedded):not(.playing-game) .nav-actions-cluster>:is(a,button){
+  min-block-size:42px;padding:8px 16px;border-radius:var(--abu-r-sm);font-size:14px;font-weight:700;display:inline-flex;align-items:center;gap:8px;white-space:nowrap;
+  background:var(--abu-surface);color:var(--abu-brand);border:1px solid var(--abu-brand-200);box-shadow:none;text-decoration:none;
+  transition:background-color var(--abu-t) var(--abu-ease),border-color var(--abu-t) var(--abu-ease)}
+body.school-app:not(.admin-embedded):not(.playing-game) .nav-actions-cluster>:is(a,button):hover{background:var(--abu-brand-50);border-color:var(--abu-brand)}
+body.school-app:not(.admin-embedded):not(.playing-game) .nav-actions-cluster>:is(a,button)[hidden]{display:none!important}
+body.school-app:not(.admin-embedded):not(.playing-game) .nav-actions-cluster>a[href="live.html"]::before{content:"";inline-size:16px;block-size:16px;background:currentColor;-webkit-mask:var(--abu-i-live) center/contain no-repeat;mask:var(--abu-i-live) center/contain no-repeat}
+body.school-app:not(.admin-embedded):not(.playing-game) #dashboardLink::before{content:"";inline-size:16px;block-size:16px;background:currentColor;-webkit-mask:var(--abu-i-board) center/contain no-repeat;mask:var(--abu-i-board) center/contain no-repeat}
+body.school-app:not(.admin-embedded):not(.playing-game) #adminLink{background:var(--abu-brand-50);border-color:var(--abu-brand-200)}
+body.school-app:not(.admin-embedded):not(.playing-game) #adminLink::before{content:"";inline-size:16px;block-size:16px;background:currentColor;-webkit-mask:var(--abu-i-shield) center/contain no-repeat;mask:var(--abu-i-shield) center/contain no-repeat}
+body.school-app:not(.admin-embedded):not(.playing-game)[data-login-style=solid] #loginLink{background:var(--abu-brand);color:#fff;border-color:var(--abu-brand)}
+body.school-app:not(.admin-embedded):not(.playing-game)[data-login-style=solid] #loginLink:hover{background:var(--abu-brand-hover);border-color:var(--abu-brand-hover)}
+body.school-app:not(.admin-embedded):not(.playing-game)[data-login-style=soft] #loginLink{background:var(--v-selected,var(--abu-brand-50));color:var(--abu-brand)}
+body.school-app:not(.admin-embedded):not(.playing-game) #loginLink::before{content:"";inline-size:16px;block-size:16px;background:currentColor;-webkit-mask:var(--abu-i-user) center/contain no-repeat;mask:var(--abu-i-user) center/contain no-repeat}
+body.school-app:not(.admin-embedded):not(.playing-game) .mobile-nav-toggle{
+  inline-size:44px;block-size:44px;min-block-size:44px;padding:0!important;justify-content:center}
+
+/* Tablet/mobile: drawer navigation (existing toggle + .is-open behaviour) */
+@media (max-width:1150px){
+  body.school-app:not(.admin-embedded):not(.playing-game)>#platformHeader{padding-block:10px 0}
+  body.school-app:not(.admin-embedded):not(.playing-game)[data-mobile-menu=drawer] .nav-tabs-track{
+    inset-block-start:calc(100% + 1px);inset-inline:0;padding:12px;gap:6px;border-radius:0 0 var(--abu-r-md) var(--abu-r-md);
+    background:var(--abu-surface);border:1px solid var(--abu-line);border-block-start:0;box-shadow:var(--abu-shadow-3)}
+  body.school-app:not(.admin-embedded):not(.playing-game)[data-mobile-menu=drawer] .nav-tabs-track.is-open{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr))}
+  body.school-app:not(.admin-embedded):not(.playing-game)[data-mobile-menu=drawer] .nav-tabs-track .nav-tab-btn{border-radius:var(--abu-r-sm);min-block-size:48px;justify-content:flex-start;background:var(--abu-surface-2)}
+  body.school-app:not(.admin-embedded):not(.playing-game) .mobile-nav-toggle[aria-expanded=true]{background:var(--abu-brand);color:#fff;border-color:var(--abu-brand)}
+}
+@media (max-width:640px){
+  body.school-app:not(.admin-embedded):not(.playing-game) .header-brand-cluster{min-block-size:0;flex-direction:column;align-items:flex-start!important;gap:8px!important}
+  body.school-app:not(.admin-embedded):not(.playing-game)[data-brand-align=center] .header-brand-cluster{align-items:center!important}
+  body.school-app:not(.admin-embedded):not(.playing-game) :is(#ministryBrandSlot:not([hidden]),.abu-ministry--packaged),
+  body.school-app:not(.admin-embedded):not(.playing-game)[data-brand-placement=start] :is(#ministryBrandSlot:not([hidden]),.abu-ministry--packaged){
+    order:0;min-block-size:0;padding:0 0 8px!important;border:0!important;border-block-end:1px solid var(--abu-line)!important;align-self:stretch;justify-content:flex-start}
+  body.school-app:not(.admin-embedded):not(.playing-game)[data-brand-align=center] :is(#ministryBrandSlot:not([hidden]),.abu-ministry--packaged){justify-content:center}
+  body.school-app:not(.admin-embedded):not(.playing-game) .header-brand-cluster>.brand,
+  body.school-app:not(.admin-embedded):not(.playing-game)[data-brand-placement=start] .header-brand-cluster>.brand{order:1;padding:0}
+  body.school-app:not(.admin-embedded):not(.playing-game).v21-skin :is(#ministryLogoImg,.abu-ministry--packaged img){block-size:max(40px,var(--v-mobile-logo,36px))!important;max-inline-size:min(220px,70vw)!important}
+  body.school-app:not(.admin-embedded):not(.playing-game)[data-mobile-brand=school] :is(#ministryBrandSlot,.abu-ministry--packaged){display:none!important}
+  body.school-app:not(.admin-embedded):not(.playing-game) .header-brand-cluster .mark{inline-size:var(--v-mobile-logo,40px);block-size:var(--v-mobile-logo,40px);border-radius:11px}
+  body.school-app:not(.admin-embedded):not(.playing-game) .brand-text-stack b{font-size:15px!important}
+  body.school-app:not(.admin-embedded):not(.playing-game) .brand-text-stack small{font-size:12px!important}
+  body.school-app:not(.admin-embedded):not(.playing-game) .gaming-top-nav{padding-block:8px 10px;gap:8px}
+  body.school-app:not(.admin-embedded):not(.playing-game) .nav-actions-cluster{width:100%;display:flex;flex-wrap:wrap;gap:6px}
+  body.school-app:not(.admin-embedded):not(.playing-game) .nav-actions-cluster>:is(a,button):not(.mobile-nav-toggle){flex:1 1 auto;min-inline-size:max-content;justify-content:center;padding-inline:8px;font-size:13.5px}
+  body.school-app:not(.admin-embedded):not(.playing-game) .nav-actions-cluster>.mobile-nav-toggle{flex:none}
+  body.school-app:not(.admin-embedded):not(.playing-game)[data-mobile-menu=drawer] .nav-tabs-track.is-open{grid-template-columns:1fr 1fr}
+}
+@media (max-width:430px){
+  body.school-app:not(.admin-embedded):not(.playing-game) .nav-actions-cluster>:is(a,button)::before{display:none}
+  body.school-app:not(.admin-embedded):not(.playing-game) .nav-actions-cluster>:is(a,button):not(.mobile-nav-toggle){font-size:13px;padding-inline:6px}
+}
+
+/* ==========================================================================
+   2. HOME LAYOUT
+   ========================================================================== */
+body.school-app:not(.admin-embedded):not(.playing-game) .platform-home{padding-block-end:var(--abu-s8)}
+body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .home-section{scroll-margin-block-start:150px}
+
+/* Section heads */
+body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .section-head{gap:20px;align-items:flex-end;margin-block-end:24px}
+body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .section-kicker{
+  display:inline-flex;align-items:center;gap:8px;font-size:13px!important;font-weight:800;color:var(--abu-brand)!important;letter-spacing:0;text-transform:none;margin-block-end:6px}
+body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .section-kicker::before{
+  content:"";inline-size:22px;block-size:9px;background:var(--abu-gold);flex:none;
+  -webkit-mask:var(--abu-sadu) 0 100%/14px 6px repeat-x;mask:var(--abu-sadu) 0 100%/14px 6px repeat-x}
+body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .section-head h2{
+  font-size:clamp(24px,2.5vw,34px)!important;line-height:1.35;font-weight:var(--abu-fw-head);color:var(--abu-ink)!important;margin:2px 0 8px}
+body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .section-head p{font-size:16px;color:var(--abu-muted);max-inline-size:62ch;line-height:1.8;margin:0}
+
+/* ---------- 2.1 Hero ------------------------------------------------------ */
+body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .hero{
+  border-radius:calc(var(--abu-r-card) + 10px);gap:clamp(24px,3.5vw,48px);padding:clamp(22px,3.4vw,44px);min-block-size:0;
+  box-shadow:var(--abu-shadow-3);margin-block:22px 0}
+body.school-app:not(.admin-embedded):not(.playing-game)[data-hero-backdrop=maroon] .platform-home .hero{
+  background:
+    radial-gradient(120% 90% at 100% 0%,color-mix(in srgb,var(--abu-brand) 70%,#fff 6%) 0%,transparent 55%),
+    linear-gradient(150deg,var(--abu-brand-deep) 0%,var(--abu-brand) 58%,color-mix(in srgb,var(--abu-brand) 82%,#000) 100%)}
+/* lattice motif, very low contrast, only on the copy side */
+body.school-app:not(.admin-embedded):not(.playing-game)[data-hero-backdrop=maroon] .platform-home .hero::before{
+  background:#fff;opacity:.05;
+  -webkit-mask:var(--abu-lattice) 0 0/56px 56px repeat;mask:var(--abu-lattice) 0 0/56px 56px repeat;
+  -webkit-mask-composite:source-over;
+  clip-path:inset(0 0 0 45%)}
+[dir=rtl] body.school-app:not(.admin-embedded):not(.playing-game)[data-hero-backdrop=maroon] .platform-home .hero::before,
+body.school-app:not(.admin-embedded):not(.playing-game)[data-hero-backdrop=maroon] .platform-home .hero::before{clip-path:inset(0 0 0 52%)}
+body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .hero::after{display:none}
+body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .hero-copy-column{display:flex;flex-direction:column;justify-content:center;align-items:flex-start;min-inline-size:0}
+body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .hero .hero-school-name{
+  display:inline-flex;align-items:center;gap:8px;padding:6px 14px;border-radius:var(--abu-r-pill);font-size:13.5px!important;font-weight:800;
+  background:rgb(255 255 255/.12)!important;color:#fff!important;border:1px solid rgb(255 255 255/.28)}
+body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .hero .hero-school-name::before{
+  content:"";inline-size:8px;block-size:8px;border-radius:2px;background:var(--abu-gold);transform:rotate(45deg)}
+body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .hero h1{
+  font-size:var(--abu-fs-display)!important;line-height:1.25!important;font-weight:var(--abu-fw-head);margin:18px 0 12px}
+body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .hero-copy-column>p{font-size:17px!important;line-height:1.9;max-inline-size:46ch;color:rgb(255 255 255/.88)}
+body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .hero-metrics{
+  display:flex;flex-wrap:wrap;gap:10px;border:0;padding:0;margin:22px 0 26px}
+body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .hero-metric{
+  display:flex;align-items:center;gap:10px;padding:10px 16px!important;border-radius:var(--abu-r-md);
+  background:rgb(255 255 255/.1)!important;border:1px solid rgb(255 255 255/.2)!important}
+body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .hero-metric b{white-space:nowrap;font-size:22px!important;font-family:var(--abu-font-num);line-height:1.2}
+body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .hero-metric span{font-size:13px!important;line-height:1.4;max-inline-size:12ch}
+body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .hero-cta-row{gap:12px;flex-wrap:wrap}
+body.school-app:not(.admin-embedded):not(.playing-game)[data-hero-backdrop=maroon] .platform-home .hero-cta-row button:not(.outline){
+  background:#fff!important;color:var(--abu-brand)!important;border-color:#fff!important;min-block-size:50px;padding-inline:22px;font-size:15.5px;box-shadow:0 10px 24px -12px rgb(0 0 0/.5)}
+body.school-app:not(.admin-embedded):not(.playing-game)[data-hero-backdrop=maroon] .platform-home .hero-cta-row button:not(.outline):hover{background:var(--abu-gold-50)!important}
+body.school-app:not(.admin-embedded):not(.playing-game)[data-hero-backdrop=maroon] .platform-home .hero-cta-row button.outline{
+  background:rgb(255 255 255/.06)!important;color:#fff!important;border:1px solid rgb(255 255 255/.55)!important;min-block-size:50px;padding-inline:22px;font-size:15.5px}
+body.school-app:not(.admin-embedded):not(.playing-game)[data-hero-backdrop=maroon] .platform-home .hero-cta-row button.outline:hover{background:rgb(255 255 255/.14)!important;border-color:#fff!important}
+body.school-app:not(.admin-embedded):not(.playing-game)[data-hero-backdrop=light] .platform-home .hero{box-shadow:var(--abu-shadow-2)}
+body.school-app:not(.admin-embedded):not(.playing-game)[data-hero-backdrop=light] .platform-home .hero .hero-school-name{background:var(--abu-brand-50)!important;color:var(--abu-brand)!important;border-color:var(--abu-brand-200)}
+body.school-app:not(.admin-embedded):not(.playing-game)[data-hero-backdrop=light] .platform-home .hero-metric{background:var(--abu-surface-2)!important;border-color:var(--abu-line)!important}
+body.school-app:not(.admin-embedded):not(.playing-game)[data-hero-backdrop=light] .platform-home .hero-copy-column>p{color:var(--abu-muted)}
+
+/* Showcase frame */
+body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .hero-showcase{
+  border-radius:calc(var(--abu-r-card) + 2px);border:1px solid rgb(255 255 255/.32);box-shadow:0 30px 60px -28px rgb(20 4 10/.7),0 0 0 6px rgb(255 255 255/.06);overflow:hidden}
+body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .hero-controls-top{padding:14px 14px 0}
+body.school-app:not(.admin-embedded):not(.playing-game) .platform-home #heroSceneBadge{font-size:13px!important;font-weight:700;padding:6px 12px;background:rgb(30 8 18/.62)!important}
+body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .hero-arrow-btn{
+  inline-size:40px;block-size:40px;min-block-size:40px;border-radius:50%;background:rgb(255 255 255/.92);color:var(--abu-brand-deep);border:0;font-size:20px;font-weight:800;
+  display:inline-grid;place-items:center;box-shadow:0 4px 12px rgb(0 0 0/.25);transition:transform var(--abu-t-fast) var(--abu-ease),background-color var(--abu-t) var(--abu-ease)}
+body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .hero-arrow-btn:hover{background:#fff;transform:scale(1.06)}
+body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .hero-showcase-caption{padding:44px 22px 20px}
+body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .hero-showcase-caption h3{font-size:clamp(18px,1.7vw,24px)!important;font-weight:800}
+body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .hero-showcase-caption p{font-size:14px!important;line-height:1.75;color:rgb(255 255 255/.9)!important}
+body.school-app:not(.admin-embedded):not(.playing-game)[data-hero-button=solid] .platform-home .hero-try-cta{
+  background:var(--abu-brand)!important;color:#fff!important;border:1px solid rgb(255 255 255/.4)!important;font-size:14px!important;min-block-size:42px!important;padding-inline:16px}
+body.school-app:not(.admin-embedded):not(.playing-game) .platform-home #v21HeroPause{
+  min-block-size:36px;font-size:13px;padding:6px 12px;border-radius:var(--abu-r-pill);background:rgb(30 8 18/.62);color:#fff;border:1px solid rgb(255 255 255/.3)}
+body.school-app:not(.admin-embedded):not(.playing-game) .platform-home #v21HeroPause:hover{background:rgb(30 8 18/.8)}
+
+@media (max-width:980px){
+  body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .hero{grid-template-columns:1fr;padding:22px}
+  body.school-app:not(.admin-embedded):not(.playing-game)[data-hero-backdrop=maroon] .platform-home .hero::before{clip-path:none}
+  body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .hero-showcase{aspect-ratio:16/11}
+}
+@media (max-width:640px){
+  body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .hero{border-radius:var(--abu-r-card);margin-block-start:14px;gap:20px}
+  body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .hero h1{font-size:30px!important;margin:14px 0 8px}
+  body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .hero-copy-column>p{font-size:15.5px!important}
+  body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .hero-metrics{margin:16px 0 18px;width:100%}
+  body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .hero-metric{flex:1 1 140px}
+  body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .hero-cta-row{width:100%}
+  body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .hero-cta-row button{flex:1 1 100%}
+  body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .hero-showcase{aspect-ratio:1/1}
+  body.school-app:not(.admin-embedded):not(.playing-game) .platform-home #heroSceneDesc{display:none}
+  body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .hero-showcase-caption{padding:36px 16px 16px}
+}
+
+/* ---------- 2.2 Join (task / competition code) --------------------------- */
+body.school-app:not(.admin-embedded):not(.playing-game) .platform-home #joinForm{
+  position:relative;z-index:2;display:grid;grid-template-columns:auto minmax(0,1fr) auto;grid-template-areas:"label input submit" ". help .";
+  align-items:center;gap:8px 16px;margin:-34px auto 0;inline-size:min(100% - 2*var(--abu-gutter),980px);
+  padding:18px 20px;background:var(--abu-surface);border:1px solid var(--abu-line);border-radius:var(--abu-r-card);box-shadow:var(--abu-shadow-3);
+  border-inline-start:5px solid var(--abu-brand)}
+body.school-app:not(.admin-embedded):not(.playing-game) .platform-home #joinForm>label{
+  grid-area:label;display:flex;align-items:center;gap:10px;font-size:16px;font-weight:800;color:var(--abu-ink);margin:0;max-inline-size:300px;line-height:1.5}
+body.school-app:not(.admin-embedded):not(.playing-game) .platform-home #joinForm>label::before{
+  content:"";inline-size:26px;block-size:26px;flex:none;background:var(--abu-brand);
+  -webkit-mask:var(--abu-i-link) center/contain no-repeat;mask:var(--abu-i-link) center/contain no-repeat}
+body.school-app:not(.admin-embedded):not(.playing-game) .platform-home #joinCode{
+  grid-area:input;min-block-size:52px;font-size:17px;padding:10px 16px;border-radius:var(--abu-r-sm);border:1.5px solid var(--abu-line-strong);
+  background:var(--abu-surface-2);color:var(--abu-ink);unicode-bidi:plaintext;inline-size:100%}
+body.school-app:not(.admin-embedded):not(.playing-game) .platform-home #joinCode:hover{border-color:var(--abu-brand-300)}
+body.school-app:not(.admin-embedded):not(.playing-game) .platform-home #joinCode:focus{border-color:var(--abu-brand);background:var(--abu-surface)}
+body.school-app:not(.admin-embedded):not(.playing-game) .platform-home #joinCode::placeholder{color:var(--abu-muted);opacity:1}
+body.school-app:not(.admin-embedded):not(.playing-game) .platform-home #joinForm>button{grid-area:submit;min-block-size:52px!important;padding-inline:26px!important;font-size:16px!important}
+body.school-app:not(.admin-embedded):not(.playing-game) .platform-home #joinForm>.help{grid-area:help;font-size:13.5px;color:var(--abu-muted);margin:0;display:flex;align-items:center;gap:6px}
+body.school-app:not(.admin-embedded):not(.playing-game) .platform-home #joinForm>.help::before{content:"";inline-size:14px;block-size:14px;background:var(--abu-success);-webkit-mask:var(--abu-i-shield) center/contain no-repeat;mask:var(--abu-i-shield) center/contain no-repeat}
+@media (max-width:760px){
+  body.school-app:not(.admin-embedded):not(.playing-game) .platform-home #joinForm{grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"label label" "input submit" "help help";margin-top:16px;inline-size:100%;padding:16px}
+  body.school-app:not(.admin-embedded):not(.playing-game) .platform-home #joinForm>label{max-inline-size:none}
+}
+@media (max-width:420px){
+  body.school-app:not(.admin-embedded):not(.playing-game) .platform-home #joinForm{grid-template-columns:1fr;grid-template-areas:"label" "input" "submit" "help"}
+  body.school-app:not(.admin-embedded):not(.playing-game) .platform-home #joinForm>button{inline-size:100%}
+}
+
+/* ---------- 2.3 Games gallery -------------------------------------------- */
+body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .gallery-filter-bar{
+  display:inline-flex;flex-wrap:wrap;gap:4px;padding:4px;border-radius:var(--abu-r-pill);background:var(--abu-surface);border:1px solid var(--abu-line);box-shadow:var(--abu-shadow-1)}
+body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .gallery-filter-btn{
+  min-block-size:40px;padding:6px 16px;border-radius:var(--abu-r-pill);font-size:14px;font-weight:700;border:0;background:transparent;color:var(--abu-ink-2);box-shadow:none;cursor:pointer;
+  transition:background-color var(--abu-t) var(--abu-ease),color var(--abu-t) var(--abu-ease)}
+body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .gallery-filter-btn:hover{background:var(--abu-brand-50);color:var(--abu-brand)}
+body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .gallery-filter-btn.active{background:var(--abu-brand);color:#fff}
+body.school-app:not(.admin-embedded):not(.playing-game)[data-gallery-layout=grid] .platform-home .games-gallery{
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,250px),1fr));gap:20px}
+@media (min-width:1200px){
+  body.school-app:not(.admin-embedded):not(.playing-game)[data-gallery-layout=grid] .platform-home .games-gallery[data-cols="4"]{grid-template-columns:repeat(4,minmax(0,1fr))}
+}
+body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .game-cover-card{
+  display:flex;flex-direction:column;padding:0!important;overflow:hidden;border-radius:var(--abu-r-card);background:var(--abu-surface);
+  border:1px solid var(--abu-line);box-shadow:var(--abu-shadow-1);
+  transition:transform var(--abu-t) var(--abu-ease),box-shadow var(--abu-t) var(--abu-ease),border-color var(--abu-t) var(--abu-ease)}
+body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .game-cover-card:hover{box-shadow:var(--abu-shadow-3);border-color:color-mix(in srgb,var(--game-accent,var(--abu-brand)) 35%,var(--abu-line))}
+body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .game-cover-card:focus-within{border-color:var(--abu-brand)}
+body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .game-cover{
+  position:relative;block-size:var(--v-cover,190px)!important;margin:0!important;border-radius:0!important;background:var(--abu-sunken);overflow:hidden}
+body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .game-cover img{
+  inline-size:100%;block-size:100%;object-fit:cover;transition:transform var(--abu-t-slow) var(--abu-ease)}
+body.school-app:not(.admin-embedded):not(.playing-game)[data-gallery-hover=lift] .platform-home .game-cover-card:hover .game-cover img{transform:scale(1.035)}
+/* .cover-number stays hidden (design-v21 hides it in the current skin) */
+body.school-app:not(.admin-embedded):not(.playing-game)[data-gallery-text=below] .platform-home .cover-badge{
+  position:absolute;inset-block-end:12px;inset-inline-start:12px;inset-inline-end:auto;inset-block-start:auto;z-index:2;
+  padding:4px 10px;border-radius:var(--abu-r-pill);font-size:12.5px!important;font-weight:800;color:#fff;background:rgb(43 12 25/.78);
+  border:1px solid rgb(255 255 255/.25);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .game-cover-body{display:flex;flex-direction:column;gap:8px;padding:16px 18px 18px!important;flex:1}
+body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .game-card-title-row{display:flex;align-items:center;justify-content:space-between;gap:10px}
+body.school-app:not(.admin-embedded):not(.playing-game)[data-gallery-text=below] .platform-home .game-card-title-row h3{font-size:19px!important;font-weight:800;color:var(--abu-ink)!important;margin:0;line-height:1.4}
+body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .game-card-icon{
+  inline-size:34px;block-size:34px;border-radius:10px;display:inline-grid;place-items:center;flex:none;
+  background:color-mix(in srgb,var(--game-accent,var(--abu-brand)) 10%,#fff);color:color-mix(in srgb,var(--game-accent,var(--abu-brand)) 80%,#000)}
+body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .game-cover-body>p{
+  font-size:14.5px!important;line-height:1.75;color:var(--abu-muted)!important;margin:0;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-block-size:3.5em}
+body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .game-launch-btn{
+  margin-block-start:auto;inline-size:100%;justify-content:space-between!important;min-block-size:44px!important;
+  background:var(--abu-brand-50)!important;color:var(--abu-brand)!important;border:1px solid var(--abu-brand-100)!important}
+body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .game-cover-card:hover .game-launch-btn,
+body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .game-launch-btn:hover{background:var(--abu-brand)!important;color:#fff!important;border-color:var(--abu-brand)!important}
+@media (max-width:640px){
+  body.school-app:not(.admin-embedded):not(.playing-game)[data-gallery-layout=grid] .platform-home .games-gallery{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+  body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .game-cover{block-size:clamp(110px,30vw,150px)!important}
+  body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .game-cover-body{padding:12px!important;gap:6px}
+  body.school-app:not(.admin-embedded):not(.playing-game)[data-gallery-text=below] .platform-home .game-card-title-row h3{font-size:16px!important}
+  body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .game-card-icon{display:none}
+  body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .game-cover-body>p{font-size:13px!important;-webkit-line-clamp:3;min-block-size:0}
+  body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .game-launch-btn{font-size:13px!important;padding-inline:10px!important}
+  body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .cover-badge{font-size:11.5px!important;inset-inline-start:8px!important;inset-block-end:8px!important}
+  body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .gallery-filter-bar{display:flex;flex-wrap:nowrap;overflow-x:auto;border-radius:var(--abu-r-md);scrollbar-width:none;max-inline-size:100%}
+  body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .gallery-filter-btn{white-space:nowrap;flex:none}
+}
+
+/* ---------- 2.4 Weekly champions ---------------------------------------- */
+body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .ranking-rule-note{
+  display:inline-flex;align-items:center;padding:6px 12px;border-radius:var(--abu-r-pill);font-size:13px;font-weight:700;color:var(--abu-ink-2);background:var(--abu-surface);border:1px solid var(--abu-line)}
+body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .champions-board{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:20px}
+body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .champion-box{
+  position:relative;display:flex;flex-direction:column;gap:12px;padding:22px!important;border-radius:var(--abu-r-card);background:var(--abu-surface);
+  border:1px solid var(--abu-line);box-shadow:var(--abu-shadow-1);overflow:hidden}
+body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .champion-box.is-crowned{
+  background:linear-gradient(180deg,var(--abu-gold-50),var(--abu-surface) 46%);border-color:color-mix(in srgb,var(--abu-gold) 45%,var(--abu-line))}
+body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .champion-box.is-crowned::before{
+  content:"";position:absolute;inset-inline:0;inset-block-start:0;block-size:7px;background:var(--abu-gold);
+  -webkit-mask:var(--abu-sadu) 0 0/18px 8px repeat-x;mask:var(--abu-sadu) 0 0/18px 8px repeat-x;transform:scaleY(-1)}
+body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .champion-header{display:flex;align-items:center;justify-content:space-between;gap:10px}
+body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .champion-grade-label{
+  padding:4px 12px;border-radius:var(--abu-r-pill);font-size:13px!important;font-weight:800;color:var(--abu-brand)!important;background:var(--abu-brand-50);border:1px solid var(--abu-brand-100)}
+body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .champion-emblem{
+  inline-size:48px;block-size:48px;border-radius:50%;display:inline-grid;place-items:center;font-size:24px;
+  background:var(--abu-surface);box-shadow:0 0 0 2px color-mix(in srgb,var(--abu-gold) 55%,transparent),var(--abu-shadow-1)}
+body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .is-awaiting .champion-emblem{box-shadow:0 0 0 1px var(--abu-line);color:var(--abu-muted);filter:grayscale(1)}
+body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .champion-box h3{font-size:15px!important;font-weight:700;color:var(--abu-muted)!important;margin:0}
+body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .champion-student-name{display:block;font-size:24px!important;font-weight:800;color:var(--abu-ink)!important;line-height:1.35}
+body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .champion-class-meta{display:inline-block;margin-block-start:4px;font-size:13.5px;color:var(--abu-muted);font-family:var(--abu-font-num)}
+body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .champion-score-bar{block-size:8px;border-radius:99px;background:var(--abu-sunken);overflow:hidden;margin-block:14px 10px}
+body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .champion-score-bar span{display:block;block-size:100%;border-radius:inherit;background:linear-gradient(90deg,var(--abu-gold),var(--abu-brand))}
+body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .champion-metrics{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .champion-metrics b{font:800 28px/1 var(--abu-font-num);color:var(--abu-brand)}
+body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .champion-metrics span{font-size:13px;color:var(--abu-muted)}
+body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .champion-box.is-awaiting{background:var(--abu-surface-2);border-style:dashed;border-color:var(--abu-line-strong);box-shadow:none}
+body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .champion-empty-body{display:flex;flex-direction:column;gap:6px;flex:1}
+body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .champion-prompt{font-size:16px;font-weight:700;color:var(--abu-ink-2);margin:6px 0 0}
+body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .champion-subtext{font-size:13.5px;color:var(--abu-muted);margin:0}
+body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .champion-cta{margin-block-start:auto;align-self:flex-start}
+
+/* ---------- 2.5 Top games ------------------------------------------------ */
+body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .engagement-kpi-strip{
+  display:inline-flex;align-items:center;gap:8px;padding:8px 14px;border-radius:var(--abu-r-md);background:var(--abu-surface);border:1px solid var(--abu-line);font-size:14px;color:var(--abu-muted)}
+body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .engagement-kpi-strip b{font:800 18px/1 var(--abu-font-num);color:var(--abu-brand)}
+body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .top-games-board{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:16px}
+body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .top-game-row{
+  display:grid;grid-template-columns:auto 64px minmax(0,1fr);grid-template-areas:"rank thumb info" "try try try";gap:12px 14px;align-items:center;
+  padding:16px;border-radius:var(--abu-r-card);background:var(--abu-surface);border:1px solid var(--abu-line);box-shadow:var(--abu-shadow-1)}
+body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .top-game-rank{grid-area:rank;font:800 26px/1 var(--abu-font-num);color:var(--abu-muted);min-inline-size:34px}
+body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .top-game-row:first-child .top-game-rank{color:var(--abu-gold-ink)}
+body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .top-game-thumb{grid-area:thumb;inline-size:64px;block-size:48px;border-radius:10px;object-fit:cover;box-shadow:0 0 0 1px var(--abu-line)}
+body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .top-game-info{grid-area:info;min-inline-size:0}
+body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .top-game-title-row{display:flex;flex-direction:column;gap:2px}
+body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .top-game-title-row h3{font-size:17px!important;font-weight:800;margin:0;color:var(--abu-ink)!important}
+body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .top-game-stats{font-size:13px;color:var(--abu-muted)}
+body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .top-game-stats b{font-family:var(--abu-font-num);color:var(--abu-ink)}
+body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .top-game-bar-track{block-size:6px;border-radius:99px;background:var(--abu-sunken);margin-block-start:8px;overflow:hidden}
+body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .top-game-bar-fill{display:block;block-size:100%;border-radius:inherit;background:var(--abu-brand)}
+body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .top-game-try{grid-area:try;justify-self:stretch;min-block-size:40px!important}
+
+/* ---------- 2.6 Active teachers ------------------------------------------ */
+body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .teachers-board{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,280px),1fr));gap:16px}
+body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .teacher-box{
+  display:flex;align-items:center;gap:16px;padding:18px;border-radius:var(--abu-r-card);background:var(--abu-surface);border:1px solid var(--abu-line);box-shadow:var(--abu-shadow-1)}
+body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .teacher-rank-badge{
+  inline-size:48px;block-size:48px;flex:none;border-radius:14px;display:grid;place-items:center;font:800 16px/1 var(--abu-font-num);color:var(--abu-brand);background:var(--abu-brand-50);border:1px solid var(--abu-brand-100)}
+body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .teacher-info h3{font-size:17px!important;margin:0;color:var(--abu-ink)!important}
+body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .teacher-subject{display:inline-block;margin-block:4px;font-size:13px;font-weight:700;color:var(--abu-gold-ink)}
+body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .teacher-metrics{font-size:13px;color:var(--abu-muted);margin:0}
+
+/* ---------- 2.7 Learning pulse ------------------------------------------- */
+body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .v21-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,200px),1fr));gap:16px;margin-block-end:16px}
+body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .v21-kpis>div{
+  display:flex;flex-direction:column;gap:6px;padding:18px 20px;border-radius:var(--abu-r-card);background:var(--abu-surface);border:1px solid var(--abu-line);box-shadow:var(--abu-shadow-1)}
+body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .v21-kpis span{font-size:14px;font-weight:700;color:var(--abu-muted)}
+body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .v21-kpis strong{font:800 30px/1.1 var(--abu-font-num);color:var(--abu-brand);min-block-size:1.1em}
+body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .v21-kpis strong:empty::before{content:"—";color:var(--abu-line-strong)}
+body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .v21-chart{margin:0;padding:20px;border-radius:var(--abu-r-card);background:var(--abu-surface);border:1px solid var(--abu-line);box-shadow:var(--abu-shadow-1)}
+body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .v21-chart figcaption{font-size:15px;font-weight:800;color:var(--abu-ink);margin-block-end:12px}
+body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .v21-chart-bars:empty{
+  display:grid;place-items:center;min-block-size:140px;border-radius:var(--abu-r-md);background:var(--abu-surface-2);border:1px dashed var(--abu-line-strong)}
+body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .v21-chart-bars:empty::before{content:"لا توجد جولات مكتملة في هذه الفترة بعد";font-size:14px;color:var(--abu-muted)}
+body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .v21-chart .help{font-size:13px;color:var(--abu-muted);margin-block:12px 0}
+
+/* ---------- 2.8 Video library -------------------------------------------- */
+body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .video-count-note{
+  display:inline-flex;align-items:center;gap:8px;padding:6px 12px;border-radius:var(--abu-r-pill);font-size:13px;font-weight:700;color:var(--abu-ink-2);background:var(--abu-surface);border:1px solid var(--abu-line)}
+body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .video-count-note::before{content:"";inline-size:16px;block-size:16px;background:var(--abu-brand);-webkit-mask:var(--abu-i-video) center/contain no-repeat;mask:var(--abu-i-video) center/contain no-repeat}
+body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .video-empty-board{
+  display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:20px;padding:24px 26px;border-radius:var(--abu-r-card);
+  background:var(--abu-surface);border:1px dashed var(--abu-line-strong)}
+body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .video-empty-board::before{
+  content:"";inline-size:48px;block-size:48px;background:var(--abu-brand-300);
+  -webkit-mask:var(--abu-i-video) center/contain no-repeat;mask:var(--abu-i-video) center/contain no-repeat}
+body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .video-empty-text h3{font-size:19px!important;margin:0 0 4px;color:var(--abu-ink)!important}
+body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .video-empty-text p{font-size:14.5px;margin:0;line-height:1.8}
+body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .video-empty-board .row{gap:10px;flex-wrap:wrap;justify-content:flex-end}
+body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .video-gallery-board{gap:20px}
+body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .video-featured-stage{border-radius:var(--abu-r-card);overflow:hidden;background:var(--abu-surface);border:1px solid var(--abu-line);box-shadow:var(--abu-shadow-2)}
+body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .video-thumb-btn{
+  display:grid;grid-template-columns:120px minmax(0,1fr);gap:12px;align-items:center;text-align:start;padding:8px!important;border-radius:var(--abu-r-md);
+  background:var(--abu-surface)!important;color:var(--abu-ink)!important;border:1px solid var(--abu-line)!important;min-block-size:0!important}
+body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .video-thumb-btn:hover{border-color:var(--abu-brand-300)!important;background:var(--abu-brand-50)!important}
+body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .video-thumb-btn.active{border-color:var(--abu-brand)!important;box-shadow:inset 3px 0 0 var(--abu-brand)!important}
+body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .video-thumb-preview{position:relative;aspect-ratio:16/9;border-radius:10px;overflow:hidden;background:var(--abu-sunken)}
+body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .video-thumb-preview img{inline-size:100%;block-size:100%;object-fit:cover}
+body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .video-thumb-caption strong{display:block;font-size:14.5px;line-height:1.5}
+body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .video-thumb-caption span{font-size:12.5px;color:var(--abu-muted)}
+@media (max-width:760px){
+  body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .video-empty-board{grid-template-columns:auto minmax(0,1fr);padding:18px}
+  body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .video-empty-board .row{grid-column:1/-1;justify-content:stretch}
+  body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .video-empty-board .row>button{flex:1 1 100%}
+}
+
+/* ---------- 2.9 About + school identity ---------------------------------- */
+body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .about-board{
+  display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:20px;padding:0;background:transparent;border:0;box-shadow:none}
+body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .about-main,
+body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .about-contact{
+  position:relative;padding:28px;border-radius:var(--abu-r-card);background:var(--abu-surface);border:1px solid var(--abu-line);box-shadow:var(--abu-shadow-1);overflow:hidden}
+body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .about-main::after{
+  content:"";position:absolute;inset-block:0;inset-inline-end:0;inline-size:38%;background:var(--abu-brand);opacity:.05;pointer-events:none;
+  -webkit-mask:var(--abu-lattice) 0 0/44px 44px repeat;mask:var(--abu-lattice) 0 0/44px 44px repeat}
+body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .about-main h2{font-size:clamp(22px,2.2vw,30px)!important;margin:6px 0 10px;color:var(--abu-ink)!important}
+body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .about-main p{font-size:16px;line-height:1.9;color:var(--abu-ink-2);max-inline-size:60ch}
+body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .about-contact{background:var(--abu-brand-50);border-color:var(--abu-brand-100)}
+body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .about-contact h3{display:flex;align-items:center;gap:10px;font-size:18px!important;color:var(--abu-brand)!important;margin:0 0 8px}
+body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .about-contact h3::before{content:"";inline-size:20px;block-size:20px;background:currentColor;-webkit-mask:var(--abu-i-mail) center/contain no-repeat;mask:var(--abu-i-mail) center/contain no-repeat}
+body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .about-contact p{font-size:15px;color:var(--abu-ink-2);line-height:1.85;margin:0}
+@media (max-width:800px){body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .about-board{grid-template-columns:1fr}}
+
+body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .school-architectural-banner{border-radius:calc(var(--abu-r-card) + 6px);overflow:hidden;box-shadow:var(--abu-shadow-2)}
+
+/* ---------- 2.10 Footer -------------------------------------------------- */
+body.school-app:not(.admin-embedded):not(.playing-game)>#footer{
+  position:relative;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:14px 24px;
+  margin-block-start:var(--abu-s10);padding:26px max(var(--abu-gutter),calc((100vw - var(--abu-page))/2 + 28px)) 30px;
+  background:var(--abu-surface);border-block-start:1px solid var(--abu-line);color:var(--abu-ink-2);max-inline-size:none}
+body.school-app:not(.admin-embedded):not(.playing-game)>#footer::before{
+  content:"";position:absolute;inset-inline:0;inset-block-start:-1px;block-size:5px;background:var(--abu-brand);opacity:.85;
+  -webkit-mask:var(--abu-sadu) 0 0/20px 9px repeat-x;mask:var(--abu-sadu) 0 0/20px 9px repeat-x;transform:scaleY(-1)}
+body.school-app:not(.admin-embedded):not(.playing-game)>#footer .footer-brand-row{display:flex;flex-wrap:wrap;align-items:center;gap:8px;font-size:14px;color:var(--abu-muted)}
+body.school-app:not(.admin-embedded):not(.playing-game)>#footer .footer-brand-row strong{font-size:16px;color:var(--abu-ink)}
+body.school-app:not(.admin-embedded):not(.playing-game)>#footer :is(.v21-footer-nav,.footer-links-row){display:flex;flex-wrap:wrap;gap:4px 6px}
+body.school-app:not(.admin-embedded):not(.playing-game)>#footer :is(.v21-footer-nav,.footer-links-row) a{
+  display:inline-flex;align-items:center;min-block-size:40px;padding:6px 12px;border-radius:var(--abu-r-sm);font-size:14px;font-weight:700;color:var(--abu-ink-2);text-decoration:none}
+body.school-app:not(.admin-embedded):not(.playing-game)>#footer :is(.v21-footer-nav,.footer-links-row) a:hover{background:var(--abu-brand-50);color:var(--abu-brand)}
+body.school-app:not(.admin-embedded):not(.playing-game)>#footer .footer-links-row:empty{display:none}
+
+/* ==========================================================================
+   3. TEACHER LOGIN (/index.html?login=1)
+   ========================================================================== */
+body.school-app:not(.admin-embedded):not(.playing-game) main>.auth.card{
+  position:relative;inline-size:min(100% - 2*var(--abu-gutter),480px);margin:clamp(24px,6vh,64px) auto;padding:clamp(24px,4vw,40px)!important;
+  border-radius:calc(var(--abu-r-card) + 4px);background:var(--abu-surface);border:1px solid var(--abu-line);box-shadow:var(--abu-shadow-3);overflow:hidden}
+body.school-app:not(.admin-embedded):not(.playing-game) main>.auth.card::before{
+  content:"";position:absolute;inset-inline:0;inset-block-start:0;block-size:6px;background:var(--abu-brand)}
+body.school-app:not(.admin-embedded):not(.playing-game) main>.auth.card::after{
+  content:"";position:absolute;inset-inline:0;inset-block-start:6px;block-size:8px;background:var(--abu-brand);opacity:.35;
+  -webkit-mask:var(--abu-sadu) 0 0/18px 8px repeat-x;mask:var(--abu-sadu) 0 0/18px 8px repeat-x;transform:scaleY(-1)}
+body.school-app:not(.admin-embedded):not(.playing-game) main>.auth.card .eyebrow{display:inline-block;font-size:13px;font-weight:800;color:var(--abu-brand);margin-block:8px 4px}
+body.school-app:not(.admin-embedded):not(.playing-game) main>.auth.card h1{font-size:30px!important;margin:4px 0 6px;color:var(--abu-ink)}
+body.school-app:not(.admin-embedded):not(.playing-game) main>.auth.card>p.muted{font-size:15px;line-height:1.8;color:var(--abu-muted);margin-block-end:22px}
+body.school-app:not(.admin-embedded):not(.playing-game) main>.auth.card form{display:flex;flex-direction:column;gap:6px}
+body.school-app:not(.admin-embedded):not(.playing-game) main>.auth.card label{font-size:14px;font-weight:700;color:var(--abu-ink-2);margin-block-start:10px}
+body.school-app:not(.admin-embedded):not(.playing-game) main>.auth.card input{min-block-size:50px;font-size:16px;border-radius:var(--abu-r-sm);border:1.5px solid var(--abu-line-strong);padding:10px 14px;background:var(--abu-surface)}
+body.school-app:not(.admin-embedded):not(.playing-game) main>.auth.card input:focus{border-color:var(--abu-brand)}
+body.school-app:not(.admin-embedded):not(.playing-game) main>.auth.card #username{unicode-bidi:plaintext}
+body.school-app:not(.admin-embedded):not(.playing-game) main>.auth.card .help{font-size:13.5px;color:var(--abu-muted);margin:6px 0 4px}
+body.school-app:not(.admin-embedded):not(.playing-game) main>.auth.card form>button{min-block-size:52px!important;font-size:16px!important;margin-block-start:10px;inline-size:100%}
+body.school-app:not(.admin-embedded):not(.playing-game) main>.auth.card>div:last-child{margin-block-start:18px;padding-block-start:18px;border-block-start:1px solid var(--abu-line);display:flex;justify-content:center}
+body.school-app:not(.admin-embedded):not(.playing-game) main>.auth.card>div:last-child>button{inline-size:100%}
+
+/* ==========================================================================
+   4. DIALOGS (#modal) — public, teacher, embedded panels
+   ========================================================================== */
+body.school-app:not(.playing-game) dialog#modal:not(.football-question):not(.scene-question):not(.target-shooting-question){
+  inline-size:min(100% - 24px,680px);max-block-size:min(100dvh - 32px,900px);padding:0;border:0;border-radius:calc(var(--abu-r-card) + 2px);
+  background:var(--abu-surface);color:var(--abu-ink);box-shadow:var(--abu-shadow-pop);overflow:auto;overscroll-behavior:contain}
+body.school-app:not(.playing-game) dialog#modal:not(.football-question):not(.scene-question):not(.target-shooting-question)::backdrop{background:rgb(33 12 22/.48);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px)}
+body.school-app:not(.playing-game) dialog#modal:not(.football-question):not(.scene-question):not(.target-shooting-question) #modalContent{padding:26px clamp(18px,3vw,30px) 28px}
+body.school-app:not(.playing-game) dialog#modal:not(.football-question):not(.scene-question):not(.target-shooting-question) #modalContent>h2:first-child{
+  position:sticky;inset-block-start:-26px;z-index:2;margin:-26px calc(-1*clamp(18px,3vw,30px)) 18px;padding:22px clamp(18px,3vw,30px) 16px;padding-inline-end:68px;
+  font-size:21px!important;line-height:1.45;background:var(--abu-surface);border-block-end:1px solid var(--abu-line)}
+body.school-app:not(.playing-game) dialog#modal #closeModal{
+  position:absolute;inset-block-start:14px;inset-inline-end:14px;z-index:3;inline-size:42px;block-size:42px;min-block-size:42px;padding:0;border-radius:12px;font-size:24px;line-height:1;
+  background:var(--abu-surface-2)!important;color:var(--abu-ink)!important;border:1px solid var(--abu-line)!important;display:grid;place-items:center}
+body.school-app:not(.playing-game) dialog#modal #closeModal:hover{background:var(--abu-danger-bg)!important;color:var(--abu-danger)!important;border-color:var(--abu-danger-line)!important}
+body.school-app:not(.playing-game) dialog#modal #modalContent :is(form,.stack){display:flex;flex-direction:column;gap:8px}
+body.school-app:not(.playing-game) dialog#modal #modalContent label:not(.check){font-size:14px;font-weight:700;color:var(--abu-ink-2);margin-block-start:8px}
+body.school-app:not(.playing-game) dialog#modal #modalContent :is(input:not([type=checkbox]):not([type=radio]),select,textarea){
+  min-block-size:46px;padding:10px 14px;font-size:15.5px;border-radius:var(--abu-r-sm);border:1.5px solid var(--abu-line-strong);background:var(--abu-surface);color:var(--abu-ink);inline-size:100%}
+body.school-app:not(.playing-game) dialog#modal #modalContent :is(input,select,textarea):focus{border-color:var(--abu-brand)}
+body.school-app:not(.playing-game) dialog#modal #modalContent :is(input[type=url],input[type=number],input[type=datetime-local],.link-field){unicode-bidi:plaintext}
+body.school-app:not(.playing-game) dialog#modal #modalContent .check-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+body.school-app:not(.playing-game) dialog#modal #modalContent label.check{
+  display:flex;align-items:center;gap:10px;min-block-size:44px;padding:8px 12px;border-radius:var(--abu-r-sm);border:1px solid var(--abu-line);background:var(--abu-surface);
+  font-size:14.5px;font-weight:600;color:var(--abu-ink);cursor:pointer;transition:background-color var(--abu-t) var(--abu-ease),border-color var(--abu-t) var(--abu-ease)}
+body.school-app:not(.playing-game) dialog#modal #modalContent label.check:hover{border-color:var(--abu-brand-300)}
+body.school-app:not(.playing-game) dialog#modal #modalContent label.check:has(input:checked){background:var(--abu-brand-50);border-color:var(--abu-brand-300)}
+body.school-app:not(.playing-game) dialog#modal #modalContent label.check input{inline-size:18px;block-size:18px;accent-color:var(--abu-brand);flex:none}
+body.school-app:not(.playing-game) dialog#modal #modalContent fieldset{border:1px solid var(--abu-line)!important;border-radius:var(--abu-r-md)!important;padding:12px 14px!important;background:var(--abu-surface-2)}
+body.school-app:not(.playing-game) dialog#modal #modalContent legend{font-weight:800;font-size:14.5px;padding-inline:6px}
+body.school-app:not(.playing-game) dialog#modal #modalContent .two-col{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+body.school-app:not(.playing-game) dialog#modal #modalContent .help{font-size:13.5px;color:var(--abu-muted);line-height:1.75}
+body.school-app:not(.playing-game) dialog#modal #modalContent form>button:last-child,
+body.school-app:not(.playing-game) dialog#modal #modalContent form>button[type=submit]{
+  position:sticky;inset-block-end:-28px;margin:14px calc(-1*clamp(18px,3vw,30px)) -28px;padding:16px;border-radius:0;min-block-size:56px;font-size:16px;
+  box-shadow:0 -1px 0 var(--abu-line)}
+body.school-app:not(.playing-game) dialog#modal #modalContent .row{display:flex;flex-wrap:wrap;gap:10px}
+body.school-app:not(.playing-game) dialog#modal #modalContent .card{padding:14px 16px;border-radius:var(--abu-r-md);border:1px solid var(--abu-line);background:var(--abu-surface-2);box-shadow:none}
+
+/* Notice / toast */
+body.school-app:not(.playing-game) #notice:not(:empty){
+  border-radius:var(--abu-r-md);background:var(--abu-ink);color:#fff;font-weight:700;box-shadow:var(--abu-shadow-pop);padding:12px 18px}
+
+/* Empty-state used by school.js (.empty) */
+body.school-app:not(.playing-game) main .empty{
+  display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;padding:36px 20px;border-radius:var(--abu-r-card);
+  background:var(--abu-surface);border:1px dashed var(--abu-line-strong);color:var(--abu-muted);font-size:15px}
+body.school-app:not(.playing-game) main .empty::before{content:"";inline-size:44px;block-size:44px;background:var(--abu-brand-300);-webkit-mask:var(--abu-i-archive) center/contain no-repeat;mask:var(--abu-i-archive) center/contain no-repeat}

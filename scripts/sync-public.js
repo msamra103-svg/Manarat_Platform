@@ -24,7 +24,7 @@ for (const file of ['index.html', 'auth.html', 'auth-legacy.html', 'live.html'])
   if (fs.existsSync(src)) copyRecursive(src, path.join(pub, file));
 }
 
-for (const dir of ['js', 'css', 'assets', 'admin', 'teacher', 'player', 'games']) {
+for (const dir of ['js', 'css', 'assets', 'admin', 'teacher', 'player', 'games', 'ui-redesign']) {
   const src = path.join(root, dir);
   if (fs.existsSync(src)) copyRecursive(src, path.join(pub, dir));
 }
