@@ -17,7 +17,14 @@ jobs:
         with:
           persist-credentials: false
       - name: Materialize and review limited UI integration
-        run: python3 .review-ui/install.py
+        run: |
+          git fetch --depth=1 origin 070fedaefed768135c58cb3d25c95a03fa64c01a
+          python3 .review-ui/install.py
+          python3 - <<'PY'
+          from pathlib import Path
+          for p in Path('ui-redesign').glob('*'):
+            if p.is_file():p.write_text('\n'.join(line.rstrip() for line in p.read_text().splitlines())+'\n')
+          PY
       - name: Locked build and existing regression tests
         run: |
           npm ci --no-audit --no-fund
