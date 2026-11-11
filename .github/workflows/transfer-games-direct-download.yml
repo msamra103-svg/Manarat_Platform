@@ -1,0 +1,67 @@
+name: Transfer verified game packages for direct download
+on:
+  push:
+    branches: [handoff/claude-games-20261111]
+    paths: [.github/workflows/transfer-games-direct-download.yml]
+permissions:
+  contents: read
+jobs:
+  transfer:
+    if: github.repository == 'msamra103-svg/Manarat_Platform'
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: 8c5b176a02086d22fcf3e2302d65ab1a1c64cd9f
+          persist-credentials: false
+          sparse-checkout: packages
+      - name: Verify every original ZIP and prepare read-only delivery copies
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path, PurePosixPath
+          import json, hashlib, zipfile, shutil
+          root=Path('packages')
+          summary=json.loads((root/'SUMMARY.json').read_text())
+          assert len(summary['games'])==11
+          assert summary['source_commit']=='070fedaefed768135c58cb3d25c95a03fa64c01a'
+          verified=[]
+          for game in summary['games']:
+            name=game['file']
+            assert name==Path(name).name and name.endswith('.zip')
+            p=root/name
+            assert p.stat().st_size==game['bytes'],name
+            assert hashlib.sha256(p.read_bytes()).hexdigest()==game['sha256'],name
+            with zipfile.ZipFile(p) as z:
+              assert z.testzip() is None,name
+              for entry in z.namelist():
+                path=PurePosixPath(entry)
+                assert not path.is_absolute() and '..' not in path.parts,entry
+                assert path.suffix.lower() not in {'.ttf','.otf','.woff','.woff2','.eot'},entry
+              count=len(z.namelist())
+            dest=Path('delivery')/('fishing' if game['id']=='fishing' else 'other-games')
+            dest.mkdir(parents=True,exist_ok=True)
+            shutil.copyfile(p,dest/name)
+            verified.append({'id':game['id'],'file':name,'bytes':p.stat().st_size,'sha256':game['sha256'],'zip_crc':'PASS','entries':count})
+            print('PASS',name,p.stat().st_size,count,'entries')
+          for folder in ['fishing','other-games']:
+            dest=Path('delivery')/folder
+            shutil.copyfile(root/'SUMMARY.json',dest/'SUMMARY.json')
+            (dest/'DOWNLOAD_VERIFICATION.json').write_text(json.dumps({'status':'PASS','source_packages_commit':'8c5b176a02086d22fcf3e2302d65ab1a1c64cd9f','production_modified':False,'games':verified},ensure_ascii=False,indent=2))
+          PY
+      - name: Transfer ten original game ZIP files
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: abu-ubaida-ten-games-direct
+          path: delivery/other-games/
+          compression-level: 0
+          if-no-files-found: error
+          retention-days: 7
+      - name: Transfer original fishing game ZIP file
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: abu-ubaida-fishing-direct
+          path: delivery/fishing/
+          compression-level: 0
+          if-no-files-found: error
+          retention-days: 7
