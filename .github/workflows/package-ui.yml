@@ -1,0 +1,57 @@
+name: Package isolated platform UI handoff
+on:
+  push:
+    branches: [handoff/claude-platform-ui-20261111]
+    paths: ['handoff/**', '.github/workflows/package-ui.yml']
+permissions:
+  contents: read
+jobs:
+  handoff:
+    if: github.repository == 'msamra103-svg/Manarat_Platform'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: 070fedaefed768135c58cb3d25c95a03fa64c01a
+          path: source
+          persist-credentials: false
+      - name: Assemble current frontend and isolated preview
+        run: |
+          node --check handoff/mock.js
+          node --check handoff/after-core.js
+          node --check handoff/serve.cjs
+          python3 -m py_compile handoff/build.py handoff/export_return.py
+          python3 handoff/build.py prepare
+      - name: Install browser verification tools
+        run: |
+          npm install --prefix handoff --no-save --no-audit --no-fund --ignore-scripts playwright@1.61.1
+          handoff/node_modules/.bin/playwright install --with-deps chromium
+      - name: Test interface routes without production network access
+        run: node handoff/test-ui.cjs
+      - name: Test export boundaries and package files
+        run: |
+          python3 handoff/build.py finalize
+      - name: Save delivery only on isolated handoff branch
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          test "$(git branch --show-current)" = 'handoff/claude-platform-ui-20261111'
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add packages
+          git diff --cached --check
+          git commit -m 'Deliver standalone platform appearance and admin UI handoff with local fixtures'
+          export GIT_CONFIG_COUNT=1
+          export GIT_CONFIG_KEY_0=http.https://github.com/.extraheader
+          export GIT_CONFIG_VALUE_0="AUTHORIZATION: basic $(printf 'x-access-token:%s' "$GH_TOKEN" | base64 -w0)"
+          git push origin HEAD:refs/heads/handoff/claude-platform-ui-20261111
+          unset GIT_CONFIG_COUNT GIT_CONFIG_KEY_0 GIT_CONFIG_VALUE_0
+          git rev-parse HEAD
+          cat packages/SUMMARY.json
