@@ -1,0 +1,54 @@
+name: Verify published Qatar UI
+on:
+  push:
+    branches: [review/qatari-ui-20261111]
+    paths: [.github/workflows/verify-published-qatari-ui.yml]
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: 96e3d1d23cf1bf521e5cbe5c340e3373eb4b3e34
+          persist-credentials: false
+      - name: Confirm exact released assets on production
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';import assert from 'node:assert/strict';import {createHash} from 'node:crypto';
+          const origin='https://manarat-ten.vercel.app',version='21.13-qatari-ui-20261111';
+          const report={commit:'96e3d1d23cf1bf521e5cbe5c340e3373eb4b3e34',origin,version,checks:[],mode:'read-only'};
+          const hash=b=>createHash('sha256').update(b).digest('hex');
+          const paths=['index.html','admin/admin.html','teacher/create-game.html',...['tokens.css','public.css','admin.css','teacher.css','studio.css','components.js'].map(n=>'ui-redesign/'+n),'js/design-runtime.js','js/design-studio.js','js/school-bridge.js','js/school.js','js/core.js'];
+          let last;
+          for(let attempt=1;attempt<=8;attempt++){
+            try{report.checks=[];for(const p of paths){const r=await fetch(origin+'/'+p+'?verify='+version+'-'+Date.now(),{headers:{'Cache-Control':'no-cache'},signal:AbortSignal.timeout(20000)});assert.equal(r.status,200,p);const bytes=Buffer.from(await r.arrayBuffer());const expected=fs.readFileSync(p);assert.equal(hash(bytes),hash(expected),'Published bytes differ: '+p);report.checks.push({path:p,status:200,sha256:hash(bytes)});}last=null;break;}catch(e){last=e;console.log('Asset check attempt',attempt,e.message);if(attempt<8)await new Promise(r=>setTimeout(r,6000));}
+          }
+          if(last)throw last;
+          for(const p of ['ui-redesign/components.js','js/design-runtime.js','js/design-studio.js','js/school-bridge.js']){const s=fs.readFileSync(p,'utf8');assert(!s.includes('local-preview-not-a-token'));assert(!s.includes('ui-preview.invalid'));}
+          report.status='PASS';fs.mkdirSync('verification',{recursive:true});fs.writeFileSync('verification/production-assets.json',JSON.stringify(report,null,2));console.log('PASS exact production hashes for',report.checks.length,'files; no sandbox credentials or endpoints in modified runtime files');
+          NODE
+      - name: Install browser test tooling
+        run: |
+          npm ci --no-audit --no-fund
+          npx --no-install playwright install --with-deps chromium
+      - name: Verify real public pages without accounts or writes
+        run: |
+          node <<'NODE'
+          const {chromium}=require('playwright'),assert=require('node:assert/strict'),fs=require('node:fs');
+          (async()=>{const browser=await chromium.launch({headless:true,args:['--no-sandbox','--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']});const page=await browser.newPage({viewport:{width:1440,height:1000}}),errors=[],blockedWrites=[],checks=[];
+          page.on('pageerror',e=>errors.push(e.message));
+          await page.route('**/*',r=>{const req=r.request(),u=new URL(req.url());if(u.hostname.endsWith('.supabase.co')&&req.method()==='POST'){let b={};try{b=req.postDataJSON()}catch{}if(!['settings','homeHub'].includes(b.action)){blockedWrites.push(b.action||u.pathname);return r.abort();}}if(u.hostname.endsWith('.supabase.co')&&!['GET','HEAD','OPTIONS','POST'].includes(req.method())){blockedWrites.push(req.method()+' '+u.pathname);return r.abort();}return r.continue();});
+          try{for(const width of [1440,390]){await page.setViewportSize({width,height:1000});await page.goto('https://manarat-ten.vercel.app/index.html',{waitUntil:'domcontentloaded'});await page.locator('#gamesGallerySection').waitFor({timeout:30000});await page.waitForFunction(()=>window.__abuUI?.passes>0);assert.equal(await page.locator('#brandName').innerText(),'مدرسة أبو عبيدة الإعدادية للبنين');assert.equal(await page.evaluate(()=>__abuUI.version),'1.1.1-reviewed');assert.equal(await page.locator('.abu-local-note').count(),0);const clipped=await page.locator('.nav-actions-cluster>a,.nav-actions-cluster>button').evaluateAll(els=>els.filter(e=>e.getBoundingClientRect().width>0).some(e=>e.scrollWidth>e.clientWidth+2));assert(!clipped,'Navigation clipping '+width);checks.push({page:'public-home',width,status:'PASS'});}
+          await page.goto('https://manarat-ten.vercel.app/index.html?login=1',{waitUntil:'domcontentloaded'});await page.locator('#authForm').waitFor();assert.equal(await page.locator('link[href*="ui-redesign/"]').count(),5);checks.push({page:'teacher-login-without-submission',status:'PASS'});assert.deepEqual(blockedWrites,[]);assert.deepEqual(errors,[]);fs.writeFileSync('verification/production-browser.json',JSON.stringify({status:'PASS',checks,errors,blockedWrites,realAccountLoginPerformed:false,studentDataWritten:false},null,2));console.log('PASS live public homepage at desktop/mobile, login form, school identity, UI version and no JavaScript errors. No account login or database write performed.');}finally{await browser.close();}})().catch(e=>{console.error(e);process.exit(1)});
+          NODE
+      - name: Save read-only production verification
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: qatari-ui-production-verification
+          path: verification/
+          if-no-files-found: ignore
+          retention-days: 7
