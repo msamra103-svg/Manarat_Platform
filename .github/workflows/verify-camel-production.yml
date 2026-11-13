@@ -10,11 +10,11 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     env:
-      RELEASE_SHA: a3a7f50bd5fd3122228e473b68e403dc847200f9
+      RELEASE_SHA: e2333c9d2fcd8d2aa4860b2cfce73a558ad3eacd
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
-          ref: a3a7f50bd5fd3122228e473b68e403dc847200f9
+          ref: e2333c9d2fcd8d2aa4860b2cfce73a558ad3eacd
           persist-credentials: false
       - name: Install locked browser tools
         run: |
@@ -35,7 +35,7 @@ jobs:
            const response=await fetch(endpoint,{method:'POST',headers:{'Content-Type':'application/json',apikey},body:JSON.stringify({action:'settings'}),signal:AbortSignal.timeout(25000)});assert.equal(response.status,200);const config=await response.json();assert(config.design.gameOrder.includes(key));assert(config.design.games[key]);report.backendCatalogIncludesCamel=true;
            browser=await chromium.launch({headless:true,args:['--no-sandbox','--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']});const page=await browser.newPage({viewport:{width:1440,height:1000}});page.on('pageerror',e=>report.errors.push(e.message));
            await page.route('**/*',route=>{const req=route.request(),u=new URL(req.url());if(u.hostname.endsWith('.supabase.co')&&req.method()==='POST'){let b={};try{b=req.postDataJSON();}catch{}if(!['settings','homeHub'].includes(b.action)){report.blockedWrites.push(b.action||u.pathname);return route.abort();}}if(u.hostname.endsWith('.supabase.co')&&!['GET','HEAD','OPTIONS','POST'].includes(req.method())){report.blockedWrites.push(req.method());return route.abort();}return route.continue();});
-           for(const width of [1440,390]){await page.setViewportSize({width,height:1000});await page.goto(site+'/',{waitUntil:'domcontentloaded'});await page.locator('[data-action="demo"][data-id="qatar-camel-race"]').first().waitFor({timeout:40000});assert(await page.locator('[data-cover-slot="qatar-camel-race"]').count()>0);report.checks.push({page:'live homepage',width,camelCardVisible:true});}
+           for(const width of [1440,390]){await page.setViewportSize({width,height:1000});await page.goto(site+'/',{waitUntil:'domcontentloaded'});const card=page.locator('#gamesGallerySection [data-game="qatar-camel-race"]');await card.locator('a[href*="demo=qatar-camel-race"]').waitFor({timeout:40000});assert((await card.innerText()).includes('سباق الهجن القطري'));assert(!(await card.innerText()).includes('undefined'));assert((await card.locator('img').getAttribute('src')).includes('qatar-camel-race'));report.checks.push({page:'live homepage',width,camelCardVisible:true,cardTextComplete:true});}
            await page.setViewportSize({width:1440,height:1000});await page.addInitScript(()=>{const patch=()=>{for(const f of document.querySelectorAll('#camelRaceFrame')){const s=f.getAttribute('src');if(s&&!s.includes('capture=1'))f.setAttribute('src',s+(s.includes('?')?'&':'?')+'capture=1');}};new MutationObserver(patch).observe(document,{childList:true,subtree:true,attributes:true,attributeFilter:['src']});patch();});
            await page.goto(site+'/?demo=qatar-camel-race',{waitUntil:'domcontentloaded'});await page.locator('#camelRaceFrame').waitFor({timeout:30000});const frame=page.frames().find(f=>f.url().includes('/games/qatar-camel-race/'));assert(frame);await frame.waitForFunction(()=>window.QatarCamelRace?.debug?.app?.external&&window.QatarCamelRace.debug.app.status==='idle',null,{timeout:45000});
            assert.deepEqual(await frame.evaluate(()=>QatarCamelRace.debug.app.race.camels.filter(c=>!c.isPlayer).map(c=>c.name)),['شاهين','برق','سهيل','رعد','غيث']);await frame.locator('#qcr-player-name').fill('نجم');assert.equal(await frame.locator('#start-form input:visible:not([disabled])').count(),1);await frame.locator('#btn-start').click();await frame.waitForFunction(()=>QatarCamelRace.debug.app.race.phase==='countdown');await frame.evaluate(()=>{const a=QatarCamelRace.debug.app;a.race.step(4);a._syncRoster();a._setStatus('race');});
