@@ -13,6 +13,9 @@ for name,text in data['files'].items():
  assert p.suffix.lower() not in ('.woff','.woff2','.ttf','.otf','.eot')
  p.parent.mkdir(parents=True,exist_ok=True);p.write_text(text,encoding='utf8')
 subprocess.run(['python3','.camel-review/patch_platform.py'],check=True)
-# Generated geometry is reproducible; node_modules/dist never enter the source commit.
 (root/'game-sources/qatar-camel-race/.gitignore').write_text('node_modules/\ndist/\n')
+p=root/'tests/camel-race-browser.cjs';s=p.read_text()
+s=s.replace("await f.locator('body').screenshot({path:path.join(out,`results-${mode}.png`)});","await page.screenshot({path:path.join(out,`results-${mode}.png`)});")
+s=s.replace("assert.deepEqual(report.errors,[]);report.status='PASS'","assert.deepEqual(report.errors,[]);assert.deepEqual(report.missing,[]);report.status='PASS'")
+p.write_text(s)
 print('PASS exact reviewed source payload materialized and platform metadata patched:',len(data['files']))
