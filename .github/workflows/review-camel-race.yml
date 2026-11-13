@@ -1,0 +1,72 @@
+name: Review Qatar camel race integration
+on:
+  push:
+    branches: [review/camel-race-20261113]
+    paths: ['.camel-review/**', '.github/workflows/review-camel-race.yml']
+permissions:
+  contents: read
+jobs:
+  verify:
+    if: github.repository == 'msamra103-svg/Manarat_Platform'
+    runs-on: ubuntu-latest
+    timeout-minutes: 24
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Materialize reviewed source and platform integration
+        run: python3 .camel-review/install.py
+      - name: Build deterministic camel models and bundled runtime
+        run: |
+          npm ci --no-audit --no-fund
+          npm install --prefix game-sources/qatar-camel-race --ignore-scripts --no-audit --no-fund
+          npm run sculpt --prefix game-sources/qatar-camel-race
+          npm run build --prefix game-sources/qatar-camel-race
+          mkdir -p games/qatar-camel-race
+          cp game-sources/qatar-camel-race/dist/* games/qatar-camel-race/
+          npm run build
+      - name: Game model, bridge and server authority regression tests
+        run: |
+          npm test --prefix game-sources/qatar-camel-race
+          node --test tests/camel-race-host.test.cjs
+          node tests/camel-race-api.cjs
+          npm run check:js
+          npm run test:unit
+          node tests/admin-requests.cjs
+          node tests/game-session.cjs
+          node tests/game-modes.cjs
+          node tests/school-api.cjs
+      - name: Browser integration, real gameplay and source cover
+        run: |
+          npx --no-install playwright install --with-deps chromium
+          node tests/classroom-auth-browser.cjs
+          node tests/camel-race-browser.cjs
+          npm run build
+      - name: Preserve browser report and gameplay screenshots
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: camel-integration-review
+          path: .camel-test-output/
+          include-hidden-files: true
+          if-no-files-found: ignore
+          retention-days: 7
+      - name: Commit only tested camel implementation to review branch
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          test "$(git branch --show-current)" = 'review/camel-race-20261113'
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add game-sources/qatar-camel-race games/qatar-camel-race public/games/qatar-camel-race js/camel-race-host.js public/js/camel-race-host.js js/school.js public/js/school.js js/design-schema.js public/js/design-schema.js js/design-studio.js public/js/design-studio.js js/game-covers.js public/js/game-covers.js js/homepage-hub-logic.js public/js/homepage-hub-logic.js supabase/functions/school-api/index.ts supabase/functions/_shared/design-schema.js index.html public/index.html tests/camel-race-host.test.cjs tests/camel-race-api.cjs tests/camel-race-browser.cjs tests/classroom-auth.test.cjs assets/game-covers/qatar-camel-race.20261113.jpg public/assets/game-covers/qatar-camel-race.20261113.jpg
+          git diff --cached --check
+          git commit -m 'Integrate Qatar camel race with authoritative questions, assignments and player-only naming'
+          export GIT_CONFIG_COUNT=1
+          export GIT_CONFIG_KEY_0=http.https://github.com/.extraheader
+          export GIT_CONFIG_VALUE_0="AUTHORIZATION: basic $(printf 'x-access-token:%s' "$GH_TOKEN" | base64 -w0)"
+          git push origin HEAD:refs/heads/review/camel-race-20261113
+          unset GIT_CONFIG_COUNT GIT_CONFIG_KEY_0 GIT_CONFIG_VALUE_0
+          git rev-parse HEAD
