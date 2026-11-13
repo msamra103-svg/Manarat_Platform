@@ -15,7 +15,11 @@ for name,text in data['files'].items():
 subprocess.run(['python3','.camel-review/patch_platform.py'],check=True)
 (root/'game-sources/qatar-camel-race/.gitignore').write_text('node_modules/\ndist/\n')
 p=root/'tests/camel-race-browser.cjs';s=p.read_text()
-s=s.replace("await f.locator('body').screenshot({path:path.join(out,`results-${mode}.png`)});","await page.screenshot({path:path.join(out,`results-${mode}.png`)});")
-s=s.replace("assert.deepEqual(report.errors,[]);report.status='PASS'","assert.deepEqual(report.errors,[]);assert.deepEqual(report.missing,[]);report.status='PASS'")
+old="await f.locator('body').screenshot({path:path.join(out,'results-'+mode+'.png')});"
+assert s.count(old)==1
+s=s.replace(old,"await page.screenshot({path:path.join(out,'results-'+mode+'.png')});")
+old="assert.deepEqual(logs.errors,[]);logs.status='PASS'"
+assert s.count(old)==1
+s=s.replace(old,"assert.deepEqual(logs.errors,[]);assert.deepEqual(logs.missing,[]);logs.status='PASS'")
 p.write_text(s)
 print('PASS exact reviewed source payload materialized and platform metadata patched:',len(data['files']))
