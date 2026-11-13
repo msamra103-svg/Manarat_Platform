@@ -1,0 +1,38 @@
+name: Camel review source context
+on:
+  push:
+    branches: [review/camel-race-20261113]
+    paths: [.github/workflows/camel-review-context.yml]
+permissions:
+  contents: read
+jobs:
+  context:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: 96e3d1d23cf1bf521e5cbe5c340e3373eb4b3e34
+          persist-credentials: false
+      - run: |
+          npm ci --ignore-scripts --no-audit --no-fund
+          npm install --prefix /tmp/camel-deps --ignore-scripts --no-audit --no-fund --no-save three@0.187.0 meshoptimizer@1.3.0 esbuild@0.28.2
+          mkdir -p /tmp/camel-context
+          python3 - <<'PY'
+          import zipfile
+          from pathlib import Path
+          root=Path.cwd()
+          with zipfile.ZipFile('/tmp/camel-context/context.zip','w',zipfile.ZIP_DEFLATED,compresslevel=5) as z:
+            for p in root.rglob('*'):
+              r=p.relative_to(root)
+              if not p.is_file() or p.is_symlink() or any(x in r.parts for x in ('.git','public','.vercel')) or p.name.startswith('.env'):continue
+              if p.suffix.lower() in ('.woff','.woff2','.ttf','.otf','.eot'):continue
+              z.write(p,'platform/'+r.as_posix())
+            for p in Path('/tmp/camel-deps/node_modules').rglob('*'):
+              if p.is_file() and not p.is_symlink():z.write(p,'camel-node-modules/'+p.relative_to('/tmp/camel-deps/node_modules').as_posix())
+          PY
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: camel-review-context
+          path: /tmp/camel-context/context.zip
+          retention-days: 2
