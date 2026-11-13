@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#8A1538">
+  <title>سباق الهجن القطري</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Crect width=%2732%27 height=%2732%27 rx=%277%27 fill=%27%238a1538%27/%3E%3Ccircle cx=%2716%27 cy=%2716%27 r=%278%27 fill=%27%23fff%27/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="game.css">
+</head>
+<body>
+  <div id="qcr-root" class="qcr" data-state="loading">
+    <div id="qcr-stage" class="qcr-stage"></div>
+
+    <!-- شاشة التحميل -->
+    <section id="qcr-loading" class="qcr-screen qcr-loading" aria-live="polite">
+      <div class="qcr-brand">
+        <div class="qcr-brand-mark" aria-hidden="true"></div>
+        <h1 class="qcr-title">سباق الهجن القطري</h1>
+      </div>
+      <div class="qcr-progress" role="progressbar" aria-valuemin="0" aria-valuemax="100"><div class="qcr-progress-fill"></div></div>
+      <p class="qcr-loading-msg">جارٍ التحميل…</p>
+      <div class="qcr-error" hidden>
+        <p class="qcr-error-msg"></p>
+        <button type="button" class="qcr-btn qcr-btn-primary" data-action="retry-load">إعادة المحاولة</button>
+      </div>
+      <noscript><p class="qcr-error-msg">تحتاج اللعبة إلى تفعيل JavaScript في المتصفح.</p></noscript>
+    </section>
+
+    <!-- شاشة البداية -->
+    <section id="qcr-start" class="qcr-screen qcr-start" hidden>
+      <div class="qcr-start-panel">
+        <header class="qcr-start-head">
+          <div class="qcr-brand-mark small" aria-hidden="true"></div>
+          <div>
+            <h1 class="qcr-title">سباق الهجن القطري</h1>
+            <p class="qcr-sub">أجب عن الأسئلة ليتقدّم هجينك نحو خط النهاية</p>
+          </div>
+        </header>
+
+        <div class="qcr-field">
+          <span class="qcr-label">طريقة اللعب</span>
+          <div class="qcr-seg" role="radiogroup" aria-label="طريقة اللعب">
+            <button type="button" role="radio" class="qcr-seg-btn" data-mode="solo" aria-checked="true">فردي</button>
+            <button type="button" role="radio" class="qcr-seg-btn" data-mode="classroom" aria-checked="false">سبورة صفية</button>
+          </div>
+        </div>
+
+        <div class="qcr-field">
+          <label class="qcr-label" for="qcr-player-name">اسم هجني في السباق</label>
+          <input id="qcr-player-name" class="qcr-input" type="text" maxlength="30" placeholder="شهاب" autocomplete="off" aria-describedby="qcr-name-note">
+          <p id="qcr-name-note" class="qcr-note">هذا اسم للسباق فقط؛ لا يغيّر اسم الطالب في التقارير. أسماء المنافسين ثابتة.</p>
+        </div>
+        <div class="qcr-field" hidden aria-hidden="true">
+          <label class="qcr-label" for="qcr-team-name">اسم الفريق أو الفصل</label>
+          <input id="qcr-team-name" disabled class="qcr-input" type="text" maxlength="30" placeholder="مثال: فريق الصقور" autocomplete="off">
+          <label class="qcr-label" for="qcr-students">أسماء الطلاب (اختياري — اسم في كل سطر للتناوب على الإجابة)</label>
+          <textarea id="qcr-students" disabled class="qcr-input qcr-textarea" rows="3" placeholder="سارة&#10;أحمد&#10;مريم"></textarea>
+        </div>
+
+        <details class="qcr-details">
+          <summary>إعدادات المعلم والصوت والجودة</summary>
+          <div class="qcr-grid">
+            <label class="qcr-label" for="qcr-difficulty">مستوى المنافسين</label>
+            <select id="qcr-difficulty" class="qcr-input">
+              <option value="easy">سهل</option>
+              <option value="normal">متوسط</option>
+              <option value="hard">صعب</option>
+            </select>
+            <label class="qcr-label" for="qcr-segment">زمن الجري بين الأسئلة: <output id="qcr-segment-out">٦</output> ث</label>
+            <input id="qcr-segment" type="range" min="4" max="8" step="1" value="6">
+            <label class="qcr-label" for="qcr-timer">مؤقّت الإجابة</label>
+            <select id="qcr-timer" class="qcr-input">
+              <option value="0">بلا مؤقّت</option>
+              <option value="20">٢٠ ثانية</option>
+              <option value="30">٣٠ ثانية</option>
+              <option value="45">٤٥ ثانية</option>
+              <option value="60">٦٠ ثانية</option>
+            </select>
+            <label class="qcr-label" for="qcr-quality">جودة الرسوم</label>
+            <select id="qcr-quality" class="qcr-input">
+              <option value="auto">تلقائية</option>
+              <option value="high">عالية</option>
+              <option value="medium">متوسطة</option>
+              <option value="low">منخفضة (للأجهزة الأبطأ)</option>
+            </select>
+          </div>
+          <div class="qcr-toggles">
+            <label class="qcr-toggle"><input type="checkbox" id="qcr-voice"> <span>الصوت البشري (التعليق)</span></label>
+            <label class="qcr-toggle"><input type="checkbox" id="qcr-read"> <span>قراءة الأسئلة بصوت</span></label>
+            <label class="qcr-toggle"><input type="checkbox" id="qcr-sfx"> <span>المؤثرات وأصوات السباق</span></label>
+            <label class="qcr-toggle"><input type="checkbox" id="qcr-music"> <span>الموسيقى</span></label>
+            <label class="qcr-toggle"><input type="checkbox" id="qcr-reduced"> <span>تقليل حركة الكاميرا</span></label>
+          </div>
+          <p class="qcr-note qcr-voice-note" hidden>لا يتوفر صوت عربي في هذا المتصفح؛ ستعمل المؤثرات بدون تعليق صوتي.</p>
+        </details>
+
+        <p class="qcr-note qcr-data-note" hidden></p>
+        <button type="button" class="qcr-btn qcr-btn-primary qcr-btn-xl" data-action="start">ابدأ السباق</button>
+      </div>
+    </section>
+
+    <!-- واجهة السباق -->
+    <section id="qcr-hud" class="qcr-hud" hidden>
+      <div class="qcr-hud-top">
+        <div class="qcr-hud-info">
+          <div class="qcr-chip qcr-stage-chip"><span class="qcr-chip-label">المرحلة</span> <b class="qcr-stage-num">١</b> <span>من</span> <b class="qcr-stage-total">٦</b></div>
+          <div class="qcr-chip qcr-points-chip"><span class="qcr-chip-label">النقاط</span> <b class="qcr-points">٠</b></div>
+          <div class="qcr-chip qcr-rank-chip"><span class="qcr-chip-label">المركز</span> <b class="qcr-rank">—</b></div>
+        </div>
+        <div class="qcr-hud-buttons">
+          <button type="button" class="qcr-icon-btn" data-action="pause" aria-label="إيقاف مؤقت" title="إيقاف مؤقت"><span class="i-pause"></span></button>
+          <button type="button" class="qcr-icon-btn" data-action="mute" aria-label="كتم المؤثرات" title="كتم المؤثرات"><span class="i-sound"></span></button>
+          <button type="button" class="qcr-icon-btn" data-action="fullscreen" aria-label="ملء الشاشة" title="ملء الشاشة"><span class="i-full"></span></button>
+        </div>
+      </div>
+      <ol class="qcr-board" aria-label="لوحة الترتيب"></ol>
+      <div class="qcr-track-bar" aria-hidden="true">
+        <div class="qcr-track-fill"></div>
+        <div class="qcr-track-ticks"></div>
+        <div class="qcr-track-me"></div>
+        <div class="qcr-track-flag">النهاية</div>
+      </div>
+    </section>
+
+    <div id="qcr-marker" class="qcr-marker" hidden><span class="qcr-marker-label">أنت</span></div>
+    <div id="qcr-countdown" class="qcr-countdown" hidden aria-live="assertive"></div>
+    <div id="qcr-toast" class="qcr-toast" hidden aria-live="polite"></div>
+
+    <!-- بطاقة السؤال -->
+    <section id="qcr-question" class="qcr-overlay qcr-question" hidden role="dialog" aria-modal="true" aria-labelledby="qcr-q-text">
+      <div class="qcr-card">
+        <header class="qcr-card-head">
+          <span class="qcr-q-count">السؤال ١ من ٦</span>
+          <span class="qcr-q-subject"></span>
+          <span class="qcr-q-turn" hidden></span>
+          <span class="qcr-q-timer" hidden></span>
+        </header>
+        <div class="qcr-q-media" hidden></div>
+        <h2 id="qcr-q-text" class="qcr-q-text"></h2>
+        <div class="qcr-choices" role="group" aria-label="الاختيارات"></div>
+        <div class="qcr-q-status" aria-live="polite"></div>
+        <footer class="qcr-card-foot">
+          <button type="button" class="qcr-btn qcr-btn-ghost" data-action="next-student" hidden>طالب آخر</button>
+          <button type="button" class="qcr-btn qcr-btn-primary" data-action="retry-submit" hidden>إعادة المحاولة</button>
+          <button type="button" class="qcr-btn qcr-btn-primary" data-action="continue" hidden>متابعة السباق</button>
+        </footer>
+      </div>
+    </section>
+
+    <!-- الإيقاف المؤقت -->
+    <section id="qcr-pause" class="qcr-overlay qcr-pause" hidden role="dialog" aria-modal="true" aria-label="إيقاف مؤقت">
+      <div class="qcr-card qcr-card-narrow">
+        <h2 class="qcr-card-title">متوقف مؤقتًا</h2>
+        <div class="qcr-toggles">
+          <label class="qcr-toggle"><input type="checkbox" data-bind="voice"> <span>الصوت البشري</span></label>
+          <label class="qcr-toggle"><input type="checkbox" data-bind="sfx"> <span>المؤثرات</span></label>
+          <label class="qcr-toggle"><input type="checkbox" data-bind="music"> <span>الموسيقى</span></label>
+          <label class="qcr-toggle"><input type="checkbox" data-bind="reduced"> <span>تقليل الحركة</span></label>
+        </div>
+        <div class="qcr-row">
+          <button type="button" class="qcr-btn qcr-btn-primary" data-action="resume">متابعة</button>
+          <button type="button" class="qcr-btn" data-action="restart">إعادة السباق</button>
+          <button type="button" class="qcr-btn qcr-btn-ghost" data-action="exit">العودة</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- النتائج -->
+    <section id="qcr-results" class="qcr-overlay qcr-results" hidden role="dialog" aria-modal="true" aria-labelledby="qcr-r-title">
+      <div class="qcr-card qcr-card-wide">
+        <header class="qcr-results-head">
+          <h2 id="qcr-r-title" class="qcr-title">سباق الهجن القطري</h2>
+          <p class="qcr-r-name"></p>
+        </header>
+        <div class="qcr-r-stats">
+          <div class="qcr-stat qcr-stat-rank"><span class="qcr-stat-label">المركز في السباق</span><b class="qcr-r-rank"></b></div>
+          <div class="qcr-stat"><span class="qcr-stat-label">الإجابات الصحيحة</span><b class="qcr-r-correct"></b></div>
+          <div class="qcr-stat"><span class="qcr-stat-label">النقاط التعليمية</span><b class="qcr-r-points"></b></div>
+        </div>
+        <ol class="qcr-r-order" aria-label="ترتيب عبور خط النهاية"></ol>
+        <p class="qcr-r-save" aria-live="polite"></p>
+        <div class="qcr-row qcr-r-actions">
+          <button type="button" class="qcr-btn qcr-btn-primary qcr-btn-xl" data-action="replay">إعادة السباق</button>
+          <button type="button" class="qcr-btn" data-action="retry-result" hidden>إعادة حفظ النتيجة</button>
+          <button type="button" class="qcr-btn qcr-btn-ghost" data-action="exit">العودة</button>
+        </div>
+        <details class="qcr-details qcr-r-review" open>
+          <summary>مراجعة الإجابات والتفسيرات</summary>
+          <ol class="qcr-review"></ol>
+        </details>
+      </div>
+    </section>
+  </div>
+  <script src="game.config.js"></script>
+
+  <script src="game.js"></script>
+</body>
+</html>

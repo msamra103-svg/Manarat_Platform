@@ -1,0 +1,11 @@
+import { build } from "esbuild";
+import { cpSync, mkdirSync, rmSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
+const root = join(dirname(fileURLToPath(import.meta.url)), ".."), out = join(root, "dist");
+rmSync(out, { recursive: true, force: true });
+mkdirSync(out, { recursive: true });
+await build({ entryPoints: { game: join(root, "src/main.mjs") }, bundle: true, format: "iife", target: ["es2020"], outdir: out, minify: true, legalComments: "eof", define: { "process.env.NODE_ENV": '"production"' } });
+cpSync(join(root, "index.html.template"), join(out, "index.html"));
+cpSync(join(root, "public/game.config.js"), join(out, "game.config.js"));
+console.log("Built platform-only camel race without sample answer keys, fonts or remote runtime libraries.");

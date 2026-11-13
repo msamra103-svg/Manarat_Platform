@@ -5,7 +5,7 @@ const DESIGN_PREVIEW=false;
 const base=Deno.env.get('SUPABASE_URL')!, key=Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 const headers={'Content-Type':'application/json','apikey':key,'Authorization':'Bearer '+key};
 const cors={'Access-Control-Allow-Origin':'*','Access-Control-Allow-Headers':'authorization,apikey,content-type','Access-Control-Allow-Methods':'POST,OPTIONS'};
-const templates=['race','football','basketball','volleyball','bowling','fishing','target-shooting','qatar-runner','qatar-hero','puzzle','classic'];
+const templates=['race','football','basketball','volleyball','bowling','fishing','target-shooting','qatar-runner','qatar-hero','qatar-camel-race','puzzle','classic'];
 const types=['multiple_choice','true_false','open_text','matching','connecting','ordering','classification','puzzle_image'];
 const enc=encodeURIComponent;
 async function db(table:string,query='',method='GET',data?:unknown){const r=await fetch(`${base}/rest/v1/${table}${query?'?'+query:''}`,{method,headers:{...headers,Prefer:'return=representation'},body:data===undefined?undefined:JSON.stringify(data)});const j=await r.json().catch(()=>null);if(!r.ok)throw new Error('تعذر حفظ البيانات. أعد المحاولة.');return j;}
@@ -39,6 +39,7 @@ const gameTitles:Record<string,[string,string,string]>={
  'target-shooting':['التصويب على الهدف','٤ تحديات رماية 3D','assets/game-covers/target-shooting.svg'],
  'qatar-runner':['عدّاء قطر','جري 3D في الدوحة','assets/game-covers/qatar-runner.svg'],
  'qatar-hero':['مغامرات بطل قطر','مغامرة 3D تعليمية','assets/game-covers/qatar-hero.svg'],
+ 'qatar-camel-race':['سباق الهجن القطري','سباق قطري ثلاثي الأبعاد','assets/game-covers/qatar-camel-race.20261113.jpg'],
  classic:['تحدّي المعرفة','مسابقة تفاعلية','assets/game-covers/classic.svg'],
  puzzle:['بازل الصور','تركيب الصور','assets/game-covers/puzzle.svg']
 };
@@ -231,7 +232,7 @@ export async function handle(req:Request){if(req.method==='OPTIONS')return new R
  const as=(await db('school_assignments','code=eq.'+enc(b.code)+'&active=eq.true'))[0];if(!as)throw new Error('المهمة غير متاحة.');if(as.settings.deadline&&new Date(as.settings.deadline)<new Date())throw new Error('انتهى موعد المهمة.');
  const mode=b.mode||'home';if(!['home','individual','group'].includes(mode))throw new Error('نمط غير صالح.');if(mode!=='home'){const p=await requireUser(req);if(p.id!==as.teacher_id&&!p.admin)throw new Error('التشغيل الصفي متاح لصاحب المهمة.');}
  if(mode!=='group'&&!String(b.name||'').trim())throw new Error('اكتب اسم الطالب.');if(!(as.settings.templates||templates).includes(b.template)||!templates.includes(b.template))throw new Error('اختر لعبة متاحة.');
- const g=(await db('manarat_games','id=eq.'+enc(as.game_id)))[0];let qs=g.data.questions||[];const allowed=as.settings.types||types;qs=qs.filter((q:any)=>allowed.includes(q.type)&&(!b.type||q.type===b.type)&&(b.template!=='puzzle'||q.type==='puzzle_image')&&(b.template!=='qatar-hero'||['multiple_choice','true_false'].includes(q.type)));if(!qs.length)throw new Error('لا توجد أسئلة من النوع المحدد.');qs=qs.slice(0,b.template==='qatar-hero'?36:100).map((q:any)=>({...q,_classItems:(q.categories||[]).flatMap((c:any,category:number)=>(c.items||[]).map((it:any)=>({...it,id:crypto.randomUUID(),category}))).sort(()=>Math.random()-.5)}));const sk=String(b.student_key||crypto.randomUUID()).slice(0,100);
+ const g=(await db('manarat_games','id=eq.'+enc(as.game_id)))[0];let qs=g.data.questions||[];const allowed=as.settings.types||types;qs=qs.filter((q:any)=>allowed.includes(q.type)&&(!b.type||q.type===b.type)&&(b.template!=='puzzle'||q.type==='puzzle_image')&&(!['qatar-hero','qatar-camel-race'].includes(b.template)||['multiple_choice','true_false'].includes(q.type)));if(!qs.length)throw new Error('لا توجد أسئلة من النوع المحدد.');qs=qs.slice(0,b.template==='qatar-hero'?36:100).map((q:any)=>({...q,_classItems:(q.categories||[]).flatMap((c:any,category:number)=>(c.items||[]).map((it:any)=>({...it,id:crypto.randomUUID(),category}))).sort(()=>Math.random()-.5)}));const sk=String(b.student_key||crypto.randomUUID()).slice(0,100);
  const ip=await hash(req.headers.get('x-forwarded-for')?.split(',')[0]||'unknown');if(!await db('rpc/school_rate_limit','','POST',{k:'start:'+ip,maximum:300,seconds:3600}))throw new Error('محاولات كثيرة. حاول لاحقًا.');
  const s=(await db('school_sessions','','POST',{assignment_id:as.id,teacher_id:as.teacher_id,student_name:mode==='group'?'':String(b.name).trim().slice(0,100),student_key:mode==='group'?'':sk,mode,template:b.template,questions:qs}))[0];
  out={id:s.id,secret:s.secret,questions:qs.map(cleanQuestion),student_key:sk,threshold:as.settings.passing_score||70};
