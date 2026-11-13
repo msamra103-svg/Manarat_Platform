@@ -17,7 +17,13 @@ jobs:
         with:
           persist-credentials: false
       - name: Materialize reviewed source and platform integration
-        run: python3 .camel-review/install.py
+        run: |
+          python3 .camel-review/install.py
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('game-sources/qatar-camel-race/index.html.template')
+          p.write_text('\n'.join(line.rstrip() for line in p.read_text().splitlines())+'\n')
+          PY
       - name: Build deterministic camel models and bundled runtime
         run: |
           npm ci --no-audit --no-fund
@@ -62,7 +68,11 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add game-sources/qatar-camel-race games/qatar-camel-race public/games/qatar-camel-race js/camel-race-host.js public/js/camel-race-host.js js/school.js public/js/school.js js/design-schema.js public/js/design-schema.js js/design-studio.js public/js/design-studio.js js/game-covers.js public/js/game-covers.js js/homepage-hub-logic.js public/js/homepage-hub-logic.js supabase/functions/school-api/index.ts supabase/functions/_shared/design-schema.js index.html public/index.html tests/camel-race-host.test.cjs tests/camel-race-api.cjs tests/camel-race-browser.cjs tests/classroom-auth.test.cjs assets/game-covers/qatar-camel-race.20261113.jpg public/assets/game-covers/qatar-camel-race.20261113.jpg
-          git diff --cached --check
+          # Three.js embeds upstream GLSL strings containing significant source formatting.
+          # Preserve the browser-tested bundle bytes; only these generated files are exempt
+          # from whitespace style lint, not from syntax, security or gameplay tests.
+          git diff --cached --check -- . ':!games/qatar-camel-race/game.js' ':!public/games/qatar-camel-race/game.js'
+          git -c core.whitespace=-blank-at-eol,-space-before-tab diff --cached --check -- games/qatar-camel-race/game.js public/games/qatar-camel-race/game.js
           git commit -m 'Integrate Qatar camel race with authoritative questions, assignments and player-only naming'
           export GIT_CONFIG_COUNT=1
           export GIT_CONFIG_KEY_0=http.https://github.com/.extraheader
