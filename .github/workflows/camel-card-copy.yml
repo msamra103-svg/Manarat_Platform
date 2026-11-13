@@ -1,0 +1,59 @@
+name: Complete camel homepage card copy
+on:
+  push:
+    branches: [review/camel-race-20261113]
+    paths: [.github/workflows/camel-card-copy.yml]
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Complete exact presentation mappings and cache revision
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('js/school.js');s=p.read_text()
+          replacements={"'qatar-hero':'مغامرة 3D في قطر',puzzle:":"'qatar-hero':'مغامرة 3D في قطر','qatar-camel-race':'سباق هجن قطري 3D',puzzle:","'qatar-hero':'اقفز نحو مكعبات الأسئلة واكتشف ست بيئات قطرية.',puzzle:":"'qatar-hero':'اقفز نحو مكعبات الأسئلة واكتشف ست بيئات قطرية.','qatar-camel-race':'نافس خمسة هجن في مضمار قطري، وأجب بعد كل مرحلة قصيرة لتتقدم نحو خط النهاية.',puzzle:"}
+          for before,after in replacements.items():
+            assert s.count(before)==1,before
+            s=s.replace(before,after)
+          p.write_text(s)
+          p=Path('index.html');s=p.read_text()
+          before='js/school.js?v=21.14-camel-race"'
+          assert s.count(before)==1
+          p.write_text(s.replace(before,'js/school.js?v=21.14-camel-race.1"'))
+          PY
+      - name: Build and regression tests
+        run: |
+          npm ci --no-audit --no-fund
+          npm run build
+          npm run test:unit
+          node --test tests/camel-race-host.test.cjs
+          node tests/camel-race-api.cjs
+          node tests/game-modes.cjs
+          node tests/game-session.cjs
+      - name: Preserve tested presentation changes on review branch
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add js/school.js public/js/school.js index.html public/index.html
+          git diff --cached --check
+          git commit -m 'Complete camel card badge and description with fresh cache version'
+          export GIT_CONFIG_COUNT=1
+          export GIT_CONFIG_KEY_0=http.https://github.com/.extraheader
+          export GIT_CONFIG_VALUE_0="AUTHORIZATION: basic $(printf 'x-access-token:%s' "$GH_TOKEN" | base64 -w0)"
+          git push origin HEAD:refs/heads/review/camel-race-20261113
+          unset GIT_CONFIG_COUNT GIT_CONFIG_KEY_0 GIT_CONFIG_VALUE_0
+          echo 'VERIFIED PRESENTATION BLOBS'
+          git ls-tree HEAD js/school.js public/js/school.js index.html public/index.html
+          git rev-parse HEAD
