@@ -1,9 +1,9 @@
 /* Published gameplay stills. Never run legacy preview games on the homepage. */
 (function(root){
  'use strict';
- const keys=['football','basketball','bowling','volleyball','fishing','race','target-shooting','qatar-runner','qatar-hero','classic','puzzle'];
+ const keys=['football','basketball','bowling','volleyball','fishing','race','target-shooting','qatar-runner','qatar-hero','qatar-camel-race','classic','puzzle'];
  function resolve(key,custom){
-  const current='assets/game-covers/'+key+'.20261102.jpg';
+  const current='assets/game-covers/'+key+(key==='qatar-camel-race'?'.20261113.jpg':'.20261102.jpg');
   if(!keys.includes(key))return custom||'';
   if(!custom)return current;
   // Migrate saved built-in paths, while keeping teacher-uploaded covers.

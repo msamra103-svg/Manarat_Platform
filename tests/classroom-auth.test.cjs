@@ -70,5 +70,5 @@ test('local demonstration answers do not acquire teacher authentication',async()
  const f=fixture({session:null,play:{id:'demo',demo:true,questions:[{id:'q',type:'multiple_choice',correct:0,points:10}]}});const result=await f.api('answer',{id:'demo',question:'q',value:0});assert.equal(result.correct,true);assert.equal(f.state.refreshes,0);assert.equal(f.state.requests.length,0);
 });
 test('source and production mirrors and cache version stay in sync',()=>{
- assert.equal(read('public/js/school.js'),source);assert.equal(read('public/index.html'),read('index.html'));assert.match(read('index.html'),/js\/school\.js\?v=21\.12-classroom-auth/);
+ assert.equal(read('public/js/school.js'),source);assert.equal(read('public/index.html'),read('index.html'));assert.match(read('index.html'),/js\/school\.js\?v=21\.14-camel-race/);
 });

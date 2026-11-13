@@ -1,0 +1,1 @@
+window.QATAR_CAMEL_RACE_CONFIG={gameId:'qatar-camel-race',integration:{bridge:'postMessage'},race:{segmentSeconds:6,competitors:5},audio:{voice:{enabled:false},effects:{enabled:true},music:{enabled:false}}};
