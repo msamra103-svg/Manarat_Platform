@@ -1,0 +1,54 @@
+name: Verify published Qatar camel race
+on:
+  push:
+    branches: [review/camel-race-20261113]
+    paths: [.github/workflows/verify-camel-production.yml]
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      RELEASE_SHA: a3a7f50bd5fd3122228e473b68e403dc847200f9
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: a3a7f50bd5fd3122228e473b68e403dc847200f9
+          persist-credentials: false
+      - name: Install locked browser tools
+        run: |
+          npm ci --no-audit --no-fund
+          npx --no-install playwright install --with-deps chromium
+      - name: Verify published bytes, backend catalog and public gameplay without student writes
+        run: |
+          cat > verify-camel-live.cjs <<'NODE'
+          'use strict';
+          const fs=require('node:fs'),assert=require('node:assert/strict'),{createHash}=require('node:crypto'),{chromium}=require('playwright');
+          const site='https://manarat-ten.vercel.app',key='qatar-camel-race',out='camel-production-verification';fs.mkdirSync(out,{recursive:true});
+          const report={commit:process.env.RELEASE_SHA,checks:[],errors:[],blockedWrites:[],realAccountLoginPerformed:false,studentDataWritten:false};
+          const sha=b=>createHash('sha256').update(b).digest('hex');
+          (async()=>{let browser;try{
+           const paths=['index.html','js/school.js','js/camel-race-host.js','js/design-schema.js','js/design-studio.js','js/game-covers.js','js/homepage-hub-logic.js','games/qatar-camel-race/index.html','games/qatar-camel-race/game.js','games/qatar-camel-race/game.css','games/qatar-camel-race/game.config.js','assets/game-covers/qatar-camel-race.20261113.jpg'];
+           let last;for(let n=0;n<8;n++){try{report.checks=[];for(const p of paths){const r=await fetch(site+'/'+p+'?verify=camel-'+Date.now(),{headers:{'Cache-Control':'no-cache'},signal:AbortSignal.timeout(25000)});assert.equal(r.status,200,p);const b=Buffer.from(await r.arrayBuffer());assert.equal(sha(b),sha(fs.readFileSync(p)),p+' source differs');report.checks.push({file:p,status:200,sha256:sha(b)});}last=null;break;}catch(e){last=e;console.log('Propagation check',n+1,e.message);if(n<7)await new Promise(r=>setTimeout(r,7000));}}if(last)throw last;
+           const code=fs.readFileSync('js/school.js','utf8');const endpoint=code.match(/const endpoint='([^']+)'/)[1],apikey=code.match(/const KEY='([^']+)'/)[1];
+           const response=await fetch(endpoint,{method:'POST',headers:{'Content-Type':'application/json',apikey},body:JSON.stringify({action:'settings'}),signal:AbortSignal.timeout(25000)});assert.equal(response.status,200);const config=await response.json();assert(config.design.gameOrder.includes(key));assert(config.design.games[key]);report.backendCatalogIncludesCamel=true;
+           browser=await chromium.launch({headless:true,args:['--no-sandbox','--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']});const page=await browser.newPage({viewport:{width:1440,height:1000}});page.on('pageerror',e=>report.errors.push(e.message));
+           await page.route('**/*',route=>{const req=route.request(),u=new URL(req.url());if(u.hostname.endsWith('.supabase.co')&&req.method()==='POST'){let b={};try{b=req.postDataJSON();}catch{}if(!['settings','homeHub'].includes(b.action)){report.blockedWrites.push(b.action||u.pathname);return route.abort();}}if(u.hostname.endsWith('.supabase.co')&&!['GET','HEAD','OPTIONS','POST'].includes(req.method())){report.blockedWrites.push(req.method());return route.abort();}return route.continue();});
+           for(const width of [1440,390]){await page.setViewportSize({width,height:1000});await page.goto(site+'/',{waitUntil:'domcontentloaded'});await page.locator('[data-action="demo"][data-id="qatar-camel-race"]').first().waitFor({timeout:40000});assert(await page.locator('[data-cover-slot="qatar-camel-race"]').count()>0);report.checks.push({page:'live homepage',width,camelCardVisible:true});}
+           await page.setViewportSize({width:1440,height:1000});await page.addInitScript(()=>{const patch=()=>{for(const f of document.querySelectorAll('#camelRaceFrame')){const s=f.getAttribute('src');if(s&&!s.includes('capture=1'))f.setAttribute('src',s+(s.includes('?')?'&':'?')+'capture=1');}};new MutationObserver(patch).observe(document,{childList:true,subtree:true,attributes:true,attributeFilter:['src']});patch();});
+           await page.goto(site+'/?demo=qatar-camel-race',{waitUntil:'domcontentloaded'});await page.locator('#camelRaceFrame').waitFor({timeout:30000});const frame=page.frames().find(f=>f.url().includes('/games/qatar-camel-race/'));assert(frame);await frame.waitForFunction(()=>window.QatarCamelRace?.debug?.app?.external&&window.QatarCamelRace.debug.app.status==='idle',null,{timeout:45000});
+           assert.deepEqual(await frame.evaluate(()=>QatarCamelRace.debug.app.race.camels.filter(c=>!c.isPlayer).map(c=>c.name)),['شاهين','برق','سهيل','رعد','غيث']);await frame.locator('#qcr-player-name').fill('نجم');assert.equal(await frame.locator('#start-form input:visible:not([disabled])').count(),1);await frame.locator('#btn-start').click();await frame.waitForFunction(()=>QatarCamelRace.debug.app.race.phase==='countdown');await frame.evaluate(()=>{const a=QatarCamelRace.debug.app;a.race.step(4);a._syncRoster();a._setStatus('race');});
+           for(let i=0;i<3;i++){await frame.evaluate(()=>{const a=QatarCamelRace.debug.app;if(a.status==='race'){a.race.step(a.race.segmentEnd-a.race.segmentTime+0.1);a._showQuestion();}});await frame.locator('#question-overlay.active').waitFor();await frame.locator('#question-options button').first().click();await frame.waitForFunction(()=>!!QatarCamelRace.debug.app.pendingQuestionResult,null,{timeout:10000});await frame.evaluate(()=>{const a=QatarCamelRace.debug.app;a._continueQuestion();if(a.race.phase==='settling'){a.race.step(5);a._syncRoster();a._finishRace();}});}
+           await frame.locator('#results-screen.active').waitFor({timeout:10000});assert((await frame.locator('#leaderboard').innerText()).includes('نجم'));assert.deepEqual(report.blockedWrites,[]);assert.deepEqual(report.errors,[]);report.liveDemoFinished=true;report.liveCompetitorNamesVerified=true;report.status='PASS';console.log('PASS exact published source hashes, live backend catalog, desktop/mobile camel card and three-question public race. No real student results written.');
+           }catch(e){report.status='FAIL';report.failure=e.stack;console.error(e);process.exitCode=1;}finally{fs.writeFileSync(out+'/report.json',JSON.stringify(report,null,2));if(browser)await browser.close();}})();
+          NODE
+          node verify-camel-live.cjs
+      - name: Preserve production verification report
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: camel-production-verification
+          path: camel-production-verification/
+          if-no-files-found: ignore
+          retention-days: 7
