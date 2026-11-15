@@ -43,14 +43,29 @@ changed = [p.decode() for p in subprocess.check_output(
 assert 10 < len(changed) < 350, len(changed)
 assert all(Path(p).is_file() for p in changed), "Unexpected file deletion"
 
+def blob_exists(sha):
+    for attempt in range(3):
+        req = urllib.request.Request(API + "/git/blobs/" + sha, headers=HEADERS, method="HEAD")
+        try:
+            with urllib.request.urlopen(req, timeout=25) as response:
+                return response.status == 200
+        except urllib.error.HTTPError as exc:
+            if exc.code in (404, 405):
+                return False
+            if exc.code != 403 or attempt == 2:
+                raise
+            time.sleep(60)
+    return False
+
 def upload_blob(path):
     data = Path(path).read_bytes()
     assert len(data) < 15_000_000, (path, len(data))
     digest = hashlib.sha1(b"blob " + str(len(data)).encode() + b"\0" + data).hexdigest()
-    uploaded = request("POST", "/git/blobs", {
-        "content": base64.b64encode(data).decode(), "encoding": "base64"
-    })
-    assert uploaded["sha"] == digest, (path, uploaded["sha"], digest)
+    if not blob_exists(digest):
+        uploaded = request("POST", "/git/blobs", {
+            "content": base64.b64encode(data).decode(), "encoding": "base64"
+        })
+        assert uploaded["sha"] == digest, (path, uploaded["sha"], digest)
     return path
 
 with concurrent.futures.ThreadPoolExecutor(max_workers=2) as pool:
