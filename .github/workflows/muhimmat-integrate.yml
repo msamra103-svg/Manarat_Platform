@@ -86,9 +86,9 @@ jobs:
           from pathlib import Path
           p=Path('tests/classroom-auth.test.cjs')
           s=p.read_text()
-          original=r'21\\.14-camel-race'
+          original=r'21\.14-camel-race'
           assert s.count(original)==1
-          p.write_text(s.replace(original,r'21\\.15-muhimmat-20261115'))
+          p.write_text(s.replace(original,r'21\.15-muhimmat-20261115'))
           PY
           node review-tests/test-adapter.cjs
           node review-tests/test-game-bridge.cjs
