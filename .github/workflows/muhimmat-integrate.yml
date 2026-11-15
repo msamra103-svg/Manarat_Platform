@@ -114,10 +114,15 @@ jobs:
               page.on('response',r=>{if(r.status()===404&&r.url().startsWith('http://127.0.0.1:3000'))missing.push(r.url())});
               await page.goto('http://127.0.0.1:3000/games/muhimmat-almaarifa/index.html?school=1',{waitUntil:'domcontentloaded'});
               await page.waitForFunction(()=>!!window.__mmSchoolGame,{timeout:90000});
-              const state=await page.evaluate(()=>({renderer:!!window.__mmSchoolGame?.renderer,bridge:document.body.classList.contains('mm-school-mode'),debug:!!window.__mmTest}));
-              assert(state.renderer&&state.bridge&&!state.debug,JSON.stringify(state));
+              const state=await page.evaluate(()=>({renderer:!!window.__mmSchoolGame?.renderer,debug:!!window.__mmTest}));
+              assert(state.renderer&&!state.debug,JSON.stringify(state));
+              await page.setContent('<!doctype html><html><body><iframe id="school-iframe" src="/games/muhimmat-almaarifa/index.html?school=1" style="width:100%;height:800px"></iframe></body></html>');
+              const embedded=page.frameLocator('#school-iframe');
+              await embedded.locator('body.mm-school-mode').waitFor({timeout:90000});
+              const bridged=await embedded.locator('body').evaluate(el=>({active:el.classList.contains('mm-school-mode'),renderer:!!window.__mmSchoolGame?.renderer,debug:!!window.__mmTest}));
+              assert(bridged.active&&bridged.renderer&&!bridged.debug,JSON.stringify(bridged));
               assert.deepEqual(errors,[]);assert.deepEqual(missing,[]);
-              console.log('PASS 3D engine school mode, protected bridge and no missing assets');
+              console.log('PASS direct WebGL renderer and real embedded same-origin school bridge without debug hook or missing assets');
             }finally{await browser.close()}
           })().catch(e=>{console.error(e);process.exit(1)});
           NODE
