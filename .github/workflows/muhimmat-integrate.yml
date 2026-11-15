@@ -135,7 +135,8 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add tests/classroom-auth.test.cjs scripts/smoke-check.js index.html public/index.html js/mm-host.js public/js/mm-host.js js/school.js public/js/school.js js/design-studio.js public/js/design-studio.js js/homepage-hub-logic.js public/js/homepage-hub-logic.js js/design-schema.js public/js/design-schema.js js/game-covers.js public/js/game-covers.js assets/game-covers/muhimmat-almaarifa.20261115.jpg public/assets/game-covers/muhimmat-almaarifa.20261115.jpg supabase/functions/school-api/index.ts supabase/functions/_shared/design-schema.js game-sources/muhimmat-almaarifa games/muhimmat-almaarifa public/games/muhimmat-almaarifa
-          git diff --cached --check -- ':!games/muhimmat-almaarifa/assets/*' ':!public/games/muhimmat-almaarifa/assets/*'
+          git reset -q -- game-sources/muhimmat-almaarifa/standalone game-sources/muhimmat-almaarifa/dist || true
+          git diff --cached --check -- ':!games/muhimmat-almaarifa/assets/*' ':!public/games/muhimmat-almaarifa/assets/*' ':!games/muhimmat-almaarifa/index.html' ':!public/games/muhimmat-almaarifa/index.html' ':!game-sources/muhimmat-almaarifa/index.html'
           git commit -m 'Integrate Mission of Knowledge in school assignments and homepage'
           export GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=http.https://github.com/.extraheader
           export GIT_CONFIG_VALUE_0="AUTHORIZATION: basic $(printf 'x-access-token:%s' "$GH_TOKEN" | base64 -w0)"
