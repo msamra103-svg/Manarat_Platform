@@ -67,7 +67,7 @@ jobs:
               });
               await page.goto('https://manarat-ten.vercel.app/index.html',{waitUntil:'domcontentloaded'});
               await page.locator('#gamesGallerySection').waitFor({timeout:30000});
-              await page.getByText('مهمّة المعرفة',{exact:true}).first().waitFor({timeout:30000});
+              await page.locator('#gamesGallerySection article[data-game="muhimmat-almaarifa"] h3').waitFor({timeout:30000});
               result.checks.push('public homepage card visible');
               await page.goto('https://manarat-ten.vercel.app/index.html?demo=muhimmat-almaarifa',{waitUntil:'domcontentloaded'});
               await page.locator('iframe[src*="muhimmat-almaarifa"]').first().waitFor({timeout:30000});
