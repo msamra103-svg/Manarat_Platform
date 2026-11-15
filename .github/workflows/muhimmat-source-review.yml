@@ -1,0 +1,33 @@
+name: Export current platform source for isolated knowledge game compatibility review
+on:
+  push:
+    branches: [review/muhimmat-knowledge-20261115]
+    paths: ['.github/workflows/muhimmat-source-review.yml']
+permissions: {contents: read}
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Create clean, read-only source archive without dependencies or secrets
+        run: |
+          python3 - <<'PY'
+          import os,subprocess,zipfile
+          keep=[]
+          for f in subprocess.check_output(['git','ls-files','-z']).decode().split('\0'):
+            if not f or f.startswith(('.git/','.github/','.camel-review/','.review-ui/','game-sources/')): continue
+            if f.startswith(('games/','public/','assets/','bundles/')): continue
+            if os.path.getsize(f)>1000000:continue
+            keep.append(f)
+          with zipfile.ZipFile('/tmp/platform-source.zip','w',zipfile.ZIP_DEFLATED) as z:
+            for f in keep:z.write(f,'platform/'+f)
+          print('Files:',len(keep))
+          PY
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: muhimmat-platform-source-read-only
+          path: /tmp/platform-source.zip
+          retention-days: 2
