@@ -1,6 +1,6 @@
 """Publish an already-tested, staged Git tree using SHA-verified REST operations."""
 import base64, concurrent.futures, hashlib, json, os, subprocess, time
-import urllib.request, urllib.error
+import urllib.request, urllib.error, threading
 from pathlib import Path
 
 PROJECT = "msamra103-svg/Manarat_Platform"
@@ -16,17 +16,27 @@ HEADERS = {
 }
 def git(*args):
     return subprocess.check_output(["git", *args]).decode().strip()
+throttle = threading.Lock()
+last_request = [0.0]
 def request(method, endpoint, payload=None):
     body = json.dumps(payload).encode() if payload is not None else None
-    for attempt in range(4):
+    for attempt in range(7):
+        with throttle:
+            elapsed = time.monotonic() - last_request[0]
+            if elapsed < 1.15:
+                time.sleep(1.15 - elapsed)
+            last_request[0] = time.monotonic()
         try:
             req = urllib.request.Request(API + endpoint, data=body, headers=HEADERS, method=method)
             with urllib.request.urlopen(req, timeout=60) as response:
                 return json.load(response)
         except urllib.error.HTTPError as exc:
-            if exc.code not in (429, 500, 502, 503, 504) or attempt == 3:
-                raise
-            time.sleep(2 ** attempt)
+            body = exc.read().decode("utf-8", "replace")
+            transient = exc.code in (429, 500, 502, 503, 504) or (exc.code == 403 and ("secondary rate limit" in body.lower() or "rate limit exceeded" in body.lower()))
+            if not transient or attempt == 6:
+                raise RuntimeError(f"GitHub REST {exc.code}: {body[:300]}") from exc
+            delay = int(exc.headers.get("Retry-After", "0") or "0")
+            time.sleep(max(delay, 75 if exc.code == 403 else 2 ** attempt))
 
 changed = [p.decode() for p in subprocess.check_output(
     ["git", "diff", "--cached", "--name-only", "-z"]).split(b"\0") if p]
@@ -43,7 +53,7 @@ def upload_blob(path):
     assert uploaded["sha"] == digest, (path, uploaded["sha"], digest)
     return path
 
-with concurrent.futures.ThreadPoolExecutor(max_workers=4) as pool:
+with concurrent.futures.ThreadPoolExecutor(max_workers=2) as pool:
     for index, path in enumerate(pool.map(upload_blob, changed), 1):
         if index % 10 == 0:
             print(f"uploaded {index}/{len(changed)} immutable blobs", flush=True)
