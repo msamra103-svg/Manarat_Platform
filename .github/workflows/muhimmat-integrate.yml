@@ -1,0 +1,120 @@
+name: Review and build Muhimmat Almaarifa from verified source blobs
+on:
+  push:
+    branches: [review/muhimmat-knowledge-20261115]
+    paths: ['.github/workflows/muhimmat-integrate.yml']
+permissions: {contents: read}
+jobs:
+  integrate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    permissions: {contents: write}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: e2333c9d2fcd8d2aa4860b2cfce73a558ad3eacd
+          path: platform
+          persist-credentials: false
+      - name: Retrieve reviewed game assets by immutable Git blob SHA
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import os,urllib.request,json,base64,hashlib,zipfile
+          shas=['23783f8f0b8499c5f94f251065c34cc3c9e0d625','470c7785cf262e3504297dd4a7d828e9e702f7a5','8f6a8e7586f45e21a1fad2dc871d7a6fb911f28c','09da921536f87ad516099f5b97f35d411d0653ca','d17a25fba81f773f6534acc3ebd3ed98a50e2fc3','79fd2d6d8b6f706d99728bb72934bb3b113c6e48','534b38a3dc4eb7096242f17d44a107c1508f9990','7848d92666ac3fb7fe26bb16aed36f0465e2906b','77771aa590b6a76399ae4881172751ede798c1bf','8bb43a59c9bc6f4b2e19d091418b208e0c75d497','19a853ae5bc1082fb198f7184dce4e4b63af3a73','61bdddeab8eb18fa628c93e1c452b485f9962491','d081cdcf8c6d844ba11ee64e2df6998684fc351a','9878ef1283b9d28df0ea36e7796555cf68c289a9','5180076d3f34a17eebee7e0b92cc3ca4f2084c40']
+          binary=[]
+          for n,sha in enumerate(shas):
+            req=urllib.request.Request('https://api.github.com/repos/msamra103-svg/Manarat_Platform/git/blobs/'+sha,headers={'Authorization':'Bearer '+os.environ['GH_TOKEN'],'Accept':'application/vnd.github+json','X-GitHub-Api-Version':'2022-11-28'})
+            with urllib.request.urlopen(req,timeout=30) as r:obj=json.load(r)
+            assert obj['encoding']=='base64' and obj['sha']==sha
+            chunk=base64.b64decode(obj['content']);binary.append(chunk)
+            print('verified blob',n,len(chunk))
+          payload=b''.join(binary)
+          assert hashlib.sha256(payload).hexdigest()=='40593ebd28eb5e9c59adb42e4c55c9c5951a4e5f7dd46d4d6e887920bffaeaa8'
+          import io
+          with zipfile.ZipFile(io.BytesIO(payload)) as z:
+            assert z.testzip() is None
+            for entry in z.infolist():
+              p=Path(entry.filename)
+              assert not p.is_absolute() and '..' not in p.parts
+              assert entry.file_size<6000000 and not p.suffix.lower() in ('.woff','.woff2','.ttf','.otf','.eot')
+              allowed=str(p).startswith(('game-sources/muhimmat-almaarifa/','review-tests/')) or str(p) in {'index.html','js/mm-host.js','js/school.js','js/design-studio.js','js/homepage-hub-logic.js','js/design-schema.js','js/game-covers.js','assets/game-covers/muhimmat-almaarifa.20261115.jpg','supabase/functions/school-api/index.ts','supabase/functions/_shared/design-schema.js'}
+              assert allowed,str(p)
+              if entry.is_dir():continue
+              assert (entry.external_attr>>16)&0o170000!=0o120000
+              target=Path('platform')/p;target.parent.mkdir(parents=True,exist_ok=True);target.write_bytes(z.read(entry))
+          print('PASS exact SHA256, paths, no third party fonts or unsafe links')
+          PY
+      - name: Build and test full source and integration
+        working-directory: platform
+        run: |
+          npm ci --no-audit --no-fund
+          npm ci --prefix game-sources/muhimmat-almaarifa --no-audit --no-fund
+          npm test --prefix game-sources/muhimmat-almaarifa
+          npm run build --prefix game-sources/muhimmat-almaarifa
+          mkdir -p games/muhimmat-almaarifa
+          cp -a game-sources/muhimmat-almaarifa/dist/. games/muhimmat-almaarifa/
+          npm run build
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('review-tests/test-adapter.cjs');p.write_text(p.read_text().replace('../candidate/js/mm-host.js','../js/mm-host.js'))
+          p=Path('review-tests/test-game-bridge.cjs');p.write_text(p.read_text().replace('../candidate/games/muhimmat-almaarifa/school-bridge.js','../games/muhimmat-almaarifa/school-bridge.js'))
+          t=Path('supabase/functions/school-api/index.ts').read_text()
+          assert "b.template==='muhimmat-almaarifa'?10:100" in t
+          assert "b.template!=='muhimmat-almaarifa'||(!q.image" in t
+          assert '?school=1&test=1' not in Path('js/school.js').read_text()
+          assert 'window.__mmSchoolGame' in Path('game-sources/muhimmat-almaarifa/src/main.js').read_text()
+          assert Path('js/school.js').read_bytes()==Path('public/js/school.js').read_bytes()
+          assert not list(Path('games/muhimmat-almaarifa').rglob('*.woff*'))
+          PY
+          node review-tests/test-adapter.cjs
+          node review-tests/test-game-bridge.cjs
+          npm run check:js
+          npm run test:unit
+          node tests/school-api.cjs
+          node tests/game-session.cjs
+          node tests/game-modes.cjs
+          node tests/admin-requests.cjs
+      - name: Chromium 3D runtime verification
+        working-directory: platform
+        run: |
+          npx --no-install playwright install --with-deps chromium
+          node scripts/serve.js >/tmp/mm-server.log 2>&1 &
+          node <<'NODE'
+          const {chromium}=require('playwright'),assert=require('node:assert/strict');
+          (async()=>{
+            for(let i=0;i<50;i++){try{const r=await fetch('http://127.0.0.1:3000/');if(r.ok)break;}catch{}await new Promise(r=>setTimeout(r,200))}
+            const browser=await chromium.launch({headless:true,args:['--no-sandbox','--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
+            try{
+              const page=await browser.newPage({viewport:{width:1366,height:900}});
+              const errors=[],missing=[];page.on('pageerror',e=>errors.push(e.message));
+              page.on('response',r=>{if(r.status()===404&&r.url().startsWith('http://127.0.0.1:3000'))missing.push(r.url())});
+              await page.goto('http://127.0.0.1:3000/games/muhimmat-almaarifa/index.html?school=1',{waitUntil:'domcontentloaded'});
+              await page.waitForFunction(()=>!!window.__mmSchoolGame,{timeout:90000});
+              const state=await page.evaluate(()=>({renderer:!!window.__mmSchoolGame?.renderer,bridge:document.body.classList.contains('mm-school-mode'),debug:!!window.__mmTest}));
+              assert(state.renderer&&state.bridge&&!state.debug,JSON.stringify(state));
+              assert.deepEqual(errors,[]);assert.deepEqual(missing,[]);
+              console.log('PASS 3D engine school mode, protected bridge and no missing assets');
+            }finally{await browser.close()}
+          })().catch(e=>{console.error(e);process.exit(1)});
+          NODE
+      - name: Preserve inspected source as a nonproduction integration branch
+        working-directory: platform
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html public/index.html js/mm-host.js public/js/mm-host.js js/school.js public/js/school.js js/design-studio.js public/js/design-studio.js js/homepage-hub-logic.js public/js/homepage-hub-logic.js js/design-schema.js public/js/design-schema.js js/game-covers.js public/js/game-covers.js assets/game-covers/muhimmat-almaarifa.20261115.jpg public/assets/game-covers/muhimmat-almaarifa.20261115.jpg supabase/functions/school-api/index.ts supabase/functions/_shared/design-schema.js game-sources/muhimmat-almaarifa games/muhimmat-almaarifa public/games/muhimmat-almaarifa
+          git diff --cached --check -- ':!games/muhimmat-almaarifa/assets/*' ':!public/games/muhimmat-almaarifa/assets/*'
+          git commit -m 'Integrate Mission of Knowledge in school assignments and homepage'
+          export GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=http.https://github.com/.extraheader
+          export GIT_CONFIG_VALUE_0="AUTHORIZATION: basic $(printf 'x-access-token:%s' "$GH_TOKEN" | base64 -w0)"
+          git push origin HEAD:refs/heads/review/muhimmat-integrated-20261115
+          unset GIT_CONFIG_COUNT GIT_CONFIG_KEY_0 GIT_CONFIG_VALUE_0
+          git rev-parse HEAD
