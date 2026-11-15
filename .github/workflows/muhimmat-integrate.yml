@@ -58,6 +58,17 @@ jobs:
           npm run build --prefix game-sources/muhimmat-almaarifa
           mkdir -p games/muhimmat-almaarifa
           cp -a game-sources/muhimmat-almaarifa/dist/. games/muhimmat-almaarifa/
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('scripts/smoke-check.js')
+          s=p.read_text()
+          original=" const rel=path.relative(root,file);"
+          assert s.count(original)==1
+          s=s.replace(original,original+"\\n const unbundledMissionSource=rel.startsWith('game-sources/muhimmat-almaarifa/');")
+          s=s.replace("if(/\\.(js|cjs)$/.test(file)){try{new vm.Script", "if(!unbundledMissionSource&&/\\.(js|cjs)$/.test(file)){try{new vm.Script")
+          s=s.replace("if(file.endsWith('.html')){", "if(!unbundledMissionSource&&file.endsWith('.html')){")
+          p.write_text(s)
+          PY
           npm run build
           python3 - <<'PY'
           from pathlib import Path
@@ -110,7 +121,7 @@ jobs:
           set -euo pipefail
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add index.html public/index.html js/mm-host.js public/js/mm-host.js js/school.js public/js/school.js js/design-studio.js public/js/design-studio.js js/homepage-hub-logic.js public/js/homepage-hub-logic.js js/design-schema.js public/js/design-schema.js js/game-covers.js public/js/game-covers.js assets/game-covers/muhimmat-almaarifa.20261115.jpg public/assets/game-covers/muhimmat-almaarifa.20261115.jpg supabase/functions/school-api/index.ts supabase/functions/_shared/design-schema.js game-sources/muhimmat-almaarifa games/muhimmat-almaarifa public/games/muhimmat-almaarifa
+          git add scripts/smoke-check.js index.html public/index.html js/mm-host.js public/js/mm-host.js js/school.js public/js/school.js js/design-studio.js public/js/design-studio.js js/homepage-hub-logic.js public/js/homepage-hub-logic.js js/design-schema.js public/js/design-schema.js js/game-covers.js public/js/game-covers.js assets/game-covers/muhimmat-almaarifa.20261115.jpg public/assets/game-covers/muhimmat-almaarifa.20261115.jpg supabase/functions/school-api/index.ts supabase/functions/_shared/design-schema.js game-sources/muhimmat-almaarifa games/muhimmat-almaarifa public/games/muhimmat-almaarifa
           git diff --cached --check -- ':!games/muhimmat-almaarifa/assets/*' ':!public/games/muhimmat-almaarifa/assets/*'
           git commit -m 'Integrate Mission of Knowledge in school assignments and homepage'
           export GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=http.https://github.com/.extraheader
