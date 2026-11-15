@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#14181c">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>مهمّة المعرفة</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%2314181c'/%3E%3Ccircle cx='32' cy='32' r='17' fill='none' stroke='%23d9a441' stroke-width='5'/%3E%3Ccircle cx='32' cy='32' r='5' fill='%23d9a441'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="./school-only.css">
+</head>
+<body>
+  <canvas id="view" aria-label="ميدان اللعب"></canvas>
+
+  <!-- واجهة اللعب -->
+  <div id="hud" class="hidden" aria-live="polite">
+    <div class="hud-top">
+      <div class="stat health" id="healthBox">
+        <span class="stat-label">الصحة</span>
+        <div class="bar"><i id="healthFill"></i></div>
+        <b id="healthNum">١٠٠</b>
+      </div>
+      <div class="mission">
+        <div class="mission-row"><span id="missionLabel">المهمة ١ من ١</span><div class="progress" id="progress"></div></div>
+        <p id="question" class="question"></p>
+      </div>
+      <div class="stat score">
+        <button id="btnPause" class="icon-btn" aria-label="إيقاف مؤقت"><svg viewBox="0 0 24 24"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg></button>
+        <span class="stat-label">النقاط</span><b id="scoreNum">٠</b>
+      </div>
+    </div>
+    <div id="crosshair"><i></i><i></i><i></i><i></i><b></b></div>
+    <div id="hitmark"><i></i><i></i></div>
+    <div id="feedback" class="feedback hidden"><strong id="fbTitle"></strong><span id="fbText"></span></div>
+    <div id="aimed" class="aimed hidden"><span id="aimedNum"></span><span id="aimedText"></span></div>
+    <div id="damage"></div>
+    <div id="keys" class="keys">الأرقام ١–٤: اختيار هدف · مسافة: إطلاق · Esc: إيقاف مؤقت</div>
+    <button id="fireL" class="fire hidden" aria-label="إطلاق"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="2.5"/></svg></button>
+    <button id="fireR" class="fire hidden" aria-label="إطلاق"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="2.5"/></svg></button>
+  </div>
+
+  <!-- التحميل -->
+  <section id="scrLoading" class="screen center">
+    <div class="load-card">
+      <h1 class="brand">مهمّة المعرفة</h1>
+      <p id="loadText">جارٍ تجهيز الميدان…</p>
+      <div class="bar big"><i id="loadFill"></i></div>
+      <span id="loadPct">٠٪</span>
+    </div>
+  </section>
+
+  <!-- البداية -->
+  <section id="scrStart" class="screen side hidden">
+    <div class="panel">
+      <h1 class="brand">مهمّة المعرفة</h1>
+      <p class="tagline">أصِب هدف الإجابة الصحيحة لتفتح بوابة المحطة التالية.</p>
+      <label class="field"><span>اسم اللاعب (اختياري)</span><input id="playerName" type="text" maxlength="30" autocomplete="off" placeholder="اكتب اسمك"></label>
+      <button id="btnStart" class="btn primary">ابدأ المهمّة</button>
+      <div class="row">
+        <button id="btnHow" class="btn">طريقة اللعب</button>
+        <button id="btnSettings" class="btn">الإعدادات</button>
+      </div>
+      <button id="btnTeacher" class="btn ghost">لوحة المعلم</button>
+      <p class="bank-note" id="bankNote"></p>
+    </div>
+  </section>
+
+  <!-- طريقة اللعب -->
+  <section id="scrHow" class="screen center hidden">
+    <div class="panel wide">
+      <h2>طريقة اللعب</h2>
+      <ol class="how">
+        <li>اقرأ السؤال في أعلى الشاشة، ثم اقرأ الخيارات المكتوبة على الأهداف أمامك.</li>
+        <li>وجّه السلاح إلى هدف الإجابة التي تختارها وأطلق عليه.</li>
+        <li>الإجابة الصحيحة تفتح البوابة وتنقلك إلى المحطة التالية، والخاطئة تُنقص صحتك وتبقيك في المهمة نفسها.</li>
+        <li>الطلقات التي لا تصيب أي هدف لا تُحسب عليك.</li>
+      </ol>
+      <div class="how-grid">
+        <div><h3>الحاسوب</h3><p>حرّك الفأرة للتصويب وانقر للإطلاق. يمكنك أيضًا الضغط على الأرقام ١–٤ لاختيار هدف، و Esc للإيقاف المؤقت.</p></div>
+        <div><h3>الهاتف واللوح</h3><p>اسحب بإصبعك لتحريك النظر ثم اضغط زر الإطلاق، أو المس الهدف مباشرة للتصويب إليه والإطلاق.</p></div>
+      </div>
+      <button class="btn primary" data-close="scrHow">فهمت</button>
+    </div>
+  </section>
+
+  <!-- الإعدادات -->
+  <section id="scrSettings" class="screen center hidden">
+    <div class="panel wide">
+      <h2>الإعدادات</h2>
+      <div class="settings">
+        <label class="set"><span>جودة الرسوم</span>
+          <select id="setQuality"><option value="auto">تلقائية</option><option value="low">منخفضة</option><option value="medium">متوسطة</option><option value="high">عالية</option></select></label>
+        <label class="set"><span><input type="checkbox" id="setSfxOn"> أصوات اللعب والمؤثرات</span><input type="range" id="setSfxVol" min="0" max="1" step="0.05"></label>
+        <label class="set"><span><input type="checkbox" id="setAmbOn"> أجواء الميدان</span><input type="range" id="setAmbVol" min="0" max="1" step="0.05"></label>
+        <label class="set"><span><input type="checkbox" id="setSpeechOn"> قراءة السؤال صوتيًا</span><input type="range" id="setSpeechVol" min="0" max="1" step="0.05"></label>
+        <p class="hint" id="speechNote"></p>
+        <label class="set"><span>حساسية تحريك النظر</span><input type="range" id="setSens" min="0.4" max="2" step="0.1"></label>
+        <label class="set"><span><input type="checkbox" id="setReduce"> تقليل الحركة واهتزاز الكاميرا</span></label>
+        <p class="hint" id="fpsNote"></p>
+      </div>
+      <div class="row">
+        <button id="btnFullscreen" class="btn">ملء الشاشة</button>
+        <button class="btn primary" data-close="scrSettings">تم</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- الإيقاف المؤقت -->
+  <section id="scrPause" class="screen center hidden">
+    <div class="panel">
+      <h2>إيقاف مؤقت</h2>
+      <p class="sub">مهمّة المعرفة</p>
+      <button id="btnResume" class="btn primary">متابعة</button>
+      <button id="btnPauseSettings" class="btn">الإعدادات</button>
+      <button id="btnRestart" class="btn">إعادة البدء</button>
+      <button id="btnQuit" class="btn ghost">الشاشة الرئيسية</button>
+    </div>
+  </section>
+
+  <!-- انتهاء المحاولة -->
+  <section id="scrFail" class="screen center hidden">
+    <div class="panel wide">
+      <h2 class="danger">انتهت المحاولة</h2>
+      <p class="sub" id="failSummary"></p>
+      <div class="review">
+        <h3>مراجعة السؤال</h3>
+        <p id="failQuestion" class="review-q"></p>
+        <p id="failWrong"></p>
+        <p id="failHint" class="hint-box"></p>
+      </div>
+      <button id="btnRetry" class="btn primary">أعد المحاولة من هذه المهمة بصحة كاملة</button>
+      <div class="row">
+        <button id="btnFailNew" class="btn">جلسة جديدة</button>
+        <button id="btnFailHome" class="btn ghost">الشاشة الرئيسية</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- النهاية -->
+  <section id="scrEnd" class="screen side hidden">
+    <div class="panel wide">
+      <h2 class="success">اكتملت المهمّة!</h2>
+      <p class="sub" id="endName"></p>
+      <div class="cards" id="endCards"></div>
+      <p class="verdict" id="endVerdict"></p>
+      <details class="review"><summary>مراجعة الأسئلة</summary><ol id="endReview"></ol></details>
+      <button id="btnAgain" class="btn primary">العب مرة أخرى</button>
+      <div class="row">
+        <button id="btnSaveResult" class="btn">تنزيل النتيجة</button>
+        <button id="btnEndHome" class="btn ghost">الشاشة الرئيسية</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- لوحة المعلم -->
+  <section id="scrTeacher" class="screen full hidden">
+    <header class="t-head">
+      <h2>لوحة المعلم <small>مهمّة المعرفة</small></h2>
+      <nav><button class="tab active" data-tab="tabBank">الأسئلة</button><button class="tab" data-tab="tabRules">قواعد اللعب</button></nav>
+      <button id="btnTeacherClose" class="btn primary small">حفظ وإغلاق</button>
+    </header>
+    <p id="storeWarn" class="warn hidden">تعذّر الحفظ الدائم على هذا الجهاز. ستبقى تغييراتك حتى إغلاق الصفحة فقط، ويمكنك تصدير البنك للاحتفاظ به.</p>
+    <div id="tabBank" class="t-body">
+      <div class="t-tools">
+        <label class="field inline"><span>عنوان البنك</span><input id="bankTitle" type="text" maxlength="60"></label>
+        <button id="btnAddQ" class="btn small primary">إضافة سؤال</button>
+        <button id="btnImport" class="btn small">استيراد JSON</button>
+        <button id="btnExport" class="btn small">تصدير JSON</button>
+        <button id="btnDemo" class="btn small ghost">استعادة الأسئلة التجريبية</button>
+        <input id="fileImport" type="file" accept=".json,application/json" hidden>
+      </div>
+      <div id="bankMsg" class="msg hidden"></div>
+      <ol id="qList" class="q-list"></ol>
+      <form id="qForm" class="q-form hidden" autocomplete="off">
+        <h3 id="qFormTitle">سؤال جديد</h3>
+        <label class="field"><span>نص السؤال</span><textarea id="qText" rows="2" maxlength="240"></textarea></label>
+        <div class="field"><span>الخيارات — حدّد الإجابة الصحيحة</span><div id="qOptions"></div>
+          <button type="button" id="btnAddOpt" class="btn small ghost">إضافة خيار</button></div>
+        <label class="field"><span>تفسير الإجابة</span><textarea id="qExplain" rows="2" maxlength="300"></textarea></label>
+        <label class="field"><span>تلميح (اختياري)</span><input id="qHint" type="text" maxlength="160"></label>
+        <label class="field"><span>نص القراءة الصوتية مشكولًا (اختياري)</span><input id="qSpeech" type="text" maxlength="400"></label>
+        <div id="qFormMsg" class="msg hidden"></div>
+        <div class="row"><button type="submit" class="btn primary small">حفظ السؤال</button><button type="button" id="btnCancelQ" class="btn small">إلغاء</button></div>
+      </form>
+    </div>
+    <div id="tabRules" class="t-body hidden">
+      <div class="rules">
+        <label class="field"><span>الصحة عند البداية</span><input id="rHealth" type="number" min="20" max="1000" step="10"></label>
+        <label class="field"><span>خصم الإجابة الخاطئة</span><input id="rPenalty" type="number" min="0" max="1000" step="5"></label>
+        <label class="field"><span>نقاط المحاولة الأولى</span><input id="rP1" type="number" min="0" max="10000" step="10"></label>
+        <label class="field"><span>نقاط المحاولة الثانية</span><input id="rP2" type="number" min="0" max="10000" step="10"></label>
+        <label class="field"><span>نقاط المحاولة الثالثة</span><input id="rP3" type="number" min="0" max="10000" step="10"></label>
+        <label class="field"><span>نقاط المحاولة الرابعة</span><input id="rP4" type="number" min="0" max="10000" step="10"></label>
+        <label class="field"><span>عدد أسئلة الجلسة (٠ = كل الأسئلة)</span><input id="rLimit" type="number" min="0" max="200" step="1"></label>
+        <label class="field"><span>مدة عرض التفسير بالثواني</span><input id="rFeedback" type="number" min="1" max="8" step="0.2"></label>
+        <label class="check"><input id="rShuffleO" type="checkbox"> خلط ترتيب الخيارات</label>
+        <label class="check"><input id="rShuffleQ" type="checkbox"> خلط ترتيب الأسئلة</label>
+      </div>
+      <button id="btnRulesReset" class="btn small ghost">استعادة القيم الافتراضية</button>
+    </div>
+  </section>
+
+  <!-- تنبيهات -->
+  <section id="scrRotate" class="screen center hidden">
+    <div class="panel">
+      <svg class="rotate-ico" viewBox="0 0 64 64"><rect x="20" y="8" width="24" height="48" rx="5" fill="none" stroke="currentColor" stroke-width="4"/><path d="M50 40a22 22 0 0 1-14 16" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round"/><path d="M34 60l3-5 4 5" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round"/></svg>
+      <h2>أدِر الجهاز إلى الوضع الأفقي</h2>
+      <p class="sub">تقدّمك محفوظ، وتُستكمل اللعبة بعد التدوير.</p>
+      <button id="btnRotateSkip" class="btn ghost">المتابعة بهذا الوضع</button>
+    </div>
+  </section>
+  <div id="toast" class="toast hidden"></div>
+  <div id="fade"></div>
+
+  <script type="module" src="/src/main.js"></script>
+<script src="./school-bridge.js"></script>
+</body>
+</html>

@@ -92,6 +92,7 @@
       playableDemo: true
     },
     'qatar-hero':{key:'qatar-hero',name:'مغامرات بطل قطر',badge:'مغامرة ثلاثية الأبعاد',eyebrow:'قفز ومهارة وأسئلة',headline:'اكتشف قطر بالقفز على مكعبات الأسئلة',pitch:'مغامرة وسط ست بيئات قطرية؛ اصطدم بمكعب السؤال، وأجب بشكل صحيح لتفتح الطريق وتتابع التقدم.',cover:'assets/game-covers/qatar-hero.20261102.jpg',playableDemo:true},
+  'muhimmat-almaarifa':{key:'muhimmat-almaarifa',name:'مهمّة المعرفة',badge:'ميدان تصويب تعليمي 3D',eyebrow:'تحدي التصويب بالمعرفة',headline:'صوّب نحو الإجابة الصحيحة وتقدّم',pitch:'اصب الهدف الصحيح لتفتح بوابة جديدة في ميدان تدريبي ثلاثي الأبعاد.',cover:'assets/game-covers/muhimmat-almaarifa.20261115.jpg',playableDemo:true},
   'qatar-camel-race':{key:'qatar-camel-race',name:'سباق الهجن القطري',badge:'سباق قطري ثلاثي الأبعاد',eyebrow:'تراث قطري وتنافس معرفي',headline:'قدّم هجينك بإجاباتك نحو خط النهاية',pitch:'نافس خمسة هجن في مضمار قطري، وأجب بعد كل مرحلة قصيرة.',cover:'assets/game-covers/qatar-camel-race.20261113.jpg',playableDemo:true},
     classic: {
       key: 'classic',

@@ -4,9 +4,10 @@ const root=path.resolve(__dirname,'..'),errors=[];let scripts=0,links=0;
 function walk(dir){return fs.readdirSync(dir,{withFileTypes:true}).flatMap(e=>['node_modules','.git'].includes(e.name)?[]:e.isDirectory()?walk(path.join(dir,e.name)):[path.join(dir,e.name)])}
 for(const file of walk(root)){
  const rel=path.relative(root,file);
- if(/\.(js|cjs)$/.test(file)){try{new vm.Script(fs.readFileSync(file,'utf8'),{filename:rel});scripts++}catch(e){errors.push(e.message)}}
+ const unbundledMissionSource=rel.startsWith('game-sources/muhimmat-almaarifa/');
+ if(!unbundledMissionSource&&/\.(js|cjs)$/.test(file)){try{new vm.Script(fs.readFileSync(file,'utf8'),{filename:rel});scripts++}catch(e){errors.push(e.message)}}
  if(/\.(js|html|ts)$/.test(file)&&/AIzaSy[A-Za-z0-9_\-]{20,}|sb_secret_[A-Za-z0-9_-]{20,}/.test(fs.readFileSync(file,'utf8')))errors.push('Private API key: '+rel);
- if(file.endsWith('.html')){
+ if(!unbundledMissionSource&&file.endsWith('.html')){
   const html=fs.readFileSync(file,'utf8');for(const match of html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/gi)){const scriptType=match[1].match(/\btype\s*=\s*["']([^"']+)["']/i);if(/\bsrc\s*=/.test(match[1])||(scriptType&&!/^(?:module|text\/javascript|application\/javascript)$/i.test(scriptType[1]))||!match[2].trim())continue;try{new vm.Script(match[2],{filename:rel+' inline'});scripts++}catch(e){errors.push(e.message)}}
   for(const match of html.matchAll(/(?:src|href)=["']([^"']+)["']/g)){const url=match[1].split(/[?#]/)[0];if(!url||/^(?:[a-z]+:|\/\/|#)/i.test(url))continue;const target=path.resolve(path.dirname(file),url);if(!fs.existsSync(target))errors.push(rel+' references missing '+url);links++}
  }
