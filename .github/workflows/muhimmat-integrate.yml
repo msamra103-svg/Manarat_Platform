@@ -64,7 +64,7 @@ jobs:
           s=p.read_text()
           original=" const rel=path.relative(root,file);"
           assert s.count(original)==1
-          s=s.replace(original,original+"\\n const unbundledMissionSource=rel.startsWith('game-sources/muhimmat-almaarifa/');")
+          s=s.replace(original,original+"\n const unbundledMissionSource=rel.startsWith('game-sources/muhimmat-almaarifa/');")
           s=s.replace("if(/\\.(js|cjs)$/.test(file)){try{new vm.Script", "if(!unbundledMissionSource&&/\\.(js|cjs)$/.test(file)){try{new vm.Script")
           s=s.replace("if(file.endsWith('.html')){", "if(!unbundledMissionSource&&file.endsWith('.html')){")
           p.write_text(s)
