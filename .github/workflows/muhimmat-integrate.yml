@@ -2,7 +2,7 @@ name: Review and build Muhimmat Almaarifa from verified source blobs
 on:
   push:
     branches: [review/muhimmat-knowledge-20261115]
-    paths: ['.github/workflows/muhimmat-integrate.yml']
+    paths: ['.github/workflows/muhimmat-integrate.yml', '.github/scripts/muhimmat-rest-commit.py']
 permissions: {contents: read}
 jobs:
   integrate:
