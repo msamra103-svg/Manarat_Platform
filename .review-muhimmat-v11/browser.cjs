@@ -1,0 +1,26 @@
+'use strict';
+const http=require('node:http'),fs=require('node:fs'),path=require('node:path'),assert=require('node:assert/strict'),{chromium}=require('playwright');
+const root=process.cwd();
+const html=`<!doctype html><html lang="ar"><meta charset="utf-8"><body><iframe id="game" src="/games/muhimmat-almaarifa/index.html?school=1&v=20261116-v11" style="width:1260px;height:750px"></iframe><script>
+const ch='test-channel-v11';window.log={ready:0,grades:[],finishes:0};
+addEventListener('message',e=>{
+ const m=e.data;if(!m||m.protocol!=='mm-school/1'||m.game!=='muhimmat-almaarifa'||e.source!==document.querySelector('iframe').contentWindow||e.origin!==location.origin)return;
+ const send=(type,rest={})=>e.source.postMessage({protocol:'mm-school/1',game:'muhimmat-almaarifa',channel:ch,type,...rest},location.origin);
+ if(m.type==='ready'){log.ready++;send('config',{mode:'individual',title:'تجربة صفية آمنة',student:'طالب اختبار',questions:[{id:'q1',text:'ما عاصمة قطر؟',options:[{id:'0',text:'الريان'},{id:'1',text:'الدوحة'},{id:'2',text:'الخور'}]}]});}
+ if(m.type==='answer'){const correct=m.value==='1';log.grades.push([m.value,correct]);send('grade',{requestId:m.requestId,index:m.index,correct,points:correct?25:0,feedback:'تصحيح تجريبي',explanation:'الدوحة'});}
+ if(m.type==='finish'){log.finishes++;send('finishAck',{score:77,group:false,saved:true});}
+});</script></body></html>`;
+const mime={'.html':'text/html;charset=utf-8','.js':'text/javascript;charset=utf-8','.css':'text/css;charset=utf-8','.svg':'image/svg+xml','.webp':'image/webp','.png':'image/png','.jpg':'image/jpeg','.woff':'font/woff','.woff2':'font/woff2','.bin':'application/octet-stream','.glb':'model/gltf-binary'};
+const server=http.createServer((req,res)=>{const url=new URL(req.url,'http://localhost');if(url.pathname==='/__host__'){res.writeHead(200,{'content-type':'text/html;charset=utf-8'});return res.end(html)}const file=path.resolve(root,'.'+decodeURIComponent(url.pathname));if(!file.startsWith(root+path.sep)){res.writeHead(403);return res.end()}fs.readFile(file,(e,bytes)=>{if(e){res.writeHead(404);return res.end('Not Found')}res.writeHead(200,{'content-type':mime[path.extname(file)]||'application/octet-stream'});res.end(bytes)});});
+(async()=>{let browser;const errors=[],missing=[],checks=[];try{await new Promise(r=>server.listen(0,'127.0.0.1',r));const origin='http://127.0.0.1:'+server.address().port;
+ browser=await chromium.launch({headless:true,args:['--no-sandbox','--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']});const page=await browser.newPage({viewport:{width:1450,height:900}});
+ page.on('pageerror',e=>errors.push(e.message));page.on('response',r=>{if(r.status()===404)missing.push(r.url())});await page.route('**/*',r=>new URL(r.request().url()).origin===origin?r.continue():r.abort());
+ await page.goto(origin+'/__host__',{waitUntil:'domcontentloaded',timeout:30000});const f=page.frameLocator('#game');await page.waitForFunction(()=>log.ready===1,{},{timeout:60000});
+ await f.locator('#btnStart').waitFor({state:'visible',timeout:30000});const selection=await f.locator('body').evaluate(async()=>{const g=window.__mmSchoolGame;if(!g||!g.mmSchoolReceive)throw Error('Bridge not configured');g.chooseChar('student');await g.chooseEnv('forest');return {env:g.prefs.environment,character:g.prefs.character,teacherShown:!!document.querySelector('#btnTeacher')?.offsetParent}});
+ assert.deepEqual(selection,{env:'forest',character:'student',teacherShown:false});checks.push('new characters and forest');await f.locator('#btnStart').click();
+ await f.locator('body').evaluate(()=>new Promise((ok,fail)=>{const start=Date.now(),timer=setInterval(()=>{const g=window.__mmSchoolGame;if(g?.state==='question'){clearInterval(timer);ok()}else if(Date.now()-start>30000){clearInterval(timer);fail(Error('Question failed '+g?.state))}},100)}));
+ const emit=async id=>{await f.locator('body').evaluate(x=>{const g=window.__mmSchoolGame,b=Array.from({length:4},(_,i)=>g.targets.byBadge(i+1)).find(y=>y&&y.optionId===x);if(!b)throw Error('Answer board '+x+' missing');g.evaluate(b)},id)};
+ await emit('0');await page.waitForFunction(()=>log.grades.length===1,{},{timeout:10000});await page.waitForTimeout(350);await emit('1');await page.waitForFunction(()=>log.grades.length===2,{},{timeout:10000});await page.waitForFunction(()=>log.finishes===1,{},{timeout:30000});await f.locator('#scrEnd').waitFor({state:'visible',timeout:20000});
+ assert.deepEqual(await page.evaluate('log.grades'),[['0',false],['1',true]]);const x=await f.locator('body').evaluate(()=>({mode:document.body.classList.contains('mm-school-mode'),review:document.querySelector('#endReview')?.textContent||''}));assert(x.mode);assert(!x.review.includes('الإجابة الصحيحة:'));
+ checks.push('school server grading wrong/correct, final once, no answer leak');assert.deepEqual(errors,[]);assert.deepEqual(missing,[]);console.log('PASS '+checks.join(' | '));
+}catch(err){console.error(err);console.log('ERRORS',errors,'MISSING',missing);process.exitCode=1}finally{if(browser)await browser.close();await new Promise(r=>server.close(r))}})();
