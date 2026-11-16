@@ -17,6 +17,8 @@ export const DEFAULT_RULES = {
 
 export const DEFAULT_PREFS = {
   playerName: '',
+  environment: 'desert',     // desert | forest
+  character: 'ranger-desert',
   quality: 'auto',           // auto | low | medium | high
   sfxOn: true, sfxVolume: 0.8,
   ambienceOn: true, ambienceVolume: 0.45,

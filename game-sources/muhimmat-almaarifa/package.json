@@ -1,6 +1,6 @@
 {
   "name": "muhimmat-almaarifa",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "مهمّة المعرفة — لعبة تعليمية ثلاثية الأبعاد تعمل في المتصفح",
   "private": true,
   "type": "module",
@@ -9,12 +9,15 @@
     "build": "node tools/copy-samples.mjs && vite build && node tools/make-standalone.mjs",
     "preview": "vite preview --host",
     "serve": "node tools/serve.mjs dist 8080",
-    "test": "node --test tests/core.test.mjs"
+    "test": "node --test tests/core.test.mjs",
+    "assets:trees": "node tools/gen-trees.mjs"
   },
   "dependencies": {
+    "@fontsource/cairo": "^5.3.0",
     "three": "^0.187.0"
   },
   "devDependencies": {
-    "vite": "^8.3.8"
+    "vite": "^8.3.8",
+    "@dgreenheck/ez-tree": "^1.1.0"
   }
 }

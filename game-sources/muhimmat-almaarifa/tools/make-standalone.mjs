@@ -25,6 +25,7 @@ const js = readFileSync(join(dist, jsTag[1]), 'utf8').replace(/<\/script/gi, '<\
 const inline = {};
 for (const f of readdirSync(join(dist, 'assets/textures/512'))) inline[`assets/textures/512/${f}`] = b64(join(dist, 'assets/textures/512', f), 'image/webp');
 inline['assets/models/soldier.glb'] = b64(join(dist, 'assets/models/soldier.glb'), 'model/gltf-binary');
+inline['assets/models/trees.bin'] = b64(join(dist, 'assets/models/trees.bin'), 'application/octet-stream');
 
 html = html.replace(cssTag[0], () => `<style>${css}</style>`)
   .replace(jsTag[0], () => `<script>window.__MM_INLINE=${JSON.stringify(inline)};</script>\n<script type="module">${js}</script>`);

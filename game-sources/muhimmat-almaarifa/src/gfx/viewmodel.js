@@ -4,6 +4,7 @@ import * as THREE from 'three';
 import { clone as cloneSkinned } from 'three/addons/utils/SkeletonUtils.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { SUN_DIR } from './world.js';
+import { makeRig, buildStudent } from './characters.js';
 
 // وضعية الإمساك (إحداثيات محلية للسلاح: ‎-Z للأمام، ‎+Y للأعلى، الأصل أعلى المقبض)
 export const POSE = {
@@ -102,36 +103,40 @@ function frame(along, top) {
   return new THREE.Matrix4().makeBasis(a, t, new THREE.Vector3().crossVectors(a, t));
 }
 
-export function buildArms(gltf) {
-  const root = cloneSkinned(gltf.scene);
-  root.updateMatrixWorld(true);
-  let mesh = null;
-  root.traverse(o => { if (o.isSkinnedMesh) { if (/visor/i.test(o.name)) o.visible = false; else mesh = o; } });
-  if (!mesh) return null;
-  // إبقاء مثلثات الذراعين واليدين فقط
-  const geo = mesh.geometry.clone();
-  const bones = mesh.skeleton.bones;
-  const armIdx = new Set(bones.map((b, i) => (isArmBone(b.name) ? i : -1)).filter(i => i >= 0));
-  const si = geo.attributes.skinIndex, sw = geo.attributes.skinWeight;
-  const armW = new Float32Array(si.count);
-  for (let i = 0; i < si.count; i++) {
-    let w = 0;
-    for (let k = 0; k < 4; k++) if (armIdx.has(si.getComponent(i, k))) w += sw.getComponent(i, k);
-    armW[i] = w;
+export function buildArms(gltf, def, assets) {
+  const rig = makeRig(gltf), root = rig.root, bones = rig.bones;
+  if (def && def.kind === 'student') {
+    // الطالب: كُمّا الثوب ويدان مكشوفتان مبنيّة على الهيكل نفسه
+    rig.meshes.forEach(m => { m.visible = false; });
+    buildStudent(rig, assets, true);
+  } else {
+    rig.meshes.forEach(m => { if (m !== rig.body) m.visible = false; });
+    const mesh = rig.body;
+    // إبقاء مثلثات الذراعين واليدين فقط
+    const geo = mesh.geometry.clone();
+    const armIdx = new Set(bones.map((b, i) => (isArmBone(b.name) ? i : -1)).filter(i => i >= 0));
+    const si = geo.attributes.skinIndex, sw = geo.attributes.skinWeight;
+    const armW = new Float32Array(si.count);
+    for (let i = 0; i < si.count; i++) {
+      let w = 0;
+      for (let k = 0; k < 4; k++) if (armIdx.has(si.getComponent(i, k))) w += sw.getComponent(i, k);
+      armW[i] = w;
+    }
+    const src = geo.index ? geo.index.array : Array.from({ length: geo.attributes.position.count }, (_, i) => i);
+    const keep = [];
+    for (let i = 0; i < src.length; i += 3) if (armW[src[i]] > 0.5 && armW[src[i + 1]] > 0.5 && armW[src[i + 2]] > 0.5) keep.push(src[i], src[i + 1], src[i + 2]);
+    geo.setIndex(keep);
+    for (let i = 0; i < si.count; i++) {
+      if (armW[i] <= 0.5) continue;
+      for (let k = 0; k < 4; k++) sw.setComponent(i, k, armIdx.has(si.getComponent(i, k)) ? sw.getComponent(i, k) / armW[i] : 0);
+    }
+    sw.needsUpdate = true;
+    mesh.geometry = geo;
+    mesh.frustumCulled = false; mesh.castShadow = false; mesh.receiveShadow = false;
+    mesh.material = mesh.material.clone();
+    mesh.material.metalness = 0.12; mesh.material.roughness = 0.62;
+    if (def && def.tint) mesh.material.color.set(def.tint);
   }
-  const src = geo.index ? geo.index.array : Array.from({ length: geo.attributes.position.count }, (_, i) => i);
-  const keep = [];
-  for (let i = 0; i < src.length; i += 3) if (armW[src[i]] > 0.5 && armW[src[i + 1]] > 0.5 && armW[src[i + 2]] > 0.5) keep.push(src[i], src[i + 1], src[i + 2]);
-  geo.setIndex(keep);
-  for (let i = 0; i < si.count; i++) {
-    if (armW[i] <= 0.5) continue;
-    for (let k = 0; k < 4; k++) sw.setComponent(i, k, armIdx.has(si.getComponent(i, k)) ? sw.getComponent(i, k) / armW[i] : 0);
-  }
-  sw.needsUpdate = true;
-  mesh.geometry = geo;
-  mesh.frustumCulled = false; mesh.castShadow = false; mesh.receiveShadow = false;
-  mesh.material = mesh.material.clone();
-  mesh.material.metalness = 0.12; mesh.material.roughness = 0.62;
 
   const byName = {}; bones.forEach(b => { byName[b.name.replace('mixamorig', '')] = b; });
   bones.forEach(b => { b.userData.bindLocal = b.quaternion.clone(); b.userData.bindWorld = b.getWorldQuaternion(new THREE.Quaternion()); b.userData.bindPos = b.position.clone(); });
@@ -176,18 +181,19 @@ export function buildArms(gltf) {
     }
     root.updateMatrixWorld(true);
   }
-  return { root, mesh, apply, byName };
+  return { root, apply, byName };
 }
 
 // ---------- المجموعة الكاملة ----------
 export class ViewModel {
-  constructor(assets, envTexture) {
+  constructor(assets, envTexture, def) {
+    this.assets = assets;
     this.scene = new THREE.Scene();
     this.scene.environment = envTexture; this.scene.environmentIntensity = 0.45;
     this.camera = new THREE.PerspectiveCamera(50, 16 / 9, 0.02, 8);
     this.root = new THREE.Group(); this.scene.add(this.root);
     this.weapon = buildWeapon(); this.root.add(this.weapon);
-    this.arms = assets.models.soldier ? buildArms(assets.models.soldier) : null;
+    this.arms = assets.models.soldier ? buildArms(assets.models.soldier, def, assets) : null;
     if (this.arms) this.root.add(this.arms.root);
     this.sun = new THREE.DirectionalLight(0xfff0d8, 2.6); this.scene.add(this.sun, this.sun.target);
     this.fill = new THREE.HemisphereLight(0xcfe0ff, 0xb89a6e, 0.55); this.scene.add(this.fill);
@@ -203,6 +209,17 @@ export class ViewModel {
     this.swayX = 0; this.swayY = 0;
     this.applyPose();
   }
+
+  /** يبدّل ذراعي منظور الشخص الأول بما يطابق الشخصية المختارة. */
+  setCharacter(def) {
+    if (!this.assets.models.soldier) return;
+    if (this.arms) { this.root.remove(this.arms.root); this.arms.root.traverse(o => { if (o.isSkinnedMesh && o.geometry) o.geometry.dispose(); }); }
+    this.arms = buildArms(this.assets.models.soldier, def, this.assets);
+    this.root.add(this.arms.root);
+    this.applyPose();
+  }
+
+  setEnvironment(texture, intensity = 0.45) { this.scene.environment = texture; this.scene.environmentIntensity = intensity; }
 
   applyPose() {
     this.base = { pos: V(POSE.root.pos), rot: new THREE.Euler(...POSE.root.rot) };

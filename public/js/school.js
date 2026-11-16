@@ -453,7 +453,7 @@ function renderMissionGame(){
   restart:async()=>{session.answerPending=false;try{await restartSession();}finally{session.answerPending=false;}},
   exit:done=>{if(done)home();else endSession();}
  });
- frame.src='games/muhimmat-almaarifa/index.html?school=1&v=20261115-hardening';
+ frame.src='games/muhimmat-almaarifa/index.html?school=1&v=20261116-v11';
 }
 
 function renderCamelRace(){
