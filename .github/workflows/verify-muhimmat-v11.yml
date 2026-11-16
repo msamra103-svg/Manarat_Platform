@@ -1,0 +1,88 @@
+name: Verify Muhimmat Almaarifa v1.1 safe replacement
+on:
+  push:
+    branches: [review/muhimmat-almaarifa-v11-20261116]
+    paths: ['.review-muhimmat-v11/**','.github/workflows/verify-muhimmat-v11.yml']
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 22
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Restore reviewed v1.1 source and verify every file hash
+        run: |
+          python3 - <<'PY'
+          import pathlib,zipfile,io,hashlib,base64,json
+          r=pathlib.Path('.review-muhimmat-v11')
+          parts=[(r/f'part-{i:02}.b64').read_text().strip() for i in range(1,12)]
+          payload=base64.b64decode(''.join(parts),validate=True)
+          expected='e315e4efb80d3b6af7fe38d8d24993cbd4be998efabeec4f9338bf316136f9a4'
+          assert hashlib.sha256(payload).hexdigest()==expected
+          with zipfile.ZipFile(io.BytesIO(payload)) as z:
+            assert z.testzip() is None
+            manifest=json.loads(z.read('overlay-manifest.json'))
+            assert manifest['game']=='muhimmat-almaarifa' and manifest['version']=='1.1.0'
+            for f in manifest['files']:
+              name='overlay/'+f['path']
+              assert f['path'] and '..' not in pathlib.PurePosixPath(f['path']).parts
+              assert f['path'].startswith(('src/','public/','tools/','tests/')) or f['path'] in ('index.html','package.json','package-lock.json','vite.config.js')
+              raw=z.read(name)
+              assert len(raw)==f['size'] and hashlib.sha256(raw).hexdigest()==f['sha256']
+              dest=pathlib.Path('game-sources/muhimmat-almaarifa')/f['path']
+              dest.parent.mkdir(parents=True,exist_ok=True);dest.write_bytes(raw)
+          p=pathlib.Path('js/school.js');s=p.read_text();old='games/muhimmat-almaarifa/index.html?school=1&v=20261115-hardening'
+          assert s.count(old)==1
+          p.write_text(s.replace(old,'games/muhimmat-almaarifa/index.html?school=1&v=20261116-v11'))
+          assert 'window.__mmSchoolGame' in pathlib.Path('game-sources/muhimmat-almaarifa/src/main.js').read_text()
+          assert 'g.notifyHost=function(){}' in pathlib.Path('game-sources/muhimmat-almaarifa/public/school-bridge.js').read_text()
+          assert 'mm-school-mode' in pathlib.Path('game-sources/muhimmat-almaarifa/public/school-only.css').read_text()
+          print('PASS exact version 1.1 sources, school bridge and original student result authority')
+          PY
+      - name: Install, build game, synchronize web production mirrors
+        run: |
+          npm ci --no-audit --no-fund
+          npm ci --prefix game-sources/muhimmat-almaarifa --no-audit --no-fund --ignore-scripts
+          npm test --prefix game-sources/muhimmat-almaarifa
+          npm run build --prefix game-sources/muhimmat-almaarifa
+          test -s game-sources/muhimmat-almaarifa/dist/assets/models/trees.bin
+          test -s game-sources/muhimmat-almaarifa/dist/assets/models/soldier.glb
+          test -s game-sources/muhimmat-almaarifa/dist/school-bridge.js
+          grep -q 'school-bridge.js' game-sources/muhimmat-almaarifa/dist/index.html
+          rm -rf games/muhimmat-almaarifa
+          mkdir -p games/muhimmat-almaarifa
+          cp -a game-sources/muhimmat-almaarifa/dist/. games/muhimmat-almaarifa/
+          rm -rf game-sources/muhimmat-almaarifa/dist game-sources/muhimmat-almaarifa/standalone
+          npm run build
+          npm run check:js
+          npm run test:unit
+          node tests/game-session.cjs
+          node tests/game-modes.cjs
+          node tests/school-api.cjs
+      - name: Verify live Chromium game iframe and server-owned grades
+        run: |
+          npx --no-install playwright install --with-deps chromium
+          node tests/classroom-auth-browser.cjs
+          node .review-muhimmat-v11/browser.cjs
+      - name: Publish tested source and static assets to review branch only
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          test "$(git branch --show-current)" = 'review/muhimmat-almaarifa-v11-20261116'
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A game-sources/muhimmat-almaarifa games/muhimmat-almaarifa public/games/muhimmat-almaarifa js/school.js public/js/school.js
+          git diff --cached --check -- game-sources/muhimmat-almaarifa/src js/school.js public/js/school.js
+          git commit -m 'Replace Muhimmat Almaarifa 1.0 with Chromium-tested 1.1 while preserving assignment grading'
+          export GIT_CONFIG_COUNT=1
+          export GIT_CONFIG_KEY_0=http.https://github.com/.extraheader
+          export GIT_CONFIG_VALUE_0="AUTHORIZATION: basic $(printf 'x-access-token:%s' "$GH_TOKEN" | base64 -w0)"
+          git push origin HEAD:refs/heads/review/muhimmat-almaarifa-v11-20261116
+          unset GIT_CONFIG_COUNT GIT_CONFIG_KEY_0 GIT_CONFIG_VALUE_0
+          git rev-parse HEAD
