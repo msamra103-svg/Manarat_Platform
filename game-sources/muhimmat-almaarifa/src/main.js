@@ -1,5 +1,10 @@
 // «مهمّة المعرفة» — نقطة التشغيل وآلة الحالات:
 // loading → menu → intro → presenting → question ⇄ (خطأ) → feedback → moving → … → done | failed
+import '@fontsource/cairo/arabic-500.css';
+import '@fontsource/cairo/arabic-700.css';
+import '@fontsource/cairo/arabic-900.css';
+import '@fontsource/cairo/latin-500.css';
+import '@fontsource/cairo/latin-700.css';
 import './ui/styles.css';
 import * as THREE from 'three';
 import { APP_NAME, DEFAULT_PREFS, DEFAULT_RULES, STORAGE_KEYS, WORLD, FEEDBACK, num, countQuestions } from './core/config.js';
@@ -9,10 +14,11 @@ import { createSession, currentMission, submitAnswer, advance, retryCurrent, sum
 import demoBank from './data/demo-bank.json';
 import { Assets } from './gfx/assets.js';
 import { createMaterials } from './gfx/materials.js';
-import { World, SUN_DIR } from './gfx/world.js';
+import { World, SUN_DIR, ENVS } from './gfx/world.js';
 import { TargetSets } from './gfx/targets.js';
 import { ViewModel, POSE } from './gfx/viewmodel.js';
-import { FX, Character } from './gfx/fx.js';
+import { FX } from './gfx/fx.js';
+import { Character, CHARACTERS, characterById } from './gfx/characters.js';
 import { GameAudio } from './audio/audio.js';
 import { Controls } from './input/controls.js';
 import { UI, $, downloadText } from './ui/ui.js';
@@ -38,6 +44,8 @@ class Game {
     const stored = storage.read(STORAGE_KEYS.bank, null);
     const check = stored ? validateBank(stored) : null;
     this.bank = check && check.ok ? check.bank : validateBank(demoBank).bank;
+    if (!ENVS[this.prefs.environment]) this.prefs.environment = 'desert';
+    this.prefs.character = characterById(this.prefs.character).id;
     this.state = 'loading'; this.paused = false; this.session = null;
     this.timers = []; this.clock = 0; this.lastShot = -1; this.player = new THREE.Vector3(0, 0, 5.6);
     this.move = null; this.kick = 0; this.fps = 60; this.fpsAcc = 0; this.fpsN = 0; this.slow = 0; this.vmVisible = false; this.skipRotate = false;
@@ -68,7 +76,7 @@ class Game {
       return;
     }
     const r = this.renderer;
-    r.toneMapping = THREE.ACESFilmicToneMapping; r.toneMappingExposure = 0.6;
+    r.toneMapping = THREE.ACESFilmicToneMapping; r.toneMappingExposure = ENVS[this.prefs.environment].exposure;
     r.shadowMap.type = THREE.PCFShadowMap; r.shadowMap.autoUpdate = false; r.autoClear = false;
     canvas.addEventListener('webglcontextlost', e => { e.preventDefault(); this.lost = true; if (PLAYING.includes(this.state)) this.pause(); ui.toast('توقّف عرض الرسوم مؤقتًا. سيُستكمل تلقائيًا، وتقدّمك محفوظ.', 6000); });
     canvas.addEventListener('webglcontextrestored', () => { this.lost = false; this.shadowDirty = true; });
@@ -87,21 +95,23 @@ class Game {
       } catch (e) { this.bootNotice = 'تعذّر تحميل بنك الأسئلة المحدَّد في الرابط؛ تُستعمل الأسئلة المحفوظة في الجهاز.'; }
     }
     this.assets = new Assets();
-    const fontJob = Promise.resolve(); // Arabic system font fallback only
+    const fontJob = Promise.all(['500', '700', '900'].map(w => document.fonts.load(`${w} 40px Cairo`, 'مهمّة ١٢٣'))).catch(() => {});
     const tier = QUALITY[this.prefs.quality === 'auto' ? this.autoTier : this.prefs.quality].tier;
-    const failed = await this.assets.loadAll(tier, p => ui.setLoading(0.05 + p * 0.7, 'جارٍ تحميل الخامات والنماذج…'));
+    const failed = await this.assets.loadAll(tier, p => ui.setLoading(0.05 + p * 0.7, 'جارٍ تحميل الخامات والنماذج…'), this.prefs.environment);
     await fontJob;
     ui.setLoading(0.8, 'جارٍ بناء المحطات…');
     await new Promise(res => requestAnimationFrame(res));
 
     this.mats = createMaterials(this.assets);
     this.world = new World(this.scene, this.mats, this.assets);
+    this.world.envName = this.prefs.environment;
     const env = this.world.build(this.sessionCount(), r);
     this.targets = new TargetSets(this.scene, this.mats);
     this.fx = new FX(this.scene);
-    this.vm = new ViewModel(this.assets, env);
-    this.character = new Character(this.scene, this.assets);
-    this.audio = new GameAudio(this.prefs);
+    const who = characterById(this.prefs.character);
+    this.vm = new ViewModel(this.assets, env, who);
+    this.character = new Character(this.scene, this.assets); this.character.set(who);
+    this.audio = new GameAudio(this.prefs); this.audio.env = this.prefs.environment;
     this.controls = new Controls(canvas, {
       onFire: ndc => this.onFire(ndc), onSelect: n => this.onSelect(n), onPause: () => this.togglePause(),
       onLockChange: locked => { if (!locked && PLAYING.includes(this.state) && !this.paused && this.controls.wantLock) this.pause(); }
@@ -122,8 +132,8 @@ class Game {
     r.setAnimationLoop(t => this.frame(t));
     if (failed.length) ui.toast('تعذّر تحميل بعض العناصر البصرية، وسيستمر اللعب ببدائل مبسّطة.', 6000);
     else if (this.bootNotice) ui.toast(this.bootNotice, 6000);
-    if (new URLSearchParams(location.search).get('school') === '1') window.__mmSchoolGame = this; // واجهة الربط المدرسي فقط
-    else if (import.meta.env.DEV && new URLSearchParams(location.search).has('test')) window.__mmTest = this; // التطوير فقط
+    if (new URLSearchParams(location.search).get('school') === '1' && window.parent !== window) window.__mmSchoolGame = this;
+    else if (import.meta.env.DEV && new URLSearchParams(location.search).has('test')) window.__mmTest = this; // development only
     if (import.meta.env.DEV) { window.__mm = this; window.__POSE = POSE; }
   }
 
@@ -147,6 +157,7 @@ class Game {
     if (sh.mapSize.x !== Q.shadowSize) { sh.mapSize.set(Q.shadowSize, Q.shadowSize); if (sh.map) { sh.map.dispose(); sh.map = null; } }
     this.assets.setAnisotropy(Math.min(Q.aniso, r.capabilities.getMaxAnisotropy()));
     this.assets.setTier(Q.tier);
+    this.world.setTreeDensity({ low: 1, medium: 2, high: 3 }[tier]);
     if (changed) this.scene.traverse(o => { if (o.material) [].concat(o.material).forEach(m => { m.needsUpdate = true; }); });
     this.shadowDirty = true; this.resize();
   }
@@ -169,6 +180,12 @@ class Game {
   bindUI() {
     const ui = this.ui, on = (id, fn) => $(id).addEventListener('click', e => { e.preventDefault(); this.audio.unlock(); this.audio.play('ui'); fn(e); });
     $('playerName').value = this.prefs.playerName;
+    // اختيار المكان واللاعب
+    $('envChips').innerHTML = Object.entries(ENVS).map(([id, e]) => `<button type="button" class="chip" data-env="${id}">${e.label}</button>`).join('');
+    $('charChips').innerHTML = CHARACTERS.map(c => `<button type="button" class="chip" data-char="${c.id}">${c.name}</button>`).join('');
+    $('envChips').addEventListener('click', e => { const b = e.target.closest('[data-env]'); if (b) { this.audio.unlock(); this.audio.play('ui'); this.chooseEnv(b.dataset.env); } });
+    $('charChips').addEventListener('click', e => { const b = e.target.closest('[data-char]'); if (b) { this.audio.unlock(); this.audio.play('ui'); this.chooseChar(b.dataset.char); } });
+    this.syncChips();
     on('btnStart', () => { this.prefs.playerName = $('playerName').value.trim().slice(0, 30); this.saveSettings(); this.controls.requestLock(); this.startSession(); });
     on('btnHow', () => ui.show('scrHow'));
     on('btnSettings', () => this.openSettings());
@@ -206,6 +223,34 @@ class Game {
     }, () => { this.idle = false; this.enterMenu(); });
     on('btnTeacher', () => { this.character.hide(); ui.only('scrTeacher'); this.teacher.open(); this.idle = true; });   // لا رسم خلف لوحة المعلم
     if (window.speechSynthesis && 'onvoiceschanged' in window.speechSynthesis) window.speechSynthesis.onvoiceschanged = () => this.updateSpeechNote();
+  }
+
+  syncChips() {
+    document.querySelectorAll('#envChips .chip').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.env === this.prefs.environment)));
+    document.querySelectorAll('#charChips .chip').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.char === this.prefs.character)));
+  }
+
+  /** تبديل مكان اللعب من الشاشة الرئيسية: تُحمَّل أصوله عند أول اختيار ثم يُعاد بناء الميدان. */
+  async chooseEnv(name) {
+    if (this.state !== 'menu' || !ENVS[name] || name === this.prefs.environment || this.switching) return;
+    this.switching = true;
+    this.ui.fade(true); this.ui.toast(`جارٍ تجهيز ${ENVS[name].label}…`, 2600);
+    await new Promise(res => setTimeout(res, 240));
+    await this.assets.ensureEnv(name);
+    this.prefs.environment = name; this.saveSettings();
+    const env = this.world.setEnvironment(name, this.renderer);
+    this.vm.setEnvironment(env); this.renderer.toneMappingExposure = ENVS[name].exposure; this.audio.setEnvironment(name);
+    this.targets.stage(0, 4); this.world.followSun(new THREE.Vector3(0, 0, 6)); this.shadowDirty = true;
+    this.syncChips(); this.ui.fade(false); this.switching = false;
+    if (this.assets.failed.includes('trees')) this.ui.toast('تعذّر تحميل أشجار الغابة، وسيستمر اللعب بدونها.', 5000);
+  }
+
+  chooseChar(id) {
+    const def = characterById(id);
+    if (def.id === this.prefs.character) return;
+    this.prefs.character = def.id; this.saveSettings();
+    this.character.set(def); this.vm.setCharacter(def);
+    this.shadowDirty = true; this.syncChips();
   }
 
   openSettings() { this.updateSpeechNote(); $('fpsNote').textContent = `مستوى الجودة الحالي: ${{ low: 'منخفضة', medium: 'متوسطة', high: 'عالية' }[this.tier]} — معدل العرض المقاس: ${num(Math.round(this.fps))} إطارًا في الثانية.`; this.ui.show('scrSettings'); }
@@ -255,7 +300,7 @@ class Game {
       ui.setHealth(s.health, s.maxHealth); ui.setScore(0); ui.setMission(0, n); ui.setQuestion('');
       ui.fade(false);
       this.state = 'intro';
-      this.notifyHost('session-start', { total: n, bankTitle: this.bank.title });
+      this.notifyHost('session-start', { total: n, bankTitle: this.bank.title, environment: this.prefs.environment, character: this.prefs.character });
       this.moveTo(this.world.stand(0), WORLD.introSeconds, () => this.beginQuestion());
     }, 200);
   }
@@ -410,7 +455,7 @@ class Game {
 
   exportResult() {
     const r = this.result; if (!r) return;
-    const lines = [`${APP_NAME} — نتيجة الجلسة`, `اللاعب: ${this.prefs.playerName || 'غير محدد'}`, `التاريخ: ${new Date().toLocaleString('ar')}`, `بنك الأسئلة: ${this.bank.title}`, '',
+    const lines = [`${APP_NAME} — نتيجة الجلسة`, `اللاعب: ${this.prefs.playerName || 'غير محدد'}`, `التاريخ: ${new Date().toLocaleString('ar')}`, `المكان: ${ENVS[this.prefs.environment].label} — اللاعب: ${characterById(this.prefs.character).name}`, `بنك الأسئلة: ${this.bank.title}`, '',
       `النقاط: ${num(r.score)} من ${num(r.maxScore)}`, `الإجابات الصحيحة من المحاولة الأولى: ${num(r.firstTry)} من ${num(r.total)} (${num(r.firstTryPercent)}٪)`,
       `عدد الأخطاء: ${num(r.mistakes)}`, `المهمات المكتملة: ${num(r.completed)} من ${num(r.total)}`, `مرات الاستكمال بعد نفاد الصحة: ${num(r.retries)}`, '', 'تفصيل الأسئلة:',
       ...r.missions.map((m, i) => `${num(i + 1)}. ${m.text}\n   الإجابة الصحيحة: ${m.correctText} — عدد الأخطاء: ${num(m.wrong)} — النقاط: ${num(m.points)}`)];

@@ -95,10 +95,6 @@ save("metal_orm", orm(None, gray(load("tls/metal_rusty_paint_Roughness.jpg")), g
 save("rock_color", load("pc/rock_face_03_diff_1k.jpg"))
 save("rock_normal", load("pc/rock_face_03_nor_1k.jpg"), 90)
 
-# التربة البعيدة: Poly Haven dirt_aerial_02
-save("dirt_color", load("pc/dirt_aerial_02_diff_1k.jpg"))
-save("dirt_normal", load("pc/dirt_aerial_02_nor_1k.jpg"), 90)
-
 # القماش: Poly Haven fabric_pattern_07 (عبر godot-demo-projects)
 save("fabric_color", load("ph/fabric_pattern_07_col_1_1k.jpg"))
 save("fabric_normal", load("ph/fabric_pattern_07_nor_gl_1k.jpg"), 90)
@@ -183,5 +179,42 @@ lat = np.concatenate([np.clip(pl * 1.05, 0, 1), al[..., None]], -1)
 arr = np.clip(lat * 255 + 0.5, 0, 255).astype(np.uint8)
 for folder, w in (("1k", 512), ("512", 256)):
     Image.fromarray(arr, "RGBA").resize((w, w), Image.LANCZOS).save(os.path.join(OUT, folder, "lattice.webp"), "WEBP", quality=90, method=6)
+
+# ---------- خامات بيئة الغابة ----------
+# أرض الغابة: Poly Haven sparse_grass (عبر playcanvas/engine)
+# الخامة الأصلية داكنة وقليلة التباين فتبدو مسطّحة في الظل؛ نرفع تباين النصال ونلوّنها بين تربة بنية وعشب أخضر
+def wrap_blur(a, r):
+    n = a.shape[0]
+    im = Image.fromarray(np.clip(a * 255 + 0.5, 0, 255).astype(np.uint8))
+    big = Image.new("RGB" if a.ndim == 3 else "L", (n * 3, n * 3))
+    for i in range(3):
+        for j in range(3):
+            big.paste(im, (i * n, j * n))
+    return np.asarray(big.filter(ImageFilter.GaussianBlur(r)).crop((n, n, 2 * n, 2 * n))).astype(np.float32) / 255.0
+
+
+g = load("forest/sparse_grass_diff_1k.jpg")
+L = g.mean(axis=-1)
+lo = wrap_blur(L, 26)
+Ln = np.clip(1 + (L / np.maximum(lo, 1e-3) - 1) * 1.55, 0.5, 1.75) * (lo / lo.mean()) ** 1.25
+d = wrap_blur(g[..., 1] - g[..., 0] + 0.5, 1.1) - 0.5          # مقدار الخضرة في الأصل
+k = np.clip((d - np.percentile(d, 12)) / (np.percentile(d, 80) - np.percentile(d, 12)), 0, 1) ** 0.8
+soil, blade = np.array([0.40, 0.31, 0.19], np.float32), np.array([0.33, 0.46, 0.17], np.float32)
+save("grass_color", np.clip(Ln[..., None] * (soil + (blade - soil) * k[..., None]), 0.02, 1))
+save("grass_normal", load("forest/sparse_grass_nor_1k.jpg"), 90)
+# لحاء الأشجار: من حزمة ez-tree (البلوط = Poly Haven bark_brown_02، الصنوبر = TextureCan)
+save("bark_oak_color", load("forest/oak_color_1k.jpg"))
+save("bark_oak_normal", load("forest/oak_normal_1k.jpg"), 90)
+save("bark_pine_color", load("forest/pine_color_1k.jpg"))
+save("bark_pine_normal", load("forest/pine_normal_1k.jpg"), 90)
+# أوراق الأشجار (RGBA) من حزمة ez-tree
+for leaf in ("oak", "ash", "pine"):
+    a = load(f"forest/{leaf}_color.png", "RGBA")
+    rgb, al = a[..., :3], a[..., 3:4]
+    mean = (rgb * al).sum(axis=(0, 1)) / max(al.sum(), 1e-6)
+    rgb = rgb * al + mean[None, None, :] * (1 - al)      # تعبئة ما حول الأوراق بلونها لمنع الهالات الداكنة
+    arr = np.clip(np.concatenate([rgb, al], -1) * 255 + 0.5, 0, 255).astype(np.uint8)
+    for folder, w in (("1k", 1024), ("512", 512)):
+        Image.fromarray(arr, "RGBA").resize((w, w), Image.LANCZOS).save(os.path.join(OUT, folder, f"leaves_{leaf}.webp"), "WEBP", quality=88, method=6)
 
 print("تم تجهيز الخامات في", OUT)

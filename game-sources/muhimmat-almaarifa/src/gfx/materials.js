@@ -19,7 +19,20 @@ export function createMaterials(assets) {
   const mats = {};
   mats.sand = pbr('sand', { color: 0xe2c79a, normalScale: new THREE.Vector2(0.8, 0.8) });
   mats.sand.roughnessMap = null; mats.sand.roughness = 1;      // رمل جاف غير لامع
-  mats.sandFar = std({ map: T('dirt_color'), normalMap: T('dirt_normal'), color: 0xe9d3ae, roughness: 1, metalness: 0, vertexColors: true });
+  // ---- بيئة الغابة ----
+  mats.grass = std({ map: T('grass_color'), normalMap: T('grass_normal'), color: 0xf2f4e6, roughness: 1, metalness: 0 });
+  // انعكاس السماء على العشب يغسله بالرمادي في الظل؛ نخفّضه فيبقى لون العشب ظاهرًا
+  mats.grass.onBeforeCompile = (sh) => { sh.fragmentShader = sh.fragmentShader.replace('reflectedLight.directSpecular + reflectedLight.indirectSpecular', 'reflectedLight.directSpecular + reflectedLight.indirectSpecular * 0.3'); };
+  mats.grass.customProgramCacheKey = () => 'grass-soft-sky';
+  mats.fortStone = ['#a3a796', '#979d8b', '#adad9d', '#929886', '#a6ab98'].map(c => std({ map: T('rock_color'), normalMap: T('rock_normal'), color: new THREE.Color(c), roughness: 0.96, metalness: 0 }));
+  mats.bark = {
+    oak: std({ map: T('bark_oak_color'), normalMap: T('bark_oak_normal'), roughness: 1, metalness: 0 }),
+    pine: std({ map: T('bark_pine_color'), normalMap: T('bark_pine_normal'), roughness: 1, metalness: 0 })
+  };
+  mats.leaves = {};
+  for (const k of ['oak', 'ash', 'pine']) mats.leaves[k] = std({ map: T('leaves_' + k), alphaTest: 0.5, side: THREE.DoubleSide, roughness: 0.82, metalness: 0, color: 0xe2e8d4 });
+  mats.tarp = std({ color: 0x5f6b48, normalMap: T('fabric_normal'), roughness: 0.9, metalness: 0, side: THREE.DoubleSide });
+  mats.tarpTan = std({ color: 0x8a7a58, normalMap: T('fabric_normal'), roughness: 0.9, metalness: 0, side: THREE.DoubleSide });
   // تدرجات جصّ دافئة: كل محطة تأخذ لونًا مختلفًا من المكان نفسه
   mats.plaster = ['#eadcc2', '#e2cba6', '#efe6d4', '#d9c29c', '#e6d5ba'].map(c => pbr('plaster', { color: new THREE.Color(c), ao: false }));
   mats.stone = std({ map: T('rock_color'), normalMap: T('rock_normal'), color: 0xd9c7a6, roughness: 0.95, metalness: 0 });
