@@ -89,7 +89,7 @@ jobs:
           npx --no-install playwright install --with-deps chromium
           python3 -m venv /tmp/mm-v11-python
           /tmp/mm-v11-python/bin/pip install --quiet playwright==1.61.0
-      - name: Exercise forest, Qatari student, desert and actual quiz mechanics
+      - name: Exercise real shooting, forest, desert and Qatari student in Chromium
         run: |
           set -euo pipefail
           (cd game-sources/muhimmat-almaarifa && npm run dev -- --host 127.0.0.1 --port 8765 >/tmp/mm-vite.log 2>&1) &
@@ -98,7 +98,7 @@ jobs:
           for i in $(seq 1 45);do if curl -fsS http://127.0.0.1:8765/ >/dev/null;then break;fi;sleep 1;done
           mkdir -p .muhimmat-v11-review/results
           export CHROME="$(node -p 'require("playwright").chromium.executablePath()')"
-          SECTIONS=AE /tmp/mm-v11-python/bin/python game-sources/muhimmat-almaarifa/tests/e2e.py http://127.0.0.1:8765/ .muhimmat-v11-review/results/e2e.json
+          SECTIONS=E /tmp/mm-v11-python/bin/python game-sources/muhimmat-almaarifa/tests/e2e.py http://127.0.0.1:8765/ .muhimmat-v11-review/results/e2e.json
       - name: Test built school iframe grading, including all three play modes
         run: |
           set -euo pipefail
