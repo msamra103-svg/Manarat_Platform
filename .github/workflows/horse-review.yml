@@ -55,6 +55,14 @@ jobs:
           p.write_text(s.replace(old,new))
           PY
           node --check js/horse-race-host.js
+          # Relocate the self-contained unit test beside the platform's existing tests.
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('tests/horse-race-host.test.cjs')
+          s=p.read_text()
+          assert s.count("require('./horse-race-host.js')")==1
+          p.write_text(s.replace("require('./horse-race-host.js')","require('../js/horse-race-host.js')"))
+          PY
       - name: Build original game model and platform bundles
         run: |
           set -euo pipefail
