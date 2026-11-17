@@ -1,0 +1,132 @@
+name: Verify Muhimmat v1.1 replacement
+on:
+  push:
+    branches: [review/muhimmat-v11-20261117]
+    paths: [.github/workflows/muhimmat-v11-integration.yml]
+permissions: {contents: read}
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 28
+    permissions: {contents: write}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Verify exact 1.1 overlay and preserve authoritative school bridge
+        run: |
+          set -euo pipefail
+          cat .muhimmat-v11-review/payload-*.b64 | base64 -d > /tmp/mm-v11.zip
+          echo 'e315e4efb80d3b6af7fe38d8d24993cbd4be998efabeec4f9338bf316136f9a4  /tmp/mm-v11.zip' | sha256sum -c
+          python3 - <<'PY'
+          import zipfile,hashlib,json,pathlib
+          dest=pathlib.Path('game-sources/muhimmat-almaarifa')
+          with zipfile.ZipFile('/tmp/mm-v11.zip') as z:
+           assert z.testzip() is None
+           m=json.loads(z.read('overlay-manifest.json'))
+           assert m['version']=='1.1.0' and m['game']=='muhimmat-almaarifa'
+           allowed={x['path'] for x in m['files']}
+           found={n[8:] for n in z.namelist() if n.startswith('overlay/') and not n.endswith('/')}
+           assert allowed==found,(allowed-found,found-allowed)
+           for x in m['files']:
+            name=x['path'];v=z.read('overlay/'+name);p=pathlib.PurePosixPath(name)
+            assert len(v)==x['size'] and hashlib.sha256(v).hexdigest()==x['sha256']
+            assert not p.is_absolute() and '..' not in p.parts and not any(t.startswith('.env') for t in p.parts)
+            assert p.parts[0] in {'src','public','tests','tools'} or name in {'index.html','package.json','package-lock.json','README-ar.md'}
+            assert 'school-bridge' not in name and 'mm-host' not in name
+            f=dest/name;f.parent.mkdir(parents=True,exist_ok=True);f.write_bytes(v)
+          assert 'window.__mmSchoolGame' in (dest/'src/main.js').read_text()
+          assert "send('answer'" in (dest/'public/school-bridge.js').read_text()
+          print('PASS verified updated files',len(allowed))
+          p=pathlib.Path('js/school.js');s=p.read_text()
+          old='games/muhimmat-almaarifa/index.html?school=1&v=20261115-hardening'
+          assert s.count(old)==1
+          p.write_text(s.replace(old,'games/muhimmat-almaarifa/index.html?school=1&v=20261117-v11'))
+          p=pathlib.Path('index.html');s=p.read_text()
+          for f in ('js/mm-host.js','js/school.js'):
+           old=f+'?v=21.15-muhimmat-20261115'
+           assert s.count(old)==1,old
+           s=s.replace(old,f+'?v=21.16-muhimmat-v11-20261117')
+          p.write_text(s)
+          PY
+      - name: Build and run all game and platform regression tests
+        run: |
+          set -euo pipefail
+          npm ci --no-audit --no-fund
+          npm ci --prefix game-sources/muhimmat-almaarifa --no-audit --no-fund
+          npm test --prefix game-sources/muhimmat-almaarifa
+          npm run build --prefix game-sources/muhimmat-almaarifa
+          test -f game-sources/muhimmat-almaarifa/dist/index.html
+          test -f game-sources/muhimmat-almaarifa/dist/school-bridge.js
+          test -f game-sources/muhimmat-almaarifa/dist/assets/models/trees.bin
+          test -f game-sources/muhimmat-almaarifa/dist/assets/models/soldier.glb
+          rm -rf games/muhimmat-almaarifa
+          mkdir -p games/muhimmat-almaarifa
+          cp -a game-sources/muhimmat-almaarifa/dist/. games/muhimmat-almaarifa/
+          npm run build
+          npm run check:js
+          npm run test:unit
+          node tests/game-modes.cjs
+          node tests/game-session.cjs
+          node tests/school-api.cjs
+          node tests/admin-requests.cjs
+          node - <<'NODE'
+          const assert=require('node:assert/strict'),fs=require('node:fs');
+          const h=require('./js/mm-host.js');
+          assert.equal(h.cleanQuestions([{id:'q',type:'multiple_choice',text:'سؤال',options:['أ','ب']}]).length,1);
+          assert.throws(()=>h.cleanQuestions([{id:'q',type:'open_text',text:'Essay',options:[]}]),/فقط/);
+          assert(fs.readFileSync('games/muhimmat-almaarifa/index.html','utf8').includes('school-bridge.js'));
+          assert.equal(fs.readFileSync('public/js/school.js','utf8'),fs.readFileSync('js/school.js','utf8'));
+          console.log('PASS secure school bridge, question contract and production mirrors');
+          NODE
+      - name: Install Python Playwright and real Chromium
+        run: |
+          npx --no-install playwright install --with-deps chromium
+          python3 -m venv /tmp/mm-v11-python
+          /tmp/mm-v11-python/bin/pip install --quiet playwright==1.61.0
+      - name: Exercise forest, Qatari student, desert and actual quiz mechanics
+        run: |
+          set -euo pipefail
+          (cd game-sources/muhimmat-almaarifa && npm run dev -- --host 127.0.0.1 --port 8765 >/tmp/mm-vite.log 2>&1) &
+          pid=$!
+          trap 'kill "$pid" 2>/dev/null || true' EXIT
+          for i in $(seq 1 45);do if curl -fsS http://127.0.0.1:8765/ >/dev/null;then break;fi;sleep 1;done
+          mkdir -p .muhimmat-v11-review/results
+          export CHROME="$(node -p 'require("playwright").chromium.executablePath()')"
+          SECTIONS=AE /tmp/mm-v11-python/bin/python game-sources/muhimmat-almaarifa/tests/e2e.py http://127.0.0.1:8765/ .muhimmat-v11-review/results/e2e.json
+      - name: Test built school iframe grading, including all three play modes
+        run: |
+          set -euo pipefail
+          HOST=127.0.0.1 PORT=3001 node scripts/serve.js >/tmp/mm-platform.log 2>&1 &
+          pid=$!
+          trap 'kill "$pid" 2>/dev/null || true' EXIT
+          for i in $(seq 1 45);do if curl -fsS http://127.0.0.1:3001/ >/dev/null;then break;fi;sleep 1;done
+          export CHROME="$(node -p 'require("playwright").chromium.executablePath()')"
+          /tmp/mm-v11-python/bin/python .muhimmat-v11-review/school-check.py
+          node tests/classroom-auth-browser.cjs
+          npm run build
+      - name: Save test results even on failure
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: muhimmat-v11-isolated-results
+          path: .muhimmat-v11-review/results/
+          retention-days: 7
+          if-no-files-found: ignore
+      - name: Commit only the tested game and cache updates on the review branch
+        env:
+          GH_TOKEN: \${{ github.token }}
+        run: |
+          set -euo pipefail
+          test "$(git branch --show-current)" = 'review/muhimmat-v11-20261117'
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add game-sources/muhimmat-almaarifa games/muhimmat-almaarifa public/games/muhimmat-almaarifa js/school.js public/js/school.js index.html public/index.html
+          git diff --cached --check -- js/school.js index.html game-sources/muhimmat-almaarifa/src
+          git commit -m 'Replace Muhimmat with tested v1.1 forest and student edition'
+          export GIT_CONFIG_COUNT=1
+          export GIT_CONFIG_KEY_0=http.https://github.com/.extraheader
+          export GIT_CONFIG_VALUE_0="AUTHORIZATION: basic $(printf 'x-access-token:%s' "$GH_TOKEN" | base64 -w0)"
+          git push origin HEAD:refs/heads/review/muhimmat-v11-20261117
+          unset GIT_CONFIG_COUNT GIT_CONFIG_KEY_0 GIT_CONFIG_VALUE_0
+          git rev-parse HEAD
