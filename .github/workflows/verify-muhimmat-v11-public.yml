@@ -1,0 +1,90 @@
+name: Verify live Muhimmat 1.1 without writing school data
+on:
+  push:
+    branches: [review/muhimmat-v11-20261117]
+    paths: [.github/workflows/verify-muhimmat-v11-public.yml]
+permissions: {contents: read}
+jobs:
+  verify-live:
+    runs-on: ubuntu-latest
+    timeout-minutes: 14
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: 5c80bc0138b7de076fd8f8ab7c0c151d15b4953e
+          persist-credentials: false
+      - name: Check SHA-256 of exact public assets and parent school script
+        run: |
+          mkdir -p .live-verification
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';import assert from 'node:assert/strict';import {createHash} from 'node:crypto';
+          const base='https://manarat-ten.vercel.app',sha=x=>createHash('sha256').update(x).digest('hex');
+          const html=fs.readFileSync('games/muhimmat-almaarifa/index.html','utf8'),js=html.match(/src="\.\/assets\/(index-[^"]+\.js)"/);
+          assert(js,'Expected bundled Vite game JavaScript');
+          const paths=['index.html','js/school.js','js/mm-host.js','games/muhimmat-almaarifa/index.html','games/muhimmat-almaarifa/school-bridge.js','games/muhimmat-almaarifa/assets/'+js[1],'games/muhimmat-almaarifa/assets/models/trees.bin','games/muhimmat-almaarifa/assets/textures/512/grass_color.webp'];
+          let ready=false,fail='';
+          for(let attempt=1;attempt<=14;attempt++){
+            try{
+              for(const p of paths){
+                const r=await fetch(base+'/'+p+'?verify=20261117-'+Date.now(),{headers:{'Cache-Control':'no-cache'},signal:AbortSignal.timeout(30000)});
+                assert.equal(r.status,200,p);
+                const published=Buffer.from(await r.arrayBuffer()),expected=fs.readFileSync(p);
+                assert.equal(sha(published),sha(expected),'Live asset hash mismatch: '+p);
+              }
+              ready=true;break;
+            }catch(e){fail=e.message;console.log('Live check attempt',attempt,fail);if(attempt<14)await new Promise(r=>setTimeout(r,8000));}
+          }
+          if(!ready)throw Error(fail);
+          assert(fs.readFileSync('js/school.js','utf8').includes('games/muhimmat-almaarifa/index.html?school=1&v=20261117-v11'));
+          fs.writeFileSync('.live-verification/assets.json',JSON.stringify({status:'PASS',origin:base,commit:'5c80bc0138b7de076fd8f8ab7c0c151d15b4953e',files:paths},null,2));
+          console.log('PASS exact live SHA-256 and game/cache integration for',paths.length,'assets');
+          NODE
+      - name: Install browser for read-only public demo
+        run: |
+          npm ci --no-audit --no-fund
+          npx --no-install playwright install --with-deps chromium
+      - name: Verify actual homepage game card and v1.1 forest/character selection
+        run: |
+          node <<'NODE'
+          const {chromium}=require('playwright'),assert=require('node:assert/strict'),fs=require('node:fs');
+          (async()=>{
+            const origin='https://manarat-ten.vercel.app',report={status:'FAIL',origin,realUserLogin:false,resultsWritten:false,pageerrors:[],blockedRequests:[]};
+            const browser=await chromium.launch({headless:true,args:['--no-sandbox','--use-angle=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
+            try{
+              const page=await browser.newPage({viewport:{width:1440,height:900}});
+              page.on('pageerror',e=>report.pageerrors.push(e.message));
+              await page.route('**/*',route=>{
+                const req=route.request(),u=new URL(req.url());
+                if(u.hostname.endsWith('.supabase.co')&&req.method()==='POST'){
+                  let b={};try{b=req.postDataJSON()}catch{}
+                  if(!['settings','homeHub'].includes(b.action)){report.blockedRequests.push(b.action||u.pathname);return route.abort();}
+                }
+                return route.continue();
+              });
+              await page.goto(origin+'/index.html?demo=muhimmat-almaarifa',{waitUntil:'domcontentloaded',timeout:45000});
+              await page.locator('#missionKnowledgeFrame').waitFor({timeout:75000});
+              const frame=page.frameLocator('#missionKnowledgeFrame');
+              await frame.locator('#scrStart:not(.hidden)').waitFor({timeout:90000});
+              assert.equal(await frame.locator('#btnTeacher').count(),0);
+              assert.equal(await frame.locator('[data-env]').count(),2);
+              assert.equal(await frame.locator('[data-char]').count(),4);
+              await frame.locator('[data-char="student"]').click();
+              await frame.locator('[data-char="student"][aria-pressed="true"]').waitFor({timeout:12000});
+              await frame.locator('[data-env="forest"]').click();
+              await frame.locator('[data-env="forest"][aria-pressed="true"]').waitFor({timeout:60000});
+              report.status='PASS';report.checks=['Public demo mounted','Latest WebGL v1.1 present','Student character','Forest textures','No teacher editor'];
+              assert.deepEqual(report.pageerrors,[]);
+              assert.deepEqual(report.blockedRequests,[]);
+              await page.screenshot({path:'.live-verification/public-demo.png'});
+              console.log('PASS real public homepage/demo, forest and Qatari student, no user-data writes');
+            }finally{fs.writeFileSync('.live-verification/browser.json',JSON.stringify(report,null,2));await browser.close();}
+          })().catch(e=>{console.error(e);process.exit(1);});
+          NODE
+      - name: Store verification
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: muhimmat-v11-public-verification
+          path: .live-verification/
+          retention-days: 7
+          if-no-files-found: ignore
