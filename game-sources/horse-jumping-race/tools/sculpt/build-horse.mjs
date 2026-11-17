@@ -81,6 +81,9 @@ function legWeights(p) {
     if (j < 1) m *= smooth(-0.15, 0.55, j) * 0.85 + 0.15 * smooth(0.0, 0.3, j);
     // ما فوق مفصل الكتف/الورك يتبع الجذع
     m *= 1 - smooth(pts[0][1] - 0.02, pts[0][1] + 0.12, p[1]);
+    // كل ما تحت مستوى البطن جزء من الرجل حتمًا (الوتر خلف العرقوب، عضلات الساق الخلفية):
+    // لو بقي جزء منه مرتبطًا بالجذع لتمطط الجلد كصفيحة عند تأرجح الرجل.
+    if (n.d < 0.26) m = Math.max(m, 1 - smooth(0.74, 0.88, p[1]));
     if (!best || m > best.m) best = { m, id, j, pts };
   }
   if (!best || best.m < 0.01) return null;
@@ -94,6 +97,17 @@ function legWeights(p) {
   if (frac > 1 - blend && seg < 3) { const k = 0.5 * (frac - (1 - blend)) / blend; w.set(bn(seg), 1 - k); w.set(bn(seg + 1), k); }
   else if (frac < blend && seg > 0) { const k = 0.5 * (1 - frac / blend); w.set(bn(seg), 1 - k); w.set(bn(seg - 1), k); }
   else w.set(bn(seg), 1);
+  // نقطة العرقوب (عظم العقب خلف مفصل العرقوب) جزء من الساق السفلى: تتبع عظمة القصبة عند الانثناء،
+  // وإلا ظهرت «زعنفة» جلدية مسطحة خلف العرقوب عند ثنيه بقوة في العدو.
+  if (id[0] === 'H' && j > 1.45 && j < 2.4) {
+    const hx = LEGS[id].joints[2][0], hy = LEGS[id].joints[2][1];
+    const behind = hx - p[0];
+    const k = smooth(0.01, 0.045, behind) * (1 - smooth(0.045, 0.09, Math.abs(p[1] - hy - 0.035))) * 0.8;
+    if (k > 0) {
+      for (const [b, v] of w) w.set(b, v * (1 - k));
+      w.set(bn(2), (w.get(bn(2)) || 0) + k);
+    }
+  }
   return { w, m };
 }
 
