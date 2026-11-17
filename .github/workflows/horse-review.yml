@@ -35,6 +35,14 @@ jobs:
             z.extractall(root)
           print('PASS safe verified horse source extraction')
           PY
+          # The full catalog expansion also updates the eligibility array; avoid a second identical replacement.
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('.horse-review/source/install.py');s=p.read_text()
+          line='patch(p,"[\'qatar-hero\',\'qatar-camel-race\',\'muhimmat-almaarifa\'].includes(k)","[\'qatar-hero\',\'qatar-camel-race\',\'horse-jumping-race\',\'muhimmat-almaarifa\'].includes(k)")'
+          assert s.count(line)==1
+          p.write_text(s.replace(line,''))
+          PY
           python3 .horse-review/source/install.py
           node --check js/horse-race-host.js
       - name: Build original game model and platform bundles
