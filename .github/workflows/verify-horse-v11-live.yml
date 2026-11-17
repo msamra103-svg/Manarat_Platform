@@ -68,7 +68,7 @@ jobs:
             try{
              await page.goto('https://manarat-ten.vercel.app/index.html',{waitUntil:'domcontentloaded',timeout:40000});
              await page.locator('#gamesGallerySection').waitFor({timeout:45000});
-             await page.getByText('سباق الخيل — قفز الحواجز',{exact:true}).first().waitFor({timeout:30000});
+             await page.locator('#gamesGallerySection').getByText('سباق الخيل — قفز الحواجز',{exact:true}).first().waitFor({state:'visible',timeout:30000});
              await page.goto('https://manarat-ten.vercel.app/index.html?demo=horse-jumping-race',{waitUntil:'domcontentloaded',timeout:40000});
              const iframe=page.frameLocator('#horseRaceFrame');
              await iframe.locator('#qcr-start:not([hidden])').waitFor({timeout:120000});
