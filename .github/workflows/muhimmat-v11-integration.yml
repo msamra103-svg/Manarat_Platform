@@ -120,7 +120,7 @@ jobs:
           if-no-files-found: ignore
       - name: Commit only the tested game and cache updates on the review branch
         env:
-          GH_TOKEN: \${{ github.token }}
+          GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
           test "$(git branch --show-current)" = 'review/muhimmat-v11-20261117'
