@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>محاكي المنصة — سباق الخيل — قفز الحواجز</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Crect width=%2732%27 height=%2732%27 rx=%277%27 fill=%27%238a1538%27/%3E%3Ccircle cx=%2716%27 cy=%2716%27 r=%278%27 fill=%27%23fff%27/%3E%3C/svg%3E">
+  <style>
+    body { margin: 0; font-family: Tahoma, Arial, sans-serif; background: #f4ede2; color: #2a1d15; display: grid; grid-template-columns: 360px 1fr; height: 100vh; }
+    aside { overflow-y: auto; padding: 12px 14px; background: #fffaf2; border-left: 3px solid #8a1538; font-size: 14px; }
+    h1 { font-size: 17px; color: #8a1538; margin: 4px 0 6px; }
+    .warn { background: #fff1d6; border: 1px solid #e0b663; padding: 6px 8px; border-radius: 6px; font-size: 12.5px; }
+    fieldset { border: 1px solid #e3d3b8; border-radius: 8px; margin: 8px 0; padding: 6px 10px; }
+    legend { color: #8a1538; font-weight: bold; }
+    label { display: block; margin: 4px 0; }
+    button { font: inherit; margin: 3px 2px; padding: 4px 10px; border-radius: 6px; border: 1px solid #8a1538; background: #fff; color: #8a1538; cursor: pointer; }
+    button.primary { background: #8a1538; color: #fff; }
+    #log { font-family: Consolas, monospace; font-size: 11.5px; direction: ltr; text-align: left; background: #1e1712; color: #e9dcc6; height: 34vh; overflow-y: auto; padding: 6px; border-radius: 6px; white-space: pre-wrap; }
+    #log .in { color: #9fd3a8; } #log .out { color: #f2c27b; } #log .warn { color: #ff9a8a; background: none; border: 0; }
+    main { position: relative; }
+    iframe { width: 100%; height: 100%; border: 0; display: block; background: #000; }
+    .stats { font-size: 12.5px; }
+  </style>
+</head>
+<body>
+  <aside>
+    <h1>محاكي المنصة (للاختبار فقط)</h1>
+    <p class="warn">هذه صفحة مضيفة تجريبية تطبّق <b>العقد المقترح</b> (qcr-bridge/1). ليست المنصة الفعلية ولا تمثل عقدها المعتمد. التصحيح يتم هنا (في المضيف) وليس في اللعبة.</p>
+    <fieldset>
+      <legend>الجلسة</legend>
+      <label>الوضع: <select id="mode"><option value="solo">فردي</option><option value="classroom">سبورة صفية</option></select></label>
+      <label>الاسم/الفريق: <input id="pname" value="ريم"></label>
+      <label>عدد الأسئلة: <input id="qcount" type="number" min="1" max="6" value="6" style="width:4em"></label>
+      <button class="primary" id="reload">إعادة تحميل اللعبة بجلسة جديدة</button>
+    </fieldset>
+    <fieldset>
+      <legend>محاكاة الشبكة والتصحيح</legend>
+      <label>تأخير التصحيح (مللي ث): <input id="latency" type="number" value="400" step="100" style="width:6em"></label>
+      <label><input type="checkbox" id="drop"> تجاهل الإرسال القادم (لاختبار انتهاء المهلة)</label>
+      <label><input type="checkbox" id="fail"> إرجاع خطأ اتصال للإرسال القادم</label>
+      <label><input type="checkbox" id="dropReply"> تسجيل الإجابة القادمة دون إرسال الرد (لاختبار منع التكرار)</label>
+      <label><input type="checkbox" id="pending"> الرد بـ «بانتظار التصحيح» ثم التصحيح يدويًا</label>
+      <button id="gradeNow">صحّح الإجابات المعلّقة الآن</button>
+      <label><input type="checkbox" id="failResult"> فشل حفظ النتيجة القادمة</label>
+      <label><input type="checkbox" id="dropAck"> حفظ النتيجة القادمة دون إرسال التأكيد</label>
+    </fieldset>
+    <fieldset>
+      <legend>أوامر المنصة</legend>
+      <button data-cmd="pause">إيقاف</button><button data-cmd="resume">استئناف</button><button data-cmd="restart">إعادة البدء</button><button data-cmd="end">إنهاء الجلسة</button>
+    </fieldset>
+    <fieldset class="stats">
+      <legend>سجل المنصة</legend>
+      <div>إجابات مسجّلة: <b id="nAnswers">0</b> — محاولات مكررة مرفوضة: <b id="nDup">0</b></div>
+      <div>نتائج محفوظة: <b id="nResults">0</b> — نتائج مكررة مرفوضة: <b id="nResDup">0</b></div>
+      <div>آخر نتيجة: <span id="lastResult">—</span></div>
+    </fieldset>
+    <div id="log"></div>
+  </aside>
+  <main><iframe id="game" title="سباق الخيل — قفز الحواجز" allow="fullscreen; autoplay"></iframe></main>
+  <script src="host.js"></script>
+</body>
+</html>

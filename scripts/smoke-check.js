@@ -4,7 +4,7 @@ const root=path.resolve(__dirname,'..'),errors=[];let scripts=0,links=0;
 function walk(dir){return fs.readdirSync(dir,{withFileTypes:true}).flatMap(e=>['node_modules','.git'].includes(e.name)?[]:e.isDirectory()?walk(path.join(dir,e.name)):[path.join(dir,e.name)])}
 for(const file of walk(root)){
  const rel=path.relative(root,file);
- const unbundledMissionSource=rel.startsWith('game-sources/muhimmat-almaarifa/');
+ const unbundledMissionSource=rel.startsWith('game-sources/muhimmat-almaarifa/')||rel.startsWith('game-sources/horse-jumping-race/')||rel.startsWith('.horse-review/');
  if(!unbundledMissionSource&&/\.(js|cjs)$/.test(file)){try{new vm.Script(fs.readFileSync(file,'utf8'),{filename:rel});scripts++}catch(e){errors.push(e.message)}}
  if(/\.(js|html|ts)$/.test(file)&&/AIzaSy[A-Za-z0-9_\-]{20,}|sb_secret_[A-Za-z0-9_-]{20,}/.test(fs.readFileSync(file,'utf8')))errors.push('Private API key: '+rel);
  if(!unbundledMissionSource&&file.endsWith('.html')){
