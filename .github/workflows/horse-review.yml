@@ -1,0 +1,93 @@
+name: Review horse jumping race integration
+on:
+  push:
+    branches: [review/horse-jumping-20261117]
+    paths:
+      - .github/workflows/horse-review.yml
+permissions:
+  contents: read
+jobs:
+  verify:
+    if: github.repository == 'msamra103-svg/Manarat_Platform'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Verify uploaded source and apply reviewed integration only in isolated branch
+        run: |
+          set -euo pipefail
+          cat .horse-review/payload-0.b64 .horse-review/payload-1.b64 .horse-review/payload-2.b64 | base64 -d > /tmp/horse-stage.zip
+          echo 'd116333f88d300a4d08037a00e7d7c958d27e121ab6d64a75287e21b7d1c25ef  /tmp/horse-stage.zip' | sha256sum -c
+          python3 - <<'PY'
+          from pathlib import Path
+          import zipfile
+          root=Path('.horse-review/source').resolve()
+          root.mkdir(parents=True,exist_ok=True)
+          with zipfile.ZipFile('/tmp/horse-stage.zip') as z:
+            assert z.testzip() is None
+            for f in z.namelist():
+              dest=(root/f).resolve()
+              assert dest.is_relative_to(root),f
+            z.extractall(root)
+          print('PASS safe verified horse source extraction')
+          PY
+          python3 .horse-review/source/install.py
+          node --check js/horse-race-host.js
+      - name: Build original game model and platform bundles
+        run: |
+          set -euo pipefail
+          npm ci --no-audit --no-fund
+          npm ci --prefix game-sources/horse-jumping-race --no-audit --no-fund
+          npm test --prefix game-sources/horse-jumping-race
+          npm run build --prefix game-sources/horse-jumping-race
+          mkdir -p games/horse-jumping-race
+          cp -a game-sources/horse-jumping-race/dist/. games/horse-jumping-race/
+          npm run build
+          test -s public/games/horse-jumping-race/game.js
+          test -s public/assets/game-covers/horse-jumping-race.20261117.jpg
+      - name: Parent bridge and backend regression tests
+        run: |
+          node --test tests/horse-race-host.test.cjs
+          npm run check:js
+          npm run test:unit
+          node tests/admin-requests.cjs
+          node tests/game-session.cjs
+          node tests/game-modes.cjs
+          node tests/camel-race-host.test.cjs
+          node tests/camel-race-api.cjs
+          node tests/school-api.cjs
+      - name: Chromium school mode, retry, group and individual tests
+        run: |
+          npx --no-install playwright install --with-deps chromium
+          node tests/classroom-auth-browser.cjs
+          node tests/horse-race-browser.cjs
+      - name: Save test results and screenshots
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: horse-race-compatibility-review
+          path: .horse-review/results/
+          retention-days: 7
+          if-no-files-found: ignore
+      - name: Commit only tested game and platform changes onto isolated review branch
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          test "$(git branch --show-current)" = 'review/horse-jumping-20261117'
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add game-sources/horse-jumping-race games/horse-jumping-race public/games/horse-jumping-race js/horse-race-host.js public/js/horse-race-host.js tests/horse-race-host.test.cjs tests/horse-race-browser.cjs assets/game-covers/horse-jumping-race.20261117.jpg public/assets/game-covers/horse-jumping-race.20261117.jpg
+          git add index.html public/index.html js/school.js public/js/school.js js/design-schema.js public/js/design-schema.js js/design-studio.js public/js/design-studio.js js/game-covers.js public/js/game-covers.js js/homepage-hub-logic.js public/js/homepage-hub-logic.js supabase/functions/school-api/index.ts supabase/functions/_shared/design-schema.js
+          git diff --cached --check
+          git commit -m 'Add verified horse jumping race to school games, assignments and secure retry grading'
+          export GIT_CONFIG_COUNT=1
+          export GIT_CONFIG_KEY_0=http.https://github.com/.extraheader
+          export GIT_CONFIG_VALUE_0="AUTHORIZATION: basic $(printf 'x-access-token:%s' "$GH_TOKEN" | base64 -w0)"
+          git push origin HEAD:refs/heads/review/horse-jumping-20261117
+          unset GIT_CONFIG_COUNT GIT_CONFIG_KEY_0 GIT_CONFIG_VALUE_0
+          git rev-parse HEAD
