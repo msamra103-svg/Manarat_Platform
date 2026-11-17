@@ -57,7 +57,7 @@ async def run():
      await page.wait_for_function('window.testState.answers.length===1',timeout=10000)
      assert await frm.evaluate('window.__mmSchoolGame.session.index')==0
     for i in range(2):
-     await frm.wait_for_function('(i)=>window.__mmSchoolGame?.state==="question" && window.__mmSchoolGame.session.index===i',i,timeout=60000)
+     await frm.wait_for_function('(i)=>window.__mmSchoolGame?.state==="question" && window.__mmSchoolGame.session.index===i',arg=i,timeout=60000)
      await frm.evaluate("""() => {const g=window.__mmSchoolGame,b=g.targets.current.find(x=>String(x.optionId)==='0');if(!b)throw Error('Missing correct target');g.evaluate(b);}""")
     await page.wait_for_function('window.testState.finishes===1',timeout=60000)
     await frm.wait_for_function('window.__mmSchoolGame?.state==="done"',timeout=15000)
