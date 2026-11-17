@@ -1,0 +1,69 @@
+name: Verify live horse jumping race release
+on:
+  push:
+    branches: [review/horse-jumping-20261117]
+    paths: [.github/workflows/horse-production-verify.yml]
+permissions: {contents: read}
+jobs:
+  verify-live:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: 3dc36d106e136eee07f6388b357f1cfd35f149c8
+          persist-credentials: false
+      - name: Verify byte-identical public source, school brand, and game links
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';import assert from 'node:assert/strict';import {createHash} from 'node:crypto';
+          const site='https://manarat-ten.vercel.app',version='horse-jumping-20261117',hash=x=>createHash('sha256').update(x).digest('hex');
+          const files=['index.html','js/school.js','js/horse-race-host.js','games/horse-jumping-race/index.html','games/horse-jumping-race/game.js','games/horse-jumping-race/game.css','games/horse-jumping-race/game.config.js','assets/game-covers/horse-jumping-race.20261117.jpg'];
+          for(let attempt=1;attempt<=10;attempt++){
+            try{for(const file of files){const response=await fetch(site+'/'+file+'?verify='+version+'-'+attempt,{headers:{'Cache-Control':'no-cache'},signal:AbortSignal.timeout(20000)});assert.equal(response.status,200,'Asset '+file);assert.equal(hash(Buffer.from(await response.arrayBuffer())),hash(fs.readFileSync(file)),'File mismatch '+file);}console.log('PASS byte-for-byte live Vercel release for',files.length,'assets');break;}
+            catch(error){if(attempt===10)throw error;console.log('Attempt',attempt,error.message);await new Promise(resolve=>setTimeout(resolve,8000));}
+          }
+          const index=fs.readFileSync('index.html','utf8');
+          assert(index.includes('js/horse-race-host.js?v=20261117-horse'));
+          assert(index.includes('js/school.js?v=21.17-horse-20261117'));
+          const source=fs.readFileSync('js/school.js','utf8');
+          assert(source.includes("'horse-jumping-race':['🏇','سباق الخيل — قفز الحواجز']"));
+          assert(source.includes("if(play.template==='horse-jumping-race')return renderHorseRace();"));
+          console.log('PASS homepage and assignment routing to horse jumping race');
+          NODE
+      - name: Install locked browser dependencies
+        run: |
+          npm ci --no-audit --no-fund
+          npx --no-install playwright install --with-deps chromium
+      - name: Verify real production demo without authenticating or writing student data
+        run: |
+          node <<'NODE'
+          const {chromium}=require('playwright'),assert=require('node:assert/strict'),fs=require('node:fs');
+          (async()=>{let browser;const report={status:'RUNNING',pages:[],errors:[],missing:[],blockedWrites:[]};try{
+            browser=await chromium.launch({headless:true,args:['--no-sandbox','--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
+            for(const width of [1440,390]){
+              const page=await browser.newPage({viewport:{width,height:930}});
+              page.on('pageerror',e=>report.errors.push(e.message));page.on('response',r=>{if(r.status()===404&&r.url().includes('/horse-jumping-race/'))report.missing.push(r.url())});
+              await page.route('**/*',route=>{const request=route.request(),url=new URL(request.url());if(url.hostname.endsWith('.supabase.co')&&request.method()==='POST'){let a='';try{a=request.postDataJSON().action||'';}catch{}if(!['settings','homeHub'].includes(a)){report.blockedWrites.push(a||url.pathname);return route.abort();}}return route.continue();});
+              await page.goto('https://manarat-ten.vercel.app/index.html?demo=horse-jumping-race',{waitUntil:'domcontentloaded',timeout:30000});
+              await page.locator('#horseRaceFrame').waitFor({timeout:30000});
+              const frame=page.frameLocator('#horseRaceFrame');
+              await frame.locator('#qcr-start:not([hidden])').waitFor({timeout:90000});
+              const label=await page.locator('#app').innerText();assert(label.includes('سباق الخيل'));
+              assert(await frame.locator('button[data-action="start"]').count()>0);
+              report.pages.push({width,status:'PASS',demo:'horse-jumping-race',loaded:true,schoolIdentity:true});
+              await page.close();
+            }
+            assert.deepEqual(report.errors,[]);assert.deepEqual(report.missing,[]);assert.deepEqual(report.blockedWrites,[]);
+            report.status='PASS';console.log(JSON.stringify(report));
+          }catch(error){report.status='FAIL';report.error=String(error.stack||error);console.error(error);process.exitCode=1;}
+          finally{fs.mkdirSync('horse-verification',{recursive:true});fs.writeFileSync('horse-verification/live.json',JSON.stringify(report,null,2));if(browser)await browser.close();}})();
+          NODE
+      - name: Save verification result
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: horse-production-proof
+          path: horse-verification/
+          if-no-files-found: ignore
+          retention-days: 7
