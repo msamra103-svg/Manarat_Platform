@@ -61,6 +61,12 @@ jobs:
           after='js/school.js?v=21.18-horse-v11-20261117'
           assert s.count(before)==1
           p.write_text(s.replace(before,after))
+          # Keep the test's precise cache assertion synchronized with the new source.
+          p=Path('tests/classroom-auth.test.cjs');s=p.read_text()
+          old=r'js\/school\.js\?v=21\.17-horse-20261117'
+          new=r'js\/school\.js\?v=21\.18-horse-v11-20261117'
+          assert s.count(old)==1,'Existing cache version test changed'
+          p.write_text(s.replace(old,new))
           PY
       - name: Install pinned lock dependencies and rebuild revised horse
         run: |
@@ -112,7 +118,7 @@ jobs:
           test "$(git branch --show-current)" = 'review/horse-v11-safe-20261117'
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add game-sources/horse-jumping-race/index.html game-sources/horse-jumping-race/package.json game-sources/horse-jumping-race/src game-sources/horse-jumping-race/tools games/horse-jumping-race public/games/horse-jumping-race js/school.js public/js/school.js index.html public/index.html
+          git add tests/classroom-auth.test.cjs game-sources/horse-jumping-race/index.html game-sources/horse-jumping-race/package.json game-sources/horse-jumping-race/src game-sources/horse-jumping-race/tools games/horse-jumping-race public/games/horse-jumping-race js/school.js public/js/school.js index.html public/index.html
           git diff --cached --check
           git commit -m 'Prepare horse jumping race v1.1 with safe school bridge and verified 3D motion'
           export GIT_CONFIG_COUNT=1
