@@ -1,9 +1,9 @@
 /* Published gameplay stills. Never run legacy preview games on the homepage. */
 (function(root){
  'use strict';
- const keys=['football','basketball','bowling','volleyball','fishing','race','target-shooting','qatar-runner','qatar-hero','qatar-camel-race','muhimmat-almaarifa','classic','puzzle'];
+ const keys=['football','basketball','bowling','volleyball','fishing','race','target-shooting','qatar-runner','qatar-hero','qatar-camel-race','horse-jumping-race','muhimmat-almaarifa','classic','puzzle'];
  function resolve(key,custom){
-  const current='assets/game-covers/'+key+(key==='qatar-camel-race'?'.20261113.jpg':key==='muhimmat-almaarifa'?'.20261115.jpg':'.20261102.jpg');
+  const current='assets/game-covers/'+key+(key==='horse-jumping-race'?'.20261117.jpg':key==='qatar-camel-race'?'.20261113.jpg':key==='muhimmat-almaarifa'?'.20261115.jpg':'.20261102.jpg');
   if(!keys.includes(key))return custom||'';
   if(!custom)return current;
   // Migrate saved built-in paths, while keeping teacher-uploaded covers.
