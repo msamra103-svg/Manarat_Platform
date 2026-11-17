@@ -1,0 +1,90 @@
+name: Verify released horse jumping race v1.1
+on:
+  push:
+    branches: [review/horse-v11-safe-20261117]
+    paths: [.github/workflows/verify-horse-v11-live.yml]
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 14
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: 436a02e1611c7d6396de0cea3836eecc91e4dcb3
+          persist-credentials: false
+      - name: Verify public files match exact released commit
+        run: |
+          node --input-type=module <<'JS'
+          import fs from 'node:fs';
+          import assert from 'node:assert/strict';
+          import crypto from 'node:crypto';
+          const origin='https://manarat-ten.vercel.app',version='20261117-horse-v11';
+          const paths=['index.html','js/school.js','games/horse-jumping-race/index.html','games/horse-jumping-race/game.js','games/horse-jumping-race/game.css','games/horse-jumping-race/game.config.js','games/horse-jumping-race/questions.sample.js'];
+          const hash=b=>crypto.createHash('sha256').update(b).digest('hex');
+          let error;
+          for(let trial=0;trial<10;trial++){
+           try{
+            for(const p of paths){
+             const r=await fetch(origin+'/'+p+'?verify='+version+'-'+Date.now(),{headers:{'Cache-Control':'no-cache'},signal:AbortSignal.timeout(25000)});
+             assert.equal(r.status,200,p);
+             const data=Buffer.from(await r.arrayBuffer());
+             assert.equal(hash(data),hash(fs.readFileSync(p)),p+' published bytes changed');
+             console.log('PASS production SHA256',p,hash(data).slice(0,16));
+            }
+            const html=fs.readFileSync('index.html','utf8'),script=fs.readFileSync('js/school.js','utf8'),bundle=fs.readFileSync('games/horse-jumping-race/game.js','utf8');
+            assert(html.includes('js/school.js?v=21.18-horse-v11-20261117'));
+            assert(script.includes('horse-jumping-race/index.html?school=1&v=20261117-horse-v11'));
+            assert(bundle.includes('1.1.0'),'New 1.1 game code not present');
+            error=null;break;
+           }catch(e){error=e;console.log('Public verification attempt',trial+1,'failed:',e.message);if(trial<9)await new Promise(r=>setTimeout(r,7000));}
+          }
+          if(error)throw error;
+          fs.mkdirSync('verification',{recursive:true});
+          fs.writeFileSync('verification/horse-v11-production-assets.json',JSON.stringify({status:'PASS',commit:'436a02e1611c7d6396de0cea3836eecc91e4dcb3',origin,paths,mode:'read-only'},null,2));
+          JS
+      - name: Install locked browser tools for read-only live check
+        run: |
+          npm ci --no-audit --no-fund
+          npx --no-install playwright install --with-deps chromium
+      - name: Check public card and demo game iframe without student writes
+        run: |
+          node <<'JS'
+          const {chromium}=require('playwright'),assert=require('node:assert/strict'),fs=require('node:fs');
+          (async()=>{
+            const browser=await chromium.launch({headless:true,args:['--no-sandbox','--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
+            const page=await browser.newPage({viewport:{width:1440,height:900}});
+            const errs=[],blocked=[];
+            page.on('pageerror',e=>errs.push(e.message));
+            await page.route('**/*',route=>{
+             const request=route.request(),u=new URL(request.url());
+             if(u.hostname.endsWith('.supabase.co')&&request.method()!=='GET'&&request.method()!=='OPTIONS'){
+               let obj={};try{obj=request.postDataJSON()}catch{}
+               if(!['settings','homeHub'].includes(obj.action)){blocked.push(obj.action||u.pathname);return route.abort();}
+             }
+             return route.continue();
+            });
+            try{
+             await page.goto('https://manarat-ten.vercel.app/index.html',{waitUntil:'domcontentloaded',timeout:40000});
+             await page.locator('#gamesGallerySection').waitFor({timeout:45000});
+             await page.getByText('سباق الخيل — قفز الحواجز',{exact:true}).first().waitFor({timeout:30000});
+             await page.goto('https://manarat-ten.vercel.app/index.html?demo=horse-jumping-race',{waitUntil:'domcontentloaded',timeout:40000});
+             const iframe=page.frameLocator('#horseRaceFrame');
+             await iframe.locator('#qcr-start:not([hidden])').waitFor({timeout:120000});
+             assert.equal(await iframe.locator('h1').first().count()>0,true);
+             assert.equal(blocked.length,0,'School grading write was attempted');
+             assert.deepEqual(errs,[]);
+             fs.writeFileSync('verification/horse-v11-live-browser.json',JSON.stringify({status:'PASS',homepageCard:true,demoLoaded:true,version:'1.1.0',blockedWrites:blocked,consoleErrors:errs,realAccountUsed:false},null,2));
+             console.log('PASS current live horse card and v1.1 WebGL demo without student writes');
+            }finally{await browser.close();}
+          })().catch(e=>{console.error(e);process.exit(1)});
+          JS
+      - name: Preserve post-deploy read-only verification
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: horse-v11-live-verification
+          path: verification/
+          retention-days: 7
+          if-no-files-found: ignore
