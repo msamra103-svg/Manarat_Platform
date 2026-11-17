@@ -57,6 +57,16 @@ jobs:
           # Match the revised page asset version in the existing classroom auth test.
           python3 - <<'PY'
           from pathlib import Path
+          game=Path('tests/horse-race-browser.cjs')
+          b=game.read_text()
+          old="window.HorseJumpingRace.debug.current()?.attempt===2"
+          new="window.HorseJumpingRace.debug._c.current?.attempt===2"
+          assert b.count(old)==1
+          b=b.replace(old,new)
+          old="    await iframe.evaluate(()=>window.HorseJumpingRace.debug.advance(10));"
+          new="    if(mode==='group')await iframe.evaluate(()=>window.HorseJumpingRace.debug._c._continueAfterFeedback());\n    await iframe.evaluate(()=>window.HorseJumpingRace.debug.advance(10));"
+          assert b.count(old)==1
+          game.write_text(b.replace(old,new))
           p=Path('tests/classroom-auth.test.cjs');s=p.read_text()
           old='21\\.16-muhimmat-v11-20261117'
           new='21\\.17-horse-20261117'
