@@ -48,6 +48,11 @@ jobs:
            assert s.count(old)==1,old
            s=s.replace(old,f+'?v=21.16-muhimmat-v11-20261117')
           p.write_text(s)
+          # Keep the existing cache-busting regression assertion aligned with this release.
+          p=pathlib.Path('tests/classroom-auth.test.cjs');t=p.read_text()
+          expected='21\\.15-muhimmat-20261115'
+          assert t.count(expected)==1
+          p.write_text(t.replace(expected,'21\\.16-muhimmat-v11-20261117'))
           PY
       - name: Build and run all game and platform regression tests
         run: |
@@ -121,7 +126,7 @@ jobs:
           test "$(git branch --show-current)" = 'review/muhimmat-v11-20261117'
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add game-sources/muhimmat-almaarifa games/muhimmat-almaarifa public/games/muhimmat-almaarifa js/school.js public/js/school.js index.html public/index.html
+          git add game-sources/muhimmat-almaarifa games/muhimmat-almaarifa public/games/muhimmat-almaarifa js/school.js public/js/school.js index.html public/index.html tests/classroom-auth.test.cjs
           git diff --cached --check -- js/school.js index.html game-sources/muhimmat-almaarifa/src
           git commit -m 'Replace Muhimmat with tested v1.1 forest and student edition'
           export GIT_CONFIG_COUNT=1
