@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { LEGS, SPINE_JOINTS, FOOT_SOLE } from './horseAnatomy.js';
+import { LEGS, SPINE_JOINTS, FOOT_SOLE, TAIL_CHAIN, TAIL_DOCK_SEGMENTS } from './horseAnatomy.js';
 import { BONE_NAMES } from './horseBuilder.js';
 import { JUMP } from '../race/raceModel.js';
 
@@ -30,6 +30,50 @@ function smoothstep(a, b, x) {
   return t * t * (3 - 2 * t);
 }
 function wrap01(x) { return x - Math.floor(x); }
+
+// منحنى Catmull-Rom عبر نقاط مفتاحية [q, قيمة...] (q تصاعدي من 0 إلى 1)
+function keyCurve(keys, q, out) {
+  let i = 1;
+  while (i < keys.length - 1 && q > keys[i][0]) i++;
+  const k0 = keys[Math.max(0, i - 2)], k1 = keys[i - 1], k2 = keys[i], k3 = keys[Math.min(keys.length - 1, i + 1)];
+  const t = (q - k1[0]) / Math.max(1e-6, k2[0] - k1[0]);
+  const t2 = t * t, t3 = t2 * t;
+  for (let c = 1; c < k1.length; c++) {
+    const p0 = k0[c], p1 = k1[c], p2 = k2[c], p3 = k3[c];
+    out[c - 1] = 0.5 * (2 * p1 + (-p0 + p2) * t + (2 * p0 - 5 * p1 + 4 * p2 - p3) * t2 + (-p0 + 3 * p1 - 3 * p2 + p3) * t3);
+  }
+  return out;
+}
+
+// مسار الحافر أثناء الأرجحة (مرجعه فيديوهات عدو خيل السباق بالحركة البطيئة).
+// القيم: [q, x نسبةً لمسار الارتكاز (-1 نهاية الارتكاز خلفًا، +1 بدايته أمامًا) + إزاحة بالأمتار, ارتفاع (م), زاوية الرسغ/الحافر]
+// الأمامية: بعد الدفع ينثني الرسغ بقوة فيرتفع الحافر للخلف نحو الساعد، تُحمل الرجل مطوية تحت الصدر،
+// ثم تنبسط وتمتد بعيدًا للأمام (المدّ) وتتراجع قليلًا قبل أن تلمس الأرض (مطابقة سرعة الأرض).
+const FORE_SWING = [
+  [0.00, -1.0, 0.00, 0.00, -0.35],
+  [0.16, -1.0, -0.10, 0.27, -1.45],
+  [0.36, -0.35, -0.05, 0.47, -1.75],
+  [0.58, 0.25, 0.10, 0.44, -1.05],
+  [0.80, 1.0, 0.30, 0.20, -0.05],
+  [0.93, 1.0, 0.12, 0.06, 0.12],
+  [1.00, 1.0, 0.00, 0.00, 0.10],
+];
+// الخلفية: ترتفع خلفًا بعد الدفع مع انثناء العرقوب، تتأرجح للأمام تحت البطن، وتمتد قبل الهبوط.
+const HIND_SWING = [
+  [0.00, -1.0, 0.00, 0.00, -0.30],
+  [0.18, -1.0, -0.06, 0.2, -0.95],
+  [0.42, -0.3, 0.00, 0.34, -1.05],
+  [0.66, 0.4, 0.08, 0.25, -0.5],
+  [0.86, 1.0, 0.16, 0.10, 0.0],
+  [1.00, 1.0, 0.00, 0.00, 0.08],
+];
+const KEY_OUT = [0, 0, 0, 0];
+
+// محاكاة الذيل
+const TAIL_N = TAIL_CHAIN.length;
+const TAIL_SUB = 1 / 240;
+const GRAVITY = new THREE.Vector3(0, -9.8, 0);
+const DOWN = new THREE.Vector3(0, -1, 0);
 
 // طول الخطوة الكاملة (دورة) ونسبة زمن الارتكاز بحسب السرعة.
 // عند 12 م/ث: خطوة ≈ 4.7م وتردد ≈ 2.5 دورة/ث ونسبة ارتكاز ≈ 0.17 (عدو سريع).
@@ -95,6 +139,7 @@ export class HorseAnimator {
     const targetGait = smoothstep(0.05, 0.9, speed);
     if (!frozen) this.gaitWeight += (targetGait - this.gaitWeight) * (1 - Math.exp(-dt * 10));
     const S = strideLengthFor(speed) * this.strideScale;
+    this.strideLen = S;
     const D = dutyFactorFor(speed);
     if (!frozen && distanceDelta > 0) this.phase = wrap01(this.phase + distanceDelta / S);
     this.boost += (boost - this.boost) * (1 - Math.exp(-dt * 3));
@@ -109,7 +154,8 @@ export class HorseAnimator {
       const leg = this.legs[id];
       const p = wrap01(this.phase - leg.offset);
       let x, y, flex = 0, stance;
-      const baseX = leg.neutralX + (leg.front ? 0.05 : -0.02) * g;
+      const baseX = leg.neutralX + (leg.front ? 0.06 : -0.02) * g;
+      const amp = Math.min(1, S / 5.2); // مدى الحركة يكبر مع طول الخطوة
       if (p < D) {
         stance = true;
         const s = p / D;
@@ -117,19 +163,15 @@ export class HorseAnimator {
         y = FOOT_SOLE;
         const load = Math.sin(Math.PI * s);
         if (leg.front) frontLoad += load; else hindLoad += load;
-        // دحرجة خفيفة للخف عند الدفع
-        flex = -0.35 * smoothstep(0.75, 1, s);
+        // تحت الحمل تنخفض الرمانة (فرط بسط طبيعي في العدو)، ثم ينقلب الحافر على مقدمته عند الدفع
+        flex = (leg.front ? 0.42 : 0.32) * load * amp + 0.1 * (1 - smoothstep(0, 0.2, s)) - 0.45 * smoothstep(0.78, 1, s);
       } else {
         stance = false;
         const q = (p - D) / (1 - D);
-        // منحنى أفقي ناعم مع سرعة ابتدائية ونهائية قريبة من سرعة الأرض
-        const e = q * q * (3 - 2 * q);
-        const tangent = -0.18 * (q - q * q) * 4;
-        x = baseX - A + 2 * A * (e + tangent * 0.5);
-        const lift = (leg.front ? 0.44 : 0.32) * Math.min(1, S / 3.6);
-        // ارتفاع غير متماثل: يرتفع سريعًا ثم يهبط بهدوء
-        y = FOOT_SOLE + lift * Math.pow(Math.sin(Math.PI * Math.pow(q, 0.8)), 1.3);
-        flex = -(leg.front ? 1.25 : 0.95) * Math.sin(Math.PI * Math.min(1, q * 1.1));
+        const k = keyCurve(leg.front ? FORE_SWING : HIND_SWING, q, KEY_OUT);
+        x = baseX + A * k[0] + k[1] * amp;
+        y = FOOT_SOLE + k[2] * amp;
+        flex = k[3] * (0.55 + 0.45 * amp);
       }
       // الوقوف: جميع الأقدام على الأرض في الوضع المحايد
       const standX = leg.neutralX;
@@ -233,15 +275,21 @@ export class HorseAnimator {
     // ميل جانبي خفيف مع الانعطاف
     body.quaternion.multiply(TMP_Q.setFromAxisAngle(new THREE.Vector3(1, 0, 0), -lateralVel * 0.04));
 
-    // --- الرقبة والرأس ---
-    const neckSwing = frozen ? 0 : Math.sin((this.phase + 0.1) * Math.PI * 2) * 0.045 * g;
-    const neckTilt = g * (0.16 + this.boost * 0.06) + this.jumpLean * 0.22; // الرقبة تمتد للأمام أثناء العدو وفوق الحاجز
+    // --- مرونة الظهر: ينثني القطَن عند تقدم الخلفيتين تحت البطن وينبسط عند الدفع ---
+    const pelvis = this.b.pelvis;
+    const flexPh = Math.cos(2 * Math.PI * (this.phase - 0.93));
+    pelvis.quaternion.copy(pelvis.userData.bindQuat).multiply(TMP_Q.setFromAxisAngle(new THREE.Vector3(0, 0, 1), g * 0.075 * flexPh * (1 - (this.jumpLean || 0) * 0.5)));
+
+    // --- الرقبة والرأس: تضخّ الرقبة مع الخطوة (تنخفض أثناء ارتكاز الأماميتين وترتفع في الطيران) ---
+    const foreMid = (GALLOP_OFFSETS.FL + GALLOP_OFFSETS.FR) / 2 + D / 2;
+    const neckSwing = frozen ? 0 : -Math.cos(2 * Math.PI * (this.phase - foreMid)) * 0.065 * g * (1 - (this.jumpLean || 0));
+    const neckTilt = g * (0.16 + this.boost * 0.06) + this.jumpLean * 0.22; // في الوقوف تُحمل الرقبة أخفض قليلًا (وضعية مسترخية) // الرقبة تمتد للأمام أثناء العدو وفوق الحاجز
     const breathNeck = Math.sin(this.time * 1.3 + this.neckPhase) * 0.01;
     const neckBones = BONE_NAMES.neck.map((n) => this.b[n]);
     let accum = -this.pitch;
     for (let i = 0; i < neckBones.length; i++) {
       const nb = neckBones[i];
-      const a = (i < 2 ? -neckTilt * 0.5 : neckTilt * 0.35) + this.pitch * 0.35 + neckSwing * (i + 1) * 0.35 + breathNeck;
+      const a = (i < 2 ? -neckTilt * 0.5 : neckTilt * 0.35) - (i < 3 ? (1 - g) * 0.075 : 0) + this.pitch * 0.35 + neckSwing * (i === 0 ? 1.0 : i === 1 ? 0.7 : 0.35) + breathNeck;
       nb.quaternion.setFromAxisAngle(new THREE.Vector3(0, 0, 1), a);
       accum += a;
     }
@@ -249,24 +297,6 @@ export class HorseAnimator {
     const head = this.b.head;
     const headTarget = -0.04 * g + Math.sin(this.time * 0.9 + this.neckPhase) * 0.02;
     head.quaternion.setFromAxisAngle(new THREE.Vector3(0, 0, 1), headTarget - accum * 0.75);
-
-    // --- الذيل: يتأخر عن حركة الجسم ---
-    if (!frozen) {
-      const tailTarget = 0.55 * g + this.pitchVel * 0.25 + Math.sin(this.phase * Math.PI * 2) * 0.12 * g;
-      const n = Math.max(1, Math.ceil(dt / SPRING_STEP)), h = dt / n;
-      for (let i = 0; i < n; i++) {
-        this.tailVel += (40 * (tailTarget - this.tailAngle) - 6 * this.tailVel) * h;
-        this.tailAngle += this.tailVel * h;
-      }
-      this.tailAngle = Math.max(-0.6, Math.min(1.2, this.tailAngle));
-    }
-    const tailSway = Math.sin(this.time * 1.1 + this.neckPhase) * 0.05;
-    for (let i = 0; i < 3; i++) {
-      const tb = this.b[BONE_NAMES.tail[i]];
-      tb.quaternion.copy(tb.userData.bindQuat).multiply(
-        TMP_Q.setFromAxisAngle(new THREE.Vector3(0, 0, 1), this.tailAngle * (i === 0 ? 0.6 : 0.3)),
-      ).multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), tailSway));
-    }
 
     // --- تحديث مصفوفات الجسم قبل حل الأرجل ---
     const group = this.rig.group;
@@ -276,6 +306,147 @@ export class HorseAnimator {
     this._invGroupQ.copy(this._groupQ).invert();
 
     for (const id of LEG_IDS) this._solveLeg(this.legs[id], footTargets[id]);
+    this._updateTail(dt, frozen, speed);
+    // رفرفة أطراف الشعر الدقيقة
+    for (const m of this.rig.hairMaterials || []) {
+      const hu = m.userData.uniforms;
+      hu.uTime.value = this.time; hu.uFlutter.value = 0.25 + Math.min(1, speed / 12) * 1.1;
+    }
+  }
+
+  // ---- الذيل: سلسلة Verlet في فضاء العالم ----
+  // النقطة 0 مثبتة بالحوض. عظم الذيل (0..3) شبه صلب يتبع وضعية «الذيل المرفوع» أثناء العدو مع تأخر بسيط،
+  // والشعر (3..9) حر تحت الجاذبية ومقاومة الهواء (الهواء ساكن؛ فالحصان المسرع يدفع الشعر للخلف)
+  // مع اضطراب خفيف، وقيود أطوال وانحناء، ومنع اختراق الأرض والكفل والأرجل الخلفية.
+  _initTail() {
+    const n = TAIL_N;
+    this.tail = {
+      p: [], prev: [], len: [], bindDir: [], bindQ: [],
+      bones: [], pelvisAnchor: null, restLocalDir: [],
+      tmp: [new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3()],
+      acc: 0, lift: 0,
+    };
+    const T = this.tail;
+    const pts = TAIL_CHAIN.map((a) => new THREE.Vector3(a[0], a[1], a[2] || 0));
+    for (let i = 0; i < n; i++) { T.p.push(new THREE.Vector3()); T.prev.push(new THREE.Vector3()); }
+    for (let i = 0; i < n - 1; i++) {
+      T.len.push(pts[i].distanceTo(pts[i + 1]));
+      T.restLocalDir.push(pts[i + 1].clone().sub(pts[i]).normalize());
+      const bone = this.b[BONE_NAMES.tail[i]];
+      T.bones.push(bone);
+      T.bindDir.push(T.restLocalDir[i].clone());
+      T.bindQ.push(bone.userData.bindQuat.clone());
+    }
+    // نقطة التثبيت في فضاء الحوض (عظمة الحوض بلا دوران في وضع الربط)
+    const pel = this.b.pelvis;
+    T.pelvisAnchor = pts[0].clone().sub(pel.userData.bindWorldPos);
+    T.restPts = pts;
+    T.reset = true;
+  }
+
+  _updateTail(dt, frozen, speed) {
+    if (!this.tail) this._initTail();
+    const T = this.tail;
+    // أثناء السؤال يتجمد السباق كله في منتصف الخطوة: يتجمد الذيل معه (لا يسقط بالجاذبية).
+    // أما الحصان الواقف (قبل الانطلاق) فيتدلى ذيله ويتأرجح طبيعيًا.
+    if (frozen && this.gaitWeight > 0.3 && !T.reset) return;
+    const group = this.rig.group;
+    const pel = this.b.pelvis;
+    pel.updateMatrixWorld(true);
+    const gm = group.matrixWorld;
+    const anchor = T.tmp[0].copy(T.pelvisAnchor).applyMatrix4(pel.matrixWorld);
+    const pelQ = pel.getWorldQuaternion(new THREE.Quaternion());
+    // رفع الذيل مع العدو: يرتفع المنبت ويُحمل الذيل بعيدًا عن الكفل
+    const g = this.gaitWeight;
+    const liftTarget = g * (0.42 + 0.14 * this.boost) + Math.sin(2 * Math.PI * (this.phase - 0.1)) * 0.06 * g + (this.jumpLean || 0) * 0.25;
+    T.lift += (liftTarget - T.lift) * (1 - Math.exp(-dt * 4));
+
+    // إعادة الضبط عند أول إطار أو بعد انتقال مفاجئ (إعادة السباق)
+    if (T.reset || T.p[0].distanceTo(anchor) > 1.5) {
+      for (let i = 0; i < TAIL_N; i++) {
+        T.p[i].copy(T.restPts[i]).applyMatrix4(gm);
+        T.prev[i].copy(T.p[i]);
+      }
+      T.reset = false;
+    }
+    const dirs = [];
+    for (let j = 0; j < TAIL_DOCK_SEGMENTS; j++) {
+      const lj = T.lift * (1 - j * 0.12);
+      dirs.push(T.restLocalDir[j].clone().applyAxisAngle(new THREE.Vector3(0, 0, 1), -lj).applyQuaternion(pelQ));
+    }
+    const prevAnchor = T.tmp[1].copy(T.p[0]);
+    const n = Math.min(12, Math.max(1, Math.ceil(dt / TAIL_SUB)));
+    const h = dt / n;
+    const drag = 0.95; // مقاومة الهواء لكل م/ث
+    const t0 = this.time - dt;
+    const side = new THREE.Vector3(0, 0, 1).transformDirection(gm);
+    for (let it = 0; it < n; it++) {
+      const tt = t0 + h * (it + 1);
+      // النقطة 0 تتبع الحوض (استيفاء داخل الإطار)
+      T.p[0].lerpVectors(prevAnchor, anchor, (it + 1) / n);
+      T.prev[0].copy(T.p[0]);
+      // تكامل Verlet
+      for (let i = 1; i < TAIL_N; i++) {
+        const p = T.p[i], q = T.prev[i];
+        const vx = (p.x - q.x) / h, vy = (p.y - q.y) / h, vz = (p.z - q.z) / h;
+        const tipK = i / (TAIL_N - 1);
+        // اضطراب الهواء + تأرجح جانبي خفيف حتى في الوقوف (طرد الذباب)
+        const gust = Math.sin(tt * 7.3 + i * 0.9) * 1.6 + Math.sin(tt * 3.1 - i * 0.5) * 1.1;
+        const swish = frozen || g < 0.3 ? Math.sin(tt * 1.3 + this.neckPhase) * Math.max(0, Math.sin(tt * 0.37 + this.neckPhase)) * 2.2 : 0;
+        const ax = -drag * vx, ay = GRAVITY.y - drag * vy + gust * 0.12 * tipK * g, az = -drag * vz;
+        const lat = (gust * 0.6 * g + swish) * tipK;
+        q.copy(p);
+        p.x += vx * h * 0.995 + (ax + side.x * lat) * h * h;
+        p.y += vy * h * 0.995 + (ay + side.y * lat) * h * h;
+        p.z += vz * h * 0.995 + (az + side.z * lat) * h * h;
+      }
+      // عظم الذيل: يقترب بقوة من وضعيته المستهدفة (شبه صلب)
+      for (let j = 0; j < TAIL_DOCK_SEGMENTS; j++) {
+        const target = T.tmp[2].copy(T.p[j]).addScaledVector(dirs[j], T.len[j]);
+        T.p[j + 1].lerp(target, 0.5);
+      }
+      // قيود الطول والانحناء
+      for (let k = 0; k < 4; k++) {
+        for (let i = 0; i < TAIL_N - 1; i++) {
+          const a = T.p[i], b = T.p[i + 1];
+          const d = T.tmp[2].subVectors(b, a);
+          const L = d.length() || 1e-6;
+          const diff = (L - T.len[i]) / L;
+          if (i === 0) b.addScaledVector(d, -diff);
+          else { a.addScaledVector(d, diff * 0.3); b.addScaledVector(d, -diff * 0.7); }
+        }
+        // صلابة انحناء خفيفة: المسافة بين i و i+2 لا تقل كثيرًا عن مجموع القطعتين
+        for (let i = TAIL_DOCK_SEGMENTS - 1; i < TAIL_N - 2; i++) {
+          const a = T.p[i], c = T.p[i + 2];
+          const d = T.tmp[2].subVectors(c, a);
+          const L = d.length() || 1e-6;
+          const min = (T.len[i] + T.len[i + 1]) * 0.86;
+          if (L < min) { const corr = (min - L) / L * 0.5; a.addScaledVector(d, -corr * 0.3); c.addScaledVector(d, corr * 0.7); }
+        }
+      }
+      // تصادمات بسيطة في فضاء الحصان: الأرض، والكفل/الأرجل الخلفية (الشعر يبقى خلف الفخذين)
+      for (let i = 2; i < TAIL_N; i++) {
+        const p = T.p[i];
+        const l = T.tmp[2].copy(p).applyMatrix4(this._invGroup);
+        let changed = false;
+        if (l.y < 0.06) { l.y = 0.06; changed = true; }
+        if (l.y > 0.25 && l.y < 1.35 && l.x > -1.02 && Math.abs(l.z) < 0.28) { l.x = -1.02; changed = true; }
+        if (changed) p.copy(l.applyMatrix4(gm));
+      }
+    }
+    // وضع العظام في فضاء الحصان: كل عظمة عند نقطتها، ودورانها = (اتجاه الربط ← الاتجاه الحالي) × دوران الربط
+    const inv = this._invGroup;
+    const qd = new THREE.Quaternion();
+    for (let j = 0; j < TAIL_N - 1; j++) {
+      const a = T.tmp[0].copy(T.p[j]).applyMatrix4(inv);
+      const b = T.tmp[1].copy(T.p[j + 1]).applyMatrix4(inv);
+      const bone = T.bones[j];
+      bone.position.copy(a);
+      const dir = b.sub(a).normalize();
+      qd.setFromUnitVectors(T.bindDir[j], dir);
+      bone.quaternion.copy(qd).multiply(T.bindQ[j]);
+    }
+    void speed; void DOWN;
   }
 
   _horseSpaceQuat(obj, out) {
@@ -305,7 +476,15 @@ export class HorseAnimator {
     const toF = vF.clone().sub(vS);
     const dAng = Math.atan2(toF.y, toF.x) - Math.atan2(bindLeg.y, bindLeg.x);
     const k = leg.front ? 0.85 : 0.7;
-    const upper = bindUp.clone().applyAxisAngle(new THREE.Vector3(0, 0, 1), dAng * k);
+    // الفخذ ينثني للأمام (يتقدم الرضفة) عندما ترتفع الرجل الخلفية وتتقدم تحت البطن، كما في العدو الحقيقي؛
+    // بدونه يُجبر الحل العرقوبَ على الارتداد بعيدًا للخلف فتصبح الساق أفقية ويتمطط الجلد.
+    let extra = 0;
+    if (!leg.front) {
+      const lift = Math.max(0, tgt.y - FOOT_SOLE);
+      const fwd = smoothstep(-0.45, 0.15, tgt.x - leg.neutralX);
+      extra = Math.min(0.75, lift * 2.2) * fwd;
+    }
+    const upper = bindUp.clone().applyAxisAngle(new THREE.Vector3(0, 0, 1), dAng * k + extra);
     vE.copy(vS).add(upper);
 
     // حل ثنائي العظام من المرفق إلى الحافر

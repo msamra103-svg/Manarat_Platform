@@ -18,7 +18,7 @@ import { GameController } from './game/gameController.js';
   const game = new GameController(root, config, flags);
   const api = {
     id: GAME_ID,
-    version: '1.0.0',
+    version: '1.1.0',
     dispose: () => game.dispose(),
     pause: () => game.pause(),
     resume: () => game.resume(),

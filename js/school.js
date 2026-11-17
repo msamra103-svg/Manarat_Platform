@@ -470,7 +470,7 @@ function renderHorseRace(){
   restart:async()=>{session.answerPending=false;try{await restartSession();}finally{session.answerPending=false;}},
   exit:finished=>{if(finished)home();else endSession()}
  });
- frame.src='games/horse-jumping-race/index.html?school=1&v=20261117-horse';
+ frame.src='games/horse-jumping-race/index.html?school=1&v=20261117-horse-v11';
 }
 function renderCamelRace(){
  const session=play;

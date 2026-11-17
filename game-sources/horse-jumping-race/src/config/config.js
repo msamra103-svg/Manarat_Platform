@@ -1,7 +1,7 @@
 // تحميل الإعدادات: القيم الافتراضية ← ملف game.config.js ← معاملات الرابط ← إعدادات المنصة/المعلم
 export const GAME_ID = 'horse-jumping-race';
 export const GAME_TITLE = 'سباق الخيل — قفز الحواجز';
-export const GAME_VERSION = '1.0.0';
+export const GAME_VERSION = '1.1.0';
 
 export const DEFAULTS = {
   race: { segmentSeconds: 6, sprintSeconds: 4, countdownSeconds: 3, competitors: 5, difficulty: 'normal', correctBoost: 0.12, baseSpeedMps: 12, introShot: true },
