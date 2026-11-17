@@ -1,0 +1,30 @@
+name: Review horse v1.1 against live platform base
+on:
+  push:
+    branches: [review/horse-v11-20261117]
+    paths: [.github/workflows/horse-v11-source.yml]
+permissions:
+  contents: read
+jobs:
+  snapshot:
+    if: github.repository == 'msamra103-svg/Manarat_Platform'
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Export only current horse source and integration, no credentials
+        run: |
+          python3 - <<'PY'
+          import subprocess,zipfile
+          entries=[x for x in subprocess.check_output(['git','ls-files','-z']).decode().split('\0') if x and (x.startswith(('game-sources/horse-jumping-race/','games/horse-jumping-race/','js/horse','tests/horse')) or x in ('js/school.js','index.html','scripts/sync-public.js','scripts/smoke-check.js','package.json'))]
+          with zipfile.ZipFile('/tmp/horse-baseline.zip','w',zipfile.ZIP_DEFLATED,compresslevel=8) as z:
+            for x in entries:z.write(x,x)
+          print('Exported',len(entries),'files')
+          PY
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: current-horse-platform-baseline
+          path: /tmp/horse-baseline.zip
+          retention-days: 3
