@@ -44,6 +44,16 @@ jobs:
           p.write_text(s.replace(line,''))
           PY
           python3 .horse-review/source/install.py
+          # Source files use ECMAScript modules. Our existing CJS smoke checker must
+          # check the compiled game, not parse raw ES-module input or staged test sources.
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('scripts/smoke-check.js');s=p.read_text()
+          old="const unbundledMissionSource=rel.startsWith('game-sources/muhimmat-almaarifa/');"
+          new="const unbundledMissionSource=rel.startsWith('game-sources/muhimmat-almaarifa/')||rel.startsWith('game-sources/horse-jumping-race/')||rel.startsWith('.horse-review/');"
+          assert s.count(old)==1
+          p.write_text(s.replace(old,new))
+          PY
           node --check js/horse-race-host.js
       - name: Build original game model and platform bundles
         run: |
@@ -90,7 +100,7 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add game-sources/horse-jumping-race games/horse-jumping-race public/games/horse-jumping-race js/horse-race-host.js public/js/horse-race-host.js tests/horse-race-host.test.cjs tests/horse-race-browser.cjs assets/game-covers/horse-jumping-race.20261117.jpg public/assets/game-covers/horse-jumping-race.20261117.jpg
-          git add index.html public/index.html js/school.js public/js/school.js js/design-schema.js public/js/design-schema.js js/design-studio.js public/js/design-studio.js js/game-covers.js public/js/game-covers.js js/homepage-hub-logic.js public/js/homepage-hub-logic.js supabase/functions/school-api/index.ts supabase/functions/_shared/design-schema.js
+          git add scripts/smoke-check.js index.html public/index.html js/school.js public/js/school.js js/design-schema.js public/js/design-schema.js js/design-studio.js public/js/design-studio.js js/game-covers.js public/js/game-covers.js js/homepage-hub-logic.js public/js/homepage-hub-logic.js supabase/functions/school-api/index.ts supabase/functions/_shared/design-schema.js
           git diff --cached --check
           git commit -m 'Add verified horse jumping race to school games, assignments and secure retry grading'
           export GIT_CONFIG_COUNT=1
