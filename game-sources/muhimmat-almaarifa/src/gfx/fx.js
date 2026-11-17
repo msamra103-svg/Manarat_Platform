@@ -1,6 +1,5 @@
 // مؤثرات الإطلاق والإصابة: خط طلقة قصير، شرر وغبار، أثر إصابة، ونبضة نجاح. بلا مشاهد دموية.
 import * as THREE from 'three';
-import { clone as cloneSkinned } from 'three/addons/utils/SkeletonUtils.js';
 
 function radialTexture(stops) {
   const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -97,23 +96,4 @@ export class FX {
       if (t >= 1) { this.ringT = 0; this.ring.visible = false; }
     }
   }
-}
-
-/** الشخصية الكاملة لشاشتَي البداية والنتيجة (حركة وقوف هادئة). */
-export class Character {
-  constructor(scene, assets) {
-    this.ok = false;
-    const gltf = assets.models.soldier; if (!gltf) return;
-    this.root = cloneSkinned(gltf.scene);
-    this.root.traverse(o => {
-      if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; o.frustumCulled = false; o.material = o.material.clone(); if (!/visor/i.test(o.name)) { o.material.metalness = 0.12; o.material.roughness = 0.62; } }
-    });
-    this.mixer = new THREE.AnimationMixer(this.root);
-    const idle = gltf.animations.find(a => a.name === 'Idle') || gltf.animations[0];
-    if (idle) this.mixer.clipAction(idle).play();
-    this.root.visible = false; scene.add(this.root); this.ok = true;
-  }
-  show(x, z, facing) { if (!this.ok) return; this.root.position.set(x, 0, z); this.root.rotation.y = facing; this.root.visible = true; }
-  hide() { if (this.ok) this.root.visible = false; }
-  update(dt) { if (this.ok && this.root.visible) this.mixer.update(dt); }
 }

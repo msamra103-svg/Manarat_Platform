@@ -11,11 +11,25 @@ const GZ = WORLD.gateZ, GT = 0.9, GH = 5.4;
 const TILE = { plaster: 3.2, stone: 2.4, concrete: 2.6, wood: 1.0, steel: 1.4, steelDark: 1, brass: 1, clay: 1, dark: 1, paintYellow: 1 };
 export const SUN_DIR = new THREE.Vector3(-0.46, 0.78, 0.6).normalize();   // من خلف اللاعب ويساره: تضيء واجهات الأهداف
 
+// أماكن اللعب: يختار اللاعب أحدها من الشاشة الرئيسية. البناء والمنطق واحد، ويتغير الجو والأرض والنبات وخامات الجدران.
+export const ENVS = {
+  desert: {
+    label: 'الصحراء', ground: 'sand', groundTile: 3.1, hills: 1, walls: 'plaster', wallTile: 3.2, canopy: ['fabric', 'fabricSand'], vegetation: 'palms',
+    sky: { turbidity: 4.2, rayleigh: 1.25, mieCoefficient: 0.0035, mieDirectionalG: 0.82 }, bounce: 0xb89a6e, bounceGain: 1.5,
+    sun: [0xfff0d8, 2.5], envIntensity: 0.5, fog: [0xcdd3d6, 90, 620], exposure: 0.6
+  },
+  forest: {
+    label: 'الغابة', ground: 'grass', groundTile: 3.6, hills: 0.65, walls: 'fortStone', wallTile: 2.6, canopy: ['tarp', 'tarpTan'], vegetation: 'trees',
+    sky: { turbidity: 6.5, rayleigh: 1.9, mieCoefficient: 0.006, mieDirectionalG: 0.8 }, bounce: 0x4f5f36, bounceGain: 1.25,
+    sun: [0xfff2da, 2.3], envIntensity: 0.6, fog: [0xb4c2b6, 55, 380], exposure: 0.66
+  }
+};
+
 const bx = (w, h, d, x, y, z, ry = 0) => { const g = new THREE.BoxGeometry(w, h, d); if (ry) g.rotateY(ry); g.translate(x, y, z); return g; };
 const cyl = (r1, r2, h, x, y, z, seg = 10) => { const g = new THREE.CylinderGeometry(r1, r2, h, seg); g.translate(x, y, z); return g; };
 const rodX = (r, len, x, y, z) => { const g = new THREE.CylinderGeometry(r, r, len, 6); g.rotateZ(Math.PI / 2); g.translate(x, y, z); return g; };
 const rodZ = (r, len, x, y, z) => { const g = new THREE.CylinderGeometry(r, r, len, 6); g.rotateX(Math.PI / 2); g.translate(x, y, z); return g; };
-const newParts = () => ({ plaster: [], plaster2: [], stone: [], concrete: [], wood: [], steel: [], steelDark: [], brass: [], clay: [], dark: [], paintYellow: [] });
+const newParts = () => ({ plaster: [], plaster2: [], stone: [], concrete: [], wood: [], steel: [], steelDark: [], brass: [], clay: [], dark: [], paintYellow: [], bark: [] });
 
 function archOutline(shape, half, spring, apex) {
   shape.lineTo(-half, 0); shape.lineTo(-half, spring);
@@ -30,7 +44,7 @@ function signTexture(text) {
   g.fillStyle = '#2b2118'; g.fillRect(0, 0, 512, 128);
   g.strokeStyle = '#b08a45'; g.lineWidth = 6; g.strokeRect(7, 7, 498, 114);
   g.fillStyle = '#efe2c4'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.direction = 'rtl';
-  g.font = '900 64px "Noto Kufi Arabic", Tahoma, sans-serif';
+  g.font = '900 64px Cairo, "Noto Kufi Arabic", Tahoma, sans-serif';
   g.fillText(text, 256, 68);
   const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4;
   return t;
@@ -44,35 +58,44 @@ export class World {
     this.occluders = [];
     this.root = new THREE.Group(); scene.add(this.root);
     this.anim = [];
+    this.envName = 'desert'; this.vegetation = []; this.treeDensity = 2;
   }
+
+  get env() { return ENVS[this.envName]; }
 
   // ---------- السماء والإضاءة ----------
   buildSky(renderer) {
     const sky = new Sky(); sky.scale.setScalar(2400);
-    const u = sky.material.uniforms;
-    u.turbidity.value = 4.2; u.rayleigh.value = 1.25; u.mieCoefficient.value = 0.0035; u.mieDirectionalG.value = 0.82;
-    u.sunPosition.value.copy(SUN_DIR);
+    sky.material.uniforms.sunPosition.value.copy(SUN_DIR);
     this.scene.add(sky); this.sky = sky;
-
-    // خريطة بيئة من السماء نفسها مع ارتداد رملي من الأسفل (إضاءة محيطة متسقة بلا ملف خارجي)
-    const envScene = new THREE.Scene();
-    const sky2 = new Sky(); sky2.scale.setScalar(1000); Object.assign(sky2.material.uniforms.sunPosition.value, SUN_DIR);
-    for (const k of ['turbidity', 'rayleigh', 'mieCoefficient', 'mieDirectionalG']) sky2.material.uniforms[k].value = u[k].value;
-    envScene.add(sky2);
-    const ground = new THREE.Mesh(new THREE.CircleGeometry(900, 24), new THREE.MeshBasicMaterial({ color: new THREE.Color(0xb89a6e).multiplyScalar(1.5) }));
-    ground.rotation.x = -Math.PI / 2; ground.position.y = -2; envScene.add(ground);
-    const pmrem = new THREE.PMREMGenerator(renderer);
-    this.envTarget = pmrem.fromScene(envScene, 0.02, 1, 2000);
-    this.scene.environment = this.envTarget.texture;
-    this.scene.environmentIntensity = 0.5;
-    pmrem.dispose(); sky2.geometry.dispose(); sky2.material.dispose();
-
     const sun = new THREE.DirectionalLight(0xfff0d8, 2.5);
     sun.castShadow = true;
     sun.shadow.bias = -0.0004; sun.shadow.normalBias = 0.035;
     const sc = sun.shadow.camera; sc.left = -22; sc.right = 22; sc.top = 22; sc.bottom = -22; sc.near = 1; sc.far = 110;
     this.scene.add(sun, sun.target); this.sun = sun;
     this.scene.fog = new THREE.Fog(0xcdd3d6, 90, 620);
+    return this.applyAtmosphere(renderer);
+  }
+
+  /** سماء وضباب وشمس المكان الحالي، وخريطة بيئة مشتقة من السماء نفسها مع ارتداد لون الأرض (بلا ملف خارجي). */
+  applyAtmosphere(renderer) {
+    const E = this.env, u = this.sky.material.uniforms;
+    for (const k of Object.keys(E.sky)) u[k].value = E.sky[k];
+    const envScene = new THREE.Scene();
+    const sky2 = new Sky(); sky2.scale.setScalar(1000); sky2.material.uniforms.sunPosition.value.copy(SUN_DIR);
+    for (const k of Object.keys(E.sky)) sky2.material.uniforms[k].value = E.sky[k];
+    envScene.add(sky2);
+    const ground = new THREE.Mesh(new THREE.CircleGeometry(900, 24), new THREE.MeshBasicMaterial({ color: new THREE.Color(E.bounce).multiplyScalar(E.bounceGain) }));
+    ground.rotation.x = -Math.PI / 2; ground.position.y = -2; envScene.add(ground);
+    const pmrem = new THREE.PMREMGenerator(renderer);
+    const old = this.envTarget;
+    this.envTarget = pmrem.fromScene(envScene, 0.02, 1, 2000);
+    this.scene.environment = this.envTarget.texture;
+    this.scene.environmentIntensity = E.envIntensity;
+    pmrem.dispose(); sky2.geometry.dispose(); sky2.material.dispose(); ground.geometry.dispose(); ground.material.dispose();
+    if (old) old.dispose();
+    this.sun.color.set(E.sun[0]); this.sun.intensity = E.sun[1];
+    this.scene.fog.color.set(E.fog[0]); this.scene.fog.near = E.fog[1]; this.scene.fog.far = E.fog[2];
     return this.envTarget.texture;
   }
 
@@ -81,30 +104,36 @@ export class World {
     this.sun.position.copy(this.sun.target.position).addScaledVector(SUN_DIR, 55);
   }
 
-  // ---------- الأرض والكثبان والنخيل ----------
+  // ---------- الأرض والتضاريس والنبات ----------
+  heightAt(x, z) {
+    const cz = this.terrainCz, len = this.terrainLen, k = this.env.hills;
+    const dx = Math.max(0, Math.abs(x) - (HW + 10)), dz = Math.max(0, Math.abs(z - cz) - (len / 2 + 6));
+    const d = Math.hypot(dx, dz);
+    const mask = THREE.MathUtils.smoothstep(d, 0, 26);
+    const h = 3.2 * Math.sin(x * 0.021 + 1.3) * Math.cos(z * 0.017) + 2.1 * Math.sin((x + z) * 0.043 + 0.4) + 0.9 * Math.sin(x * 0.09 - z * 0.07);
+    return (h + 2.4) * k * mask + THREE.MathUtils.smoothstep(d, 110, 380) * 34 * (0.6 + 0.4 * Math.sin(x * 0.011 + z * 0.006));
+  }
+
   buildTerrain(n) {
-    const len = (n + 2) * L + 40;
+    const E = this.env, len = (n + 2) * L + 40;
     const size = 900, seg = 150;
     const g = new THREE.PlaneGeometry(size, size, seg, seg); g.rotateX(-Math.PI / 2);
-    const cz = -len / 2 + 14;
-    const p = g.attributes.position;
+    this.terrainLen = len; this.terrainCz = -len / 2 + 14;
+    const p = g.attributes.position, uv = g.attributes.uv;
+    // صفوف رؤوس الأرض تُزاح مترًا عن مواضع الوقوف: رأس في مستوى الكاميرا تمامًا يُفسد إسقاط الخامة على بعض العارضات
+    const shift = Math.round(this.terrainCz) % 2 === 0 ? 1 : 0;
     for (let i = 0; i < p.count; i++) {
-      const x = p.getX(i), z = p.getZ(i) + cz;
-      const dx = Math.max(0, Math.abs(x) - (HW + 10)), dz = Math.max(0, Math.abs(z - cz) - (len / 2 + 6));
-      const d = Math.hypot(dx, dz);
-      const mask = THREE.MathUtils.smoothstep(d, 0, 26);
-      let h = 3.2 * Math.sin(x * 0.021 + 1.3) * Math.cos(z * 0.017) + 2.1 * Math.sin((x + z) * 0.043 + 0.4) + 0.9 * Math.sin(x * 0.09 - z * 0.07);
-      h = (h + 2.4) * mask + THREE.MathUtils.smoothstep(d, 110, 380) * 34 * (0.6 + 0.4 * Math.sin(x * 0.011 + z * 0.006));
-      p.setY(i, h); p.setZ(i, z);
+      const x = p.getX(i), z = p.getZ(i) + this.terrainCz + shift;
+      p.setY(i, this.heightAt(x, z)); p.setZ(i, z);
+      uv.setXY(i, x / E.groundTile, z / E.groundTile);
     }
     g.computeVertexNormals();
-    const uv = g.attributes.uv;
-    for (let i = 0; i < p.count; i++) uv.setXY(i, p.getX(i) / 3.1, p.getZ(i) / 3.1);
-    const m = new THREE.Mesh(g, this.mats.sand); m.receiveShadow = true;
+    const m = new THREE.Mesh(g, this.mats[E.ground]); m.receiveShadow = true;
     this.root.add(m); this.terrain = m; this.occluders.push(m);
   }
 
-  buildPalms(n) {
+  _palmGeometry() {
+    if (this.palmGeo) return this.palmGeo;
     const trunk = [], fronds = [];
     let y = 0, x = 0; const H = 6.6, segs = 7;
     for (let i = 0; i < segs; i++) {
@@ -124,24 +153,49 @@ export class World {
       f.computeVertexNormals(); fronds.push(f.toNonIndexed());
     }
     const tg = worldUV(mergeGeometries(trunk.map(t => t.toNonIndexed())), 1.2), fg = mergeGeometries(fronds);
-    const spots = [];
-    for (let i = -1; i <= n + 1; i++) for (const side of [-1, 1]) {
-      const r = Math.abs(Math.sin(i * 12.9898 + side * 78.233) * 43758.5453) % 1;
-      if (r < 0.2) continue;
-      spots.push([side * (HW + 3.2 + r * 5.5), -i * L - r * 7, 0.8 + r * 0.45, r * 6.28]);
-    }
     this.palmGeo = { tg, fg };
-    const tm = new THREE.InstancedMesh(tg, this.mats.trunk, spots.length), fm = new THREE.InstancedMesh(fg, this.mats.frond, spots.length);
-    const M = new THREE.Matrix4(), q = new THREE.Quaternion(), up = new THREE.Vector3(0, 1, 0);
-    spots.forEach(([px, pz, sc, rot], i) => {
-      M.compose(new THREE.Vector3(px, 0, pz), q.setFromAxisAngle(up, rot), new THREE.Vector3(sc, sc, sc));
-      tm.setMatrixAt(i, M); fm.setMatrixAt(i, M);
-    });
-    tm.castShadow = fm.castShadow = true;
     this.frondDepth = new THREE.MeshDepthMaterial({ depthPacking: THREE.RGBADepthPacking, map: this.assets.tex('frond'), alphaTest: 0.35 });
-    fm.customDepthMaterial = this.frondDepth;
-    tm.frustumCulled = fm.frustumCulled = false;
-    this.root.add(tm, fm);
+    return this.palmGeo;
+  }
+
+  /** نبات ما خارج الأسوار: نخيل في الصحراء؛ بلوط ودردار وصنوبر في الغابة (عددها يتبع مستوى الجودة). */
+  buildVegetation(n) {
+    for (const m of this.vegetation) { this.root.remove(m); if (m.customDepthMaterial && m.customDepthMaterial !== this.frondDepth) m.customDepthMaterial.dispose(); m.dispose(); }
+    this.vegetation = [];
+    const M = new THREE.Matrix4(), q = new THREE.Quaternion(), up = new THREE.Vector3(0, 1, 0);
+    const rnd = (a, b, c) => Math.abs(Math.sin(a * 12.9898 + b * 78.233 + c * 37.719) * 43758.5453) % 1;
+    const instanced = (geo, mat, spots, scale, depth) => {
+      const m = new THREE.InstancedMesh(geo, mat, spots.length);
+      spots.forEach(([px, pz, sc, rot], i) => { const k = sc * scale; M.compose(new THREE.Vector3(px, this.heightAt(px, pz) - 0.12, pz), q.setFromAxisAngle(up, rot), new THREE.Vector3(k, k, k)); m.setMatrixAt(i, M); });
+      m.castShadow = true; m.receiveShadow = !depth; m.frustumCulled = false; if (depth) m.customDepthMaterial = depth;
+      this.root.add(m); this.vegetation.push(m);
+    };
+    if (this.env.vegetation === 'palms') {
+      const { tg, fg } = this._palmGeometry(), spots = [];
+      for (let i = -1; i <= n + 1; i++) for (const side of [-1, 1]) {
+        const r = rnd(i, side, 0);
+        if (r < 0.2) continue;
+        spots.push([side * (HW + 3.2 + r * 5.5), -i * L - r * 7, 0.8 + r * 0.45, r * 6.28]);
+      }
+      instanced(tg, this.mats.trunk, spots, 1, null); instanced(fg, this.mats.frond, spots, 1, this.frondDepth);
+      return;
+    }
+    const trees = this.assets.trees || [];
+    if (!trees.length) return;
+    const spots = trees.map(() => []);
+    for (let i = -3; i <= n + 3; i++) for (const side of [-1, 1]) for (let k = 0; k < this.treeDensity; k++) {
+      const r = rnd(i, side, k), r2 = rnd(i + 7, side, k + 3), r3 = rnd(i - 5, side * 2, k + 1);
+      if (this.treeDensity === 1 && r3 < 0.52) continue;      // الجودة المنخفضة: نحو نصف الأشجار
+      spots[Math.floor(r2 * 997) % trees.length].push([side * (HW + 2.9 + k * 5.5 + r * 5), -i * L - r2 * L, 0.78 + r3 * 0.5, r * 6.28]);
+    }
+    // أشجار تحيط بمدخل الميدان (تظهر في الشاشة الرئيسية)
+    [[-10.8, 3.8, 1.1], [-16.7, 2.5, 1.2], [-13.5, 9.5, 0.95], [11.5, 4.5, 1.05], [15, 9, 1.15], [-20, 14, 1.2], [9.8, 14, 1]].forEach(([x, z, sc], k) => spots[k % trees.length].push([x, z, sc, k * 1.3]));
+    trees.forEach((t, ti) => {
+      if (!spots[ti].length) return;
+      const depth = new THREE.MeshDepthMaterial({ depthPacking: THREE.RGBADepthPacking, map: this.assets.tex('leaves_' + t.leaf), alphaTest: 0.5 });
+      instanced(t.branches, this.mats.bark[t.bark], spots[ti], t.scale, null);
+      instanced(t.leaves, this.mats.leaves[t.leaf], spots[ti], t.scale, depth);
+    });
   }
 
   // ---------- عناصر البناء ----------
@@ -170,7 +224,7 @@ export class World {
       back.translate(x + s * 0.012, y, z); lat.translate(x + s * 0.05, y, z);
       parts.plaster.push(bx(0.12, f, w + 2 * f, x + s * 0.06, y + h / 2 + f / 2, z), bx(0.12, f, w + 2 * f, x + s * 0.06, y - h / 2 - f / 2, z), bx(0.12, h, f, x + s * 0.06, y, z - w / 2 - f / 2), bx(0.12, h, f, x + s * 0.06, y, z + w / 2 + f / 2));
     }
-    extra.dark.push(mk(back)); extra.lattice.push(mk(lat));
+    extra.dark.push(mk(back)); if (this.envName === 'desert') extra.lattice.push(mk(lat));
   }
 
   _gateWall(st, parts, extra, z, label, open, theme = -1) {
@@ -275,9 +329,11 @@ export class World {
       const m = new THREE.Mesh(mergeGeometries(list.map(g => worldUV(g, tile))), mat);
       m.castShadow = shadow; m.receiveShadow = true; st.group.add(m); st.disposables.push(m.geometry); return m;
     };
-    const wallMesh = add(parts.plaster, this.mats.plaster[tint], TILE.plaster);
+    const E = this.env, walls = this.mats[E.walls];
+    const wallMesh = add(parts.plaster, walls[tint % walls.length], E.wallTile);
     st.occluders.push(wallMesh);
-    const alt = add(parts.plaster2, this.mats.plaster[(tint + 2) % this.mats.plaster.length], TILE.plaster); if (alt) st.occluders.push(alt);
+    const alt = add(parts.plaster2, walls[(tint + 2) % walls.length], E.wallTile); if (alt) st.occluders.push(alt);
+    const logs = add(parts.bark, this.mats.bark.oak, 1.1); if (logs) st.occluders.push(logs);
     for (const k of ['stone', 'concrete', 'wood', 'steel', 'steelDark', 'brass', 'clay', 'paintYellow']) {
       const m = add(parts[k], this.mats[k], TILE[k]); if (m && k !== 'paintYellow' && k !== 'wood' && k !== 'brass') st.occluders.push(m);
     }
@@ -287,7 +343,7 @@ export class World {
       m.castShadow = shadow; m.receiveShadow = true; st.group.add(m); st.disposables.push(m.geometry);
     };
     plain(extra.dark, this.mats.dark, false); plain(extra.lattice, this.mats.lattice, false);
-    plain(extra.fabric, this.mats.fabric, true); plain(extra.fabricSand, this.mats.fabricSand, true); plain(extra.glass, this.mats.glass, false);
+    plain(extra.fabric, this.mats[E.canopy[0]], true); plain(extra.fabricSand, this.mats[E.canopy[1]], true); plain(extra.glass, this.mats.glass, false);
     this.root.add(st.group);
     return st;
   }
@@ -305,17 +361,30 @@ export class World {
   }
 
   _jar(parts, x, z, s = 1) {
+    if (this.envName === 'forest') {          // في الغابة: جذع مقطوع وقطعة حطب بدل الجرّة الفخارية
+      parts.bark.push(cyl(0.3 * s, 0.36 * s, 0.5 * s, x, 0.25 * s, z, 12), rodZ(0.13 * s, 1.1 * s, x + 0.55 * s, 0.13 * s, z + 0.2));
+      return;
+    }
     const pts = [[0.0, 0], [0.16, 0], [0.3, 0.22], [0.34, 0.5], [0.26, 0.78], [0.13, 0.9], [0.16, 1.0], [0.12, 1.0]].map(([r, y]) => new THREE.Vector2(r * s, y * s));
     parts.clay.push(new THREE.LatheGeometry(pts, 14).translate(x, 0, z));
   }
 
   _palm(st, parts, x, z, s) {
     parts.stone.push(bx(1.3, 0.5, 1.3, x, 0.25, z));
-    for (const [geo, mat] of [[this.palmGeo.tg, this.mats.trunk], [this.palmGeo.fg, this.mats.frond]]) {
-      const m = new THREE.Mesh(geo, mat); m.position.set(x, 0.3, z); m.scale.setScalar(s); m.rotation.y = x * 1.7; m.castShadow = true;
-      if (mat === this.mats.frond) m.customDepthMaterial = this.frondDepth;
-      st.group.add(m);
+    let pairs, k = s, depth;
+    if (this.envName === 'forest' && this.assets.trees && this.assets.trees.length) {     // شجرة بلوط صغيرة في حوض حجري
+      const t = this.assets.trees[0];
+      pairs = [[t.branches, this.mats.bark[t.bark]], [t.leaves, this.mats.leaves[t.leaf]]]; k = t.scale * 0.42;
+      depth = this._leafDepth || (this._leafDepth = new THREE.MeshDepthMaterial({ depthPacking: THREE.RGBADepthPacking, map: this.assets.tex('leaves_' + t.leaf), alphaTest: 0.5 }));
+    } else {
+      const g = this._palmGeometry();
+      pairs = [[g.tg, this.mats.trunk], [g.fg, this.mats.frond]]; depth = this.frondDepth;
     }
+    pairs.forEach(([geo, mat], idx) => {
+      const m = new THREE.Mesh(geo, mat); m.position.set(x, 0.3, z); m.scale.setScalar(k); m.rotation.y = x * 1.7; m.castShadow = true;
+      if (idx === 1) m.customDepthMaterial = depth;
+      st.group.add(m);
+    });
   }
 
   _theme(i, st, parts, extra) {
@@ -351,9 +420,13 @@ export class World {
       const a = new THREE.ExtrudeGeometry(s, { depth: 0.42, bevelEnabled: false, curveSegments: 8 }); a.rotateY(Math.PI / 2); a.translate(-HW, 0, -3.2);
       parts.plaster.push(a, bx(0.5, 0.14, 9.0, -HW + 0.24, 3.57, -3.2));
       const tx = HW + 3.4, tz = -4.5;
-      parts.plaster.push(bx(2.6, 9.4, 2.6, tx, 4.7, tz), bx(3.0, 0.3, 3.0, tx, 9.55, tz), bx(2.9, 0.22, 2.9, tx, 6.6, tz));
-      for (let k = -1; k <= 1; k++) for (const [ox, oz, ry] of [[-1.31, 0, 0], [0, 1.31, Math.PI / 2]]) {
-        extra.dark.push(bx(0.03, 2.3, 0.5, tx + ox + (ry ? k * 0.75 : 0), 8.0, tz + oz + (ry ? 0 : k * 0.75), ry).toNonIndexed());
+      if (this.envName === 'desert') {
+        parts.plaster.push(bx(2.6, 9.4, 2.6, tx, 4.7, tz), bx(3.0, 0.3, 3.0, tx, 9.55, tz), bx(2.9, 0.22, 2.9, tx, 6.6, tz));
+        for (let k = -1; k <= 1; k++) for (const [ox, oz, ry] of [[-1.31, 0, 0], [0, 1.31, Math.PI / 2]]) {
+          extra.dark.push(bx(0.03, 2.3, 0.5, tx + ox + (ry ? k * 0.75 : 0), 8.0, tz + oz + (ry ? 0 : k * 0.75), ry).toNonIndexed());
+        }
+      } else {                // في الغابة: كومة حطب بدل برج الهواء
+        for (const [ox, oy] of [[0, 0.17], [0.36, 0.17], [0.72, 0.17], [0.18, 0.47], [0.54, 0.47], [0.36, 0.77]]) parts.bark.push(rodZ(0.17, 2.3, 5.2 + ox, oy, -3.0));
       }
       this._jar(parts, -5.9, -6.9, 0.9);
     } else if (t === 2) {     // نوافذ بمشبّكات جصّية وأحواض حجرية
@@ -406,7 +479,7 @@ export class World {
   build(n, renderer) {
     this.count = n; this.solved = 0;
     const env = this.buildSky(renderer);
-    this.buildTerrain(n); this.buildPalms(n);
+    this.buildTerrain(n); this.buildVegetation(n);
     this.prepare(0);
     return env;
   }
@@ -414,14 +487,30 @@ export class World {
   /** يعيد ضبط الميدان لجلسة جديدة بعدد مهمات مختلف. */
   reset(n) {
     for (const i of [...this.stations.keys()]) this._drop(i);
-    if (n !== this.count) {
-      this.count = n;
-      this.root.remove(this.terrain); this.occluders = this.occluders.filter(o => o !== this.terrain); this.terrain.geometry.dispose();
-      this.buildTerrain(n);
-    }
+    if (n !== this.count) { this.count = n; this._rebuildGround(); }
     this.solved = 0; this.progressLamps = null; this.anim.length = 0;
     this.prepare(0);
   }
+
+  _rebuildGround() {
+    this.root.remove(this.terrain); this.occluders = this.occluders.filter(o => o !== this.terrain); this.terrain.geometry.dispose();
+    this.buildTerrain(this.count); this.buildVegetation(this.count);
+  }
+
+  /** يبدّل مكان اللعب (صحراء / غابة) ويعيد بناء الأرض والنبات والمحطات. يعيد خريطة البيئة الجديدة. */
+  setEnvironment(name, renderer) {
+    if (!ENVS[name] || name === this.envName) return this.envTarget.texture;
+    for (const i of [...this.stations.keys()]) this._drop(i);
+    this.envName = name;
+    const env = this.applyAtmosphere(renderer);
+    this._rebuildGround();
+    this.solved = 0; this.progressLamps = null; this.anim.length = 0;
+    this.prepare(0);
+    return env;
+  }
+
+  /** عدد الأشجار يتبع مستوى الجودة (١ قليل … ٣ كثيف). */
+  setTreeDensity(d) { if (d !== this.treeDensity) { this.treeDensity = d; if (this.terrain && this.env.vegetation === 'trees') this.buildVegetation(this.count); } }
 
   _drop(i) {
     const st = this.stations.get(i); if (!st) return;

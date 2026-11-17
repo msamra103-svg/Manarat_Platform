@@ -14,7 +14,7 @@ from playwright.async_api import async_playwright
 URL = (sys.argv[1] if len(sys.argv) > 1 else 'http://localhost:8080/').rstrip('/') + '/'
 REPORT = sys.argv[2] if len(sys.argv) > 2 else None
 CHROME = os.environ.get('CHROME', '/usr/bin/google-chrome')
-SECTIONS = os.environ.get('SECTIONS', 'ABCD')   # A: فأرة ولوحة مفاتيح، B: لمس، C: خلط ونصوص طويلة، D: لوحة المعلم والصوت
+SECTIONS = os.environ.get('SECTIONS', 'ABCDE')   # A: فأرة ولوحة مفاتيح، B: لمس، C: خلط ونصوص طويلة، D: لوحة المعلم والصوت، E: اختيار المكان واللاعب
 ARGS = ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist', '--enable-webgl', '--autoplay-policy=no-user-gesture-required']
 results = []
 
@@ -395,6 +395,37 @@ async def main():
             check('القراءة موقوفة والمؤثرات تعمل', a['ready'] and a['r1'] is False and a['n1'] == 0 and a['onPlays'] > 0, json.dumps(a))
             check('المؤثرات موقوفة والقراءة تعمل (إن دعمها المتصفح)', a['mutedPlays'] == 0 and (a['n2'] > 0 if a['supported'] else a['r2'] is False))
             check('لا أخطاء JavaScript في لوحة المعلم', len(errors) == 0, '; '.join(errors[:3]))
+            await ctx.close()
+        # ===== ٩) اختيار المكان واللاعب =====
+        if 'E' in SECTIONS:
+            print('٩) اختيار المكان واللاعب')
+            ctx, pg, errors = await open_page(browser)
+            await pg.evaluate("window.__mmTest.controls.wantLock = false")
+            chips = await pg.evaluate("({ env: [...document.querySelectorAll('#envChips .chip')].map(b => b.textContent), chars: [...document.querySelectorAll('#charChips .chip')].map(b => b.textContent) })")
+            check('شاشة البداية تعرض اختيار المكان واللاعب، ومن ضمنه الطالب الخليجي', 'الصحراء' in chips['env'] and 'الغابة' in chips['env'] and 'الطالب الخليجي' in chips['chars'] and len(chips['chars']) == 4, '، '.join(chips['env'] + chips['chars']))
+            await pg.click('[data-char=student]'); await settle(pg, 300)
+            st = await pg.evaluate("(() => { const g = window.__mmTest; return { id: g.prefs.character, kind: g.character.def.kind, parts: g.character.parts.length, shown: g.character.root.visible, armMeshes: (() => { let n = 0; g.vm.arms.root.traverse(o => { if (o.isSkinnedMesh && o.visible) n++; }); return n; })() }; })()")
+            check('اختيار الطالب الخليجي يبدّل الشخصية الكاملة وذراعَي منظور الشخص الأول', st['id'] == 'student' and st['kind'] == 'student' and st['parts'] >= 6 and st['shown'] and st['armMeshes'] == 2, json.dumps(st))
+            await pg.click('[data-env=forest]')
+            await pg.wait_for_function("window.__mmTest.prefs.environment === 'forest' && !window.__mmTest.switching", timeout=120000)
+            f = await pg.evaluate("(() => { const g = window.__mmTest; return { env: g.world.envName, trees: (g.assets.trees || []).length, veg: g.world.vegetation.length, failed: g.assets.failed, state: g.state }; })()")
+            check('اختيار الغابة يحمّل أصولها ويعيد بناء الميدان دون مغادرة الشاشة الرئيسية', f['env'] == 'forest' and f['trees'] == 3 and f['veg'] == 6 and f['failed'] == [] and f['state'] == 'menu', json.dumps(f))
+            await pg.click('#btnStart'); await wait_state(pg, 'question')
+            i0 = await info(pg)
+            check('في الغابة: الأهداف كلها ظاهرة وعددها يساوي الخيارات', i0['hittable'] == i0['optionCount'] and all(0 < b['x'] < i0['w'] and 0 < b['y'] < i0['h'] for b in i0['boards']))
+            await shoot_at(pg, i0['correctId'])
+            await pg.wait_for_function("window.__mmTest.session.index === 1", timeout=60000)
+            g1 = await pg.evaluate("({ score: window.__mmTest.session.score, gate: window.__mmTest.world.station(0).gate.open })")
+            check('اللعب في الغابة بشخصية الطالب: المهمة تُنجز والبوابة تُفتح', g1['score'] == 100 and g1['gate'] > 0.9, json.dumps(g1))
+            await pg.reload(); await pg.wait_for_function("document.getElementById('scrLoading').classList.contains('hidden')", timeout=120000)
+            pr = await pg.evaluate("(() => { const g = window.__mmTest; return { env: g.prefs.environment, world: g.world.envName, ch: g.prefs.character, def: g.character.def.id, failed: g.assets.failed, pressed: [...document.querySelectorAll('.chip[aria-pressed=true]')].map(b => b.textContent) }; })()")
+            check('المكان واللاعب المختاران محفوظان بعد إعادة التحميل', pr['env'] == 'forest' and pr['world'] == 'forest' and pr['ch'] == 'student' and pr['def'] == 'student' and pr['failed'] == [], '، '.join(pr['pressed']))
+            await pg.click('[data-env=desert]')
+            await pg.wait_for_function("window.__mmTest.prefs.environment === 'desert' && !window.__mmTest.switching", timeout=120000)
+            await pg.click('[data-char=ranger-night]'); await settle(pg, 300)
+            d = await pg.evaluate("(() => { const g = window.__mmTest; return { env: g.world.envName, veg: g.world.vegetation.length, ch: g.character.def.id, failed: g.assets.failed }; })()")
+            check('العودة إلى الصحراء وتبديل زيّ المقاتل', d['env'] == 'desert' and d['veg'] == 2 and d['ch'] == 'ranger-night' and d['failed'] == [], json.dumps(d))
+            check('لا أخطاء JavaScript عند تبديل المكان واللاعب', len(errors) == 0, '; '.join(errors[:3]))
             await ctx.close()
         await browser.close()
 

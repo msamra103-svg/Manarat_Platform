@@ -4,7 +4,7 @@ import * as THREE from 'three';
 import { WORLD, num } from '../core/config.js';
 
 const CW = 1024, CH = 632, HEAD = 96;
-const FONT = '"Noto Kufi Arabic", "Segoe UI", Tahoma, Arial, sans-serif';
+const FONT = 'Cairo, "Noto Kufi Arabic", "Segoe UI", Tahoma, Arial, sans-serif';
 const STOW = -1.52;
 const LAYOUT = { 2: [1.1, -1.1], 3: [2.2, 0, -2.2], 4: [3.3, 1.1, -1.1, -3.3] };   // من اليمين إلى اليسار
 

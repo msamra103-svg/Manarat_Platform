@@ -18,6 +18,10 @@ export class GameAudio {
         this.amb = c.createGain(); this.amb.connect(this.master);
         const len = c.sampleRate * 2; this.noise = c.createBuffer(1, len, c.sampleRate);
         const d = this.noise.getChannelData(0); for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+        // صدى المكان: ارتدادات عن أسوار الميدان (أطول وألمع في الصحراء، وأقصر وأكتم بين أشجار الغابة)
+        this.verb = c.createConvolver(); this.verbGain = c.createGain(); this.verbGain.gain.value = 0.55;
+        this.verb.connect(this.verbGain); this.verbGain.connect(this.sfx);
+        this._buildIR(this.env || 'desert');
         this._ambience();
         this.ready = true; this.applyPrefs();
       } catch (e) { this.ctx = null; return; }
@@ -33,14 +37,31 @@ export class GameAudio {
     if (!p.speechOn) this.stopSpeech();
   }
 
+  setEnvironment(env) { this.env = env; if (this.ready) this._buildIR(env); }
+
+  _buildIR(env) {
+    const c = this.ctx, forest = env === 'forest', dur = forest ? 1.1 : 1.7, n = Math.floor(c.sampleRate * dur), buf = c.createBuffer(2, n, c.sampleRate);
+    for (let ch = 0; ch < 2; ch++) {
+      const d = buf.getChannelData(ch), a = forest ? 0.12 : 0.3, tau = forest ? 0.2 : 0.42;
+      let lp = 0;
+      for (let i = 0; i < n; i++) { lp += a * ((Math.random() * 2 - 1) - lp); d[i] = lp * Math.exp(-(i / c.sampleRate) / tau) * (forest ? 1.7 : 1); }
+      for (const [delay, g] of forest ? [[0.07, 0.5], [0.16, 0.3]] : [[0.09, 0.7], [0.21, 0.45], [0.36, 0.25]]) {
+        const k = Math.floor((delay + ch * 0.007) * c.sampleRate);
+        for (let i = 0; i < 260 && k + i < n; i++) d[k + i] += (Math.random() * 2 - 1) * g * Math.exp(-i / 60);
+      }
+    }
+    this.verb.buffer = buf;
+  }
+
   suspend(on) { if (this.ready) { if (on) this.ctx.suspend().catch(() => {}); else this.ctx.resume().catch(() => {}); } if (on) this.stopSpeech(); }
 
   // ---------- لبنات التوليد ----------
-  _noise(t, dur, { type = 'lowpass', f0 = 1000, f1 = f0, q = 0.8, gain = 0.5, attack = 0.002, dest = this.sfx } = {}) {
+  _noise(t, dur, { type = 'lowpass', f0 = 1000, f1 = f0, q = 0.8, gain = 0.5, attack = 0.002, dest = this.sfx, send = false } = {}) {
     const c = this.ctx, s = c.createBufferSource(); s.buffer = this.noise; s.loop = true;
     const f = c.createBiquadFilter(); f.type = type; f.Q.value = q; f.frequency.setValueAtTime(f0, t); f.frequency.exponentialRampToValueAtTime(Math.max(20, f1), t + dur);
     const g = c.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(gain, t + attack); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-    s.connect(f); f.connect(g); g.connect(dest); s.start(t, Math.random() * 1.5); s.stop(t + dur + 0.05);
+    s.connect(f); f.connect(g); g.connect(dest); if (send && this.verb) g.connect(this.verb);
+    s.start(t, Math.random() * 1.5); s.stop(t + dur + 0.05);
   }
   _tone(t, dur, { type = 'sine', f0 = 440, f1 = f0, gain = 0.3, attack = 0.004, dest = this.sfx } = {}) {
     const c = this.ctx, o = c.createOscillator(); o.type = type; o.frequency.setValueAtTime(f0, t); o.frequency.exponentialRampToValueAtTime(Math.max(20, f1), t + dur);
@@ -63,12 +84,20 @@ export class GameAudio {
     if (!this.ready || !this.prefs.sfxOn) return;
     const t = this.ctx.currentTime + 0.005;
     switch (name) {
-      case 'shot':
-        this._noise(t, 0.035, { type: 'highpass', f0: 2600, gain: 0.5, attack: 0.001 });
-        this._noise(t, 0.17, { type: 'bandpass', f0: 1900, f1: 420, q: 0.6, gain: 0.85 });
-        this._tone(t, 0.13, { f0: 170, f1: 48, gain: 0.7 });
-        this._noise(t + 0.03, 0.55, { type: 'lowpass', f0: 1100, f1: 260, gain: 0.13, attack: 0.02 });
+      case 'shot': {
+        // طلقة مركّبة من طبقات: فرقعة حادة، جسم الانفجار، ضربة منخفضة، حركة الترباس، رنين الظرف، ثم صدى المكان
+        const pv = 0.94 + Math.random() * 0.12;      // تنويع طفيف حتى لا تتطابق الطلقات
+        this._noise(t, 0.022, { type: 'highpass', f0: 3200, gain: 1.0, attack: 0.0005, send: true });
+        this._noise(t, 0.13, { type: 'lowpass', f0: 2600 * pv, f1: 520, q: 0.7, gain: 1.0, attack: 0.001, send: true });
+        this._noise(t + 0.004, 0.09, { type: 'bandpass', f0: 900 * pv, f1: 300, q: 1.2, gain: 0.7 });
+        this._tone(t, 0.16, { f0: 150 * pv, f1: 40, gain: 0.95 });
+        this._tone(t, 0.05, { type: 'square', f0: 95 * pv, f1: 60, gain: 0.22 });
+        this._noise(t + 0.055, 0.018, { type: 'bandpass', f0: 2500, q: 6, gain: 0.16, attack: 0.001 });
+        this._noise(t + 0.085, 0.014, { type: 'bandpass', f0: 3400, q: 8, gain: 0.1, attack: 0.001 });
+        const tc = t + 0.38 + Math.random() * 0.12;
+        [4300, 5750].forEach((f, k) => this._tone(tc + k * 0.045, 0.07, { f0: f * pv, gain: 0.022 }));
         break;
+      }
       case 'hitBoard':
         [1870, 2630, 3410].forEach((f, i) => this._tone(t, 0.26 - i * 0.05, { f0: f, gain: 0.11 - i * 0.025 }));
         this._noise(t, 0.03, { type: 'highpass', f0: 3000, gain: 0.25, attack: 0.001 });
