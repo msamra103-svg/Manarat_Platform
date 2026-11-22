@@ -1,0 +1,100 @@
+@font-face{font-family:Tajawal;src:url("../games/basketball/assets/fonts/Tajawal-Regular.woff2") format("woff2");font-weight:400;font-display:swap}
+@font-face{font-family:Tajawal;src:url("../games/basketball/assets/fonts/Tajawal-Bold.woff2") format("woff2");font-weight:600 700;font-display:swap}
+@font-face{font-family:Tajawal;src:url("../games/basketball/assets/fonts/Tajawal-ExtraBold.woff2") format("woff2");font-weight:800 900;font-display:swap}
+
+body.school-app:not(.playing-game):not(:has([data-game-nav-slot])) #platform-navigation{display:none!important}
+#app .arena-home{min-width:0;font-family:var(--v-font,Tajawal),sans-serif}
+#app .arena-home #heroShowcaseSection{
+  display:flex;align-items:center;justify-content:flex-start;position:relative;isolation:isolate;
+  min-height:clamp(340px,31vw,464px);height:auto;overflow:hidden;margin:14px 0 0;
+  padding:clamp(28px,3.5vw,60px);border:0;border-radius:var(--ui-radius,20px);
+  background:#300515 url("../assets/school-arena.webp") left 46% / cover no-repeat!important;
+  color:white;box-shadow:0 14px 36px -24px #410e2b99;text-align:start;
+}
+#app .arena-home #heroShowcaseSection::before,#app .arena-home #heroShowcaseSection::after{display:none}
+#heroShowcaseSection .arena-copy{position:relative;width:min(52%,620px);display:grid;justify-items:start;align-content:center}
+#app .arena-copy .hero-school-name{display:flex;align-items:center;gap:9px;border:0!important;border-radius:0;background:transparent!important;padding:0!important;font-size:15px;line-height:1.4;color:#fff}
+#app .arena-copy .hero-school-name::before{content:"";width:30px;height:2px;background:#edbd7e;border-radius:0}
+#app #heroShowcaseSection .arena-copy h1{font-size:clamp(38px,4vw,67px)!important;font-weight:800;line-height:1.23!important;letter-spacing:0!important;color:#fff!important;margin:14px 0 5px;max-width:17ch;text-shadow:none}
+#app .arena-copy>p{font-size:clamp(15px,1.15vw,19px)!important;line-height:1.65;color:#f5e6ec;max-width:48ch;margin:0}
+#app #heroShowcaseSection #joinForm{display:block;width:min(100%,490px);margin:20px 0 0;padding:0;border:0;background:transparent;box-shadow:none}
+#app #heroShowcaseSection #joinForm>label{display:block;font-size:15px;font-weight:700;color:#fff;margin:0 0 5px}
+#app #heroShowcaseSection #joinForm>label::before{display:none}
+.arena-code-row{display:flex;align-items:stretch;gap:5px;background:#fff;border:1px solid #f2d9e2;border-radius:12px;padding:4px;box-shadow:0 5px 15px #24001030}
+#app #heroShowcaseSection #joinCode{min-width:0;width:100%;flex:1;margin:0;padding:8px 10px;min-height:42px;background:white;border:0;box-shadow:none;font-size:16px;color:#2d1a24;text-align:start;unicode-bidi:plaintext}
+#app #heroShowcaseSection .arena-code-row button{min-width:90px;min-height:44px;border-radius:8px;gap:9px;background:var(--abu-brand,#8a1538);color:#fff}
+#app #heroShowcaseSection .arena-code-row button:hover{background:var(--abu-brand-deep,#5b0d27)}
+body[data-hero-backdrop=light] #app .arena-home #heroShowcaseSection{background-image:linear-gradient(to left,#fff 29%,#fff5f8f5 48%,transparent 78%),url("../assets/school-arena.webp")!important}
+body[data-hero-backdrop=light] #app #heroShowcaseSection :is(.hero-school-name,.arena-copy h1,#joinForm>label){color:var(--abu-brand)!important}
+body[data-hero-backdrop=light] #app #heroShowcaseSection .arena-copy>p{color:var(--abu-ink)}
+body[data-hero-align=center] #heroShowcaseSection .arena-copy{justify-items:center;text-align:center}
+body[data-hero-button=outline] #app #heroShowcaseSection .arena-code-row button{color:var(--abu-brand);border:1px solid var(--abu-brand);background:white}
+#app .arena-feature{display:flex;align-items:center;gap:18px;min-width:0;padding:12px 16px;border:1px solid var(--abu-line);background:var(--abu-surface,#fff);border-radius:var(--ui-radius,16px);margin:12px 0 24px}
+.arena-feature-image{flex:none;width:94px;aspect-ratio:1.65;border-radius:9px;overflow:hidden}
+.arena-feature-image img{width:100%;height:100%;object-fit:cover;display:block}
+.arena-feature-info{flex:1;min-width:0}
+#app .arena-feature-info #heroSceneBadge{font-size:13px;font-weight:700;color:var(--abu-brand)}
+#app .arena-feature-info #heroSceneTitle{font-size:19px!important;line-height:1.45;margin:2px 0 0;color:var(--abu-ink)!important}
+#app .arena-feature #heroPlayLink{position:static;min-height:42px;white-space:normal;font-size:14px}
+.arena-feature-controls{display:flex;gap:4px;direction:rtl}
+#app .arena-feature-controls :is(button,#v21HeroPause){position:static;display:grid;place-items:center;min-width:44px;min-height:44px;padding:4px;inset:auto;margin:0;border:1px solid var(--abu-line);border-radius:50%;background:var(--abu-surface);color:var(--abu-ink);box-shadow:none;font-size:17px}
+#app .arena-feature-controls button:hover{border-color:var(--abu-brand);color:var(--abu-brand)}
+#app .arena-library .section-head{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:16px}
+#app .gallery-search{display:flex;align-items:center;gap:7px;border:1px solid var(--abu-line);border-radius:10px;background:var(--abu-surface);padding:0 12px;margin:0;min-width:0}
+.gallery-search>span{font:28px/1 sans-serif;color:var(--abu-muted)}
+#app .gallery-search input{margin:0;height:44px;min-width:0;max-width:100%;width:16ch;font-size:15px;border:0;box-shadow:none;background:transparent;color:var(--abu-ink)}
+.gallery-tools,.game-card-facts,.latest-assignment{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.gallery-tools{flex-wrap:wrap;margin-bottom:18px}
+.gallery-total,.game-card-facts{font-size:14px;color:var(--abu-muted)}
+.gallery-total b{color:var(--abu-brand)}
+#app .arena-library .game-cover-card[hidden],#app .arena-library [hidden]{display:none!important}
+#app .arena-library .game-cover-body h3{margin:0;font-size:21px;line-height:1.4}
+#app .arena-library .game-card-facts{justify-content:flex-start;flex-wrap:wrap;font-size:13px;line-height:1.4;margin-top:auto}
+.game-card-facts span+span{padding-inline-start:11px;border-inline-start:1px solid var(--abu-line)}
+#app .arena-library .game-launch-btn{margin-block-start:7px;justify-content:space-between}
+.latest-assignment{background:var(--abu-surface);border:1px solid var(--abu-line);border-inline-start:4px solid var(--abu-brand);border-radius:14px;padding:18px 22px;margin:16px 0;flex-wrap:wrap}
+.latest-assignment h2{font-size:22px;margin:3px 0}
+.latest-assignment small{color:var(--abu-brand);font-weight:700}
+.classroom-tools{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.classroom-tools button,.classroom-tools [data-review-clock]{border-radius:8px;padding:8px 14px;font-weight:700;font-size:15px;line-height:1.4}
+.classroom-tools button{min-height:44px;border:1px solid #871238;background:#fff;color:#741032}
+.classroom-tools button[aria-pressed=true],.classroom-tools [data-review-clock]{background:#690c32;color:#fff}
+.classroom-tools [data-review-clock]{font-variant-numeric:tabular-nums}
+body.classroom-board #platformHeader,body.classroom-board #footer{display:none!important}
+body.classroom-board #app{max-width:none;width:100%;padding-inline:clamp(8px,2vw,28px)}
+body.classroom-board .game-session-hud .session-identity strong{font-size:clamp(18px,2vw,32px)}
+body.classroom-board .game-layout h2{font-size:clamp(24px,3.1vw,49px)!important}
+body.classroom-board .game-layout .answers button{font-size:clamp(20px,2vw,32px);min-height:60px}
+body.classroom-board .game-layout{max-width:1240px}
+@media(max-width:700px){
+  #app .arena-home #heroShowcaseSection{padding:20px;align-items:flex-end;min-height:350px;background-image:linear-gradient(0deg,#300515 4%,#300515ed 33%,#30051580 62%,#3005150a 100%),url("../assets/school-arena.webp")!important;background-size:cover,auto 81%!important;background-position:center,left -18px top!important}
+  #heroShowcaseSection .arena-copy{width:100%}
+  #app #heroShowcaseSection .arena-copy h1{font-size:clamp(31px,7.5vw,41px)!important;margin:8px 0 3px}
+  #app .arena-copy>p{font-size:15px!important;line-height:1.55}
+  #app #heroShowcaseSection #joinForm{margin-top:12px}
+  body[data-hero-backdrop=light] #app .arena-home #heroShowcaseSection{background-image:linear-gradient(0deg,#fff 28%,#fff5f8f2 49%,#fff5f849 85%),url("../assets/school-arena.webp")!important}
+  #app .arena-feature{display:grid;grid-template-columns:68px 1fr;gap:8px 12px;padding:12px}
+  .arena-feature-image{width:68px}
+  #app .arena-feature-info #heroSceneTitle{font-size:16px!important}
+  #app .arena-feature #heroPlayLink{grid-column:1/3;grid-row:2;justify-self:start;max-width:calc(100% - 145px)}
+  .arena-feature-controls{grid-column:1/3;grid-row:2;justify-self:end}
+  #app .gallery-search{width:100%}
+  #app .gallery-search input{flex:1}
+  .gallery-tools{gap:7px}
+  #app .arena-library .gallery-filter-bar{max-width:100%;flex-wrap:wrap}
+  #app .arena-library .gallery-filter-btn{padding-inline:10px;min-height:44px}
+}
+@media(max-width:390px){#app .arena-home #heroShowcaseSection{padding:15px}.gallery-total{font-size:12px}}
+#app .arena-feature-info #heroSceneBadge{display:block;padding:0;border:0;border-radius:0;background:transparent!important;box-shadow:none;color:var(--abu-brand)!important}
+#app .arena-home .arena-copy .hero-school-name::before{transform:none}
+@media(min-width:701px){
+  #app .arena-home #heroShowcaseSection{min-height:clamp(335px,26vw,408px);padding-block:clamp(25px,2.3vw,40px);background-position:left 45%!important}
+  #app #heroShowcaseSection .arena-copy h1{font-size:clamp(36px,3.6vw,59px)!important}
+  #app .arena-home .arena-library{margin-block-start:26px}
+}
+@media(max-width:700px){
+  #app .arena-home #heroShowcaseSection{padding-top:128px;min-height:0;background-image:linear-gradient(to top,#300515 41%,#300515e8 57%,#30051505 84%),url("../assets/school-arena.webp")!important;background-size:cover,100% auto!important;background-position:center,left top!important}
+  body[data-hero-backdrop=light] #app .arena-home #heroShowcaseSection{background-image:linear-gradient(to top,#fff 41%,#fff8fbea 57%,#ffffff05 84%),url("../assets/school-arena.webp")!important}
+  #app .arena-copy .hero-school-name{font-size:13px}
+  #app .arena-home .arena-library{margin-block-start:23px}
+}
