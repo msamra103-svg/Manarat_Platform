@@ -6,6 +6,38 @@ const assignment={id:'as',code:'code',teacher_id:teacher,title:'لعبة الن�
 (async()=>{await new Promise(r=>server.listen(0,'127.0.0.1',r));const base='http://127.0.0.1:'+server.address().port;const browser=await chromium.launch({executablePath:process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH,headless:true,args:['--no-sandbox','--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']});const page=await browser.newPage({viewport:{width:1440,height:1000}}),errors=[];page.on('pageerror',e=>errors.push(e.message));let answers=0;
 await page.route('**/*',async r=>{const u=new URL(r.request().url());if(u.hostname==='127.0.0.1')return r.continue();if(u.pathname.endsWith('/school-api')){const b=r.request().postDataJSON();let j={};switch(b.action){case'settings':j=config;break;case'designState':j={data:config,revision:'2026-10-24',preview:false,publicVideos:[]};break;case'homeHub':j={videos:[{key:'yt:dQw4w9WgXcQ',id:'dQw4w9WgXcQ',youtubeId:'dQw4w9WgXcQ',kind:'youtube',title:'مقدمة التفاعلات الكيميائية',subject:'العلوم العامة',url:'https://www.youtube.com/watch?v=dQw4w9WgXcQ',embedUrl:'https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ?rel=0',thumbnail:'',featured:true},{key:'url:https://example.test/lesson2.mp4',id:'v2',youtubeId:'',kind:'direct',title:'مراجعة الهندسة الفضائية',subject:'الرياضيات',url:'https://example.test/lesson2.mp4',embedUrl:'https://example.test/lesson2.mp4',thumbnail:'',featured:false}],weekly:{week:{labelAr:'الأحد ١٨ أكتوبر – السبت ٢٤ أكتوبر'},champions:[{grade:'7',title:'نجم الصف السابع',gradeLabel:'الصف السابع',hasWinner:true,studentName:'عبدالله م. الكواري',className:'الصف السابع / ١',avgScore:96,metricLabel:'متوسط 96% · 3 مهمات مكتملة'},{grade:'8',title:'نجم الصف الثامن',gradeLabel:'الصف الثامن',hasWinner:true,studentName:'تميم ف. العطية',className:'الصف الثامن / ٢',avgScore:93,metricLabel:'متوسط 93% · مهمتان مكتملتان'},{grade:'9',title:'نجم الصف التاسع',gradeLabel:'الصف التاسع',hasWinner:false,studentName:null,className:'الصف التاسع',avgScore:null,emptyPrompt:'من سيكون نجم الصف التاسع هذا الأسبوع؟',metricLabel:'أكمل مهماتك التعليمية بدقة لتتصدر لوحة الشرف الأسبوعية للصف التاسع.'}],topGames:[{rank:1,key:'football',name:'كرة القدم',badge:'ملعب 3D',cover:'assets/game-covers/football.svg',sessionsCount:28,uniqueStudents:19,sharePercent:100},{rank:2,key:'volleyball',name:'الكرة الطائرة',badge:'تداول 6×6',cover:'assets/game-covers/volleyball.svg',sessionsCount:21,uniqueStudents:15,sharePercent:75},{rank:3,key:'race',name:'سباق السيارات',badge:'حلبة 3D',cover:'assets/game-covers/race.svg',sessionsCount:16,uniqueStudents:12,sharePercent:57}],activeTeachers:[{id:teacher,name:'أ. خالد المنصوري',subject:'العلوم · الرياضيات',summaryText:'4 مهمات نشطة · 28 مشاركة طلابية',engagementScore:400}]},puzzleAvailable:false};break;case'profile':j={id:teacher,name:'معلم الاختبار',admin:true};break;case'dashboard':j={profile:{id:teacher,name:'معلم الاختبار',admin:true},games:[{id:'g',title:'لعبة النباتات المائية',teacher_id:teacher,data:{questions}}],assignments:[assignment],videos:[],sessions:[],teachers:[]};break;case'open':j=assignment;break;case'start':j={id:'s',secret:'secret',questions,threshold:70};break;case'answer':answers++;j={correct:b.question==='q1',pending:b.question==='q2',feedback:'تم تسجيل إجابتك',explanation:''};break;case'finish':j={score:50,pending:true,group:false};break;case'settingsHistory':case'leaderboard':case'saveSettings':j=[];break;case'assignment':j=assignment;break;}return r.fulfill({json:j});}return r.fulfill({json:[]});});
 await page.goto(base);await page.locator('.hero').waitFor();const gameKeys=require('../js/design-schema').gameKeys;
+await page.locator('#footer .v21-footer-nav a').first().waitFor();
+await page.evaluate(()=>document.fonts.ready);
+for (const width of [1326, 768, 390, 320]) {
+  await page.setViewportSize({width, height:844});
+  const layout = await page.locator('#footer').evaluate(footer => {
+    const brand = footer.querySelector('.footer-brand-row');
+    const nav = footer.querySelector('.v21-footer-nav');
+    const center = document.documentElement.clientWidth / 2;
+    function lineOffsets(row) {
+      const lines = new Map();
+      for (const item of row.children) {
+        const box = item.getBoundingClientRect();
+        if (!box.width) continue;
+        const key = Math.round((box.top + box.bottom) / 2);
+        const line = lines.get(key) || {left:Infinity, right:-Infinity};
+        line.left = Math.min(line.left, box.left);
+        line.right = Math.max(line.right, box.right);
+        lines.set(key, line);
+      }
+      return [...lines.values()].map(line => Math.abs((line.left + line.right) / 2 - center));
+    }
+    return {
+      offsets:[...lineOffsets(brand), ...lineOffsets(nav)],
+      stacked:nav.getBoundingClientRect().top >= brand.getBoundingClientRect().bottom,
+      fits:footer.scrollWidth <= document.documentElement.clientWidth
+    };
+  });
+  assert(layout.offsets.length > 0 && layout.offsets.every(offset => offset <= 1), 'Footer content must be centered at ' + width);
+  assert(layout.stacked && layout.fits, 'Footer rows must stack and fit at ' + width);
+}
+await page.setViewportSize({width:1440,height:1000});
+console.log('PASS centered school identity and footer navigation');
 await page.locator('#galleryQuery').fill('كُرَة القَدَم');
 assert.equal(await page.locator('.game-cover-card:visible').count(),1);
 assert.equal(await page.locator('.game-cover-card:visible').getAttribute('data-game'),'football');

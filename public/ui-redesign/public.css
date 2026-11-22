@@ -547,19 +547,23 @@ body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .school-a
 
 /* ---------- 2.10 Footer -------------------------------------------------- */
 body.school-app:not(.admin-embedded):not(.playing-game)>#footer{
-  position:relative;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:14px 24px;
+  position:relative;display:flex;flex-direction:column;flex-wrap:nowrap;align-items:stretch;justify-content:center;gap:14px;text-align:center;
   margin-block-start:var(--abu-s10);padding:26px max(var(--abu-gutter),calc((100vw - var(--abu-page))/2 + 28px)) 30px;
   background:var(--abu-surface);border-block-start:1px solid var(--abu-line);color:var(--abu-ink-2);max-inline-size:none}
 body.school-app:not(.admin-embedded):not(.playing-game)>#footer::before{
   content:"";position:absolute;inset-inline:0;inset-block-start:-1px;block-size:5px;background:var(--abu-brand);opacity:.85;
   -webkit-mask:var(--abu-sadu) 0 0/20px 9px repeat-x;mask:var(--abu-sadu) 0 0/20px 9px repeat-x;transform:scaleY(-1)}
-body.school-app:not(.admin-embedded):not(.playing-game)>#footer .footer-brand-row{display:flex;flex-wrap:wrap;align-items:center;gap:8px;font-size:14px;color:var(--abu-muted)}
+body.school-app:not(.admin-embedded):not(.playing-game)>#footer .footer-brand-row{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:8px;font-size:14px;color:var(--abu-muted)}
 body.school-app:not(.admin-embedded):not(.playing-game)>#footer .footer-brand-row strong{font-size:16px;color:var(--abu-ink)}
-body.school-app:not(.admin-embedded):not(.playing-game)>#footer :is(.v21-footer-nav,.footer-links-row){display:flex;flex-wrap:wrap;gap:4px 6px}
+body.school-app:not(.admin-embedded):not(.playing-game)>#footer :is(.v21-footer-nav,.footer-links-row){display:flex;flex-wrap:wrap;justify-content:center;gap:4px 6px}
 body.school-app:not(.admin-embedded):not(.playing-game)>#footer :is(.v21-footer-nav,.footer-links-row) a{
   display:inline-flex;align-items:center;min-block-size:40px;padding:6px 12px;border-radius:var(--abu-r-sm);font-size:14px;font-weight:700;color:var(--abu-ink-2);text-decoration:none}
 body.school-app:not(.admin-embedded):not(.playing-game)>#footer :is(.v21-footer-nav,.footer-links-row) a:hover{background:var(--abu-brand-50);color:var(--abu-brand)}
 body.school-app:not(.admin-embedded):not(.playing-game)>#footer .footer-links-row:empty{display:none}
+@media (max-width:720px){
+  body.school-app:not(.admin-embedded):not(.playing-game)>#footer .footer-brand-row{flex-direction:column;gap:4px}
+  body.school-app:not(.admin-embedded):not(.playing-game)>#footer .footer-brand-row strong+span{display:none}
+}
 
 /* ==========================================================================
    3. TEACHER LOGIN (/index.html?login=1)
