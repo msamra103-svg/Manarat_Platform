@@ -1,7 +1,9 @@
 /* Shared, allowlisted V21 design contract. Browser, tests and Edge Function use identical bytes. */
 (function(root){'use strict';
 const gameKeys=['football','volleyball','basketball','race','bowling','fishing','target-shooting','qatar-runner','qatar-hero','qatar-camel-race','horse-jumping-race','muhimmat-almaarifa','classic','puzzle'];
-const sections={schoolIdentity:['schoolIdentitySection','مدرستنا'],games:['gamesGallerySection','اختر ملعبك. وابدأ التحدّي.'],champions:['weeklyChampionsSection','نجوم التميز لهذا الأسبوع'],topGames:['weeklyTopGamesSection','الألعاب الأكثر تفاعلًا'],activeTeachers:['weeklyTeachersSection','المعلمون الأكثر تفعيلًا'],analytics:['learningAnalyticsSection','نبض التعلّم هذا الأسبوع'],videos:['schoolVideosSection','مكتبة الفيديو التعليمية'],about:['aboutSchoolSection','عن المنصة']};
+// Offer a mix of subjects and play styles when the school has not curated its own order.
+const schoolGalleryOrder=['classic','puzzle','qatar-hero','football',...gameKeys.filter(k=>!['classic','puzzle','qatar-hero','football'].includes(k))];
+const sections={schoolIdentity:['schoolIdentitySection','مدرستنا'],games:['gamesGallerySection','مكتبة الألعاب التعليمية'],champions:['weeklyChampionsSection','نجوم التميز لهذا الأسبوع'],topGames:['weeklyTopGamesSection','الألعاب الأكثر تفاعلًا'],activeTeachers:['weeklyTeachersSection','المعلمون الأكثر تفعيلًا'],analytics:['learningAnalyticsSection','نبض التعلّم هذا الأسبوع'],videos:['schoolVideosSection','مكتبة الفيديو التعليمية'],about:['aboutSchoolSection','عن المنصة']};
 const destinations={heroShowcaseSection:'الرئيسية',gamesGallerySection:'الألعاب التعليمية',weeklyChampionsSection:'نجوم التميز',weeklyTopGamesSection:'الأكثر تفاعلًا',weeklyTeachersSection:'عطاء المعلمين',learningAnalyticsSection:'نبض التعلّم',schoolVideosSection:'مكتبة الفيديو',aboutSchoolSection:'عن المنصة',schoolIdentitySection:'مدرستنا'};
 const presets={qatar:{label:'الهوية القطرية | Qatar National Identity',primary:'#8A1538',secondary:'#551025',accent:'#D6B36A',background:'#FAF8F7',surface:'#FFFFFF',text:'#30212A',muted:'#71616A',border:'#E8DDE1',nav:'#FFFFFF',button:'#8A1538',hover:'#6D1230',active:'#551025',selected:'#F5EDE8'},light:{label:'قطر المضيئة | Qatar Light',primary:'#8A1538',secondary:'#551025',accent:'#D6B36A',background:'#FFFFFF',surface:'#FAF8F7',text:'#30212A',muted:'#71616A',border:'#E8DDE1',nav:'#FFFFFF',button:'#8A1538',hover:'#6D1230',active:'#551025',selected:'#F5EDE8'},dark:{label:'قطر الليلية | Qatar Dark',primary:'#CF6381',secondary:'#551025',accent:'#D6B36A',background:'#21131A',surface:'#301E27',text:'#FAF8F7',muted:'#CBBAC2',border:'#63414E',nav:'#301E27',button:'#8A1538',hover:'#A72A50',active:'#6D1230',selected:'#4B2535'},premium:{label:'العنابي الفاخر | Premium Maroon',primary:'#8A1538',secondary:'#551025',accent:'#D6B36A',background:'#F5EDE8',surface:'#FFFFFF',text:'#30212A',muted:'#71616A',border:'#DDCBD2',nav:'#FFFFFF',button:'#6D1230',hover:'#551025',active:'#8A1538',selected:'#F5EDE8'}};
 const fields={};
@@ -64,17 +66,35 @@ add('analytics','showAverage','إظهار المتوسط','checkbox',true);
 add('analytics','chartStyle','الرسم البياني','select','bars',{bars:'أعمدة يومية',line:'خط التقدم'});
 const text=(v,max=160)=>String(v??'').slice(0,max),num=(v,d,min,max)=>Number.isFinite(Number(v))?Math.max(min,Math.min(max,Number(v))):d;
 function image(v){const s=text(v,400000).trim();return /^https:\/\/[^\s<>"']+$/i.test(s)||/^assets\/[\w/-]+\.(png|jpe?g|webp|svg)$/i.test(s)||/^data:image\/(png|jpeg|webp);base64,[a-z0-9+/=]+$/i.test(s)?s:'';}
-function normalize(input={}){const c={...input};const old=c.design||{},d={version:21};for(const [k,f]of Object.entries(fields)){const v=old[k]??f.value;d[k]=f.type==='checkbox'?v===true:f.type==='number'?num(v,f.value,f.min,f.max):f.type==='color'?(/^#[0-9a-f]{6}$/i.test(v)?v:f.value):Object.hasOwn(f.options||{},v)?v:f.value;}
+function cleanSchoolIdentity(c){
+ const previousBrand=/منارة\s*التعلّ?م(?:\s*الرقمي)?|DIGITAL LEARNING BEACON|\bManarat(?: Learning)?\b|^(?:للتواصل مع |عن )?منارة$/i;
+ const previousLogo=/(?:^|\/)manarat-(?:logo|mark)\.svg(?:[?#]|$)/i;
+ const previousAccount=/61574253098010|mnrltlmlrqmy|manartaltalm|منارةالتعلمالرقمي/i;
+ for(const key of ['name','subtitle','hero','description','about','contactText','footerText']){
+  if(previousBrand.test(c[key]||''))c[key]='';
+ }
+ if(previousLogo.test(c.logo||''))c.logo='assets/school-mark.svg';
+ if(previousLogo.test(c.platformLogo||''))c.platformLogo='';
+ if(Array.isArray(c.socials))c.socials=c.socials.filter(item=>{
+  if(!item||!item.url||previousBrand.test(item.label||''))return false;
+  let url=String(item.url);
+  try{url=decodeURIComponent(url);}catch{/* Preserve unrelated URLs with a literal percent sign. */}
+  return !previousAccount.test(url);
+ });
+}
+function normalize(input={}){const c={...input};cleanSchoolIdentity(c);const old=c.design||{},d={version:21};for(const [k,f]of Object.entries(fields)){const v=old[k]??f.value;d[k]=f.type==='checkbox'?v===true:f.type==='number'?num(v,f.value,f.min,f.max):f.type==='color'?(/^#[0-9a-f]{6}$/i.test(v)?v:f.value):Object.hasOwn(f.options||{},v)?v:f.value;}
 if(!c.design){for(const k of ['primary','background','accent'])if(/^#[0-9a-f]{6}$/i.test(c[k]||''))d[k]=c[k];}
 if(d.privacy==='full'&&!d.namesApproved)d.privacy='approved_only';
 c.name=text(c.name||'مدرسة أبو عبيدة الإعدادية للبنين');if(['مدرسة أبو عبيد الإعدادية للبنين','مدرسة أبو عبيدة الاعدادية للبنين'].includes(c.name))c.name='مدرسة أبو عبيدة الإعدادية للبنين';
-c.subtitle=text(c.subtitle||'منصة التعلّم التفاعلي والألعاب التعليمية');c.hero=text(c.hero||'المعرفة ملعبك. والتميّز هدفك.');c.description=text(c.description||'تحديات تعليمية تجمع متعة اللعب بقوة المعرفة، لطلاب الصفوف السابع والثامن والتاسع.',500);
+c.subtitle=text(c.subtitle||'منصة التعلّم التفاعلي والألعاب التعليمية');c.hero=text(!c.hero||c.hero==='المعرفة ملعبك. والتميّز هدفك.'?'تعلّم باللعب، واكتشف دروسك.':c.hero);c.description=text(c.description||'تحديات تعليمية تجمع متعة اللعب بقوة المعرفة، لطلاب الصفوف السابع والثامن والتاسع.',500);
 for(const k of ['logo','ministryLogo','platformLogo','schoolImage'])c[k]=image(c[k]);
 if(c.ministryLogo==='assets/qatar-moehe-logo.svg')c.ministryLogo='';if(c.schoolImage==='assets/school-building.png'&&!c.design?.buildingVerified)c.schoolImage='';d.buildingVerified=!!c.schoolImage;
 d.sectionOrder=[...new Set((old.sectionOrder||Object.keys(sections)).filter(k=>sections[k]))];for(const k of Object.keys(sections))if(!d.sectionOrder.includes(k))d.sectionOrder.push(k);
-d.sections={};for(const [k,[id,label]]of Object.entries(sections)){const v=old.sections?.[k]||{};d.sections[k]={visible:v.visible!==false,title:text(v.title||label),description:text(v.description||'',500),background:/^#[0-9a-f]{6}$/i.test(v.background||'')?v.background:'',space:num(v.space,0,0,80),layout:['default','compact','wide'].includes(v.layout)?v.layout:'default',image:image(v.image)};}
+d.sections={};for(const [k,[id,label]]of Object.entries(sections)){const v=old.sections?.[k]||{};d.sections[k]={visible:v.visible!==false,title:text(k==='games'&&v.title==='اختر ملعبك. وابدأ التحدّي.'?label:v.title||label),description:text(v.description||'',500),background:/^#[0-9a-f]{6}$/i.test(v.background||'')?v.background:'',space:num(v.space,0,0,80),layout:['default','compact','wide'].includes(v.layout)?v.layout:'default',image:image(v.image)};}
 if(!Object.values(d.sections).some(s=>s.visible))d.sections.games.visible=true;
-d.gameOrder=[...new Set((old.gameOrder||gameKeys).filter(k=>gameKeys.includes(k)))];for(const k of gameKeys)if(!d.gameOrder.includes(k))d.gameOrder.push(k);
+const priorDefault=old.catalogOrderVersion!==2&&Array.isArray(old.gameOrder)&&old.gameOrder.join(',')===gameKeys.join(',');
+const order=Array.isArray(old.gameOrder)&&!priorDefault?old.gameOrder:schoolGalleryOrder;
+d.catalogOrderVersion=2;d.gameOrder=[...new Set([...order,...schoolGalleryOrder].filter(k=>gameKeys.includes(k)))];
 d.games={};for(const k of gameKeys){const v=old.games?.[k]||{};d.games[k]={visible:v.visible!==false,featured:v.featured!==false,cover:image(v.cover),badge:text(v.badge||'',40),accent:/^#[0-9a-f]{6}$/i.test(v.accent||'')?v.accent:d.primary};}
 const rawNav=old.navigation||c.navItems||Object.entries(destinations).filter(([k])=>!['weeklyTeachersSection','learningAnalyticsSection','schoolIdentitySection'].includes(k)).map(([target,label])=>({target,label,icon:'✦',visible:true}));
 d.navigation=[];const used=new Set();for(const n of rawNav.slice(0,12)){const target=String(n.target||n.href?.replace(/^#/, '')||'');if(!destinations[target]||used.has(target))continue;used.add(target);d.navigation.push({target,label:text(n.label||destinations[target],40),icon:['home','game','trophy','chart','video','school','star','✦','⌂','🎮','🏆','🔥','🎬','🏛️'].includes(n.icon)?n.icon:'star',visible:n.visible!==false});}
@@ -84,8 +104,8 @@ d.featuredVideo=text(old.featuredVideo||'',180);d.videoOrder=Array.isArray(old.v
 d.assets=(Array.isArray(old.assets)?old.assets:[]).slice(-40).filter(a=>image(a.url)).map(a=>({id:text(a.id,80),name:text(a.name,100),url:image(a.url)}));
 d.gradeOrder=[...new Set((old.gradeOrder||['7','8','9']).map(String).filter(g=>['7','8','9'].includes(g)))];for(const g of ['7','8','9'])if(!d.gradeOrder.includes(g))d.gradeOrder.push(g);
 c.customThemes=(Array.isArray(c.customThemes)?c.customThemes:[]).slice(-10).map(t=>({name:text(t.name,50),design:Object.fromEntries(Object.entries(fields).filter(([k,f])=>f.group==='theme').map(([k,f])=>[k,t.design?.[k]??f.value]))}));
-c.design=d;c.primary=d.primary;c.background=d.background;c.accent=d.accent;c.themePreset=d.preset;c.fontFamily=d.font;c.motionLevel=d.motion;c.cardRadius=d.radius;c.galleryColumns=d.columns;c.stickyHeader=d.sticky;c.showMinistryLogo=d.showMinistry&&!!c.ministryLogo;c.showSchoolImage=d.showSchoolImage&&!!c.schoolImage;c.heroAutoRotate=d.rotate;c.heroIntervalSeconds=d.interval;c.enablePuzzleInHero=false;c.studentPrivacyMode=d.privacy;c.sections=d.sectionOrder.filter(k=>d.sections[k].visible);c.rankingsEnabled=d.sections.champions.visible||d.sections.topGames.visible;c.teacherRecognitionEnabled=d.sections.activeTeachers.visible;
-c.navItems=d.navigation.filter(n=>n.visible).map(n=>({id:n.target,label:n.label,href:'#'+n.target,icon:n.icon,visible:true}));c.heroGames=d.gameOrder.filter(k=>d.games[k].visible&&d.games[k].featured);if(!c.heroGames.length)c.heroGames=['classic'];c.videoLayout=d.videoLayout;c.schoolImageOverlay=d.overlay;c.schoolImagePos=d.focalX+'% '+d.focalY+'%';
+c.design=d;c.primary=d.primary;c.background=d.background;c.accent=d.accent;c.themePreset=d.preset;c.fontFamily=d.font;c.motionLevel=d.motion;c.cardRadius=d.radius;c.galleryColumns=d.columns;c.stickyHeader=d.sticky;c.showMinistryLogo=d.showMinistry&&!!c.ministryLogo;c.showSchoolImage=d.showSchoolImage&&!!c.schoolImage;c.heroAutoRotate=d.rotate;c.heroIntervalSeconds=d.interval;c.studentPrivacyMode=d.privacy;c.sections=d.sectionOrder.filter(k=>d.sections[k].visible);c.rankingsEnabled=d.sections.champions.visible||d.sections.topGames.visible;c.teacherRecognitionEnabled=d.sections.activeTeachers.visible;
+c.navItems=d.navigation.filter(n=>n.visible).map(n=>({id:n.target,label:n.label,href:'#'+n.target,icon:n.icon,visible:true}));c.heroGames=d.gameOrder.filter(k=>d.games[k].visible&&d.games[k].featured);if(!c.heroGames.length)c.heroGames=['classic'];c.enablePuzzleInHero=c.heroGames.includes('puzzle');c.videoLayout=d.videoLayout;c.schoolImageOverlay=d.overlay;c.schoolImagePos=d.focalX+'% '+d.focalY+'%';
 return c;}
 const api={fields,presets,gameKeys,sections,destinations,normalize,image};root.ManaratDesign=api;if(typeof module==='object'&&module.exports)module.exports=api;
 })(typeof globalThis!=='undefined'?globalThis:this);

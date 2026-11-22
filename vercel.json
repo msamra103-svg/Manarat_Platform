@@ -49,5 +49,27 @@
     }
   ],
   "outputDirectory": "public",
-  "buildCommand": "npm run build"
+  "buildCommand": "npm run build",
+  "redirects": [
+    {
+      "source": "/auth-legacy.html",
+      "destination": "/auth.html",
+      "permanent": false
+    },
+    {
+      "source": "/teacher/dashboard-legacy.html",
+      "destination": "/teacher/dashboard.html",
+      "permanent": false
+    },
+    {
+      "source": "/assets/manarat-logo.svg",
+      "destination": "/assets/school-mark.svg",
+      "permanent": false
+    },
+    {
+      "source": "/assets/manarat-mark.svg",
+      "destination": "/assets/school-mark.svg",
+      "permanent": false
+    }
+  ]
 }

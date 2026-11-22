@@ -1279,6 +1279,10 @@
       return { start, w, drop };
     }
     computeAutoInput(p) {
+      // Classroom touch controls override auto-run. Holding stops instantly;
+      // touching the left side (or pressing Left) reverses the hero.
+      if (this.input.stop) return { left: false, right: false, jump: false };
+      if (this.input.back || this.input.left) return { left: true, right: false, jump: false };
       const inp = { left: false, right: p.vx < P.autoRun, jump: this.input.jump };
       // standing on a boat / lift: stay on it (the student jumps off when the far side is close)
       if (p.onGround && p.ground && p.ground.kind !== 'fall') { const m = p.ground, c = m.x + m.w / 2; inp.right = p.x < c - 0.35; inp.left = p.x > c + 0.35; return inp; }
@@ -1309,6 +1313,7 @@
     stepPlayer(h) {
       const p = this.player; if (p.dead) return;
       this.unstick(p);
+      if (this.opts.autorun && this.input.stop) p.vx = 0;
       const inp = this.opts.autorun ? this.computeAutoInput(p) : this.input;
       p.prevBottom = p.y; p.invulT = Math.max(0, p.invulT - h); p.landT += h; p.airT = p.onGround ? 0 : p.airT + h;
       if (p.bumpT >= 0) { p.bumpT += h; if (p.bumpT > 0.3) p.bumpT = -1; }

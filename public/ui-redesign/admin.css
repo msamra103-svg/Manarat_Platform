@@ -309,3 +309,29 @@ body:is(.admin-page,.builder-page) .topbar a.brand .abu-ministry img{display:blo
   body:is(.admin-page,.builder-page)[data-mobile-brand=school] .topbar a.brand .abu-ministry{display:none!important}
 }
 body:is(.admin-page,.builder-page) .topbar a.brand .abu-ministry[hidden]{display:none!important}
+
+/* School administration renders its own shell before scripts or settings arrive. */
+html.school-admin-shell,html[data-school-panel-page]{
+  --primary:#8a1538;--secondary:#551025;--accent:#d6b36a;--bg:#faf8f7;--surface:#fff;
+  --ink:#30212a;--muted:#71616a;--line:#e8dde1;--v-nav:#fff;--v-font:Tajawal,Tahoma,Arial,sans-serif;
+  --school-primary:var(--primary);--school-background:var(--bg);background:var(--bg);color:var(--ink)
+}
+html[data-school-panel-page] body>#platformHeader,html[data-school-panel-page] body>#footer,
+html[data-school-panel-page] body>.skip{display:none!important}
+html[data-school-panel-page] body{margin:0;background:var(--bg);color:var(--ink)}
+.admin-page .nav,.admin-page .navlinks,.admin-page .brand,.admin-page .toolbar,.admin-page .q-actions{
+  display:flex;align-items:center;gap:10px;flex-wrap:wrap
+}
+.admin-page .nav,.admin-page .toolbar{justify-content:space-between}
+.admin-page .admin-grid,.admin-page .field-grid,.admin-page .field-3{display:grid;gap:16px}
+.admin-page .field-grid{grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr))}
+.admin-page .field-3{grid-template-columns:repeat(auto-fit,minmax(min(100%,150px),1fr))}
+.admin-page .control-card{padding:clamp(14px,2vw,26px);border-radius:var(--abu-r-card);overflow-x:auto}
+.admin-page .page{margin-block:20px 32px}
+.admin-page .side-btn{width:100%}
+.admin-page .side-btn[hidden],.admin-page [data-ministry][hidden]{display:none!important}
+.admin-page iframe[data-school-panel]{width:100%;min-height:600px;border:0;border-radius:16px;background:var(--abu-bg)}
+.admin-page .table{width:100%;border-collapse:collapse}
+.admin-page .table :is(th,td){padding:8px;text-align:start;border-bottom:1px solid var(--abu-line)}
+.admin-page .input{display:block;width:100%;min-width:0}
+.admin-page :is(.q-actions,.field-grid,.field-3){margin-block:12px}

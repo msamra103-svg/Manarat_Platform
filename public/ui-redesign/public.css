@@ -145,6 +145,62 @@ body.school-app:not(.admin-embedded):not(.playing-game) #loginLink::before{conte
 body.school-app:not(.admin-embedded):not(.playing-game) .mobile-nav-toggle{
   inline-size:44px;block-size:44px;min-block-size:44px;padding:0!important;justify-content:center}
 
+/* Keep section links and signed-in actions on one line. A custom, longer
+   navigation can scroll within its own track without moving the actions. */
+#platformHeader #platformTopNav{
+  display:flex;position:relative;inset:auto;flex-flow:row nowrap;align-items:center;
+  min-width:0;gap:8px;padding-inline:0
+}
+#platformHeader #primaryNavTabs{
+  display:flex;min-width:0;flex:1 1 0;flex-wrap:nowrap;overflow-x:auto;
+  scrollbar-width:thin;scroll-padding-inline:4px
+}
+#platformHeader #primaryNavTabs .nav-tab-btn{
+  flex:none;gap:5px;padding-inline:8px!important;white-space:nowrap;
+  transition-property:background-color,color,border-color,box-shadow,transform
+}
+#platformHeader .nav-actions-cluster{flex:0 0 auto;flex-wrap:nowrap;gap:6px}
+#platformHeader .nav-actions-cluster>:is(a,button){padding-inline:10px;gap:6px}
+#platformHeader #mobileNavBtn{display:none!important}
+@media(min-width:1151px) and (max-width:1240px){
+  #platformHeader #primaryNavTabs .nav-tab-btn{padding-inline:4px!important;gap:3px}
+  #platformHeader #primaryNavTabs{gap:3px}
+  #platformHeader .nav-actions-cluster>:is(a,button){padding-inline:6px}
+}
+@media(max-width:1150px){
+  body:not([data-mobile-menu=scroll]) #platformTopNav{justify-content:flex-end}
+  body:not([data-mobile-menu=scroll]) #platformHeader #primaryNavTabs{
+    display:none;position:absolute;z-index:1;inset:calc(100% + 1px) 0 auto;
+    padding:10px;background:var(--abu-surface);border:1px solid var(--abu-line);
+    border-radius:var(--abu-r-sm);box-shadow:var(--abu-shadow-2);max-height:60vh;overflow:auto
+  }
+  body:not([data-mobile-menu=scroll]) #platformHeader #primaryNavTabs.is-open{
+    display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,145px),1fr))
+  }
+  body:not([data-mobile-menu=scroll]) #platformHeader #mobileNavBtn{display:inline-flex!important}
+  #platformHeader .nav-actions-cluster{width:auto;min-width:0;max-width:100%;margin-inline-start:auto}
+  body[data-mobile-menu=scroll] #platformHeader #primaryNavTabs{position:static;inset:auto}
+}
+@media(max-width:640px){
+  #platformHeader #platformTopNav{gap:4px}
+  #platformHeader .nav-actions-cluster{gap:4px}
+  #platformHeader .nav-actions-cluster>:is(a,button){min-height:44px;justify-content:center}
+  #platformHeader .nav-actions-cluster :is(#adminLink,#dashboardLink){
+    position:relative;min-width:44px;width:44px;flex:0 0 44px;padding:0;gap:0
+  }
+  #platformHeader .nav-actions-cluster :is(#adminLink,#dashboardLink)::before{
+    display:inline-block;width:19px;height:19px
+  }
+  #platformHeader .compact-action-label{
+    position:absolute;width:1px;height:1px;clip-path:inset(50%);overflow:hidden;white-space:nowrap
+  }
+  body[data-mobile-menu=scroll] #platformHeader #platformTopNav{overflow-x:auto;scrollbar-width:thin}
+  body[data-mobile-menu=scroll] #platformHeader #primaryNavTabs{flex:0 0 auto;overflow:visible}
+}
+@media(max-width:380px){
+  body.school-app #platformHeader.platform-top-header{padding-inline:8px!important}
+  #platformHeader .nav-actions-cluster>:is(a,button){padding-inline:5px}
+}
 /* Tablet/mobile: drawer navigation (existing toggle + .is-open behaviour) */
 @media (max-width:1150px){
   body.school-app:not(.admin-embedded):not(.playing-game)>#platformHeader{padding-block:10px 0}
@@ -170,7 +226,7 @@ body.school-app:not(.admin-embedded):not(.playing-game) .mobile-nav-toggle{
   body.school-app:not(.admin-embedded):not(.playing-game) .brand-text-stack b{font-size:15px!important}
   body.school-app:not(.admin-embedded):not(.playing-game) .brand-text-stack small{font-size:12px!important}
   body.school-app:not(.admin-embedded):not(.playing-game) .gaming-top-nav{padding-block:8px 10px;gap:8px}
-  body.school-app:not(.admin-embedded):not(.playing-game) .nav-actions-cluster{width:100%;display:flex;flex-wrap:wrap;gap:6px}
+  body.school-app:not(.admin-embedded):not(.playing-game) .nav-actions-cluster{width:100%;display:flex;flex-wrap:nowrap;gap:6px}
   body.school-app:not(.admin-embedded):not(.playing-game) .nav-actions-cluster>:is(a,button):not(.mobile-nav-toggle){flex:1 1 auto;min-inline-size:max-content;justify-content:center;padding-inline:8px;font-size:13.5px}
   body.school-app:not(.admin-embedded):not(.playing-game) .nav-actions-cluster>.mobile-nav-toggle{flex:none}
   body.school-app:not(.admin-embedded):not(.playing-game)[data-mobile-menu=drawer] .nav-tabs-track.is-open{grid-template-columns:1fr 1fr}
@@ -491,19 +547,23 @@ body.school-app:not(.admin-embedded):not(.playing-game) .platform-home .school-a
 
 /* ---------- 2.10 Footer -------------------------------------------------- */
 body.school-app:not(.admin-embedded):not(.playing-game)>#footer{
-  position:relative;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:14px 24px;
+  position:relative;display:flex;flex-direction:column;flex-wrap:nowrap;align-items:stretch;justify-content:center;gap:14px;text-align:center;
   margin-block-start:var(--abu-s10);padding:26px max(var(--abu-gutter),calc((100vw - var(--abu-page))/2 + 28px)) 30px;
   background:var(--abu-surface);border-block-start:1px solid var(--abu-line);color:var(--abu-ink-2);max-inline-size:none}
 body.school-app:not(.admin-embedded):not(.playing-game)>#footer::before{
   content:"";position:absolute;inset-inline:0;inset-block-start:-1px;block-size:5px;background:var(--abu-brand);opacity:.85;
   -webkit-mask:var(--abu-sadu) 0 0/20px 9px repeat-x;mask:var(--abu-sadu) 0 0/20px 9px repeat-x;transform:scaleY(-1)}
-body.school-app:not(.admin-embedded):not(.playing-game)>#footer .footer-brand-row{display:flex;flex-wrap:wrap;align-items:center;gap:8px;font-size:14px;color:var(--abu-muted)}
+body.school-app:not(.admin-embedded):not(.playing-game)>#footer .footer-brand-row{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:8px;font-size:14px;color:var(--abu-muted)}
 body.school-app:not(.admin-embedded):not(.playing-game)>#footer .footer-brand-row strong{font-size:16px;color:var(--abu-ink)}
-body.school-app:not(.admin-embedded):not(.playing-game)>#footer :is(.v21-footer-nav,.footer-links-row){display:flex;flex-wrap:wrap;gap:4px 6px}
+body.school-app:not(.admin-embedded):not(.playing-game)>#footer :is(.v21-footer-nav,.footer-links-row){display:flex;flex-wrap:wrap;justify-content:center;gap:4px 6px}
 body.school-app:not(.admin-embedded):not(.playing-game)>#footer :is(.v21-footer-nav,.footer-links-row) a{
   display:inline-flex;align-items:center;min-block-size:40px;padding:6px 12px;border-radius:var(--abu-r-sm);font-size:14px;font-weight:700;color:var(--abu-ink-2);text-decoration:none}
 body.school-app:not(.admin-embedded):not(.playing-game)>#footer :is(.v21-footer-nav,.footer-links-row) a:hover{background:var(--abu-brand-50);color:var(--abu-brand)}
 body.school-app:not(.admin-embedded):not(.playing-game)>#footer .footer-links-row:empty{display:none}
+@media (max-width:720px){
+  body.school-app:not(.admin-embedded):not(.playing-game)>#footer .footer-brand-row{flex-direction:column;gap:4px}
+  body.school-app:not(.admin-embedded):not(.playing-game)>#footer .footer-brand-row strong+span{display:none}
+}
 
 /* ==========================================================================
    3. TEACHER LOGIN (/index.html?login=1)

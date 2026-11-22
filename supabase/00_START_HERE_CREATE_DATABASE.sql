@@ -125,7 +125,7 @@ begin
   assigned_role := case when lower(coalesce(new.email,''))=lower('m.samra103@gmail.com') then 'admin' else 'teacher' end;
   insert into public.profiles(id,email,name,school,role,status,avatar,icon,educator_gender,created_at,updated_at)
   values (new.id,new.email,
-    coalesce(nullif(meta->>'name',''),split_part(coalesce(new.email,''),'@',1),'حساب منارة'),
+    coalesce(nullif(meta->>'name',''),split_part(coalesce(new.email,''),'@',1),'حساب المدرسة'),
     coalesce(nullif(meta->>'school',''),''),assigned_role,'نشط',meta->>'avatar',meta->>'icon',
     coalesce(nullif(meta->>'educator_gender',''),'female'),now(),now())
   on conflict(id) do update set

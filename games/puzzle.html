@@ -287,6 +287,9 @@
       cursor: grab;
     }
 
+    .puzzle-key-status,.puzzle-key-help { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); }
+    #puzzleCanvas:focus-visible { outline:3px solid #ffdc8a; outline-offset:-4px; }
+    #puzzleCanvas:focus-visible + .puzzle-key-help { width:auto; height:auto; clip-path:none; inset:auto 6px 5px; text-align:center; pointer-events:none; font-size:12px; padding:2px 7px; border-radius:6px; background:#211821; color:#fff; z-index:2; }
     #puzzleCanvas:active {
       cursor: grabbing;
     }
@@ -983,7 +986,9 @@ body.admin-open{overflow:hidden!important;}
     </header>
 
     <main class="workspace" id="workspace">
-      <canvas id="puzzleCanvas"></canvas>
+      <canvas id="puzzleCanvas" tabindex="0" role="group" aria-label="لوحة تركيب الصورة" aria-describedby="puzzleKeys"></canvas>
+      <span id="puzzleKeys" class="puzzle-key-help">المسافة لاختيار قطعة، والأسهم لتحديد الخانة، وEnter للتثبيت.</span>
+      <span id="puzzleKeyStatus" class="puzzle-key-status" role="status"></span>
       <div class="board-instructions hidden" id="boardInstructions" aria-live="polite">🧩 اسحبي القطع أو اختاري قطعة ثم اضغطي مكانها الصحيح</div>
 
       <!-- شريط التشجيع الفوري عند تركيب القطع -->
@@ -1597,6 +1602,7 @@ body.admin-open{overflow:hidden!important;}
         this.pieceW = 0;
         this.pieceH = 0;
 
+        this.keyboardCell = null;
         this.lockedCount = 0;
         this.isPaused = false;
         this.isCompleted = false;
@@ -1793,6 +1799,8 @@ body.admin-open{overflow:hidden!important;}
         syncSize();
 
         const canvas = this.canvas;
+        canvas.addEventListener('keydown', e => this.onBoardKey(e));
+        canvas.addEventListener('blur', () => { this.keyboardCell = null; });
         canvas.addEventListener('pointerdown', (e) => this.onPointerDown(e));
         canvas.addEventListener('pointermove', (e) => this.onPointerMove(e));
         canvas.addEventListener('pointerup', (e) => this.onPointerUp(e));
@@ -2073,6 +2081,7 @@ body.admin-open{overflow:hidden!important;}
         this.cols = cfg.cols;
         this.rows = cfg.rows;
         if (!this.sourceImage) { this.showInlineNotice(window.GAME_CONFIG.targetGender==='male'?'جاري تجهيز صورة اللعبة، انتظر لحظة…':'جاري تجهيز صورة اللعبة، انتظري لحظة…'); return; }
+        this.keyboardCell = null;
         this.lockedCount = 0;
         this.isPaused = false;
         this.isCompleted = false;
@@ -2133,12 +2142,17 @@ body.admin-open{overflow:hidden!important;}
           }
         }
 
+        const trayOrder = this.traySlots.map((slot, index) => index);
+        for (let i = trayOrder.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [trayOrder[i], trayOrder[j]] = [trayOrder[j], trayOrder[i]];
+        }
         this.pieces = [];
         for (let r = 0; r < this.rows; r++) {
           for (let c = 0; c < this.cols; c++) {
             const targetX = this.boardX + c * this.pieceW;
             const targetY = this.boardY + r * this.pieceH;
-            const slotIndex = r * this.cols + c;
+            const slotIndex = trayOrder[r * this.cols + c];
             const slot = this.traySlots[slotIndex];
             const trayScale = slot.scale;
             const startX = slot.cx - this.pieceW * trayScale / 2;
@@ -2166,7 +2180,6 @@ body.admin-open{overflow:hidden!important;}
           }
         }
 
-        this.pieces.sort(() => Math.random() - 0.5);
         this.started = true;
         this.selectedPiece = null;
         this.sessionId++;
@@ -2229,6 +2242,7 @@ body.admin-open{overflow:hidden!important;}
       onPointerDown(e) {
         if (!this.started || this.isPaused || this.isCompleted || this.activePointerId!==null) return;
         if (e.pointerType==='mouse' && e.button!==0) return;
+        this.keyboardCell = null;
         const pos=this.getCanvasCoords(e);
         // Tap on an empty board cell while a piece is selected: attempt place.
         for(let i=this.pieces.length-1;i>=0;i--){
@@ -2247,15 +2261,47 @@ body.admin-open{overflow:hidden!important;}
           return;
         }
         if(this.selectedPiece && window.GAME_CONFIG.allowTouchSelect!==false && this.isInsideBoard(pos)) {
-          const p=this.selectedPiece;
-          const centerX=p.targetX+this.pieceW/2;
-          const centerY=p.targetY+this.pieceH/2;
-          if(Math.abs(pos.x-centerX)<=this.pieceW*.52*(window.GAME_CONFIG.snapTolerance||1) && Math.abs(pos.y-centerY)<=this.pieceH*.52*(window.GAME_CONFIG.snapTolerance||1)){
-            this.snapAndLockPiece(p);
-          } else {
-            sound.playWrongPlacement();this.showInlineNotice(window.GAME_CONFIG.targetGender==='male'?'جرّب مكانًا آخر للقطعة ✨':'جرّبي مكانًا آخر للقطعة ✨',1200);
-          }
+          this.trySelectedPosition(pos);
         }
+      }
+
+      trySelectedPosition(pos) {
+        const p=this.selectedPiece;
+        const tolerance=window.GAME_CONFIG.snapTolerance||1;
+        const dx=Math.abs(pos.x-p.targetX-this.pieceW/2);
+        const dy=Math.abs(pos.y-p.targetY-this.pieceH/2);
+        if(dx<=this.pieceW*.52*tolerance && dy<=this.pieceH*.52*tolerance){
+          this.snapAndLockPiece(p);
+          return true;
+        }
+        sound.playWrongPlacement();
+        this.showInlineNotice('جرّب وضع القطعة في خانة أخرى',1200);
+        return false;
+      }
+
+      onBoardKey(e) {
+        if(!this.started || this.isPaused || this.isCompleted || this.activePiece) return;
+        if(![' ','Enter','ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(e.key)) return;
+        e.preventDefault();
+        const choices=this.pieces.filter(piece=>!piece.locked).sort((a,b)=>a.slotIndex-b.slotIndex);
+        if(!choices.length)return;
+        const status=document.getElementById('puzzleKeyStatus');
+        if(!this.selectedPiece || e.key===' '){
+          this.selectedPiece=choices[(choices.indexOf(this.selectedPiece)+1)%choices.length];
+        }
+        this.keyboardCell ||= {row:0,col:0};
+        const cell=this.keyboardCell;
+        if(e.key==='ArrowLeft')cell.col=Math.max(0,cell.col-1);
+        if(e.key==='ArrowRight')cell.col=Math.min(this.cols-1,cell.col+1);
+        if(e.key==='ArrowUp')cell.row=Math.max(0,cell.row-1);
+        if(e.key==='ArrowDown')cell.row=Math.min(this.rows-1,cell.row+1);
+        if(e.key==='Enter'){
+          if(e.repeat)return;
+          const placed=this.trySelectedPosition({x:this.boardX+(cell.col+.5)*this.pieceW,y:this.boardY+(cell.row+.5)*this.pieceH});
+          status.textContent=placed?'ثبتت القطعة. اضغط المسافة لاختيار قطعة أخرى.':'الخانة غير مناسبة. حرّك المؤشر بالأسهم.';
+          return;
+        }
+        status.textContent=`القطعة ${this.selectedPiece.slotIndex+1}، الصف ${cell.row+1}، العمود ${cell.col+1} من اليسار.`;
       }
 
       isInsideBoard(pos){
@@ -2564,6 +2610,14 @@ body.admin-open{overflow:hidden!important;}
           if (this.isCompleted) {
             ctx.drawImage(this.sourceImage, this.boardX, this.boardY, this.boardW, this.boardH);
           } else {
+            if(this.keyboardCell && this.selectedPiece){
+              const x=this.boardX+this.keyboardCell.col*this.pieceW, y=this.boardY+this.keyboardCell.row*this.pieceH;
+              ctx.save();
+              ctx.fillStyle='rgba(255,218,128,.23)';ctx.fillRect(x,y,this.pieceW,this.pieceH);
+              ctx.strokeStyle='#ffe58b';ctx.lineWidth=4;
+              ctx.strokeRect(x+2,y+2,this.pieceW-4,this.pieceH-4);
+              ctx.restore();
+            }
             // Soft labeled parking cells help students find every thumbnail, even on mobile.
             for (const p of this.pieces) {
               if (p.locked) continue;

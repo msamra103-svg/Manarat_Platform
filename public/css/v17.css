@@ -129,10 +129,6 @@ body::before{opacity:.34}
   height:230px;border-radius:27px;background:#fff;display:grid;place-items:center;padding:26px;
   box-shadow:0 22px 60px rgba(0,0,0,.26);position:relative;overflow:hidden
 }
-.premium-logo-card::after{
-  content:"منارة التعلم الرقمي";position:absolute;bottom:12px;left:18px;
-  color:#29405f;font-size:11px;font-weight:900;opacity:.5
-}
 .premium-logo-card img{width:min(320px,88%);max-height:175px;object-fit:contain}
 .hero-quick-cards{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
 .hero-quick-card{
