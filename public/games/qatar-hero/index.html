@@ -1,8 +1,9 @@
-<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>مغامرات بطل قطر</title><style>body{background:#1e1227;color:white;font:18px Tahoma,Arial;text-align:center;padding:10vh 12px}#status{max-width:700px;margin:auto}</style></head><body><p id="status">جارٍ تجهيز مغامرات بطل قطر…</p><script>
+<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>مغامرات بطل قطر</title><style>body{background:#1e1227;color:white;font:18px Tahoma,Arial;text-align:center;padding:10vh 12px}#status{max-width:700px;margin:auto}</style></head><body><p id="status" role="status">جارٍ تجهيز مغامرات بطل قطر…</p><progress id="loadProgress" value="0" max="28" aria-label="تحميل أجزاء اللعبة" style="width:min(85%,420px);accent-color:#d4af37"></progress><script>
 (async()=>{
  const urls=Array.from({length:28},(_,i)=>'parts/part-'+String(i).padStart(3,'0')+'.txt');
- const texts=await Promise.all(urls.map(async u=>{const r=await fetch(u+'?v=20261029-smartboard-retry-back-stop',{cache:'no-store'});if(!r.ok)throw Error('Missing '+u+' '+r.status);return r.text();}));
+ let loaded=0;
+ const texts=await Promise.all(urls.map(async u=>{const r=await fetch(u+'?v=20261029-smartboard-retry-back-stop',{cache:'no-store'});if(!r.ok)throw Error('Missing '+u+' '+r.status);const text=await r.text();loaded++;document.getElementById('loadProgress').value=loaded;document.getElementById('status').textContent='جارٍ تجهيز المغامرة '+Math.round(loaded/urls.length*100)+'٪';return text;}));
  const source=texts.slice(0,19).join('')+'\n'+texts.slice(19).join('');
  document.open();document.write(source);document.close();
-})().catch(e=>{console.error(e);document.getElementById('status').textContent='تعذّر تحميل اللعبة، يرجى إعادة تحميل الصفحة.';});
+})().catch(e=>{console.error(e);document.getElementById('status').textContent='تعذّر تحميل المغامرة. أعد التحميل أو استخدم الجولة الصفية السريعة أعلى اللعبة للاستمرار.';});
 </script></body></html>

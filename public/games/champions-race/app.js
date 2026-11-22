@@ -212,9 +212,9 @@ const DEFAULT_QUESTIONS = [
 
 function createDefaultConfig() {
   return {
-    schoolName: 'مدرسة الأبطال النموذجية',
+    schoolName: 'مدرسة أبو عبيدة الإعدادية للبنين',
     deptName: 'قسم تكنولوجيا التعليم والأنشطة التربوية',
-    teacherName: 'أ/ محمود الشبراوي',
+    teacherName: '',
     gameTitle: 'سباق الأبطال ثلاثي الأبعاد',
     gameSubtitle: 'تعلّم، أجب، وانطلق نحو الفوز!',
     schoolLogo: '',

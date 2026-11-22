@@ -901,7 +901,7 @@ body.admin-open{overflow:hidden!important;}
 <body class="student-mode">
 
   <!-- إعدادات اللعبة القابلة للتخصيص والتصدير -->
-  <script id="gameConfigScript">window.GAME_CONFIG = {"isStudentExport": true, "schoolName": "مدرسة أبو عبيدة الإعدادية للبنين", "departmentName": "منصة التعلّم التفاعلي", "gameTitle": "بازل المهمة", "defaultPieces": 6, "bgOpacity": 0.08, "bgBlur": 4, "allowReferenceBtn": true, "targetGender": "male", "startBtnText": "ابدأ التحدي", "levelPromptText": "اختر المستوى المناسب", "playAgainBtnText": "العب مرة أخرى", "halfwayText": "أحسنت، أكملت نصف الصورة", "victoryMainText": "أحسنت! اكتملت الصورة", "victorySubText": "إنجاز رائع", "encouragementPhrases": ["أحسنت", "واصل التقدم", "تركيب صحيح"], "customImageDataUrl": "data:image/svg+xml,<svg%20xmlns=\"http://www.w3.org/2000/svg\"%20width=\"600\"%20height=\"400\"><rect%20width=\"600\"%20height=\"400\"%20fill=\"#8a1538\"/></svg>", "allowTouchSelect": true, "snapTolerance": 1, "showTimer": true, "showProgress": true, "showCounter": true, "showSoundBtn": true, "allowPauseBtn": true, "showRestartBtn": true, "showLevelSelector": true, "showInstructions": true, "showSchoolBadges": true, "showIntroPreview": true, "playPickupSound": true, "soundEnabled": true, "soundVolume": 85, "celebrationEnabled": true, "showConfetti": true, "showFireworks": true, "showBalloons": true, "showApplause": true, "showFanfare": true, "theme": "default", "allowedPieces": [6, 9, 12, 16], "levelLabel6": "سهل جداً — 6 قطع", "levelLabel9": "سهل — 9 قطع", "levelLabel12": "متوسط — 12 قطعة", "levelLabel16": "متقدم — 16 قطعة", "instructionsText": "🧩 اسحب القطع أو اختر قطعة ثم اضغط مكانها الصحيح", "persistId": "school-puzzle"};</script>
+  <script id="gameConfigScript">window.GAME_CONFIG = {"isStudentExport": true, "schoolName": "مدرسة أبو عبيدة الإعدادية للبنين", "departmentName": "منصة التعلّم التفاعلي", "gameTitle": "بازل المهمة", "defaultPieces": 6, "bgOpacity": 0.08, "bgBlur": 4, "allowReferenceBtn": true, "targetGender": "male", "startBtnText": "ابدأ التحدي", "levelPromptText": "اختر المستوى المناسب", "playAgainBtnText": "العب مرة أخرى", "halfwayText": "أحسنت، أكملت نصف الصورة", "victoryMainText": "أحسنت! اكتملت الصورة", "victorySubText": "إنجاز رائع", "encouragementPhrases": ["أحسنت", "واصل التقدم", "تركيب صحيح"], "customImageDataUrl": "data:image/svg+xml,<svg%20xmlns=\"http://www.w3.org/2000/svg\"%20width=\"600\"%20height=\"400\"><rect%20width=\"600\"%20height=\"400\"%20fill=\"%238a1538\"/></svg>", "allowTouchSelect": true, "snapTolerance": 1, "showTimer": true, "showProgress": true, "showCounter": true, "showSoundBtn": true, "allowPauseBtn": true, "showRestartBtn": true, "showLevelSelector": true, "showInstructions": true, "showSchoolBadges": true, "showIntroPreview": true, "playPickupSound": true, "soundEnabled": true, "soundVolume": 85, "celebrationEnabled": true, "showConfetti": true, "showFireworks": true, "showBalloons": true, "showApplause": true, "showFanfare": true, "theme": "default", "allowedPieces": [6, 9, 12, 16], "levelLabel6": "سهل جداً — 6 قطع", "levelLabel9": "سهل — 9 قطع", "levelLabel12": "متوسط — 12 قطعة", "levelLabel16": "متقدم — 16 قطعة", "instructionsText": "🧩 اسحب القطع أو اختر قطعة ثم اضغط مكانها الصحيح", "persistId": "school-puzzle"};</script>
 
   <!-- خلفية النجوم العائمة -->
   <div class="bg-decorations" id="bgStars"></div>
@@ -917,7 +917,7 @@ body.admin-open{overflow:hidden!important;}
       <h2 class="intro-title" id="introGameTitle">تحدي بازل أسماء الإشارة</h2>
 
       <div class="intro-preview-wrap">
-        <img id="introPreviewImg" alt="ملصق أسماء الإشارة التعليمي للأطفال">
+        <img id="introPreviewImg" alt="الصورة التعليمية للمهمة">
       </div>
 
       <div>
@@ -1734,6 +1734,7 @@ body.admin-open{overflow:hidden!important;}
 
       loadInitialImage() {
         const cfg = window.GAME_CONFIG;
+        if(parent!==window&&!cfg.assignmentToken)return;
 
         const setSource = (imgElement, dataUrlStr) => {
           this.sourceImage = imgElement;
@@ -2415,12 +2416,10 @@ body.admin-open{overflow:hidden!important;}
        * 5. الاحتفال الكرنفالي المتزامن (0 - 9 ثوانٍ)
        **************************************************************/
       triggerCarnivalVictory() {
-        const winningSession=this.sessionId,winningToken=window.GAME_CONFIG.assignmentToken;
-        // Give the fanfare, fireworks and applause their full celebration before the host records completion.
-        if(winningToken&&parent!==window)setTimeout(()=>{
-          if(this.isCompleted&&this.sessionId===winningSession&&window.GAME_CONFIG.assignmentToken===winningToken)
-            parent.postMessage({type:'school-puzzle-complete',token:winningToken},location.origin);
-        },8500);
+        const winningToken=window.GAME_CONFIG.assignmentToken;
+        // Save as soon as the last piece locks; the host owns the result screen.
+        if(winningToken&&parent!==window)
+          parent.postMessage({type:'school-puzzle-complete',token:winningToken},location.origin);
         this.isCompleted = true;
         this.victoryTriggered = true;
         this.completionTimeMs = performance.now();
