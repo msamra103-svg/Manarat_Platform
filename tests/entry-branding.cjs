@@ -27,3 +27,15 @@ for(const design of [schoolDesign,serverDesign]){
  assert.equal(stored.socials.length,3);
 }
 console.log('PASS school display settings clean former profiles and logos while preserving educational content and custom links');
+
+function destination(next,admin=false,liveCode=''){
+ return ctx.postLoginDestination(new URLSearchParams({next,liveCode}),admin);
+}
+assert.equal(destination('teacher/create-game.html?edit=abc'),'teacher/create-game.html?edit=abc');
+assert.equal(destination('player/game.html?game=old'),'player/game.html?game=old');
+assert.equal(destination('teacher/dashboard.html'),'');
+assert.equal(destination('admin/admin.html'),'');
+assert.equal(destination('admin/admin.html',true),'admin/admin.html');
+assert.equal(destination('https://other.example/player/game.html'),'');
+assert.equal(destination('live',false,'123456'),'live.html?host=1&code=123456');
+console.log('PASS existing teacher, player and classroom login destinations');

@@ -1,1 +1,17 @@
-<!doctype html><html lang="ar" dir="rtl"><meta charset="utf-8"><title>تسجيل الدخول</title><body><a href="index.html">⌂ الرئيسية</a><p>جارٍ فتح تسجيل الدخول…</p><a href="index.html?login=1&amp;next=admin">تسجيل الدخول</a><script>location.replace('index.html?login=1'+(new URLSearchParams(location.search).has('next')?'&next=admin':''));</script></body></html>
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head><meta charset="utf-8"><title>تسجيل الدخول | مدرسة أبو عبيدة الإعدادية للبنين</title></head>
+<body>
+<a href="index.html">الرئيسية</a>
+<p>جارٍ فتح تسجيل الدخول…</p>
+<a id="login" href="index.html?login=1">تسجيل الدخول</a>
+<script>
+const incoming = new URLSearchParams(location.search);
+const target = new URL('index.html?login=1', location.href);
+for (const key of ['next', 'liveCode']) {
+  if (incoming.has(key)) target.searchParams.set(key, incoming.get(key));
+}
+document.getElementById('login').href = target.href;
+location.replace(target.href);
+</script>
+</body></html>
