@@ -38,7 +38,7 @@ function create(opts){
     if(!pending.has(key)){
      const job=Promise.resolve().then(()=>answer({question:q.id,value:Number(m.value)})).then(r=>{
       if(!valid(r)||typeof r.correct!=='boolean'||r.pending||!Number.isFinite(Number(r.points)))fail('رد التصحيح غير صالح.');
-      const data={requestId:key,index:i,questionId:q.id,correct:r.correct,points:Number(r.points)||0,feedback:String(r.feedback||''),explanation:r.correct?String(r.explanation||''):''};
+      const data={requestId:key,index:i,questionId:q.id,correct:r.correct,points:Number(r.points)||0,feedback:String(r.feedback||''),explanation:String(r.explanation||'')};
       if(r.correct){answered.add(q.id);index++;onGrade(r,q,i);}return data;
      }).finally(()=>{pending.delete(key);status();});
      pending.set(key,job);status();

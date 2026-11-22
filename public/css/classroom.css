@@ -1,0 +1,79 @@
+/* Shared classroom layer, scoped away from the administration interface. */
+.classroom-tools{display:flex;flex-wrap:wrap;align-items:center;gap:8px;width:100%}
+.classroom-tools button{font-size:13px;padding:9px 14px;min-height:42px}
+.classroom-tools .class-primary{background:var(--primary,#8a1538);color:#fff}
+.classroom-tools .class-team{margin-inline-end:auto;padding:8px 12px;border-radius:12px;background:#f5ead8;color:#6c4d1e;font-weight:800}
+.classroom-tools [aria-pressed=true]{outline:2px solid var(--primary,#8a1538);outline-offset:2px}
+.class-setup{border:1px solid #dfd4d8;border-radius:18px;background:#fcfaf7;padding:20px;margin:16px 0}
+.class-setup legend{font-weight:800;padding:0 8px;color:var(--primary,#8a1538)}
+.class-setup .help{margin:7px 0 12px}
+.class-game{max-width:1040px;margin:18px auto}
+.class-game-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 8px}
+.class-game-heading h2{font-size:22px;margin:0}
+.class-game-heading p{font-size:14px;max-width:660px;margin:6px 0;color:#74636b}
+.class-scene{background:linear-gradient(180deg,#fbf5eb,#fffcf8);border:1px solid #e9dde0;border-radius:24px;margin:14px 0;overflow:hidden}
+.class-scene svg{width:100%;height:180px;display:block}
+.class-game .game-layout{max-width:none;margin:0;padding:0}
+.class-game .card{padding:26px;border-radius:24px;box-shadow:0 12px 40px #46212d08}
+.class-game .question{font-size:clamp(23px,2.6vw,34px);line-height:1.65;margin:12px 0 22px;overflow-wrap:anywhere}
+.class-game .answers{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.class-game .answers button{display:flex;align-items:center;gap:13px;min-height:66px;padding:14px 18px;text-align:start;font-size:20px;line-height:1.5;border:1px solid #dbc9d0;background:#fff;color:#432b36;border-radius:16px;white-space:normal;overflow-wrap:anywhere}
+.class-game .answers button:hover:not(:disabled){border-color:var(--primary);background:#fbf0f3}
+.class-game .answers button:focus-visible{outline:3px solid #b5872d;outline-offset:3px}
+.class-game .answers button small{display:grid;place-items:center;min-width:32px;height:32px;border-radius:10px;background:#f1e4e9;color:#8a1538;font-weight:800}
+.class-game .answers button:disabled{opacity:.65}
+.class-game .answers button[data-chosen=true]{border:2px solid #8a1538;opacity:1;background:#fbf0f3}
+.class-kind-balloons~.game-layout .answers button small{border-radius:50% 50% 45% 45%;color:#fff;background:#8a1538}
+.class-feedback{border-radius:16px;padding:16px 18px;margin:18px 0;background:#eef6ef;border:1px solid #b6d1bc;color:#294d32;line-height:1.8}
+.class-feedback.needs-review{background:#fbf3e7;border-color:#e4ca9f;color:#6f4d20}
+.class-feedback p{margin:6px 0}
+.class-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
+.class-discussion{padding:16px;background:#fff5dc;border:1px solid #e8d29f;border-radius:16px;margin:16px 0;color:#65491e}
+.learning-review{text-align:start;border-top:1px solid #eadde2;margin-top:28px;padding-top:20px}
+.learning-review h2{font-size:24px}.learning-review h3{font-size:18px}
+.learning-totals{display:flex;gap:10px;flex-wrap:wrap}
+.learning-totals span{flex:1;min-width:140px;background:#f8f3ef;padding:14px;border-radius:14px;font-size:14px}
+.learning-totals b{font-size:24px;display:block;color:#8a1538}
+.review-item{padding:16px 0;border-bottom:1px solid #e9e0e3}
+.review-item summary{cursor:pointer;font-weight:700;line-height:1.7;overflow-wrap:anywhere}
+.review-item summary span{display:inline-block;font-size:12px;color:#7a5b22;background:#f6eddb;border-radius:8px;padding:2px 7px;margin-inline-start:6px}
+.review-item p{line-height:1.9}.class-reflection{margin-top:20px;padding:18px;background:#f5eee1;border-radius:16px}
+.class-team-results{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:18px}
+.class-team-results div{display:grid;gap:6px;border:1px solid #e3d5da;border-radius:14px;padding:14px;overflow-wrap:anywhere}
+.class-team-results span{font-size:13px;color:#75636d}
+.classroom-board .class-game .question{font-size:clamp(28px,3.3vw,42px)}
+.classroom-board .class-game .answers button{font-size:24px;min-height:78px}
+.classroom-board .class-scene svg{height:150px}
+.is-correct .class-ball{animation:class-shot .8s ease-out both;transform-box:fill-box;transform-origin:center}
+.class-kind-basket.is-correct .class-ball{animation-name:class-hoop}
+.class-kind-net.is-correct .class-ball{animation-name:class-lob}
+.class-kind-pins.is-correct .class-ball{animation-name:class-roll}
+.is-correct .class-pin{opacity:.3;transition:opacity .6s .6s}
+.is-correct .class-fish{animation:class-catch .8s ease-out both}
+.is-correct .class-balloon{animation:class-float .8s ease-out both}
+.class-mover{transition:x .6s ease-out}
+@keyframes class-shot{50%{transform:translate(180px,-50px) rotate(180deg)}100%{transform:translate(335px,-40px) rotate(360deg)}}
+@keyframes class-hoop{50%{transform:translate(170px,-110px) rotate(160deg)}100%{transform:translate(325px,-55px) rotate(300deg)}}
+@keyframes class-lob{50%{transform:translate(170px,-100px) rotate(150deg)}100%{transform:translate(320px,0) rotate(300deg)}}
+@keyframes class-roll{to{transform:translate(250px,-48px) scale(.7)}}
+@keyframes class-catch{to{transform:translate(-155px,-80px) rotate(-15deg)}}
+@keyframes class-float{to{transform:translateY(-55px);opacity:.25}}
+@media(max-width:640px){.class-game .card{padding:18px}.class-game-heading{display:block}.class-scene svg{height:140px}.class-game .answers{grid-template-columns:1fr}.class-game .answers button,.classroom-board .class-game .answers button{font-size:20px;min-height:60px}.class-team-results{grid-template-columns:1fr}.classroom-tools .class-team{width:100%}.class-setup{padding:14px}}
+@media(prefers-reduced-motion:reduce){.class-scene *{animation:none!important;transition:none!important}}
+body.playing-puzzle .class-game{display:flex;flex:1 1 auto;flex-direction:column;width:100%;max-width:none;min-height:0;margin:0}
+body.playing-puzzle .class-game-heading{display:none}
+@media(min-width:800px){
+ .classroom-board .game-session-hud{padding:12px 18px;gap:8px 20px}
+ .classroom-board .session-note{margin:0;font-size:11px}
+ .classroom-board .classroom-tools{width:auto;margin-inline-start:auto}
+ .classroom-board .class-game{display:grid;grid-template-columns:235px minmax(0,1fr);column-gap:20px;max-width:1280px;align-items:start}
+ .classroom-board .class-game-heading{grid-column:1;grid-row:1;display:block;padding:12px 0}
+ .classroom-board .class-game-heading h2{font-size:22px}
+ .classroom-board .class-scene{grid-column:1;grid-row:2;margin:0}
+ .classroom-board .class-scene svg{height:160px}
+ .classroom-board .class-game .game-layout{grid-column:2;grid-row:1 / span 3;min-width:0}
+ .classroom-board .class-game .card{padding:22px}
+ .classroom-board .class-game .question{font-size:clamp(26px,2.5vw,36px);margin:8px 0 18px}
+ .classroom-board .class-game .answers button{font-size:22px;min-height:64px}
+ .classroom-board.playing-puzzle .class-game{display:flex}
+}

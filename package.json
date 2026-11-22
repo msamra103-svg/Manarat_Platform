@@ -12,7 +12,7 @@
     "check:js": "node --check js/core.js && node --check js/admin.js && node --check js/create-game.js && node --check js/player.js && node --check js/school.js && node --check js/student-analytics-logic.js && node --check js/student-analytics.js && node --check js/homepage-hub-logic.js",
     "smoke": "node scripts/smoke-check.js",
     "check": "node scripts/smoke-check.js",
-    "test:unit": "node --test tests/student-analytics.test.cjs tests/homepage-hub.test.cjs tests/classroom-auth.test.cjs",
+    "test:unit": "node --test tests/student-analytics.test.cjs tests/homepage-hub.test.cjs tests/classroom-auth.test.cjs tests/classroom-games.test.cjs tests/classroom-mission-bridge.test.cjs",
     "test:live": "node tests/live-db.cjs && node tests/live-api.cjs && node tests/live-background-api.cjs && node tests/live-background-display.cjs && node tests/live-browser.cjs",
     "test:db": "node tests/database.cjs && node tests/upgrade.cjs",
     "test:browser": "node tests/school-browser.cjs && node tests/admin-first-paint.cjs",
@@ -32,7 +32,8 @@
     "test:target-shooting": "node tests/target-shooting-physics.cjs && node tests/target-shooting-motion.cjs && node tests/target-shooting-modes.cjs && node tests/target-shooting-integration.cjs && node tests/target-shooting-offline.cjs && node tests/target-shooting-guided-trajectory.cjs && node tests/target-shooting-four-modes.cjs",
     "build:target-shooting-offline": "node games/target-shooting/tools/build-offline.cjs",
     "test:qatar-runner": "node games/qatar-runner/tests/run-all.cjs && node tests/qatar-runner-integration.cjs",
-    "build:qatar-runner-offline": "node games/qatar-runner/tools/build-offline.cjs"
+    "build:qatar-runner-offline": "node games/qatar-runner/tools/build-offline.cjs",
+    "test:classroom": "node --test tests/classroom-games.test.cjs tests/classroom-mission-bridge.test.cjs && node tests/game-session.cjs && node tests/game-modes.cjs && node tests/navigation.cjs"
   },
   "dependencies": {
     "esbuild": "^0.28.2",

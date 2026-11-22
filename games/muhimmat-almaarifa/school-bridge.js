@@ -54,9 +54,9 @@ function patch(g){
  function wrong(r,entry){
   const s=g.session,m=s.missions[entry.i],board=entry.board,ui=g.ui;
   if(m.wrong.includes(board.optionId))return;
-  m.wrong.push(board.optionId);s.health=Math.max(0,s.health-(Number(g.rules.wrongPenalty)||20));
+  m.wrong.push(board.optionId);s.health=Math.max(0,s.health-(g.mmMode==='group'?0:(Number(g.rules.wrongPenalty)||20)));
   board.setState('wrong');g.audio.play('wrong');ui.setHealth(s.health,s.maxHealth,true);
-  ui.feedback('no','الإجابة غير صحيحة',r.feedback||'جرّب خيارًا آخر.');
+  ui.feedback('no','الإجابة غير صحيحة',r.explanation||r.feedback||'جرّب خيارًا آخر.');
   if(!s.health){s.status='failed';g.state='failed';g.controls.enabled=false;g.after(1,()=>g.showFail());}
   else{g.state='question';g.controls.enabled=true;}
  }
