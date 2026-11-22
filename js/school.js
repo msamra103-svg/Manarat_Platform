@@ -91,14 +91,6 @@ function resolveNavItems(c){
 
 function applyBrand(c){
  const cfg=window.ManaratDesign?window.ManaratDesign.normalize({...defaultConfig(),...(c||{})}):{...defaultConfig(),...(c||{})};
- const outdatedBrand=/(?:منارة\s*(?:التعلم|التعلّم)?|DIGITAL LEARNING BEACON|Manarat(?:\s+Learning)?)/i;
- const oldSocialLink=/61574253098010|mnrltlmlrqmy|manartaltalm|منارةالتعلمالرقمي/i;
- if(outdatedBrand.test(cfg.name||''))cfg.name=OFFICIAL_SCHOOL_NAME;
- if(outdatedBrand.test(cfg.subtitle||''))cfg.subtitle='منصة التعلّم التفاعلي والألعاب التعليمية';
- if(outdatedBrand.test(cfg.footerText||''))cfg.footerText=cfg.name+' · مساحة للتعلّم التفاعلي والإنجاز الرقمي';
- if(Array.isArray(cfg.socials))cfg.socials=cfg.socials.filter(s=>!oldSocialLink.test(decodeURIComponent(String(s.url||'')))&&!outdatedBrand.test(s.label||''));
- if(String(cfg.logo||'').includes('manarat-logo.svg')||String(cfg.logo||'').includes('manarat-mark.svg'))cfg.logo='assets/school-mark.svg';
-
  const preset=THEME_PRESETS[cfg.themePreset]||THEME_PRESETS.qatar||{};
  const primary=cfg.primary||preset.primary||'#8a1538';
  const background=cfg.background||preset.background||'#FAF8F7';
@@ -162,8 +154,7 @@ function getActiveHeroSlides(){
  const hub=window.ManaratHomepageHub;
  if(hub?.getHeroSlides)return hub.getHeroSlides({settings:config,puzzleAvailable:true}).map(s=>({...s,cover:gameCover(s.key,config.design?.games[s.key]?.cover||s.cover)}));
  const order=['football','volleyball','basketball','race','bowling','fishing','target-shooting','qatar-runner','qatar-hero','qatar-camel-race','horse-jumping-race','muhimmat-almaarifa','classic','puzzle'];
- // Puzzle eligibility is evaluated only inside the authorized assignment.
- return order.map(k=>({...heroCatalog[k],ctaLabel:k==='puzzle'?'متاح داخل مهام الصور':'جرّب '+heroCatalog[k].name,ctaHref:k==='puzzle'?'#joinForm':'index.html?demo='+k}));
+ return order.map(k=>({...heroCatalog[k],ctaLabel:'جرّب '+heroCatalog[k].name,ctaHref:'index.html?demo='+k}));
 }
 function updateHeroDOM(idx){
  const slides=getActiveHeroSlides();if(!slides.length)return;

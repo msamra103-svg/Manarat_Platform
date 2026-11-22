@@ -325,7 +325,7 @@ function renderAudit(){
   const el=$('auditList'); if(!el)return;
   el.innerHTML=logs.map(l=>`<div class="card"><div class="toolbar"><div><h3>${M.esc(l.action||'عملية')}</h3><p class="muted">${M.esc(l.target||'')} · ${M.esc(l.admin_name||l.admin_email||'')} · ${new Date(l.created_at).toLocaleString('ar')}</p></div></div>${l.details?`<pre class="mini-code">${M.esc(JSON.stringify(l.details,null,2)).slice(0,800)}</pre>`:''}</div>`).join('')||'<p class="muted">لا توجد عمليات مسجلة بعد.</p>';
 }
-window.exportAuditLog=function(){const s=fresh();M.downloadFile('manarat-audit-log.json',JSON.stringify(s.auditLogs||[],null,2),'application/json;charset=utf-8')}
+window.exportAuditLog=function(){const s=fresh();M.downloadFile('abu-ubaida-audit-log.json',JSON.stringify(s.auditLogs||[],null,2),'application/json;charset=utf-8')}
 window.clearAuditLog=async function(){if(!confirm('مسح سجل العمليات؟'))return;const s=fresh();s.auditLogs=[];M.saveStore(s);try{await M.syncCloudNow?.()}catch(e){}renderAudit();M.toast('تم مسح سجل العمليات محليًا ومزامنة الحالة')}
 function renderBanks(){const s=fresh();$('banksList').innerHTML=(s.questionBanks||[]).map(b=>`<div class="card"><h3>${M.esc(b.title)}</h3><p class="muted">${M.esc(b.subject||'')} · ${b.questions?.length||0} سؤال</p><button class="btn small" onclick="exportBank('${b.id}')">تصدير</button><button class="btn bad small" onclick="deleteBank('${b.id}')">حذف</button></div>`).join('')||'<p class="muted">لا توجد بنوك بعد.</p>'}
 window.addBank=async function(){const s=fresh();const q=M.normalizeQuestions(parseJSON($('bankJSON').value,{questions:[]}));if(!q.length)return M.toast('لم يتم العثور على أسئلة صحيحة','error');s.questionBanks.push({id:M.uuid(),title:$('bankTitle').value||'بنك جديد',subject:$('bankSubject').value||'',created_at:new Date().toISOString(),updated_at:new Date().toISOString(),questions:q});addAudit('إضافة بنك أسئلة','bank',{title:$('bankTitle').value||'بنك جديد'});$('bankJSON').value='';await saveAdminState(s,'تمت إضافة بنك الأسئلة ومزامنته')}
@@ -435,7 +435,7 @@ window.runSystemHealth=async function(){
   renderHealth(items);
   addAudit('تشغيل فحص صحة النظام','system-health',{ok:items.filter(x=>x.ok).length,total:items.length});
 }
-window.exportSystemHealth=function(){M.downloadFile('manarat-system-health.json',JSON.stringify(lastSystemHealth||[],null,2),'application/json;charset=utf-8')}
+window.exportSystemHealth=function(){M.downloadFile('abu-ubaida-system-health.json',JSON.stringify(lastSystemHealth||[],null,2),'application/json;charset=utf-8')}
 
 window.runQuestionTypeSelfTest=function(){
   const samples=[
@@ -458,8 +458,8 @@ window.runQuestionTypeSelfTest=function(){
   M.toast(missing.length?'يوجد خلل في بعض أنواع الأسئلة':'تم اختبار أنواع الأسئلة بنجاح',missing.length?'warn':'success');
 }
 
-window.exportFullReport=function(){const s=fresh();M.downloadFile('manarat-full-report.json',JSON.stringify(s,null,2),'application/json;charset=utf-8')}
-window.exportCSVReport=function(){const s=fresh();const rows=['اللعبة,اسم الطالب,الدرجة,الوقت,التاريخ'];(s.attempts||[]).forEach(a=>{const g=(s.games||[]).find(x=>String(x.id)===String(a.game_id))||{};rows.push([g.title||a.game_id,a.student_name,a.score,a.time_spent,a.created_at].map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(','))});M.downloadFile('manarat-report.csv',rows.join('\n'),'text/csv;charset=utf-8')}
+window.exportFullReport=function(){const s=fresh();M.downloadFile('abu-ubaida-full-report.json',JSON.stringify(s,null,2),'application/json;charset=utf-8')}
+window.exportCSVReport=function(){const s=fresh();const rows=['اللعبة,اسم الطالب,الدرجة,الوقت,التاريخ'];(s.attempts||[]).forEach(a=>{const g=(s.games||[]).find(x=>String(x.id)===String(a.game_id))||{};rows.push([g.title||a.game_id,a.student_name,a.score,a.time_spent,a.created_at].map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(','))});M.downloadFile('abu-ubaida-report.csv',rows.join('\n'),'text/csv;charset=utf-8')}
 
 
 function backupArrayMerge(current=[],incoming=[]){
@@ -479,7 +479,7 @@ function buildBackupPayload(){
 }
 window.exportBackupJSON=function(){
   const payload=buildBackupPayload();
-  M.downloadFile('manarat-platform-full-backup-'+new Date().toISOString().slice(0,10)+'.json',JSON.stringify(payload,null,2),'application/json;charset=utf-8');
+  M.downloadFile('abu-ubaida-backup-'+new Date().toISOString().slice(0,10)+'.json',JSON.stringify(payload,null,2),'application/json;charset=utf-8');
   addAudit('تصدير نسخة احتياطية','backup',{size:JSON.stringify(payload).length});
   M.saveStore(fresh());
   M.syncCloudNow?.().catch(()=>{});

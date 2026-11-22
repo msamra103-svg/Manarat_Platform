@@ -10,7 +10,11 @@ function copyRecursive(src, dest) {
   const stat = fs.statSync(src);
   if (stat.isDirectory()) {
     fs.mkdirSync(dest, { recursive: true });
-    for (const entry of fs.readdirSync(src)) {
+    const entries = new Set(fs.readdirSync(src));
+    for (const entry of fs.readdirSync(dest)) {
+      if (!entries.has(entry)) fs.rmSync(path.join(dest, entry), { recursive: true, force: true });
+    }
+    for (const entry of entries) {
       copyRecursive(path.join(src, entry), path.join(dest, entry));
     }
   } else {
@@ -19,7 +23,7 @@ function copyRecursive(src, dest) {
   }
 }
 
-for (const file of ['index.html', 'auth.html', 'auth-legacy.html', 'live.html']) {
+for (const file of ['index.html', 'auth.html', '_redirects', 'live.html']) {
   const src = path.join(root, file);
   if (fs.existsSync(src)) copyRecursive(src, path.join(pub, file));
 }

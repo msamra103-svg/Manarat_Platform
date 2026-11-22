@@ -3,7 +3,14 @@ const {stripTypeScriptTypes}=require('node:module');
 const fs=require('fs'),path=require('path'),vm=require('vm'),assert=require('node:assert/strict');
 function load(name,fetch){let handler;const code=stripTypeScriptTypes(fs.readFileSync(path.join(__dirname,'../supabase/functions',name,'index.ts'),'utf8'));vm.runInNewContext(code,{Deno:{env:{get:()=> 'test-only'},serve:f=>handler=f},fetch,Response,Request,Headers,console,TextEncoder,TextDecoder,URL,AbortController,setTimeout,clearTimeout});return handler;}
 (async()=>{
-for(const folder of fs.readdirSync(path.join(__dirname,'../supabase/functions'))){const file=path.join(__dirname,'../supabase/functions',folder,'index.ts');if(fs.existsSync(file))new vm.Script(stripTypeScriptTypes(fs.readFileSync(file,'utf8')).replace(/export (?=async function|function|const)/g,''));}
+for(const folder of fs.readdirSync(path.join(__dirname,'../supabase/functions'))){
+ const file=path.join(__dirname,'../supabase/functions',folder,'index.ts');
+ if(!fs.existsSync(file))continue;
+ const result=require('node:child_process').spawnSync(process.execPath,['--input-type=module','--check'],{
+  input:stripTypeScriptTypes(fs.readFileSync(file,'utf8')),encoding:'utf8'
+ });
+ assert.equal(result.status,0,file+' '+(result.error||result.stderr));
+}
 console.log('PASS all Edge TypeScript parses');
 for(const name of ['dynamic-api','delete-user-admin']){
 let admin=true,targetEmail='m.samra103@gmail.com',deletes=0;

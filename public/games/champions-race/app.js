@@ -2963,13 +2963,19 @@ const GameEngine = {
   updateAI(dt, moving) {
     const n = this.aiCars.length; if (!n) return;
     const P = this._P || (this._P = this.params());
-    const cp = this.checkpoints[this.currentCheckpointIndex];
-    const barrierS = cp && !cp.isOpen && !cp.cleared ? cp.s - 15 : Infinity;
+    // a barrier is solid for EVERY car until the teacher's question was answered correctly and the arm is really up
+    const solid = (c) => c && !c.cleared && !(c.isOpen && c.currentAngle > 1.1);
+    const nextBarrier = (sPos) => { for (const c of this.checkpoints) if (solid(c) && c.s > sPos - 3) return c; return null; };
     const finishS = this.finishArch ? this.finishArch.userData.s : Infinity;
     const nowT = performance.now() * 0.001;
     const Q = World.Q || { ahead: 500, behind: 80 };
     for (let i = 0; i < n; i++) {
       const ai = this.aiCars[i];
+      if (!moving && dt === 0) { // grid placement: never start beyond the first closed barrier (small checkpoint spacing)
+        const first = this.checkpoints.find(solid);
+        if (first && ai.s > first.s - 22) { ai.s = Math.max(this.START_S - 30, first.s - 22 - (i % 4) * 9); ai.startS = Math.min(ai.startS, ai.s); }
+      }
+      const bcp = nextBarrier(ai.s); const barrierS = bcp ? bcp.s - 15 : Infinity;
       if (moving) {
         const road = RoadPath.at(ai.s, this._r);
         let vDes = ai.baseV * (1 + 0.035 * Math.sin(nowT * 0.45 + i * 1.7));
@@ -2997,13 +3003,17 @@ const GameEngine = {
           if (best !== null) { ai.targetD = best; ai.laneCool = 2.5; }
         } else if (gap > 60 && ai.laneCool <= 0 && Math.abs(ai.targetD - ai.homeD) > .1 && barrierS - ai.s > 120) { ai.targetD = ai.homeD; ai.laneCool = 2.5; }
         if (gap < 60) vDes = Math.min(vDes, bv + Math.sqrt(Math.max(0, gap - 2.5) * 2 * 6));
+        if (barrierS < Infinity) vDes = Math.min(vDes, Math.sqrt(2 * 5 * Math.max(0, barrierS - ai.s - 4.2)) + 0.5); // plan the stop long before the barrier (no tunnelling at speed)
         if (ai.s > finishS + 25) vDes = 0;
         ai.v += clamp(vDes - ai.v, -9 * dt, 4.5 * dt);
         ai.v = Math.max(0, ai.v);
         const lateral = clamp(ai.targetD - ai.d, -3.2 * dt, 3.2 * dt) * Math.min(1, 6 * dt + 0.2);
-        ai.d += lateral;
+        // never steer INTO the player's side while level with him (queue release at an opened barrier)
+        const nd = ai.d + lateral;
+        if (Math.abs(ai.s - this.s) < 14 && Math.abs(nd - this.d) < 2.8 && Math.abs(nd - this.d) < Math.abs(ai.d - this.d)) { /* hold lane */ } else ai.d = nd;
         ai.psi = ai.v > 1 ? -Math.atan2(lateral / Math.max(dt, 1e-3), ai.v) : 0;
         ai.s += ai.v * dt / Math.max(0.3, 1 + road.curv * ai.d);
+        if (bcp && ai.s > bcp.s - 7.5) { ai.s = bcp.s - 7.5; ai.v = 0; } // solid barrier: hard stop
         ai.steerVis = clamp(Math.atan(WHEELBASE * road.curv) * 6 - ai.psi * 1.4, -0.4, 0.4);
       } else if (dt > 0) { ai.v = Math.max(0, ai.v - 12 * dt); }
       const ds = ai.s - this.s;
@@ -3989,49 +3999,94 @@ const UIController = {
       clearTimeout(fadeHandle); fadeHandle = setTimeout(() => marker?.classList.remove('active'), 1100);
     };
     surface.addEventListener('pointerdown', (e) => {
-      if (!active() || owner !== null || (e.pointerType === 'mouse' && e.button !== 0)) return;
+      // a new touch ALWAYS takes over: a stale owner (pointerup swallowed by the question overlay) must never lock steering
+      if (!active() || (e.pointerType === 'mouse' && e.button !== 0)) return;
+      try { window.focus(); } catch (_e) {}
       owner = e.pointerId; try { surface.setPointerCapture(owner); } catch (_e) {}
       steerTo(e.clientX, e.clientY); e.preventDefault();
     }, { passive: false });
     surface.addEventListener('pointermove', (e) => { if (owner !== e.pointerId) return; steerTo(e.clientX, e.clientY); e.preventDefault(); }, { passive: false });
     const up = (e) => { if (owner !== e.pointerId) return; owner = null; try { if (surface.hasPointerCapture(e.pointerId)) surface.releasePointerCapture(e.pointerId); } catch (_e) {} marker?.classList.remove('active'); };
-    surface.addEventListener('pointerup', up); surface.addEventListener('pointercancel', up);
+    surface.addEventListener('pointerup', up); surface.addEventListener('pointercancel', up); surface.addEventListener('lostpointercapture', up);
+    window.addEventListener('pointerup', up, true); window.addEventListener('pointercancel', up, true);
+    this._releaseFreeTouch = () => { owner = null; marker?.classList.remove('active'); };
     window.addEventListener('blur', () => { owner = null; marker?.classList.remove('active'); });
     document.addEventListener('visibilitychange', () => { if (document.hidden) { owner = null; marker?.classList.remove('active'); } });
     window.setInterval(() => { if (!hint) return; hint.classList.toggle('hidden', APP_CONFIG.touchMode !== 'free' || $id('hud-screen').classList.contains('hidden') || GameEngine.state !== 'DRIVING' || GameEngine.touchTargetLane !== null); }, 450);
   },
 
   bindKeyboardAndTouchControls() {
-    const keys = { left: false, right: false };
+    const keys = { left: false, right: false, last: '' };
+    this._keys = keys;
     const updateSteer = () => {
-      if (keys.left && !keys.right) GameEngine.steerInput = -1; else if (keys.right && !keys.left) GameEngine.steerInput = 1; else GameEngine.steerInput = 0;
+      if (keys.left && keys.right) GameEngine.steerInput = keys.last === 'left' ? -1 : 1; // last pressed wins (a lost keyup can never cancel steering)
+      else if (keys.left) GameEngine.steerInput = -1; else if (keys.right) GameEngine.steerInput = 1; else GameEngine.steerInput = 0;
       GameEngine.manualSteerOverride = keys.left || keys.right;
       if (GameEngine.manualSteerOverride) GameEngine.touchTargetLane = null;
     };
-    window.addEventListener('keydown', (e) => {
-      if (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName)) return;
-      if (e.code === 'ArrowLeft' || e.code === 'KeyA') { keys.left = true; updateSteer(); }
-      if (e.code === 'ArrowRight' || e.code === 'KeyD') { keys.right = true; updateSteer(); }
-      if (e.code === 'ArrowUp' || e.code === 'KeyW') GameEngine.gasInput = true;
-      if (e.code === 'ArrowDown' || e.code === 'KeyS' || e.code === 'Space') { GameEngine.brakeInput = true; if (e.code === 'Space') e.preventDefault(); }
-      if (e.code === 'KeyH') SoundFX.playCarHorn(false);
-      if (e.code === 'KeyC' && !e.repeat) this.cycleCamera();
-    });
-    window.addEventListener('keyup', (e) => {
-      if (e.code === 'ArrowLeft' || e.code === 'KeyA') { keys.left = false; updateSteer(); }
-      if (e.code === 'ArrowRight' || e.code === 'KeyD') { keys.right = false; updateSteer(); }
-      if (e.code === 'ArrowUp' || e.code === 'KeyW') GameEngine.gasInput = false;
-      if (e.code === 'ArrowDown' || e.code === 'KeyS' || e.code === 'Space') GameEngine.brakeInput = false;
-    });
-    window.addEventListener('blur', () => { keys.left = keys.right = false; GameEngine.steerInput = 0; GameEngine.gasInput = false; GameEngine.brakeInput = false; });
+    // layout / IME / embedded-frame independent key names
+    const kn = (e) => {
+      const c = e.code, k = e.key;
+      if (c === 'ArrowLeft' || c === 'KeyA' || k === 'ArrowLeft' || k === 'Left') return 'left';
+      if (c === 'ArrowRight' || c === 'KeyD' || k === 'ArrowRight' || k === 'Right') return 'right';
+      if (c === 'ArrowUp' || c === 'KeyW' || k === 'ArrowUp' || k === 'Up') return 'gas';
+      if (c === 'ArrowDown' || c === 'KeyS' || k === 'ArrowDown' || k === 'Down') return 'brake';
+      if (c === 'Space' || k === ' ') return 'space';
+      if (c === 'KeyH') return 'horn';
+      if (c === 'KeyC') return 'cam';
+      return '';
+    };
+    const typing = () => {
+      const a = document.activeElement; if (!a || !['INPUT', 'TEXTAREA', 'SELECT'].includes(a.tagName)) return false;
+      if (a.offsetParent === null || a.closest('.hidden')) { try { a.blur(); } catch (_e) {} return false; } // a hidden/closed form field must never swallow the arrows
+      return true;
+    };
+    const onDown = (e) => {
+      if (typing()) return;
+      const k = kn(e); if (!k) return;
+      if (k === 'left') { keys.left = true; keys.last = 'left'; updateSteer(); e.preventDefault(); }
+      else if (k === 'right') { keys.right = true; keys.last = 'right'; updateSteer(); e.preventDefault(); }
+      else if (k === 'gas') { GameEngine.gasInput = true; e.preventDefault(); }
+      else if (k === 'brake') { GameEngine.brakeInput = true; e.preventDefault(); }
+      else if (k === 'space') { GameEngine.brakeInput = true; e.preventDefault(); }
+      else if (k === 'horn') SoundFX.playCarHorn(false);
+      else if (k === 'cam' && !e.repeat) this.cycleCamera();
+    };
+    const onUp = (e) => {
+      const k = kn(e); if (!k) return;
+      if (k === 'left') { keys.left = false; updateSteer(); }
+      else if (k === 'right') { keys.right = false; updateSteer(); }
+      else if (k === 'gas') GameEngine.gasInput = false;
+      else if (k === 'brake' || k === 'space') GameEngine.brakeInput = false;
+    };
+    window.addEventListener('keydown', onDown, true); window.addEventListener('keyup', onUp, true);
+    const clearKeys = () => { keys.left = keys.right = false; keys.last = ''; GameEngine.steerInput = 0; GameEngine.manualSteerOverride = false; GameEngine.gasInput = false; GameEngine.brakeInput = false; };
+    window.addEventListener('blur', clearKeys);
+    document.addEventListener('visibilitychange', () => { if (document.hidden) clearKeys(); });
+    // every time the question / celebration / crash flow hands control back to the driver, input state starts clean and the page owns the keyboard again
+    this.resetInputs = (hard) => {
+      if (hard) clearKeys();
+      GameEngine.touchTargetLane = null; GameEngine.steerCmd = 0;
+      if (this._releaseFreeTouch) this._releaseFreeTouch();
+      ['btn-touch-left', 'btn-touch-right', 'btn-touch-gas', 'btn-touch-brake'].forEach((id) => $id(id)?.classList.remove('active'));
+      try { const a = document.activeElement; if (a && a !== document.body && typeof a.blur === 'function') a.blur(); window.focus(); } catch (_e) {}
+    };
+    let prevState = GameEngine.state;
+    window.setInterval(() => {
+      const st = GameEngine.state; if (st === prevState) return;
+      const wasFlow = prevState === 'QUESTION' || prevState === 'WRONG_RETRY' || prevState === 'CORRECT_CELEBRATION' || prevState === 'CRASH_RECOVERY' || prevState === 'APPROACHING_CHECKPOINT';
+      if (st === 'QUESTION') this.resetInputs(true);          // entering a question: drop anything held/stale
+      else if (st === 'DRIVING' && wasFlow) this.resetInputs(false); // handing control back: keep a key the student is still holding
+      prevState = st;
+    }, 80);
     const bindHoldButton = (id, onDown, onUp) => {
       const el = $id(id);
       const start = (ev) => { ev.preventDefault(); ev.stopPropagation(); el.classList.add('active'); try { el.setPointerCapture(ev.pointerId); } catch (_e) {} onDown(); };
       const end = (ev) => { ev.preventDefault(); el.classList.remove('active'); onUp(); };
-      el.addEventListener('pointerdown', start); el.addEventListener('pointerup', end); el.addEventListener('pointerleave', end); el.addEventListener('pointercancel', end);
+      el.addEventListener('pointerdown', start); el.addEventListener('pointerup', end); el.addEventListener('pointerleave', end); el.addEventListener('pointercancel', end); el.addEventListener('lostpointercapture', end);
     };
-    bindHoldButton('btn-touch-left', () => { keys.left = true; updateSteer(); }, () => { keys.left = false; updateSteer(); });
-    bindHoldButton('btn-touch-right', () => { keys.right = true; updateSteer(); }, () => { keys.right = false; updateSteer(); });
+    bindHoldButton('btn-touch-left', () => { keys.left = true; keys.last = 'left'; updateSteer(); }, () => { keys.left = false; updateSteer(); });
+    bindHoldButton('btn-touch-right', () => { keys.right = true; keys.last = 'right'; updateSteer(); }, () => { keys.right = false; updateSteer(); });
     bindHoldButton('btn-touch-gas', () => { GameEngine.gasInput = true; }, () => { GameEngine.gasInput = false; });
     bindHoldButton('btn-touch-brake', () => { GameEngine.brakeInput = true; }, () => { GameEngine.brakeInput = false; });
     const wheelWrap = $id('virtual-wheel-wrap'), wheelEl = $id('virtual-wheel'); let dragging = false;

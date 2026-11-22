@@ -64,7 +64,23 @@ add('analytics','showAverage','إظهار المتوسط','checkbox',true);
 add('analytics','chartStyle','الرسم البياني','select','bars',{bars:'أعمدة يومية',line:'خط التقدم'});
 const text=(v,max=160)=>String(v??'').slice(0,max),num=(v,d,min,max)=>Number.isFinite(Number(v))?Math.max(min,Math.min(max,Number(v))):d;
 function image(v){const s=text(v,400000).trim();return /^https:\/\/[^\s<>"']+$/i.test(s)||/^assets\/[\w/-]+\.(png|jpe?g|webp|svg)$/i.test(s)||/^data:image\/(png|jpeg|webp);base64,[a-z0-9+/=]+$/i.test(s)?s:'';}
-function normalize(input={}){const c={...input};const old=c.design||{},d={version:21};for(const [k,f]of Object.entries(fields)){const v=old[k]??f.value;d[k]=f.type==='checkbox'?v===true:f.type==='number'?num(v,f.value,f.min,f.max):f.type==='color'?(/^#[0-9a-f]{6}$/i.test(v)?v:f.value):Object.hasOwn(f.options||{},v)?v:f.value;}
+function cleanSchoolIdentity(c){
+ const previousBrand=/منارة\s*التعلّ?م(?:\s*الرقمي)?|DIGITAL LEARNING BEACON|\bManarat(?: Learning)?\b|^(?:للتواصل مع |عن )?منارة$/i;
+ const previousLogo=/(?:^|\/)manarat-(?:logo|mark)\.svg(?:[?#]|$)/i;
+ const previousAccount=/61574253098010|mnrltlmlrqmy|manartaltalm|منارةالتعلمالرقمي/i;
+ for(const key of ['name','subtitle','hero','description','about','contactText','footerText']){
+  if(previousBrand.test(c[key]||''))c[key]='';
+ }
+ if(previousLogo.test(c.logo||''))c.logo='assets/school-mark.svg';
+ if(previousLogo.test(c.platformLogo||''))c.platformLogo='';
+ if(Array.isArray(c.socials))c.socials=c.socials.filter(item=>{
+  if(!item||!item.url||previousBrand.test(item.label||''))return false;
+  let url=String(item.url);
+  try{url=decodeURIComponent(url);}catch{/* Preserve unrelated URLs with a literal percent sign. */}
+  return !previousAccount.test(url);
+ });
+}
+function normalize(input={}){const c={...input};cleanSchoolIdentity(c);const old=c.design||{},d={version:21};for(const [k,f]of Object.entries(fields)){const v=old[k]??f.value;d[k]=f.type==='checkbox'?v===true:f.type==='number'?num(v,f.value,f.min,f.max):f.type==='color'?(/^#[0-9a-f]{6}$/i.test(v)?v:f.value):Object.hasOwn(f.options||{},v)?v:f.value;}
 if(!c.design){for(const k of ['primary','background','accent'])if(/^#[0-9a-f]{6}$/i.test(c[k]||''))d[k]=c[k];}
 if(d.privacy==='full'&&!d.namesApproved)d.privacy='approved_only';
 c.name=text(c.name||'مدرسة أبو عبيدة الإعدادية للبنين');if(['مدرسة أبو عبيد الإعدادية للبنين','مدرسة أبو عبيدة الاعدادية للبنين'].includes(c.name))c.name='مدرسة أبو عبيدة الإعدادية للبنين';
@@ -84,8 +100,8 @@ d.featuredVideo=text(old.featuredVideo||'',180);d.videoOrder=Array.isArray(old.v
 d.assets=(Array.isArray(old.assets)?old.assets:[]).slice(-40).filter(a=>image(a.url)).map(a=>({id:text(a.id,80),name:text(a.name,100),url:image(a.url)}));
 d.gradeOrder=[...new Set((old.gradeOrder||['7','8','9']).map(String).filter(g=>['7','8','9'].includes(g)))];for(const g of ['7','8','9'])if(!d.gradeOrder.includes(g))d.gradeOrder.push(g);
 c.customThemes=(Array.isArray(c.customThemes)?c.customThemes:[]).slice(-10).map(t=>({name:text(t.name,50),design:Object.fromEntries(Object.entries(fields).filter(([k,f])=>f.group==='theme').map(([k,f])=>[k,t.design?.[k]??f.value]))}));
-c.design=d;c.primary=d.primary;c.background=d.background;c.accent=d.accent;c.themePreset=d.preset;c.fontFamily=d.font;c.motionLevel=d.motion;c.cardRadius=d.radius;c.galleryColumns=d.columns;c.stickyHeader=d.sticky;c.showMinistryLogo=d.showMinistry&&!!c.ministryLogo;c.showSchoolImage=d.showSchoolImage&&!!c.schoolImage;c.heroAutoRotate=d.rotate;c.heroIntervalSeconds=d.interval;c.enablePuzzleInHero=false;c.studentPrivacyMode=d.privacy;c.sections=d.sectionOrder.filter(k=>d.sections[k].visible);c.rankingsEnabled=d.sections.champions.visible||d.sections.topGames.visible;c.teacherRecognitionEnabled=d.sections.activeTeachers.visible;
-c.navItems=d.navigation.filter(n=>n.visible).map(n=>({id:n.target,label:n.label,href:'#'+n.target,icon:n.icon,visible:true}));c.heroGames=d.gameOrder.filter(k=>d.games[k].visible&&d.games[k].featured);if(!c.heroGames.length)c.heroGames=['classic'];c.videoLayout=d.videoLayout;c.schoolImageOverlay=d.overlay;c.schoolImagePos=d.focalX+'% '+d.focalY+'%';
+c.design=d;c.primary=d.primary;c.background=d.background;c.accent=d.accent;c.themePreset=d.preset;c.fontFamily=d.font;c.motionLevel=d.motion;c.cardRadius=d.radius;c.galleryColumns=d.columns;c.stickyHeader=d.sticky;c.showMinistryLogo=d.showMinistry&&!!c.ministryLogo;c.showSchoolImage=d.showSchoolImage&&!!c.schoolImage;c.heroAutoRotate=d.rotate;c.heroIntervalSeconds=d.interval;c.studentPrivacyMode=d.privacy;c.sections=d.sectionOrder.filter(k=>d.sections[k].visible);c.rankingsEnabled=d.sections.champions.visible||d.sections.topGames.visible;c.teacherRecognitionEnabled=d.sections.activeTeachers.visible;
+c.navItems=d.navigation.filter(n=>n.visible).map(n=>({id:n.target,label:n.label,href:'#'+n.target,icon:n.icon,visible:true}));c.heroGames=d.gameOrder.filter(k=>d.games[k].visible&&d.games[k].featured);if(!c.heroGames.length)c.heroGames=['classic'];c.enablePuzzleInHero=c.heroGames.includes('puzzle');c.videoLayout=d.videoLayout;c.schoolImageOverlay=d.overlay;c.schoolImagePos=d.focalX+'% '+d.focalY+'%';
 return c;}
 const api={fields,presets,gameKeys,sections,destinations,normalize,image};root.ManaratDesign=api;if(typeof module==='object'&&module.exports)module.exports=api;
 })(typeof globalThis!=='undefined'?globalThis:this);
