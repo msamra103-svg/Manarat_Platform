@@ -12,7 +12,26 @@ assert.equal(await page.locator('.games-gallery [data-game=puzzle] .game-launch-
 assert.equal(await page.locator('[data-testid^="champion-card-grade-"]').count(),3);assert((await page.locator('[data-testid="champion-card-grade-7"]').innerText()).includes('عبدالله م. الكواري'));assert((await page.locator('[data-testid="champion-card-grade-9"]').innerText()).includes('من سيكون نجم الصف التاسع هذا الأسبوع؟'));assert.equal(await page.locator('[data-testid="top-game-row"]').count(),3);assert.equal(await page.locator('[data-testid="active-teacher-card"]').count(),1);assert(await page.locator('[data-testid="homepage-video-gallery"]').isVisible());const selectedVideo=page.locator('[data-action="selectHomeVideo"]').nth(1);const selectedVideoKey=await selectedVideo.getAttribute('data-id');await selectedVideo.click();await page.waitForFunction(key=>{const button=Array.from(document.querySelectorAll('[data-action="selectHomeVideo"]')).find(b=>b.dataset.id===key);return Boolean(button?.classList.contains('active')&&document.querySelector('#activeHomeVideoTitle')?.textContent?.trim());},selectedVideoKey);await page.locator('[data-action="heroNext"]').click();await page.screenshot({path:__dirname+'/school-home.png',fullPage:true});console.log('PASS homepage');
 for(const id of ['weeklyChampionsSection','weeklyTopGamesSection','schoolVideosSection','gamesGallerySection']){await page.locator(`[data-v-target="${id}"]`).click();assert.equal(await page.locator('#primaryNavTabs [aria-current=location]').getAttribute('data-v-target'),id);await page.waitForTimeout(1600);console.log('NAV geometry',id,await page.evaluate(id=>({top:document.getElementById(id).getBoundingClientRect().top,header:document.getElementById('platformHeader').getBoundingClientRect().bottom,y:scrollY}),id));assert.equal(await page.locator('#primaryNavTabs [aria-current=location]').getAttribute('data-v-target'),id);assert(await page.locator('#'+id).evaluate(el=>el.getBoundingClientRect().top>=document.getElementById('platformHeader').getBoundingClientRect().bottom-2));}
 const rankingBoxes=await page.locator('.top-game-row').evaluateAll(els=>els.map(el=>({top:el.getBoundingClientRect().top,width:el.getBoundingClientRect().width})));assert(Math.abs(rankingBoxes[0].top-rankingBoxes[1].top)<2);assert(rankingBoxes[0].width<500);
-assert.equal(await page.locator('.hero-school-name').innerText(),config.name);assert.equal(await page.locator('.hero-school-name').evaluate(el=>getComputedStyle(el).color),'rgb(85, 16, 37)');
+assert.equal(await page.locator('.hero-school-name').innerText(),config.name);const badgeColors=await page.locator('.hero-school-name').evaluate(badge=>{
+ const body=document.body,initial=body.dataset.heroBackdrop;
+ const sample=document.createElement('span');
+ sample.style.color='var(--abu-brand)';
+ badge.append(sample);
+ try{
+  const brand=getComputedStyle(sample).color;
+  body.dataset.heroBackdrop='maroon';
+  const maroonText=getComputedStyle(badge).color;
+  body.dataset.heroBackdrop='light';
+  return {brand,maroonText,lightText:getComputedStyle(badge).color};
+ }finally{
+  sample.remove();
+  if(initial===undefined)delete body.dataset.heroBackdrop;
+  else body.dataset.heroBackdrop=initial;
+ }
+});
+assert.equal(badgeColors.maroonText,'rgb(255, 255, 255)');
+assert.equal(badgeColors.lightText,badgeColors.brand);
+assert.notEqual(badgeColors.lightText,badgeColors.maroonText);
 assert(await page.locator('.video-thumb-btn').evaluateAll(els=>els.every(el=>{const a=el.getBoundingClientRect(),b=el.querySelector('.video-thumb-preview').getBoundingClientRect();return b.left>=a.left&&b.right<=a.right&&Math.abs(b.width/b.height-16/9)<.05;})));
 console.log('PASS active navigation, compact ranking grid, readable identity and media proportions');for(const w of [390,768,1024]){await page.setViewportSize({width:w,height:844});assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+2),'overflow '+w);}console.log('PASS responsive widths');await page.setViewportSize({width:1440,height:1000});
 await page.locator('#joinCode').fill('١٢٣٤٥٦');await page.locator('#joinForm button').click();await page.waitForURL('**/live.html?code=123456');await page.locator('#studentName').waitFor();assert.equal(await page.locator('#code').inputValue(),'123456');assert.equal(await page.locator('.site-footer-global').count(),0);assert(!(await page.locator('body').innerText()).includes('منارة'));await page.goto(base+'/');await page.locator('#joinCode').waitFor();
