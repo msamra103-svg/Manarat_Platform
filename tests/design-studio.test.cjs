@@ -19,3 +19,14 @@ test('Preview save/reload, concurrent-edit protection, and production isolation'
 test('Public boundary omits student mappings and denies teacher/anonymous design writes',async()=>{const h=harness();for(const token of [undefined,'teacher','blocked'])for(const action of ['designState','saveDesign','uploadDesignAsset','settingsHistory'])assert.equal((await h.call(action,{},token)).status,400);const pub=(await h.call('settings')).data;for(const k of ['studentDisplayNames','studentGradeMap','studentOptOut','customThemes'])assert(!Object.hasOwn(pub,k));assert.deepEqual(pub.design.assets,[]);});
 test('Uploads check server authorization, type, size and file magic before writing',async()=>{const h=harness();for(const payload of [{mime:'image/svg+xml',base64:btoa('<svg/>')},{mime:'image/png',base64:btoa('<html>evil</html>')},{mime:'image/png',base64:'%not-base64%'}])assert.equal((await h.call('uploadDesignAsset',payload,'admin')).status,400);assert.equal(h.uploads(),0);const png='iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/ScLbtAAAAABJRU5ErkJggg==';const r=await h.call('uploadDesignAsset',{mime:'image/png',name:'logo.png',base64:png},'admin');assert.equal(r.status,200);assert(r.data.url.includes('/manarat-brand-assets/admin/'));assert.equal(h.uploads(),1);});
 test('Aggregate data counts unique students across games without public keys or fake winners',async()=>{const h=harness(),now=new Date().toISOString();h.tables.school_sessions=[{id:'1',finished_at:now,created_at:now,student_key:'same',student_name:'طالب حقيقي',score:80,mode:'home',template:'football'},{id:'2',finished_at:now,created_at:now,student_key:'same',student_name:'طالب حقيقي',score:100,mode:'home',template:'race'},{id:'3',finished_at:now,created_at:now,student_key:'pending',score:100,mode:'home',template:'race',pending:true}];const hub=(await h.call('homeHub')).data;assert.equal(hub.analytics.rounds,2);assert.equal(hub.analytics.participants,1);assert.equal(hub.analytics.average,90);assert.equal(hub.weekly.champions.filter(x=>x.hasWinner).length,0);assert(!JSON.stringify(hub).includes('same'));assert(!JSON.stringify(hub).includes('pending'));});
+
+test('school library leads with educational games and preserves a curated order',()=>{
+ const defaults=D.normalize({});
+ assert.deepEqual(defaults.design.gameOrder.slice(0,2),['classic','puzzle']);
+ const migrated=D.normalize({design:{gameOrder:[...D.gameKeys],sections:{games:{title:'اختر ملعبك. وابدأ التحدّي.'}}}});
+ assert.deepEqual(migrated.design.gameOrder,defaults.design.gameOrder);
+ assert.equal(migrated.design.sections.games.title,'مكتبة الألعاب التعليمية');
+ const custom=D.normalize({design:{...defaults.design,gameOrder:[...D.gameKeys],sections:{games:{title:'أنشطة الصف'}}}});
+ assert.deepEqual(custom.design.gameOrder,D.gameKeys);
+ assert.equal(custom.design.sections.games.title,'أنشطة الصف');
+});

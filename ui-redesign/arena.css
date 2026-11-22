@@ -8,7 +8,7 @@ body.school-app:not(.playing-game):not(:has([data-game-nav-slot])) #platform-nav
   display:flex;align-items:center;justify-content:flex-start;position:relative;isolation:isolate;
   min-height:clamp(340px,31vw,464px);height:auto;overflow:hidden;margin:14px 0 0;
   padding:clamp(28px,3.5vw,60px);border:0;border-radius:var(--ui-radius,20px);
-  background:#300515 url("../assets/school-arena.webp") left 46% / cover no-repeat!important;
+  background:#300515 url("../assets/school-learning-games.webp") left 46% / cover no-repeat!important;
   color:white;box-shadow:0 14px 36px -24px #410e2b99;text-align:start;
 }
 #app .arena-home #heroShowcaseSection::before,#app .arena-home #heroShowcaseSection::after{display:none}
@@ -24,7 +24,7 @@ body.school-app:not(.playing-game):not(:has([data-game-nav-slot])) #platform-nav
 #app #heroShowcaseSection #joinCode{min-width:0;width:100%;flex:1;margin:0;padding:8px 10px;min-height:42px;background:white;border:0;box-shadow:none;font-size:16px;color:#2d1a24;text-align:start;unicode-bidi:plaintext}
 #app #heroShowcaseSection .arena-code-row button{min-width:90px;min-height:44px;border-radius:8px;gap:9px;background:var(--abu-brand,#8a1538);color:#fff}
 #app #heroShowcaseSection .arena-code-row button:hover{background:var(--abu-brand-deep,#5b0d27)}
-body[data-hero-backdrop=light] #app .arena-home #heroShowcaseSection{background-image:linear-gradient(to left,#fff 29%,#fff5f8f5 48%,transparent 78%),url("../assets/school-arena.webp")!important}
+body[data-hero-backdrop=light] #app .arena-home #heroShowcaseSection{background-image:linear-gradient(to left,#fff 29%,#fff5f8f5 48%,transparent 78%),url("../assets/school-learning-games.webp")!important}
 body[data-hero-backdrop=light] #app #heroShowcaseSection :is(.hero-school-name,.arena-copy h1,#joinForm>label){color:var(--abu-brand)!important}
 body[data-hero-backdrop=light] #app #heroShowcaseSection .arena-copy>p{color:var(--abu-ink)}
 body[data-hero-align=center] #heroShowcaseSection .arena-copy{justify-items:center;text-align:center}
@@ -67,12 +67,12 @@ body.classroom-board .game-layout h2{font-size:clamp(24px,3.1vw,49px)!important}
 body.classroom-board .game-layout .answers button{font-size:clamp(20px,2vw,32px);min-height:60px}
 body.classroom-board .game-layout{max-width:1240px}
 @media(max-width:700px){
-  #app .arena-home #heroShowcaseSection{padding:20px;align-items:flex-end;min-height:350px;background-image:linear-gradient(0deg,#300515 4%,#300515ed 33%,#30051580 62%,#3005150a 100%),url("../assets/school-arena.webp")!important;background-size:cover,auto 81%!important;background-position:center,left -18px top!important}
+  #app .arena-home #heroShowcaseSection{padding:20px;align-items:flex-end;min-height:350px;background-image:linear-gradient(0deg,#300515 4%,#300515ed 33%,#30051580 62%,#3005150a 100%),url("../assets/school-learning-games.webp")!important;background-size:cover,auto 81%!important;background-position:center,left -18px top!important}
   #heroShowcaseSection .arena-copy{width:100%}
   #app #heroShowcaseSection .arena-copy h1{font-size:clamp(31px,7.5vw,41px)!important;margin:8px 0 3px}
   #app .arena-copy>p{font-size:15px!important;line-height:1.55}
   #app #heroShowcaseSection #joinForm{margin-top:12px}
-  body[data-hero-backdrop=light] #app .arena-home #heroShowcaseSection{background-image:linear-gradient(0deg,#fff 28%,#fff5f8f2 49%,#fff5f849 85%),url("../assets/school-arena.webp")!important}
+  body[data-hero-backdrop=light] #app .arena-home #heroShowcaseSection{background-image:linear-gradient(0deg,#fff 28%,#fff5f8f2 49%,#fff5f849 85%),url("../assets/school-learning-games.webp")!important}
   #app .arena-feature{display:grid;grid-template-columns:68px 1fr;gap:8px 12px;padding:12px}
   .arena-feature-image{width:68px}
   #app .arena-feature-info #heroSceneTitle{font-size:16px!important}
@@ -93,8 +93,8 @@ body.classroom-board .game-layout{max-width:1240px}
   #app .arena-home .arena-library{margin-block-start:26px}
 }
 @media(max-width:700px){
-  #app .arena-home #heroShowcaseSection{padding-top:128px;min-height:0;background-image:linear-gradient(to top,#300515 41%,#300515e8 57%,#30051505 84%),url("../assets/school-arena.webp")!important;background-size:cover,100% auto!important;background-position:center,left top!important}
-  body[data-hero-backdrop=light] #app .arena-home #heroShowcaseSection{background-image:linear-gradient(to top,#fff 41%,#fff8fbea 57%,#ffffff05 84%),url("../assets/school-arena.webp")!important}
+  #app .arena-home #heroShowcaseSection{padding-top:128px;min-height:0;background-image:linear-gradient(to top,#300515 41%,#300515e8 57%,#30051505 84%),url("../assets/school-learning-games.webp")!important;background-size:cover,100% auto!important;background-position:center,left top!important}
+  body[data-hero-backdrop=light] #app .arena-home #heroShowcaseSection{background-image:linear-gradient(to top,#fff 41%,#fff8fbea 57%,#ffffff05 84%),url("../assets/school-learning-games.webp")!important}
   #app .arena-copy .hero-school-name{font-size:13px}
   #app .arena-home .arena-library{margin-block-start:23px}
 }
